@@ -74,7 +74,7 @@ function Header() {
           Agent <span className="text-gold">Factory</span>
         </Link>
         <Link
-          to="/"
+          to="/auth"
           className="inline-flex items-center justify-center rounded-md border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
         >
           Sign In
