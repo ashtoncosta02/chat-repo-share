@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { AgentFactoryLogo } from "@/components/AgentFactoryLogo";
+import { Eye, EyeOff } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -17,6 +18,41 @@ export const Route = createFileRoute("/auth")({
   }),
   component: AuthPage,
 });
+
+function PasswordInput({
+  id,
+  value,
+  onChange,
+  minLength,
+}: {
+  id: string;
+  value: string;
+  onChange: (v: string) => void;
+  minLength?: number;
+}) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative">
+      <Input
+        id={id}
+        type={show ? "text" : "password"}
+        required
+        minLength={minLength}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="pr-10"
+      />
+      <button
+        type="button"
+        onClick={() => setShow((s) => !s)}
+        className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+        aria-label={show ? "Hide password" : "Show password"}
+      >
+        {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+      </button>
+    </div>
+  );
+}
 
 function AuthPage() {
   const { user, signIn, signUp, loading } = useAuth();
@@ -71,7 +107,7 @@ function AuthPage() {
                 </div>
                 <div>
                   <Label htmlFor="signin-password">Password</Label>
-                  <Input id="signin-password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+                  <PasswordInput id="signin-password" value={password} onChange={setPassword} />
                 </div>
                 <Button type="submit" className="w-full" disabled={submitting}>
                   {submitting ? "Signing in…" : "Sign in"}
@@ -90,7 +126,7 @@ function AuthPage() {
                 </div>
                 <div>
                   <Label htmlFor="signup-password">Password</Label>
-                  <Input id="signup-password" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
+                  <PasswordInput id="signup-password" value={password} onChange={setPassword} minLength={6} />
                 </div>
                 <Button type="submit" className="w-full" disabled={submitting}>
                   {submitting ? "Creating…" : "Create account"}
