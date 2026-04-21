@@ -13,6 +13,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as DashboardNewAgentRouteImport } from './routes/dashboard.new-agent'
 import { Route as DashboardLeadsRouteImport } from './routes/dashboard.leads'
 import { Route as DashboardConversationsRouteImport } from './routes/dashboard.conversations'
 import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard.analytics'
@@ -35,6 +36,11 @@ const IndexRoute = IndexRouteImport.update({
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardNewAgentRoute = DashboardNewAgentRouteImport.update({
+  id: '/new-agent',
+  path: '/new-agent',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardLeadsRoute = DashboardLeadsRouteImport.update({
@@ -60,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/conversations': typeof DashboardConversationsRoute
   '/dashboard/leads': typeof DashboardLeadsRoute
+  '/dashboard/new-agent': typeof DashboardNewAgentRoute
   '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRoutesByTo {
@@ -68,6 +75,7 @@ export interface FileRoutesByTo {
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/conversations': typeof DashboardConversationsRoute
   '/dashboard/leads': typeof DashboardLeadsRoute
+  '/dashboard/new-agent': typeof DashboardNewAgentRoute
   '/dashboard': typeof DashboardIndexRoute
 }
 export interface FileRoutesById {
@@ -78,6 +86,7 @@ export interface FileRoutesById {
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/conversations': typeof DashboardConversationsRoute
   '/dashboard/leads': typeof DashboardLeadsRoute
+  '/dashboard/new-agent': typeof DashboardNewAgentRoute
   '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRouteTypes {
@@ -89,6 +98,7 @@ export interface FileRouteTypes {
     | '/dashboard/analytics'
     | '/dashboard/conversations'
     | '/dashboard/leads'
+    | '/dashboard/new-agent'
     | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -97,6 +107,7 @@ export interface FileRouteTypes {
     | '/dashboard/analytics'
     | '/dashboard/conversations'
     | '/dashboard/leads'
+    | '/dashboard/new-agent'
     | '/dashboard'
   id:
     | '__root__'
@@ -106,6 +117,7 @@ export interface FileRouteTypes {
     | '/dashboard/analytics'
     | '/dashboard/conversations'
     | '/dashboard/leads'
+    | '/dashboard/new-agent'
     | '/dashboard/'
   fileRoutesById: FileRoutesById
 }
@@ -145,6 +157,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/new-agent': {
+      id: '/dashboard/new-agent'
+      path: '/new-agent'
+      fullPath: '/dashboard/new-agent'
+      preLoaderRoute: typeof DashboardNewAgentRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/leads': {
       id: '/dashboard/leads'
       path: '/leads'
@@ -173,6 +192,7 @@ interface DashboardRouteChildren {
   DashboardAnalyticsRoute: typeof DashboardAnalyticsRoute
   DashboardConversationsRoute: typeof DashboardConversationsRoute
   DashboardLeadsRoute: typeof DashboardLeadsRoute
+  DashboardNewAgentRoute: typeof DashboardNewAgentRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
 }
 
@@ -180,6 +200,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardAnalyticsRoute: DashboardAnalyticsRoute,
   DashboardConversationsRoute: DashboardConversationsRoute,
   DashboardLeadsRoute: DashboardLeadsRoute,
+  DashboardNewAgentRoute: DashboardNewAgentRoute,
   DashboardIndexRoute: DashboardIndexRoute,
 }
 
