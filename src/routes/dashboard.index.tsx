@@ -106,22 +106,28 @@ function DashboardHome() {
           ) : (
             <ul className="divide-y divide-border">
               {agents.map((a) => (
-                <li key={a.id} className="flex items-center justify-between px-6 py-4">
-                  <div>
-                    <div className="font-medium text-foreground">{a.business_name}</div>
-                    {a.industry && (
-                      <div className="text-sm text-muted-foreground">{a.industry}</div>
-                    )}
-                  </div>
-                  <span
-                    className={`text-xs px-2 py-1 rounded-full font-medium ${
-                      a.is_live
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-muted text-muted-foreground"
-                    }`}
+                <li key={a.id}>
+                  <Link
+                    to="/dashboard/agents/$agentId"
+                    params={{ agentId: a.id }}
+                    className="flex items-center justify-between px-6 py-4 hover:bg-muted/50 transition"
                   >
-                    {a.is_live ? "Live" : "Draft"}
-                  </span>
+                    <div>
+                      <div className="font-medium text-foreground">{a.business_name}</div>
+                      {a.industry && (
+                        <div className="text-sm text-muted-foreground">{a.industry}</div>
+                      )}
+                    </div>
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full font-medium ${
+                        a.is_live
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {a.is_live ? "Live" : "Draft"}
+                    </span>
+                  </Link>
                 </li>
               ))}
             </ul>
