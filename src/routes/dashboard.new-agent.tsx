@@ -110,7 +110,7 @@ function NewAgentPage() {
           <span>
             <Link to="/dashboard" className="hover:text-foreground">Dashboard</Link>
             {" / New Agent"}
-          </span> as unknown as string
+          </span>
         }
         title="Build New Agent"
       />
