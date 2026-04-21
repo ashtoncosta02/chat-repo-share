@@ -93,6 +93,7 @@ function NewAgentPage() {
       pricing_notes: form.pricing_notes || null,
       escalation_triggers: form.escalation_triggers || null,
       source_url: url || null,
+      is_live: true,
     });
     setSaving(false);
     if (error) {
