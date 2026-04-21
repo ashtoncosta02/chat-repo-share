@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       agents: {
         Row: {
+          assistant_name: string | null
           booking_link: string | null
           business_name: string
           created_at: string
@@ -35,6 +36,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          assistant_name?: string | null
           booking_link?: string | null
           business_name: string
           created_at?: string
@@ -54,6 +56,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          assistant_name?: string | null
           booking_link?: string | null
           business_name?: string
           created_at?: string
