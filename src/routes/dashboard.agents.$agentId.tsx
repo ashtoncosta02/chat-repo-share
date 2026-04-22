@@ -152,10 +152,12 @@ function AgentDetailPage() {
           const name = a.assistant_name?.trim() || "Ava";
           const greeting = `Hi there! This is ${name} with ${a.business_name}. How can I help you today?`;
           setMessages([{ role: "assistant", content: greeting, ts: new Date() }]);
-          // Persist greeting (creates the conversation row)
-          persistMessage("assistant", greeting);
-          // Speak the greeting
-          if (voiceOn) playReply(greeting);
+          // Persist greeting only once (StrictMode runs this effect twice in dev)
+          if (!greetingPersistedRef.current) {
+            greetingPersistedRef.current = true;
+            persistMessage("assistant", greeting);
+            if (voiceOn) playReply(greeting);
+          }
         }
         setLoading(false);
       });
