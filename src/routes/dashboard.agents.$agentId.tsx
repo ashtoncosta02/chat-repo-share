@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +8,27 @@ import { speakText, transcribeAudio } from "@/server/agent-voice";
 import { extractLeadFromChat } from "@/server/agent-lead-extract";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mic, MicOff, Send, Bot, ArrowLeft, Calendar, Clock, Volume2, VolumeX } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Mic, MicOff, Send, Bot, ArrowLeft, Calendar, Clock, Volume2, VolumeX, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard/agents/$agentId")({
@@ -55,6 +75,23 @@ function AgentDetailPage() {
   const [transcribing, setTranscribing] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [voiceOn, setVoiceOn] = useState(true);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [edit, setEdit] = useState({
+    business_name: "",
+    assistant_name: "",
+    tone: "",
+    primary_goal: "",
+    services: "",
+    booking_link: "",
+    emergency_number: "",
+    faqs: "",
+    pricing_notes: "",
+    escalation_triggers: "",
+  });
+  const navigate = useNavigate();
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -389,6 +426,35 @@ function AgentDetailPage() {
           <p className="text-muted-foreground text-sm mt-1">{assistantName} · AI Receptionist</p>
         </div>
         <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setEdit({
+                business_name: agent.business_name ?? "",
+                assistant_name: agent.assistant_name ?? "",
+                tone: agent.tone ?? "",
+                primary_goal: agent.primary_goal ?? "",
+                services: agent.services ?? "",
+                booking_link: agent.booking_link ?? "",
+                emergency_number: agent.emergency_number ?? "",
+                faqs: agent.faqs ?? "",
+                pricing_notes: agent.pricing_notes ?? "",
+                escalation_triggers: agent.escalation_triggers ?? "",
+              });
+              setEditOpen(true);
+            }}
+          >
+            <Pencil className="h-3.5 w-3.5 mr-1.5" /> Edit
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-destructive hover:text-destructive"
+            onClick={() => setDeleteOpen(true)}
+          >
+            <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete
+          </Button>
           <button
             type="button"
             onClick={() => {
@@ -530,6 +596,197 @@ function AgentDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Edit dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit agent</DialogTitle>
+            <DialogDescription>
+              Update what your AI agent knows about your business.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="ed-bn">Business name</Label>
+                <Input
+                  id="ed-bn"
+                  value={edit.business_name}
+                  onChange={(e) => setEdit({ ...edit, business_name: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="ed-an">Assistant name</Label>
+                <Input
+                  id="ed-an"
+                  value={edit.assistant_name}
+                  onChange={(e) => setEdit({ ...edit, assistant_name: e.target.value })}
+                  placeholder="Ava"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="ed-tone">Tone</Label>
+                <Input
+                  id="ed-tone"
+                  value={edit.tone}
+                  onChange={(e) => setEdit({ ...edit, tone: e.target.value })}
+                  placeholder="Friendly, professional"
+                />
+              </div>
+              <div>
+                <Label htmlFor="ed-goal">Primary goal</Label>
+                <Input
+                  id="ed-goal"
+                  value={edit.primary_goal}
+                  onChange={(e) => setEdit({ ...edit, primary_goal: e.target.value })}
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="ed-svc">Services</Label>
+              <Textarea
+                id="ed-svc"
+                value={edit.services}
+                onChange={(e) => setEdit({ ...edit, services: e.target.value })}
+                rows={3}
+              />
+            </div>
+            <div>
+              <Label htmlFor="ed-faq">FAQs</Label>
+              <Textarea
+                id="ed-faq"
+                value={edit.faqs}
+                onChange={(e) => setEdit({ ...edit, faqs: e.target.value })}
+                rows={4}
+              />
+            </div>
+            <div>
+              <Label htmlFor="ed-pricing">Pricing notes</Label>
+              <Textarea
+                id="ed-pricing"
+                value={edit.pricing_notes}
+                onChange={(e) => setEdit({ ...edit, pricing_notes: e.target.value })}
+                rows={2}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="ed-book">Booking link</Label>
+                <Input
+                  id="ed-book"
+                  value={edit.booking_link}
+                  onChange={(e) => setEdit({ ...edit, booking_link: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="ed-emer">Emergency number</Label>
+                <Input
+                  id="ed-emer"
+                  value={edit.emergency_number}
+                  onChange={(e) => setEdit({ ...edit, emergency_number: e.target.value })}
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="ed-esc">Escalation triggers</Label>
+              <Textarea
+                id="ed-esc"
+                value={edit.escalation_triggers}
+                onChange={(e) => setEdit({ ...edit, escalation_triggers: e.target.value })}
+                rows={2}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditOpen(false)} disabled={saving}>
+              Cancel
+            </Button>
+            <Button
+              disabled={saving || !edit.business_name.trim()}
+              className="bg-[var(--gold)] hover:bg-[var(--gold)]/90 text-white"
+              onClick={async () => {
+                if (!user) return;
+                setSaving(true);
+                const payload = {
+                  business_name: edit.business_name.trim(),
+                  assistant_name: edit.assistant_name.trim() || null,
+                  tone: edit.tone.trim() || null,
+                  primary_goal: edit.primary_goal.trim() || null,
+                  services: edit.services.trim() || null,
+                  booking_link: edit.booking_link.trim() || null,
+                  emergency_number: edit.emergency_number.trim() || null,
+                  faqs: edit.faqs.trim() || null,
+                  pricing_notes: edit.pricing_notes.trim() || null,
+                  escalation_triggers: edit.escalation_triggers.trim() || null,
+                };
+                const { error } = await supabase
+                  .from("agents")
+                  .update(payload)
+                  .eq("id", agent.id);
+                setSaving(false);
+                if (error) {
+                  toast.error("Couldn't save changes", { description: error.message });
+                  return;
+                }
+                setAgent({ ...agent, ...payload });
+                setEditOpen(false);
+                toast.success("Agent updated");
+              }}
+            >
+              {saving ? "Saving…" : "Save changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this agent?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove <strong>{agent.business_name}</strong> along with its
+              conversations, messages, and leads. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!user) return;
+                setDeleting(true);
+                // Clean up dependent rows first (no FK cascade defined).
+                const { data: convs } = await supabase
+                  .from("conversations")
+                  .select("id")
+                  .eq("agent_id", agent.id);
+                const convIds = (convs ?? []).map((c) => c.id);
+                if (convIds.length > 0) {
+                  await supabase.from("messages").delete().in("conversation_id", convIds);
+                  await supabase.from("conversations").delete().in("id", convIds);
+                }
+                await supabase.from("leads").delete().eq("agent_id", agent.id);
+                const { error } = await supabase.from("agents").delete().eq("id", agent.id);
+                setDeleting(false);
+                if (error) {
+                  toast.error("Couldn't delete agent", { description: error.message });
+                  return;
+                }
+                toast.success("Agent deleted");
+                navigate({ to: "/dashboard" });
+              }}
+            >
+              {deleting ? "Deleting…" : "Delete agent"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
