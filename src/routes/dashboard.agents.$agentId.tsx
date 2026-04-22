@@ -63,6 +63,8 @@ function AgentDetailPage() {
   const conversationIdRef = useRef<string | null>(null);
   const conversationStartRef = useRef<Date | null>(null);
   const messageCountRef = useRef<number>(0);
+  const leadIdRef = useRef<string | null>(null);
+  const leadDataRef = useRef<{ name?: string | null; phone?: string | null; email?: string | null; notes?: string | null }>({});
 
   // Persist a single message to the DB (best-effort, non-blocking UX)
   const persistMessage = async (role: "user" | "assistant", content: string) => {
