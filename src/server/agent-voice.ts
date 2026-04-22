@@ -47,7 +47,7 @@ function urlToSpeech(rest: string): string {
   const cleaned = rest.replace(/[)\].,!?;:]+$/, "");
   return cleaned
     .replace(/\./g, " dot ")
-    .replace(/\//g, " slash ")
+    .replace(/\//g, " forward slash ")
     .replace(/-/g, " dash ")
     .replace(/_/g, " underscore ")
     .replace(/\s+/g, " ")
@@ -64,7 +64,7 @@ export const speakText = createServerFn({ method: "POST" })
     try {
       const voiceId = data.voiceId || DEFAULT_VOICE;
       const res = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`,
+        `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_22050_32`,
         {
           method: "POST",
           headers: {
@@ -73,12 +73,13 @@ export const speakText = createServerFn({ method: "POST" })
           },
           body: JSON.stringify({
             text: prepareForTts(data.text),
-            model_id: "eleven_turbo_v2_5",
+            model_id: "eleven_turbo_v2",
             voice_settings: {
-              stability: 0.5,
-              similarity_boost: 0.75,
-              style: 0.3,
+              stability: 0.45,
+              similarity_boost: 0.7,
+              style: 0.2,
               use_speaker_boost: true,
+              speed: 1.08,
             },
           }),
         },

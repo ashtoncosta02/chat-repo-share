@@ -29,13 +29,13 @@ export async function synthesizeAndUpload(
     console.error("voice-call: ELEVENLABS_API_KEY missing");
     return null;
   }
-  const safeText = prepareForTts(text).slice(0, 1500);
+  const safeText = prepareForTts(text).slice(0, 900);
   if (!safeText) return null;
 
   const finalVoice = voiceId || "EXAVITQu4vr4xnSDxMaL";
   try {
     const ttsRes = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${finalVoice}?output_format=mp3_44100_128`,
+      `https://api.elevenlabs.io/v1/text-to-speech/${finalVoice}?output_format=mp3_22050_32`,
       {
         method: "POST",
         headers: {
@@ -44,12 +44,13 @@ export async function synthesizeAndUpload(
         },
         body: JSON.stringify({
           text: safeText,
-          model_id: "eleven_turbo_v2_5",
+          model_id: "eleven_turbo_v2",
           voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.75,
-            style: 0.3,
+            stability: 0.45,
+            similarity_boost: 0.7,
+            style: 0.2,
             use_speaker_boost: true,
+            speed: 1.08,
           },
         }),
       },
@@ -109,7 +110,7 @@ export function buildVoiceSystemPrompt(agent: {
 
 You are speaking with the caller live over the phone. Your reply will be spoken out loud, so:
 - Use natural spoken language (no markdown, no bullet points, no URLs read out).
-- Keep replies to 1–2 short sentences whenever possible.
+- Aim for 1 short sentence. Only use 2 short sentences if truly necessary.
 - If you must read a phone number, say each digit separately.
 - Pause naturally with commas. Avoid long lists.
 
@@ -130,7 +131,7 @@ Emergency / handoff number: ${agent.emergency_number || "(none)"}
 Escalate to a human if: ${agent.escalation_triggers || "(use judgment)"}
 
 Rules:
-- Be concise (1–2 short sentences).
+- Be extremely concise.
 - If the caller asks to book, offer to text them the booking link.
 - If you don't know an answer, offer to take a message or transfer them.
 - If they ask for a human or it's an emergency, say you'll transfer them now.`;
