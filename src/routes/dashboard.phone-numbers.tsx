@@ -3,8 +3,11 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/dashboard/PageHeader";
-import { Phone, Bot } from "lucide-react";
+import { Phone, Bot, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useServerFn } from "@tanstack/react-start";
+import { syncTwilioWebhooks } from "@/server/twilio-numbers";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard/phone-numbers")({
   head: () => ({ meta: [{ title: "Phone Numbers — Agent Factory" }] }),
@@ -33,6 +36,8 @@ function PhoneNumbersPage() {
   const { user } = useAuth();
   const [numbers, setNumbers] = useState<NumberRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncingId, setSyncingId] = useState<string | null>(null);
+  const sync = useServerFn(syncTwilioWebhooks);
 
   useEffect(() => {
     if (!user) return;
@@ -47,6 +52,26 @@ function PhoneNumbersPage() {
         setLoading(false);
       });
   }, [user]);
+
+  async function handleSync(phoneNumberId: string) {
+    setSyncingId(phoneNumberId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) {
+        toast.error("Please sign in again.");
+        return;
+      }
+      const res = await sync({ data: { accessToken, phoneNumberId } });
+      if (res.success) {
+        toast.success("Voice & SMS webhooks updated. Try calling the number now.");
+      } else {
+        toast.error(res.error);
+      }
+    } finally {
+      setSyncingId(null);
+    }
+  }
 
   return (
     <div>
