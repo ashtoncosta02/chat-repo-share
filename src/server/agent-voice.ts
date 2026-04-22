@@ -9,6 +9,51 @@ const TtsInput = z.object({
 // Default voice: "Sarah" — warm, friendly female receptionist
 const DEFAULT_VOICE = "EXAVITQu4vr4xnSDxMaL";
 
+/**
+ * Pre-process text before sending to ElevenLabs so URLs and special
+ * characters get pronounced naturally instead of glitching out.
+ *
+ * ElevenLabs reads "/" inconsistently (often as a glitchy "slash" or
+ * dropped sound), and reads URLs character-by-character. We rewrite
+ * common patterns into spoken English so the audio sounds clean.
+ */
+export function prepareForTts(input: string): string {
+  let text = input;
+
+  // Strip markdown that shouldn't be spoken
+  text = text.replace(/\*\*(.+?)\*\*/g, "$1");
+  text = text.replace(/\*(.+?)\*/g, "$1");
+  text = text.replace(/`([^`]+)`/g, "$1");
+
+  // Convert markdown links [label](url) -> just the label
+  text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1");
+
+  // Spell out URLs as natural speech: "example dot com slash booking"
+  text = text.replace(/https?:\/\/(\S+)/gi, (_m, rest: string) => urlToSpeech(rest));
+  text = text.replace(/\bwww\.(\S+)/gi, (_m, rest: string) => urlToSpeech(rest));
+
+  // Any remaining bare slashes (e.g. "9am/5pm" or "and/or") become " or "
+  // — more natural than the literal word "slash" which TTS engines
+  // tend to mispronounce or skip entirely.
+  text = text.replace(/\s*\/\s*/g, " or ");
+
+  // Collapse extra whitespace
+  text = text.replace(/\s+/g, " ").trim();
+  return text;
+}
+
+function urlToSpeech(rest: string): string {
+  // Trim trailing punctuation like ).,! that's not part of the URL
+  const cleaned = rest.replace(/[)\].,!?;:]+$/, "");
+  return cleaned
+    .replace(/\./g, " dot ")
+    .replace(/\//g, " slash ")
+    .replace(/-/g, " dash ")
+    .replace(/_/g, " underscore ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export const speakText = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => TtsInput.parse(input))
   .handler(async ({ data }) => {
@@ -27,7 +72,7 @@ export const speakText = createServerFn({ method: "POST" })
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            text: data.text,
+            text: prepareForTts(data.text),
             model_id: "eleven_turbo_v2_5",
             voice_settings: {
               stability: 0.5,

@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { prepareForTts } from "@/server/agent-voice";
 
 /**
  * Helpers shared by the inbound voice webhook routes
@@ -28,7 +29,7 @@ export async function synthesizeAndUpload(
     console.error("voice-call: ELEVENLABS_API_KEY missing");
     return null;
   }
-  const safeText = text.trim().slice(0, 1500);
+  const safeText = prepareForTts(text).slice(0, 1500);
   if (!safeText) return null;
 
   const finalVoice = voiceId || "EXAVITQu4vr4xnSDxMaL";
