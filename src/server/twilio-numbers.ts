@@ -37,28 +37,49 @@ export const searchNumbersByPostalCode = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => SearchInput.parse(input))
   .handler(async ({ data }) => {
     try {
+      // Normalize postal code per country.
+      // US: 5-digit ZIP. CA: Twilio searches by 3-char Forward Sortation Area (e.g. "L7B").
+      let postal = data.postalCode.trim().toUpperCase().replace(/\s+/g, "");
+      if (data.country === "US") {
+        if (!/^\d{5}$/.test(postal)) {
+          return {
+            success: false as const,
+            error: "US ZIP codes must be 5 digits (e.g. 90210).",
+            numbers: [] as AvailableNumber[],
+          };
+        }
+      } else {
+        // Canada: validate full postal code, then use the first 3 chars (FSA)
+        if (!/^[A-Z]\d[A-Z]\d[A-Z]\d$/.test(postal)) {
+          return {
+            success: false as const,
+            error: "Canadian postal codes look like L7B 1A2.",
+            numbers: [] as AvailableNumber[],
+          };
+        }
+        postal = postal.slice(0, 3);
+      }
+
       const params = new URLSearchParams({
-        InPostalCode: data.postalCode.trim(),
+        InPostalCode: postal,
         PageSize: "20",
       });
       if (data.smsEnabled) params.set("SmsEnabled", "true");
       if (data.voiceEnabled !== false) params.set("VoiceEnabled", "true");
 
-      const res = await fetch(
-        `${GATEWAY_URL}/AvailablePhoneNumbers/${data.country}/Local.json?${params.toString()}`,
-        {
-          method: "GET",
-          headers: gatewayHeaders(),
-        },
-      );
-      const json = await res.json();
+      const url = `${GATEWAY_URL}/AvailablePhoneNumbers/${data.country}/Local.json?${params.toString()}`;
+      const res = await fetch(url, { method: "GET", headers: gatewayHeaders() });
+      const json = await res.json().catch(() => ({}));
       if (!res.ok) {
-        console.error("Twilio search error:", res.status, json);
+        console.error("Twilio search error:", res.status, json, "url:", url);
+        // Twilio returns 404 when the postal code isn't recognized for that country.
+        const msg =
+          res.status === 404
+            ? `No numbers available near ${postal}. Try a nearby ${data.country === "US" ? "ZIP" : "postal"} code.`
+            : json?.message || `Twilio error (${res.status}). Try a different code.`;
         return {
           success: false as const,
-          error:
-            json?.message ||
-            `No numbers found for ${data.postalCode}. Try a nearby postal code.`,
+          error: msg,
           numbers: [] as AvailableNumber[],
         };
       }
