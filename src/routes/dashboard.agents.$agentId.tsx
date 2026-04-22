@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { chatWithAgent } from "@/server/agent-chat";
 import { speakText, transcribeAudio } from "@/server/agent-voice";
+import { extractLeadFromChat } from "@/server/agent-lead-extract";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mic, MicOff, Send, Bot, ArrowLeft, Calendar, Clock, Volume2, VolumeX } from "lucide-react";
@@ -43,6 +44,7 @@ function AgentDetailPage() {
   const chat = useServerFn(chatWithAgent);
   const speak = useServerFn(speakText);
   const transcribe = useServerFn(transcribeAudio);
+  const extractLead = useServerFn(extractLeadFromChat);
 
   const [agent, setAgent] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(true);
@@ -61,6 +63,8 @@ function AgentDetailPage() {
   const conversationIdRef = useRef<string | null>(null);
   const conversationStartRef = useRef<Date | null>(null);
   const messageCountRef = useRef<number>(0);
+  const leadIdRef = useRef<string | null>(null);
+  const leadDataRef = useRef<{ name?: string | null; phone?: string | null; email?: string | null; notes?: string | null }>({});
 
   // Persist a single message to the DB (best-effort, non-blocking UX)
   const persistMessage = async (role: "user" | "assistant", content: string) => {
@@ -173,6 +177,69 @@ function AgentDetailPage() {
     }
   };
 
+  // Run lead extraction on the recent transcript and upsert/merge a single
+  // lead row per conversation. Best-effort, never blocks the chat UX.
+  const tryExtractLead = async (history: Msg[]) => {
+    if (!user || !agent) return;
+    try {
+      const recent = history.slice(-12).map((m) => ({ role: m.role, content: m.content }));
+      const res = await extractLead({ data: { messages: recent } });
+      if (!res.success || !res.lead) return;
+      const incoming = res.lead;
+
+      // Merge with what we already captured, preferring non-empty new values.
+      const merged = {
+        name: pickStr(incoming.name, leadDataRef.current.name),
+        phone: pickStr(incoming.phone, leadDataRef.current.phone),
+        email: pickStr(incoming.email, leadDataRef.current.email),
+        notes: pickStr(incoming.notes, leadDataRef.current.notes),
+      };
+
+      // Skip update if nothing new was captured
+      const same =
+        merged.name === leadDataRef.current.name &&
+        merged.phone === leadDataRef.current.phone &&
+        merged.email === leadDataRef.current.email &&
+        merged.notes === leadDataRef.current.notes;
+      if (same) return;
+
+      leadDataRef.current = merged;
+
+      if (!leadIdRef.current) {
+        const { data, error } = await supabase
+          .from("leads")
+          .insert({
+            user_id: user.id,
+            agent_id: agent.id,
+            name: merged.name ?? null,
+            phone: merged.phone ?? null,
+            email: merged.email ?? null,
+            notes: merged.notes ?? null,
+          })
+          .select("id")
+          .single();
+        if (error) {
+          console.error("create lead failed", error);
+          return;
+        }
+        leadIdRef.current = data.id;
+      } else {
+        const { error } = await supabase
+          .from("leads")
+          .update({
+            name: merged.name ?? null,
+            phone: merged.phone ?? null,
+            email: merged.email ?? null,
+            notes: merged.notes ?? null,
+          })
+          .eq("id", leadIdRef.current);
+        if (error) console.error("update lead failed", error);
+      }
+    } catch (e) {
+      console.error("tryExtractLead error", e);
+    }
+  };
+
   const sendText = async (text: string) => {
     if (!text.trim() || !agent || sending) return;
     const userMsg: Msg = { role: "user", content: text.trim(), ts: new Date() };
@@ -181,6 +248,8 @@ function AgentDetailPage() {
     setSending(true);
     // Persist user message (fire-and-forget)
     persistMessage("user", userMsg.content);
+    // Try to extract lead info from the conversation so far (non-blocking)
+    tryExtractLead([...messages, userMsg]);
     try {
       const history = [...messages, userMsg].map((m) => ({ role: m.role, content: m.content }));
       const res = await chat({
@@ -513,4 +582,16 @@ function blobToBase64(blob: Blob): Promise<string> {
     reader.onerror = reject;
     reader.readAsDataURL(blob);
   });
+}
+
+// Prefer the first non-empty trimmed string; falls back to the second.
+function pickStr(
+  next: string | null | undefined,
+  prev: string | null | undefined,
+): string | null {
+  const n = next?.trim();
+  if (n) return n;
+  const p = prev?.trim();
+  if (p) return p;
+  return null;
 }
