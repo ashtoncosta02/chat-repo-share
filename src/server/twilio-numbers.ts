@@ -151,7 +151,9 @@ export const purchasePhoneNumber = createServerFn({ method: "POST" })
 
     try {
       const PROJECT_ID = "d1e796ad-671c-47e1-843b-cdecc02fe11f";
-      const baseUrl = `https://project--${PROJECT_ID}.lovable.app`;
+      // Use the -dev subdomain so webhooks work before the project is published.
+      // Once published, you can re-sync to point at the production URL.
+      const baseUrl = `https://project--${PROJECT_ID}-dev.lovable.app`;
       const smsWebhook = `${baseUrl}/api/public/twilio/sms`;
       const voiceWebhook = `${baseUrl}/api/public/twilio/voice`;
 
@@ -289,7 +291,8 @@ export const syncTwilioWebhooks = createServerFn({ method: "POST" })
 
     try {
       const PROJECT_ID = "d1e796ad-671c-47e1-843b-cdecc02fe11f";
-      const baseUrl = `https://project--${PROJECT_ID}.lovable.app`;
+      // Use the -dev subdomain so webhooks work before the project is published.
+      const baseUrl = `https://project--${PROJECT_ID}-dev.lovable.app`;
       const body = new URLSearchParams({
         SmsUrl: `${baseUrl}/api/public/twilio/sms`,
         SmsMethod: "POST",
