@@ -77,14 +77,24 @@ function NewAgentPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
     if (!form.business_name.trim()) {
       toast.error("Business name is required");
       return;
     }
     setSaving(true);
+
+    // Ensure we have a fresh, valid session before insert (RLS needs auth.uid())
+    const { data: sessionData } = await supabase.auth.getSession();
+    const authedUser = sessionData.session?.user;
+    if (!authedUser) {
+      setSaving(false);
+      toast.error("Your session expired. Please sign in again.");
+      navigate({ to: "/auth" });
+      return;
+    }
+
     const { error } = await supabase.from("agents").insert({
-      user_id: user.id,
+      user_id: authedUser.id,
       business_name: form.business_name,
       assistant_name: form.assistant_name.trim() || "Ava",
       industry: form.industry || null,
