@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Mic, MicOff, Send, Bot, ArrowLeft, Calendar, Clock, Volume2, VolumeX, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { PhoneNumberSetup } from "@/components/dashboard/PhoneNumberSetup";
 
 export const Route = createFileRoute("/dashboard/agents/$agentId")({
   head: () => ({ meta: [{ title: "Agent — Agent Factory" }] }),
