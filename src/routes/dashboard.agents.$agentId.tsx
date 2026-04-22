@@ -61,37 +61,54 @@ function AgentDetailPage() {
   const audioChunksRef = useRef<Blob[]>([]);
   const audioElRef = useRef<HTMLAudioElement | null>(null);
   const conversationIdRef = useRef<string | null>(null);
+  const conversationPromiseRef = useRef<Promise<string | null> | null>(null);
   const conversationStartRef = useRef<Date | null>(null);
   const messageCountRef = useRef<number>(0);
+  const greetingPersistedRef = useRef(false);
   const leadIdRef = useRef<string | null>(null);
   const leadDataRef = useRef<{ name?: string | null; phone?: string | null; email?: string | null; notes?: string | null }>({});
+
+  // Ensure exactly one conversation row exists for this session.
+  // Uses a promise guard so concurrent callers (e.g. StrictMode double-invoke)
+  // share the same insert instead of each creating a duplicate row.
+  const ensureConversation = (): Promise<string | null> => {
+    if (conversationIdRef.current) return Promise.resolve(conversationIdRef.current);
+    if (conversationPromiseRef.current) return conversationPromiseRef.current;
+    if (!user) return Promise.resolve(null);
+
+    const startedAt = new Date();
+    conversationStartRef.current = startedAt;
+    const p: Promise<string | null> = (async () => {
+      const { data, error } = await supabase
+        .from("conversations")
+        .insert({
+          user_id: user.id,
+          agent_id: agentId,
+          started_at: startedAt.toISOString(),
+          message_count: 0,
+          duration_seconds: 0,
+        })
+        .select("id")
+        .single();
+      if (error || !data) {
+        console.error("create conversation failed", error);
+        conversationPromiseRef.current = null;
+        return null;
+      }
+      conversationIdRef.current = data.id;
+      return data.id;
+    })();
+    conversationPromiseRef.current = p;
+    return p;
+  };
 
   // Persist a single message to the DB (best-effort, non-blocking UX)
   const persistMessage = async (role: "user" | "assistant", content: string) => {
     if (!user) return;
     try {
-      if (!conversationIdRef.current) {
-        const startedAt = new Date();
-        conversationStartRef.current = startedAt;
-        const { data, error } = await supabase
-          .from("conversations")
-          .insert({
-            user_id: user.id,
-            agent_id: agentId,
-            started_at: startedAt.toISOString(),
-            message_count: 0,
-            duration_seconds: 0,
-          })
-          .select("id")
-          .single();
-        if (error || !data) {
-          console.error("create conversation failed", error);
-          return;
-        }
-        conversationIdRef.current = data.id;
-      }
+      const convId = await ensureConversation();
+      if (!convId) return;
 
-      const convId = conversationIdRef.current;
       messageCountRef.current += 1;
 
       const { error: msgErr } = await supabase.from("messages").insert({
@@ -135,10 +152,12 @@ function AgentDetailPage() {
           const name = a.assistant_name?.trim() || "Ava";
           const greeting = `Hi there! This is ${name} with ${a.business_name}. How can I help you today?`;
           setMessages([{ role: "assistant", content: greeting, ts: new Date() }]);
-          // Persist greeting (creates the conversation row)
-          persistMessage("assistant", greeting);
-          // Speak the greeting
-          if (voiceOn) playReply(greeting);
+          // Persist greeting only once (StrictMode runs this effect twice in dev)
+          if (!greetingPersistedRef.current) {
+            greetingPersistedRef.current = true;
+            persistMessage("assistant", greeting);
+            if (voiceOn) playReply(greeting);
+          }
         }
         setLoading(false);
       });
