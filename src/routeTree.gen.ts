@@ -15,8 +15,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as DashboardNewAgentRouteImport } from './routes/dashboard.new-agent'
 import { Route as DashboardLeadsRouteImport } from './routes/dashboard.leads'
-import { Route as DashboardConversationsRouteImport } from './routes/dashboard.conversations'
 import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard.analytics'
+import { Route as DashboardConversationsIndexRouteImport } from './routes/dashboard.conversations.index'
 import { Route as DashboardConversationsConversationIdRouteImport } from './routes/dashboard.conversations.$conversationId'
 import { Route as DashboardAgentsAgentIdRouteImport } from './routes/dashboard.agents.$agentId'
 
@@ -50,21 +50,22 @@ const DashboardLeadsRoute = DashboardLeadsRouteImport.update({
   path: '/leads',
   getParentRoute: () => DashboardRoute,
 } as any)
-const DashboardConversationsRoute = DashboardConversationsRouteImport.update({
-  id: '/conversations',
-  path: '/conversations',
-  getParentRoute: () => DashboardRoute,
-} as any)
 const DashboardAnalyticsRoute = DashboardAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardConversationsIndexRoute =
+  DashboardConversationsIndexRouteImport.update({
+    id: '/conversations/',
+    path: '/conversations/',
+    getParentRoute: () => DashboardRoute,
+  } as any)
 const DashboardConversationsConversationIdRoute =
   DashboardConversationsConversationIdRouteImport.update({
-    id: '/$conversationId',
-    path: '/$conversationId',
-    getParentRoute: () => DashboardConversationsRoute,
+    id: '/conversations/$conversationId',
+    path: '/conversations/$conversationId',
+    getParentRoute: () => DashboardRoute,
   } as any)
 const DashboardAgentsAgentIdRoute = DashboardAgentsAgentIdRouteImport.update({
   id: '/agents/$agentId',
@@ -77,23 +78,23 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
-  '/dashboard/conversations': typeof DashboardConversationsRouteWithChildren
   '/dashboard/leads': typeof DashboardLeadsRoute
   '/dashboard/new-agent': typeof DashboardNewAgentRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
+  '/dashboard/conversations/': typeof DashboardConversationsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
-  '/dashboard/conversations': typeof DashboardConversationsRouteWithChildren
   '/dashboard/leads': typeof DashboardLeadsRoute
   '/dashboard/new-agent': typeof DashboardNewAgentRoute
   '/dashboard': typeof DashboardIndexRoute
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
+  '/dashboard/conversations': typeof DashboardConversationsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -101,12 +102,12 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
-  '/dashboard/conversations': typeof DashboardConversationsRouteWithChildren
   '/dashboard/leads': typeof DashboardLeadsRoute
   '/dashboard/new-agent': typeof DashboardNewAgentRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
+  '/dashboard/conversations/': typeof DashboardConversationsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -115,35 +116,35 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/dashboard/analytics'
-    | '/dashboard/conversations'
     | '/dashboard/leads'
     | '/dashboard/new-agent'
     | '/dashboard/'
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
+    | '/dashboard/conversations/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/dashboard/analytics'
-    | '/dashboard/conversations'
     | '/dashboard/leads'
     | '/dashboard/new-agent'
     | '/dashboard'
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
+    | '/dashboard/conversations'
   id:
     | '__root__'
     | '/'
     | '/auth'
     | '/dashboard'
     | '/dashboard/analytics'
-    | '/dashboard/conversations'
     | '/dashboard/leads'
     | '/dashboard/new-agent'
     | '/dashboard/'
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
+    | '/dashboard/conversations/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -196,13 +197,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardLeadsRouteImport
       parentRoute: typeof DashboardRoute
     }
-    '/dashboard/conversations': {
-      id: '/dashboard/conversations'
-      path: '/conversations'
-      fullPath: '/dashboard/conversations'
-      preLoaderRoute: typeof DashboardConversationsRouteImport
-      parentRoute: typeof DashboardRoute
-    }
     '/dashboard/analytics': {
       id: '/dashboard/analytics'
       path: '/analytics'
@@ -210,12 +204,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAnalyticsRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/conversations/': {
+      id: '/dashboard/conversations/'
+      path: '/conversations'
+      fullPath: '/dashboard/conversations/'
+      preLoaderRoute: typeof DashboardConversationsIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/conversations/$conversationId': {
       id: '/dashboard/conversations/$conversationId'
-      path: '/$conversationId'
+      path: '/conversations/$conversationId'
       fullPath: '/dashboard/conversations/$conversationId'
       preLoaderRoute: typeof DashboardConversationsConversationIdRouteImport
-      parentRoute: typeof DashboardConversationsRoute
+      parentRoute: typeof DashboardRoute
     }
     '/dashboard/agents/$agentId': {
       id: '/dashboard/agents/$agentId'
@@ -227,37 +228,25 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface DashboardConversationsRouteChildren {
-  DashboardConversationsConversationIdRoute: typeof DashboardConversationsConversationIdRoute
-}
-
-const DashboardConversationsRouteChildren: DashboardConversationsRouteChildren =
-  {
-    DashboardConversationsConversationIdRoute:
-      DashboardConversationsConversationIdRoute,
-  }
-
-const DashboardConversationsRouteWithChildren =
-  DashboardConversationsRoute._addFileChildren(
-    DashboardConversationsRouteChildren,
-  )
-
 interface DashboardRouteChildren {
   DashboardAnalyticsRoute: typeof DashboardAnalyticsRoute
-  DashboardConversationsRoute: typeof DashboardConversationsRouteWithChildren
   DashboardLeadsRoute: typeof DashboardLeadsRoute
   DashboardNewAgentRoute: typeof DashboardNewAgentRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
   DashboardAgentsAgentIdRoute: typeof DashboardAgentsAgentIdRoute
+  DashboardConversationsConversationIdRoute: typeof DashboardConversationsConversationIdRoute
+  DashboardConversationsIndexRoute: typeof DashboardConversationsIndexRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardAnalyticsRoute: DashboardAnalyticsRoute,
-  DashboardConversationsRoute: DashboardConversationsRouteWithChildren,
   DashboardLeadsRoute: DashboardLeadsRoute,
   DashboardNewAgentRoute: DashboardNewAgentRoute,
   DashboardIndexRoute: DashboardIndexRoute,
   DashboardAgentsAgentIdRoute: DashboardAgentsAgentIdRoute,
+  DashboardConversationsConversationIdRoute:
+    DashboardConversationsConversationIdRoute,
+  DashboardConversationsIndexRoute: DashboardConversationsIndexRoute,
 }
 
 const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
