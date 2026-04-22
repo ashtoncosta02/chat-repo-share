@@ -65,15 +65,22 @@ function ConversationsPage() {
           ) : (
             <ul className="divide-y divide-border">
               {convs.map((c) => (
-                <li key={c.id} className="px-6 py-4 flex items-center justify-between">
-                  <div>
-                    <div className="font-medium text-foreground">
-                      {new Date(c.started_at).toLocaleString()}
+                <li key={c.id}>
+                  <Link
+                    to="/dashboard/conversations/$conversationId"
+                    params={{ conversationId: c.id }}
+                    className="px-6 py-4 flex items-center justify-between hover:bg-muted/40 transition"
+                  >
+                    <div>
+                      <div className="font-medium text-foreground">
+                        {new Date(c.started_at).toLocaleString()}
+                      </div>
+                      <div className="text-sm text-muted-foreground mt-1">
+                        {c.message_count} messages · {Math.round(c.duration_seconds / 60)}m
+                      </div>
                     </div>
-                    <div className="text-sm text-muted-foreground mt-1">
-                      {c.message_count} messages · {Math.round(c.duration_seconds / 60)}m
-                    </div>
-                  </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </Link>
                 </li>
               ))}
             </ul>
