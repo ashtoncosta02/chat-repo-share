@@ -74,28 +74,51 @@ export const Route = createFileRoute("/api/public/twilio/voice/turn")({
 
           const utterance = speech || "(caller did not say anything)";
 
-          // Persist the caller's utterance
-          await supabaseAdmin.from("messages").insert({
+          // Pull recent message history in parallel with persisting the
+          // caller's utterance. We don't await the insert before calling
+          // the model — every saved millisecond cuts dead air on the call.
+          const historyPromise = supabaseAdmin
+            .from("messages")
+            .select("role, content")
+            .eq("conversation_id", conversationId)
+            .order("created_at", { ascending: true })
+            .limit(8);
+
+          // Fire-and-forget: persist caller utterance + capture lead.
+          // These don't gate the AI response.
+          void supabaseAdmin.from("messages").insert({
             user_id: agent.user_id,
             conversation_id: conversationId,
             role: "user",
             content: utterance,
           });
+          void (async () => {
+            const { data: existingLead } = await supabaseAdmin
+              .from("leads")
+              .select("id")
+              .eq("agent_id", agent.id)
+              .eq("phone", callerNumber)
+              .maybeSingle();
+            if (!existingLead) {
+              await supabaseAdmin.from("leads").insert({
+                user_id: agent.user_id,
+                agent_id: agent.id,
+                phone: callerNumber,
+                notes: "Captured from inbound phone call",
+              });
+            }
+          })();
 
-          // Pull recent message history for context (last 12 incl. greeting)
-          const { data: history } = await supabaseAdmin
-            .from("messages")
-            .select("role, content")
-            .eq("conversation_id", conversationId)
-            .order("created_at", { ascending: true })
-            .limit(12);
-
+          const { data: history } = await historyPromise;
           const priorMessages = (history || []).map((m) => ({
             role: m.role as "user" | "assistant",
             content: m.content,
           }));
+          // Append the current utterance manually since the insert above
+          // is fire-and-forget and may not have landed yet.
+          priorMessages.push({ role: "user", content: utterance });
 
-          // Call the AI gateway
+          // Call the AI gateway with the fastest model for voice latency.
           const apiKey = process.env.LOVABLE_API_KEY;
           let reply =
             "I'm sorry, I'm having trouble right now. Could you please try calling back in a moment?";
@@ -110,7 +133,7 @@ export const Route = createFileRoute("/api/public/twilio/voice/turn")({
                   "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                  model: "google/gemini-2.5-flash",
+                  model: "google/gemini-2.5-flash-lite",
                   messages: [
                     { role: "system", content: buildVoiceSystemPrompt(agent) },
                     ...priorMessages,
@@ -123,7 +146,7 @@ export const Route = createFileRoute("/api/public/twilio/voice/turn")({
                 choices?: { message?: { content?: string } }[];
               };
               const text = json.choices?.[0]?.message?.content;
-              if (text && text.trim()) reply = text.trim().slice(0, 1500);
+              if (text && text.trim()) reply = text.trim().slice(0, 500);
             } else {
               console.error(
                 "voice-turn: AI gateway error",
@@ -135,39 +158,20 @@ export const Route = createFileRoute("/api/public/twilio/voice/turn")({
             console.error("voice-turn: LOVABLE_API_KEY missing");
           }
 
-          // Persist the assistant reply
-          await supabaseAdmin.from("messages").insert({
+          // Synthesize speech immediately. Persist the assistant reply &
+          // bump the message count in the background — they don't block
+          // the TwiML response.
+          void supabaseAdmin.from("messages").insert({
             user_id: agent.user_id,
             conversation_id: conversationId,
             role: "assistant",
             content: reply,
           });
-
-          // Bump message count
-          await supabaseAdmin
+          void supabaseAdmin
             .from("conversations")
-            .update({
-              message_count: priorMessages.length + 1,
-            })
+            .update({ message_count: priorMessages.length + 1 })
             .eq("id", conversationId);
 
-          // Capture caller's number as a lead (idempotent per agent+phone)
-          const { data: existingLead } = await supabaseAdmin
-            .from("leads")
-            .select("id")
-            .eq("agent_id", agent.id)
-            .eq("phone", callerNumber)
-            .maybeSingle();
-          if (!existingLead) {
-            await supabaseAdmin.from("leads").insert({
-              user_id: agent.user_id,
-              agent_id: agent.id,
-              phone: callerNumber,
-              notes: "Captured from inbound phone call",
-            });
-          }
-
-          // Synthesize speech for the reply
           const audioUrl = await synthesizeAndUpload(reply, agent.voice_id);
 
           // If the agent indicated a handoff and we have an emergency
