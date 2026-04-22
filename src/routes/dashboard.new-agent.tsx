@@ -65,7 +65,7 @@ function NewAgentPage() {
         toast.error(res.error);
       } else {
         // Preserve user-entered assistant_name if any
-        setForm((f) => ({ ...res.data, assistant_name: f.assistant_name }));
+        setForm((f) => ({ ...res.data, assistant_name: f.assistant_name }) as AgentForm);
         toast.success("Form auto-filled from website");
       }
     } catch (e) {
