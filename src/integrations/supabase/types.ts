@@ -194,6 +194,68 @@ export type Database = {
           },
         ]
       }
+      phone_numbers: {
+        Row: {
+          agent_id: string | null
+          capabilities: Json
+          country: string
+          created_at: string
+          friendly_name: string | null
+          id: string
+          locality: string | null
+          monthly_price: number | null
+          phone_number: string
+          postal_code: string | null
+          region: string | null
+          status: string
+          twilio_sid: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          capabilities?: Json
+          country?: string
+          created_at?: string
+          friendly_name?: string | null
+          id?: string
+          locality?: string | null
+          monthly_price?: number | null
+          phone_number: string
+          postal_code?: string | null
+          region?: string | null
+          status?: string
+          twilio_sid: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          capabilities?: Json
+          country?: string
+          created_at?: string
+          friendly_name?: string | null
+          id?: string
+          locality?: string | null
+          monthly_price?: number | null
+          phone_number?: string
+          postal_code?: string | null
+          region?: string | null
+          status?: string
+          twilio_sid?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phone_numbers_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
