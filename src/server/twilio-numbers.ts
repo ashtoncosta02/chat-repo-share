@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
 
@@ -15,7 +15,16 @@ function gatewayHeaders() {
   };
 }
 
+async function getAuthenticatedUserId(accessToken: string) {
+  const { data, error } = await supabaseAdmin.auth.getUser(accessToken);
+  if (error || !data.user) {
+    return { error: "Unauthorized. Please sign in again." as const };
+  }
+  return { userId: data.user.id };
+}
+
 const SearchInput = z.object({
+  accessToken: z.string().min(1),
   postalCode: z.string().min(3).max(10).regex(/^[A-Za-z0-9 -]+$/),
   country: z.enum(["US", "CA"]).default("US"),
   smsEnabled: z.boolean().optional(),
@@ -33,12 +42,18 @@ export interface AvailableNumber {
 }
 
 export const searchNumbersByPostalCode = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => SearchInput.parse(input))
   .handler(async ({ data }) => {
+    const auth = await getAuthenticatedUserId(data.accessToken);
+    if ("error" in auth) {
+      return {
+        success: false as const,
+        error: auth.error,
+        numbers: [] as AvailableNumber[],
+      };
+    }
+
     try {
-      // Normalize postal code per country.
-      // US: 5-digit ZIP. CA: Twilio searches by 3-char Forward Sortation Area (e.g. "L7B").
       let postal = data.postalCode.trim().toUpperCase().replace(/\s+/g, "");
       if (data.country === "US") {
         if (!/^\d{5}$/.test(postal)) {
@@ -49,7 +64,6 @@ export const searchNumbersByPostalCode = createServerFn({ method: "POST" })
           };
         }
       } else {
-        // Canada: validate full postal code, then use the first 3 chars (FSA)
         if (!/^[A-Z]\d[A-Z]\d[A-Z]\d$/.test(postal)) {
           return {
             success: false as const,
@@ -72,7 +86,6 @@ export const searchNumbersByPostalCode = createServerFn({ method: "POST" })
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
         console.error("Twilio search error:", res.status, json, "url:", url);
-        // Twilio returns 404 when the postal code isn't recognized for that country.
         const msg =
           res.status === 404
             ? `No numbers available near ${postal}. Try a nearby ${data.country === "US" ? "ZIP" : "postal"} code.`
@@ -83,6 +96,7 @@ export const searchNumbersByPostalCode = createServerFn({ method: "POST" })
           numbers: [] as AvailableNumber[],
         };
       }
+
       const numbers: AvailableNumber[] = (json.available_phone_numbers || []).map(
         (n: Record<string, unknown>) => ({
           phoneNumber: String(n.phone_number || ""),
@@ -110,30 +124,32 @@ export const searchNumbersByPostalCode = createServerFn({ method: "POST" })
   });
 
 const PurchaseInput = z.object({
+  accessToken: z.string().min(1),
   phoneNumber: z.string().min(8).max(20).regex(/^\+[0-9]+$/),
   agentId: z.string().uuid(),
   postalCode: z.string().min(3).max(10).optional(),
 });
 
 export const purchasePhoneNumber = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => PurchaseInput.parse(input))
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
+  .handler(async ({ data }) => {
+    const auth = await getAuthenticatedUserId(data.accessToken);
+    if ("error" in auth) {
+      return { success: false as const, error: auth.error };
+    }
+    const { userId } = auth;
 
-    // Verify the agent belongs to this user
-    const { data: agent, error: agentErr } = await supabase
+    const { data: agent, error: agentErr } = await supabaseAdmin
       .from("agents")
       .select("id, business_name")
       .eq("id", data.agentId)
+      .eq("user_id", userId)
       .maybeSingle();
     if (agentErr || !agent) {
       return { success: false as const, error: "Agent not found." };
     }
 
     try {
-      // Public webhook URL for inbound SMS (and later, voice).
-      // Uses the stable per-project hostname so it works in preview AND prod.
       const PROJECT_ID = "d1e796ad-671c-47e1-843b-cdecc02fe11f";
       const smsWebhook = `https://project--${PROJECT_ID}.lovable.app/api/public/twilio/sms`;
 
@@ -163,7 +179,7 @@ export const purchasePhoneNumber = createServerFn({ method: "POST" })
       }
 
       const caps = (json.capabilities || {}) as Record<string, unknown>;
-      const { data: inserted, error: insertErr } = await supabase
+      const { data: inserted, error: insertErr } = await supabaseAdmin
         .from("phone_numbers")
         .insert({
           user_id: userId,
@@ -201,17 +217,24 @@ export const purchasePhoneNumber = createServerFn({ method: "POST" })
     }
   });
 
-const ReleaseInput = z.object({ phoneNumberId: z.string().uuid() });
+const ReleaseInput = z.object({
+  accessToken: z.string().min(1),
+  phoneNumberId: z.string().uuid(),
+});
 
 export const releasePhoneNumber = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => ReleaseInput.parse(input))
-  .handler(async ({ data, context }) => {
-    const { supabase } = context;
-    const { data: row, error: fetchErr } = await supabase
+  .handler(async ({ data }) => {
+    const auth = await getAuthenticatedUserId(data.accessToken);
+    if ("error" in auth) {
+      return { success: false as const, error: auth.error };
+    }
+
+    const { data: row, error: fetchErr } = await supabaseAdmin
       .from("phone_numbers")
       .select("id, twilio_sid")
       .eq("id", data.phoneNumberId)
+      .eq("user_id", auth.userId)
       .maybeSingle();
     if (fetchErr || !row) return { success: false as const, error: "Number not found." };
 
@@ -225,7 +248,7 @@ export const releasePhoneNumber = createServerFn({ method: "POST" })
         console.error("Twilio release error:", res.status, t);
         return { success: false as const, error: `Could not release number (${res.status}).` };
       }
-      await supabase.from("phone_numbers").delete().eq("id", row.id);
+      await supabaseAdmin.from("phone_numbers").delete().eq("id", row.id);
       return { success: true as const };
     } catch (e) {
       console.error("releasePhoneNumber error:", e);

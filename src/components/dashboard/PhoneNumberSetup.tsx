@@ -63,6 +63,13 @@ export function PhoneNumberSetup({ agentId }: Props) {
     setLoadingOwned(false);
   };
 
+  const getAccessToken = async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    return session?.access_token ?? null;
+  };
+
   useEffect(() => {
     loadOwned();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -72,7 +79,12 @@ export function PhoneNumberSetup({ agentId }: Props) {
     e.preventDefault();
     const raw = postalCode.trim();
     if (!raw) return;
-    // Auto-detect country from format so users don't get confusing errors.
+    const accessToken = await getAccessToken();
+    if (!accessToken) {
+      toast.error("Please sign in again.");
+      return;
+    }
+
     const looksCanadian = /^[A-Za-z]\d[A-Za-z]/.test(raw);
     const looksUS = /^\d{5}$/.test(raw.replace(/\s+/g, ""));
     const detected: "US" | "CA" = looksCanadian ? "CA" : looksUS ? "US" : country;
@@ -83,7 +95,7 @@ export function PhoneNumberSetup({ agentId }: Props) {
     setResults([]);
     try {
       const res = await search({
-        data: { postalCode: raw, country: detected, voiceEnabled: true },
+        data: { accessToken, postalCode: raw, country: detected, voiceEnabled: true },
       });
       setSearched(true);
       if (!res?.success) {
@@ -102,8 +114,15 @@ export function PhoneNumberSetup({ agentId }: Props) {
   const handleBuy = async (n: AvailableNumber) => {
     setBuying(n.phoneNumber);
     try {
+      const accessToken = await getAccessToken();
+      if (!accessToken) {
+        toast.error("Please sign in again.");
+        return;
+      }
+
       const res = await purchase({
         data: {
+          accessToken,
           phoneNumber: n.phoneNumber,
           agentId,
           postalCode: postalCode.trim() || undefined,
@@ -125,7 +144,13 @@ export function PhoneNumberSetup({ agentId }: Props) {
     if (!confirm("Release this number? It will be permanently disconnected.")) return;
     setReleasing(id);
     try {
-      const res = await release({ data: { phoneNumberId: id } });
+      const accessToken = await getAccessToken();
+      if (!accessToken) {
+        toast.error("Please sign in again.");
+        return;
+      }
+
+      const res = await release({ data: { accessToken, phoneNumberId: id } });
       if (!res.success) {
         toast.error(res.error);
         return;
