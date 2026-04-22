@@ -21,6 +21,7 @@ import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard.analy
 import { Route as DashboardConversationsIndexRouteImport } from './routes/dashboard.conversations.index'
 import { Route as DashboardConversationsConversationIdRouteImport } from './routes/dashboard.conversations.$conversationId'
 import { Route as DashboardAgentsAgentIdRouteImport } from './routes/dashboard.agents.$agentId'
+import { Route as ApiPublicTwilioSmsRouteImport } from './routes/api.public.twilio.sms'
 
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
@@ -84,6 +85,11 @@ const DashboardAgentsAgentIdRoute = DashboardAgentsAgentIdRouteImport.update({
   path: '/agents/$agentId',
   getParentRoute: () => DashboardRoute,
 } as any)
+const ApiPublicTwilioSmsRoute = ApiPublicTwilioSmsRouteImport.update({
+  id: '/api/public/twilio/sms',
+  path: '/api/public/twilio/sms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -98,6 +104,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
   '/dashboard/conversations/': typeof DashboardConversationsIndexRoute
+  '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -110,6 +117,7 @@ export interface FileRoutesByTo {
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
   '/dashboard/conversations': typeof DashboardConversationsIndexRoute
+  '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
   '/dashboard/conversations/': typeof DashboardConversationsIndexRoute
+  '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
     | '/dashboard/conversations/'
+    | '/api/public/twilio/sms'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -153,6 +163,7 @@ export interface FileRouteTypes {
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
     | '/dashboard/conversations'
+    | '/api/public/twilio/sms'
   id:
     | '__root__'
     | '/'
@@ -167,12 +178,14 @@ export interface FileRouteTypes {
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
     | '/dashboard/conversations/'
+    | '/api/public/twilio/sms'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRouteWithChildren
+  ApiPublicTwilioSmsRoute: typeof ApiPublicTwilioSmsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -261,6 +274,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAgentsAgentIdRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/api/public/twilio/sms': {
+      id: '/api/public/twilio/sms'
+      path: '/api/public/twilio/sms'
+      fullPath: '/api/public/twilio/sms'
+      preLoaderRoute: typeof ApiPublicTwilioSmsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -309,6 +329,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRouteWithChildren,
+  ApiPublicTwilioSmsRoute: ApiPublicTwilioSmsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -31,6 +31,7 @@ import {
 import { Mic, MicOff, Send, Bot, ArrowLeft, Calendar, Clock, Volume2, VolumeX, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { PhoneNumberSetup } from "@/components/dashboard/PhoneNumberSetup";
+import { AnswerModeCard } from "@/components/dashboard/AnswerModeCard";
 
 export const Route = createFileRoute("/dashboard/agents/$agentId")({
   head: () => ({ meta: [{ title: "Agent — Agent Factory" }] }),
@@ -51,6 +52,7 @@ interface Agent {
   pricing_notes: string | null;
   escalation_triggers: string | null;
   is_live: boolean;
+  answer_mode: "immediate" | "after_4_rings";
 }
 
 interface Msg {
@@ -478,9 +480,14 @@ function AgentDetailPage() {
         </div>
       </div>
 
-      {/* Phone number setup */}
-      <div className="px-8 pb-4">
+      {/* Phone number + answer mode */}
+      <div className="px-4 md:px-8 pb-4 space-y-4">
         <PhoneNumberSetup agentId={agent.id} />
+        <AnswerModeCard
+          agentId={agent.id}
+          value={agent.answer_mode}
+          onChange={(next) => setAgent((prev) => (prev ? { ...prev, answer_mode: next } : prev))}
+        />
       </div>
 
       {/* Chat surface */}
