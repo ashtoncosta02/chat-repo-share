@@ -119,18 +119,30 @@ function PhoneNumbersPage() {
                         {[n.locality, n.region, n.postal_code].filter(Boolean).join(", ") || "Active"}
                       </div>
                     </div>
-                    {n.agent_id ? (
-                      <Link
-                        to="/dashboard/agents/$agentId"
-                        params={{ agentId: n.agent_id }}
-                        className="flex items-center gap-1.5 text-sm text-[var(--gold-foreground)] hover:underline"
+                    <div className="flex items-center gap-3">
+                      {n.agent_id ? (
+                        <Link
+                          to="/dashboard/agents/$agentId"
+                          params={{ agentId: n.agent_id }}
+                          className="flex items-center gap-1.5 text-sm text-[var(--gold-foreground)] hover:underline"
+                        >
+                          <Bot className="h-3.5 w-3.5" />
+                          {n.agents?.business_name || "View agent"}
+                        </Link>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Unassigned</span>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleSync(n.id)}
+                        disabled={syncingId === n.id}
+                        title="Re-point Twilio's voice & SMS webhooks at this app"
                       >
-                        <Bot className="h-3.5 w-3.5" />
-                        {n.agents?.business_name || "View agent"}
-                      </Link>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">Unassigned</span>
-                    )}
+                        <RefreshCw className={`h-3.5 w-3.5 mr-1 ${syncingId === n.id ? "animate-spin" : ""}`} />
+                        {syncingId === n.id ? "Syncing…" : "Sync webhooks"}
+                      </Button>
+                    </div>
                   </div>
                 </li>
               ))}
