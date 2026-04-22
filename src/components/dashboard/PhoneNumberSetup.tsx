@@ -82,7 +82,7 @@ export function PhoneNumberSetup({ agentId }: Props) {
       if (!res.success) {
         toast.error(res.error);
       }
-      setResults(res.numbers);
+      setResults(res.numbers ?? []);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Search failed.");
     } finally {
