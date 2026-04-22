@@ -151,13 +151,17 @@ export const purchasePhoneNumber = createServerFn({ method: "POST" })
 
     try {
       const PROJECT_ID = "d1e796ad-671c-47e1-843b-cdecc02fe11f";
-      const smsWebhook = `https://project--${PROJECT_ID}.lovable.app/api/public/twilio/sms`;
+      const baseUrl = `https://project--${PROJECT_ID}.lovable.app`;
+      const smsWebhook = `${baseUrl}/api/public/twilio/sms`;
+      const voiceWebhook = `${baseUrl}/api/public/twilio/voice`;
 
       const body = new URLSearchParams({
         PhoneNumber: data.phoneNumber,
         FriendlyName: `${agent.business_name} — Agent Factory`,
         SmsUrl: smsWebhook,
         SmsMethod: "POST",
+        VoiceUrl: voiceWebhook,
+        VoiceMethod: "POST",
       });
       const res = await fetch(`${GATEWAY_URL}/IncomingPhoneNumbers.json`, {
         method: "POST",

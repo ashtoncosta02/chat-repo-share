@@ -21,7 +21,9 @@ import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard.analy
 import { Route as DashboardConversationsIndexRouteImport } from './routes/dashboard.conversations.index'
 import { Route as DashboardConversationsConversationIdRouteImport } from './routes/dashboard.conversations.$conversationId'
 import { Route as DashboardAgentsAgentIdRouteImport } from './routes/dashboard.agents.$agentId'
+import { Route as ApiPublicTwilioVoiceRouteImport } from './routes/api.public.twilio.voice'
 import { Route as ApiPublicTwilioSmsRouteImport } from './routes/api.public.twilio.sms'
+import { Route as ApiPublicTwilioVoiceTurnRouteImport } from './routes/api.public.twilio.voice.turn'
 
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
@@ -85,11 +87,22 @@ const DashboardAgentsAgentIdRoute = DashboardAgentsAgentIdRouteImport.update({
   path: '/agents/$agentId',
   getParentRoute: () => DashboardRoute,
 } as any)
+const ApiPublicTwilioVoiceRoute = ApiPublicTwilioVoiceRouteImport.update({
+  id: '/api/public/twilio/voice',
+  path: '/api/public/twilio/voice',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicTwilioSmsRoute = ApiPublicTwilioSmsRouteImport.update({
   id: '/api/public/twilio/sms',
   path: '/api/public/twilio/sms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTwilioVoiceTurnRoute =
+  ApiPublicTwilioVoiceTurnRouteImport.update({
+    id: '/turn',
+    path: '/turn',
+    getParentRoute: () => ApiPublicTwilioVoiceRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -105,6 +118,8 @@ export interface FileRoutesByFullPath {
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
   '/dashboard/conversations/': typeof DashboardConversationsIndexRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
+  '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRouteWithChildren
+  '/api/public/twilio/voice/turn': typeof ApiPublicTwilioVoiceTurnRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -118,6 +133,8 @@ export interface FileRoutesByTo {
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
   '/dashboard/conversations': typeof DashboardConversationsIndexRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
+  '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRouteWithChildren
+  '/api/public/twilio/voice/turn': typeof ApiPublicTwilioVoiceTurnRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -134,6 +151,8 @@ export interface FileRoutesById {
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
   '/dashboard/conversations/': typeof DashboardConversationsIndexRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
+  '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRouteWithChildren
+  '/api/public/twilio/voice/turn': typeof ApiPublicTwilioVoiceTurnRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -151,6 +170,8 @@ export interface FileRouteTypes {
     | '/dashboard/conversations/$conversationId'
     | '/dashboard/conversations/'
     | '/api/public/twilio/sms'
+    | '/api/public/twilio/voice'
+    | '/api/public/twilio/voice/turn'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -164,6 +185,8 @@ export interface FileRouteTypes {
     | '/dashboard/conversations/$conversationId'
     | '/dashboard/conversations'
     | '/api/public/twilio/sms'
+    | '/api/public/twilio/voice'
+    | '/api/public/twilio/voice/turn'
   id:
     | '__root__'
     | '/'
@@ -179,6 +202,8 @@ export interface FileRouteTypes {
     | '/dashboard/conversations/$conversationId'
     | '/dashboard/conversations/'
     | '/api/public/twilio/sms'
+    | '/api/public/twilio/voice'
+    | '/api/public/twilio/voice/turn'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -186,6 +211,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRouteWithChildren
   ApiPublicTwilioSmsRoute: typeof ApiPublicTwilioSmsRoute
+  ApiPublicTwilioVoiceRoute: typeof ApiPublicTwilioVoiceRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -274,12 +300,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAgentsAgentIdRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/api/public/twilio/voice': {
+      id: '/api/public/twilio/voice'
+      path: '/api/public/twilio/voice'
+      fullPath: '/api/public/twilio/voice'
+      preLoaderRoute: typeof ApiPublicTwilioVoiceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/twilio/sms': {
       id: '/api/public/twilio/sms'
       path: '/api/public/twilio/sms'
       fullPath: '/api/public/twilio/sms'
       preLoaderRoute: typeof ApiPublicTwilioSmsRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/public/twilio/voice/turn': {
+      id: '/api/public/twilio/voice/turn'
+      path: '/turn'
+      fullPath: '/api/public/twilio/voice/turn'
+      preLoaderRoute: typeof ApiPublicTwilioVoiceTurnRouteImport
+      parentRoute: typeof ApiPublicTwilioVoiceRoute
     }
   }
 }
@@ -325,11 +365,23 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
   DashboardRouteChildren,
 )
 
+interface ApiPublicTwilioVoiceRouteChildren {
+  ApiPublicTwilioVoiceTurnRoute: typeof ApiPublicTwilioVoiceTurnRoute
+}
+
+const ApiPublicTwilioVoiceRouteChildren: ApiPublicTwilioVoiceRouteChildren = {
+  ApiPublicTwilioVoiceTurnRoute: ApiPublicTwilioVoiceTurnRoute,
+}
+
+const ApiPublicTwilioVoiceRouteWithChildren =
+  ApiPublicTwilioVoiceRoute._addFileChildren(ApiPublicTwilioVoiceRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRouteWithChildren,
   ApiPublicTwilioSmsRoute: ApiPublicTwilioSmsRoute,
+  ApiPublicTwilioVoiceRoute: ApiPublicTwilioVoiceRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
