@@ -78,27 +78,30 @@ function AgentDetailPage() {
 
     const startedAt = new Date();
     conversationStartRef.current = startedAt;
-    conversationPromiseRef.current = supabase
-      .from("conversations")
-      .insert({
-        user_id: user.id,
-        agent_id: agentId,
-        started_at: startedAt.toISOString(),
-        message_count: 0,
-        duration_seconds: 0,
-      })
-      .select("id")
-      .single()
-      .then(({ data, error }) => {
-        if (error || !data) {
-          console.error("create conversation failed", error);
-          conversationPromiseRef.current = null;
-          return null;
-        }
-        conversationIdRef.current = data.id;
-        return data.id;
-      });
-    return conversationPromiseRef.current;
+    const startedAt = new Date();
+    conversationStartRef.current = startedAt;
+    const p: Promise<string | null> = (async () => {
+      const { data, error } = await supabase
+        .from("conversations")
+        .insert({
+          user_id: user.id,
+          agent_id: agentId,
+          started_at: startedAt.toISOString(),
+          message_count: 0,
+          duration_seconds: 0,
+        })
+        .select("id")
+        .single();
+      if (error || !data) {
+        console.error("create conversation failed", error);
+        conversationPromiseRef.current = null;
+        return null;
+      }
+      conversationIdRef.current = data.id;
+      return data.id;
+    })();
+    conversationPromiseRef.current = p;
+    return p;
   };
 
   // Persist a single message to the DB (best-effort, non-blocking UX)
@@ -108,7 +111,6 @@ function AgentDetailPage() {
       const convId = await ensureConversation();
       if (!convId) return;
 
-      const convId = conversationIdRef.current;
       messageCountRef.current += 1;
 
       const { error: msgErr } = await supabase.from("messages").insert({
