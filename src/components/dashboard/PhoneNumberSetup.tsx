@@ -79,11 +79,13 @@ export function PhoneNumberSetup({ agentId }: Props) {
         data: { postalCode: postalCode.trim(), country, voiceEnabled: true },
       });
       setSearched(true);
-      if (!res.success) {
-        toast.error(res.error);
+      if (!res?.success) {
+        toast.error(res?.error || "Search failed. Please try again.");
       }
-      setResults(res.numbers ?? []);
+      setResults(res?.numbers ?? []);
     } catch (err) {
+      setSearched(true);
+      setResults([]);
       toast.error(err instanceof Error ? err.message : "Search failed.");
     } finally {
       setSearching(false);
