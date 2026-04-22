@@ -75,6 +75,23 @@ function AgentDetailPage() {
   const [transcribing, setTranscribing] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [voiceOn, setVoiceOn] = useState(true);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [edit, setEdit] = useState({
+    business_name: "",
+    assistant_name: "",
+    tone: "",
+    primary_goal: "",
+    services: "",
+    booking_link: "",
+    emergency_number: "",
+    faqs: "",
+    pricing_notes: "",
+    escalation_triggers: "",
+  });
+  const navigate = useNavigate();
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
