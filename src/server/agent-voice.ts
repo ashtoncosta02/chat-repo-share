@@ -72,7 +72,7 @@ export const speakText = createServerFn({ method: "POST" })
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            text: data.text,
+            text: prepareForTts(data.text),
             model_id: "eleven_turbo_v2_5",
             voice_settings: {
               stability: 0.5,
