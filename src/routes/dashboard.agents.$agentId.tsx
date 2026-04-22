@@ -78,8 +78,6 @@ function AgentDetailPage() {
 
     const startedAt = new Date();
     conversationStartRef.current = startedAt;
-    const startedAt = new Date();
-    conversationStartRef.current = startedAt;
     const p: Promise<string | null> = (async () => {
       const { data, error } = await supabase
         .from("conversations")
