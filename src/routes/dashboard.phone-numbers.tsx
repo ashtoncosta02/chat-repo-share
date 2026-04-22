@@ -3,8 +3,11 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/dashboard/PageHeader";
-import { Phone, Bot } from "lucide-react";
+import { Phone, Bot, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useServerFn } from "@tanstack/react-start";
+import { syncTwilioWebhooks } from "@/server/twilio-numbers";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard/phone-numbers")({
   head: () => ({ meta: [{ title: "Phone Numbers — Agent Factory" }] }),
@@ -33,6 +36,8 @@ function PhoneNumbersPage() {
   const { user } = useAuth();
   const [numbers, setNumbers] = useState<NumberRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncingId, setSyncingId] = useState<string | null>(null);
+  const sync = useServerFn(syncTwilioWebhooks);
 
   useEffect(() => {
     if (!user) return;
@@ -47,6 +52,26 @@ function PhoneNumbersPage() {
         setLoading(false);
       });
   }, [user]);
+
+  async function handleSync(phoneNumberId: string) {
+    setSyncingId(phoneNumberId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) {
+        toast.error("Please sign in again.");
+        return;
+      }
+      const res = await sync({ data: { accessToken, phoneNumberId } });
+      if (res.success) {
+        toast.success("Voice & SMS webhooks updated. Try calling the number now.");
+      } else {
+        toast.error(res.error);
+      }
+    } finally {
+      setSyncingId(null);
+    }
+  }
 
   return (
     <div>
@@ -94,18 +119,30 @@ function PhoneNumbersPage() {
                         {[n.locality, n.region, n.postal_code].filter(Boolean).join(", ") || "Active"}
                       </div>
                     </div>
-                    {n.agent_id ? (
-                      <Link
-                        to="/dashboard/agents/$agentId"
-                        params={{ agentId: n.agent_id }}
-                        className="flex items-center gap-1.5 text-sm text-[var(--gold-foreground)] hover:underline"
+                    <div className="flex items-center gap-3">
+                      {n.agent_id ? (
+                        <Link
+                          to="/dashboard/agents/$agentId"
+                          params={{ agentId: n.agent_id }}
+                          className="flex items-center gap-1.5 text-sm text-[var(--gold-foreground)] hover:underline"
+                        >
+                          <Bot className="h-3.5 w-3.5" />
+                          {n.agents?.business_name || "View agent"}
+                        </Link>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Unassigned</span>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleSync(n.id)}
+                        disabled={syncingId === n.id}
+                        title="Re-point Twilio's voice & SMS webhooks at this app"
                       >
-                        <Bot className="h-3.5 w-3.5" />
-                        {n.agents?.business_name || "View agent"}
-                      </Link>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">Unassigned</span>
-                    )}
+                        <RefreshCw className={`h-3.5 w-3.5 mr-1 ${syncingId === n.id ? "animate-spin" : ""}`} />
+                        {syncingId === n.id ? "Syncing…" : "Sync webhooks"}
+                      </Button>
+                    </div>
                   </div>
                 </li>
               ))}

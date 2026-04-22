@@ -151,13 +151,17 @@ export const purchasePhoneNumber = createServerFn({ method: "POST" })
 
     try {
       const PROJECT_ID = "d1e796ad-671c-47e1-843b-cdecc02fe11f";
-      const smsWebhook = `https://project--${PROJECT_ID}.lovable.app/api/public/twilio/sms`;
+      const baseUrl = `https://project--${PROJECT_ID}.lovable.app`;
+      const smsWebhook = `${baseUrl}/api/public/twilio/sms`;
+      const voiceWebhook = `${baseUrl}/api/public/twilio/voice`;
 
       const body = new URLSearchParams({
         PhoneNumber: data.phoneNumber,
         FriendlyName: `${agent.business_name} — Agent Factory`,
         SmsUrl: smsWebhook,
         SmsMethod: "POST",
+        VoiceUrl: voiceWebhook,
+        VoiceMethod: "POST",
       });
       const res = await fetch(`${GATEWAY_URL}/IncomingPhoneNumbers.json`, {
         method: "POST",
@@ -255,6 +259,68 @@ export const releasePhoneNumber = createServerFn({ method: "POST" })
       return {
         success: false as const,
         error: e instanceof Error ? e.message : "Unexpected error releasing number.",
+      };
+    }
+  });
+
+const SyncWebhooksInput = z.object({
+  accessToken: z.string().min(1),
+  phoneNumberId: z.string().uuid(),
+});
+
+/**
+ * Re-points a previously-purchased Twilio number's SMS and Voice
+ * webhooks at this app. Useful for numbers bought before the voice
+ * webhook existed.
+ */
+export const syncTwilioWebhooks = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => SyncWebhooksInput.parse(input))
+  .handler(async ({ data }) => {
+    const auth = await getAuthenticatedUserId(data.accessToken);
+    if ("error" in auth) return { success: false as const, error: auth.error };
+
+    const { data: row, error: fetchErr } = await supabaseAdmin
+      .from("phone_numbers")
+      .select("id, twilio_sid")
+      .eq("id", data.phoneNumberId)
+      .eq("user_id", auth.userId)
+      .maybeSingle();
+    if (fetchErr || !row) return { success: false as const, error: "Number not found." };
+
+    try {
+      const PROJECT_ID = "d1e796ad-671c-47e1-843b-cdecc02fe11f";
+      const baseUrl = `https://project--${PROJECT_ID}.lovable.app`;
+      const body = new URLSearchParams({
+        SmsUrl: `${baseUrl}/api/public/twilio/sms`,
+        SmsMethod: "POST",
+        VoiceUrl: `${baseUrl}/api/public/twilio/voice`,
+        VoiceMethod: "POST",
+      });
+      const res = await fetch(
+        `${GATEWAY_URL}/IncomingPhoneNumbers/${row.twilio_sid}.json`,
+        {
+          method: "POST",
+          headers: {
+            ...gatewayHeaders(),
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body,
+        },
+      );
+      if (!res.ok) {
+        const t = await res.text();
+        console.error("syncTwilioWebhooks error:", res.status, t);
+        return {
+          success: false as const,
+          error: `Could not update Twilio webhooks (${res.status}).`,
+        };
+      }
+      return { success: true as const };
+    } catch (e) {
+      console.error("syncTwilioWebhooks exception:", e);
+      return {
+        success: false as const,
+        error: e instanceof Error ? e.message : "Unexpected error syncing webhooks.",
       };
     }
   });
