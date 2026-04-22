@@ -44,6 +44,7 @@ function AgentDetailPage() {
   const chat = useServerFn(chatWithAgent);
   const speak = useServerFn(speakText);
   const transcribe = useServerFn(transcribeAudio);
+  const extractLead = useServerFn(extractLeadFromChat);
 
   const [agent, setAgent] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(true);
