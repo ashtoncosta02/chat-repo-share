@@ -70,13 +70,20 @@ export function PhoneNumberSetup({ agentId }: Props) {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!postalCode.trim()) return;
+    const raw = postalCode.trim();
+    if (!raw) return;
+    // Auto-detect country from format so users don't get confusing errors.
+    const looksCanadian = /^[A-Za-z]\d[A-Za-z]/.test(raw);
+    const looksUS = /^\d{5}$/.test(raw.replace(/\s+/g, ""));
+    const detected: "US" | "CA" = looksCanadian ? "CA" : looksUS ? "US" : country;
+    if (detected !== country) setCountry(detected);
+
     setSearching(true);
     setSearched(false);
     setResults([]);
     try {
       const res = await search({
-        data: { postalCode: postalCode.trim(), country, voiceEnabled: true },
+        data: { postalCode: raw, country: detected, voiceEnabled: true },
       });
       setSearched(true);
       if (!res?.success) {
