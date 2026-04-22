@@ -19,6 +19,7 @@ export const Route = createFileRoute("/dashboard/new-agent")({
 
 interface AgentForm {
   business_name: string;
+  assistant_name: string;
   industry: string;
   tone: string;
   primary_goal: string;
@@ -32,6 +33,7 @@ interface AgentForm {
 
 const empty: AgentForm = {
   business_name: "",
+  assistant_name: "",
   industry: "",
   tone: "",
   primary_goal: "",
@@ -62,7 +64,8 @@ function NewAgentPage() {
       if (!res.success) {
         toast.error(res.error);
       } else {
-        setForm(res.data);
+        // Preserve user-entered assistant_name if any
+        setForm((f) => ({ ...res.data, assistant_name: f.assistant_name }));
         toast.success("Form auto-filled from website");
       }
     } catch (e) {
@@ -83,6 +86,7 @@ function NewAgentPage() {
     const { error } = await supabase.from("agents").insert({
       user_id: user.id,
       business_name: form.business_name,
+      assistant_name: form.assistant_name.trim() || "Ava",
       industry: form.industry || null,
       tone: form.tone || null,
       primary_goal: form.primary_goal || null,
@@ -152,6 +156,9 @@ function NewAgentPage() {
             </h3>
             <Field label="Business Name *" required>
               <Input value={form.business_name} onChange={(e) => update("business_name", e.target.value)} placeholder="e.g. Sunrise Dental Clinic" required />
+            </Field>
+            <Field label="AI Assistant Name" rightLabel="defaults to Ava">
+              <Input value={form.assistant_name} onChange={(e) => update("assistant_name", e.target.value)} placeholder="e.g. Ava" />
             </Field>
             <Field label="Industry">
               <Input value={form.industry} onChange={(e) => update("industry", e.target.value)} placeholder="e.g. Dental / Healthcare" />
