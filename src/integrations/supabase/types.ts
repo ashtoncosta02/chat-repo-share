@@ -35,6 +35,7 @@ export type Database = {
           tone: string | null
           updated_at: string
           user_id: string
+          voice_id: string | null
         }
         Insert: {
           answer_mode?: string
@@ -56,6 +57,7 @@ export type Database = {
           tone?: string | null
           updated_at?: string
           user_id: string
+          voice_id?: string | null
         }
         Update: {
           answer_mode?: string
@@ -77,6 +79,7 @@ export type Database = {
           tone?: string | null
           updated_at?: string
           user_id?: string
+          voice_id?: string | null
         }
         Relationships: []
       }

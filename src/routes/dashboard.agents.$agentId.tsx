@@ -28,10 +28,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Mic, MicOff, Send, Bot, ArrowLeft, Calendar, Clock, Volume2, VolumeX, Pencil, Trash2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Mic, MicOff, Send, Bot, ArrowLeft, Calendar, Clock, Volume2, VolumeX, Pencil, Trash2, Play } from "lucide-react";
 import { toast } from "sonner";
 import { PhoneNumberSetup } from "@/components/dashboard/PhoneNumberSetup";
 import { AnswerModeCard } from "@/components/dashboard/AnswerModeCard";
+import { VOICE_OPTIONS, DEFAULT_VOICE_ID, getVoiceById } from "@/lib/voices";
 
 export const Route = createFileRoute("/dashboard/agents/$agentId")({
   head: () => ({ meta: [{ title: "Agent — Agent Factory" }] }),
@@ -53,6 +61,7 @@ interface Agent {
   escalation_triggers: string | null;
   is_live: boolean;
   answer_mode: "immediate" | "after_4_rings";
+  voice_id: string | null;
 }
 
 interface Msg {
@@ -93,7 +102,9 @@ function AgentDetailPage() {
     faqs: "",
     pricing_notes: "",
     escalation_triggers: "",
+    voice_id: DEFAULT_VOICE_ID,
   });
+  const [previewing, setPreviewing] = useState(false);
   const navigate = useNavigate();
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -220,7 +231,9 @@ function AgentDetailPage() {
   const playReply = async (text: string) => {
     try {
       setSpeaking(true);
-      const res = await speak({ data: { text } });
+      const res = await speak({
+        data: { text, voiceId: agent?.voice_id ?? undefined },
+      });
       if (!res.success) {
         toast.error(res.error);
         return;
@@ -444,6 +457,7 @@ function AgentDetailPage() {
                 faqs: agent.faqs ?? "",
                 pricing_notes: agent.pricing_notes ?? "",
                 escalation_triggers: agent.escalation_triggers ?? "",
+                voice_id: agent.voice_id ?? DEFAULT_VOICE_ID,
               });
               setEditOpen(true);
             }}
@@ -712,6 +726,64 @@ function AgentDetailPage() {
                 rows={2}
               />
             </div>
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <Label htmlFor="ed-voice">Voice</Label>
+                <span className="text-xs text-muted-foreground">
+                  Used for chat replies & phone calls
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <Select
+                  value={edit.voice_id}
+                  onValueChange={(v) => setEdit({ ...edit, voice_id: v })}
+                >
+                  <SelectTrigger id="ed-voice" className="flex-1">
+                    <SelectValue placeholder="Select a voice" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {VOICE_OPTIONS.map((v) => (
+                      <SelectItem key={v.id} value={v.id}>
+                        <span className="font-medium">{v.name}</span>
+                        <span className="text-muted-foreground"> — {v.description}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={previewing}
+                  onClick={async () => {
+                    setPreviewing(true);
+                    try {
+                      const voice = getVoiceById(edit.voice_id);
+                      const businessName =
+                        edit.business_name.trim() || agent.business_name || "our office";
+                      const sample = `Hi, thanks for calling ${businessName}. How can I help you today?`;
+                      const res = await speak({
+                        data: { text: sample, voiceId: voice.id },
+                      });
+                      if (!res.success) {
+                        toast.error(res.error);
+                        return;
+                      }
+                      audioElRef.current?.pause();
+                      const audio = new Audio(`data:audio/mpeg;base64,${res.audioBase64}`);
+                      audioElRef.current = audio;
+                      await audio.play();
+                    } catch (e) {
+                      toast.error(e instanceof Error ? e.message : "Preview failed");
+                    } finally {
+                      setPreviewing(false);
+                    }
+                  }}
+                >
+                  <Play className="h-3.5 w-3.5 mr-1.5" />
+                  {previewing ? "Loading…" : "Preview"}
+                </Button>
+              </div>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)} disabled={saving}>
@@ -734,6 +806,7 @@ function AgentDetailPage() {
                   faqs: edit.faqs.trim() || null,
                   pricing_notes: edit.pricing_notes.trim() || null,
                   escalation_triggers: edit.escalation_triggers.trim() || null,
+                  voice_id: edit.voice_id || DEFAULT_VOICE_ID,
                 };
                 const { error } = await supabase
                   .from("agents")

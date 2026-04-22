@@ -1,0 +1,1 @@
+ALTER TABLE public.agents ADD COLUMN voice_id text DEFAULT 'EXAVITQu4vr4xnSDxMaL';

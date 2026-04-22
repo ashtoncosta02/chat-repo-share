@@ -4,13 +4,22 @@ import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { scrapeBusinessFromUrl } from "@/server/agent-functions";
+import { speakText } from "@/server/agent-voice";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Sparkles, Play } from "lucide-react";
 import { toast } from "sonner";
+import { VOICE_OPTIONS, DEFAULT_VOICE_ID, getVoiceById } from "@/lib/voices";
 
 export const Route = createFileRoute("/dashboard/new-agent")({
   head: () => ({ meta: [{ title: "Build New Agent — Agent Factory" }] }),
@@ -29,6 +38,7 @@ interface AgentForm {
   faqs: string;
   pricing_notes: string;
   escalation_triggers: string;
+  voice_id: string;
 }
 
 const empty: AgentForm = {
@@ -43,15 +53,18 @@ const empty: AgentForm = {
   faqs: "",
   pricing_notes: "",
   escalation_triggers: "",
+  voice_id: DEFAULT_VOICE_ID,
 };
 
 function NewAgentPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const scrape = useServerFn(scrapeBusinessFromUrl);
+  const speak = useServerFn(speakText);
   const [url, setUrl] = useState("");
   const [scraping, setScraping] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
   const [form, setForm] = useState<AgentForm>(empty);
 
   const update = (k: keyof AgentForm, v: string) => setForm((f) => ({ ...f, [k]: v }));
@@ -64,8 +77,12 @@ function NewAgentPage() {
       if (!res.success) {
         toast.error(res.error);
       } else {
-        // Preserve user-entered assistant_name if any
-        setForm((f) => ({ ...res.data, assistant_name: f.assistant_name }) as AgentForm);
+        // Preserve user-entered assistant_name + voice_id if any
+        setForm((f) => ({
+          ...res.data,
+          assistant_name: f.assistant_name,
+          voice_id: f.voice_id || DEFAULT_VOICE_ID,
+        }) as AgentForm);
         toast.success("Form auto-filled from website");
       }
     } catch (e) {
@@ -107,6 +124,7 @@ function NewAgentPage() {
       pricing_notes: form.pricing_notes || null,
       escalation_triggers: form.escalation_triggers || null,
       source_url: url || null,
+      voice_id: form.voice_id || DEFAULT_VOICE_ID,
       is_live: true,
     });
     setSaving(false);
@@ -184,6 +202,55 @@ function NewAgentPage() {
             </Field>
             <Field label="Escalation Triggers (one per line)">
               <Textarea value={form.escalation_triggers} onChange={(e) => update("escalation_triggers", e.target.value)} placeholder="Severe pain, billing dispute" rows={2} />
+            </Field>
+            <Field label="Voice" rightLabel="used for chat & phone calls">
+              <div className="flex gap-2">
+                <Select
+                  value={form.voice_id}
+                  onValueChange={(v) => update("voice_id", v)}
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Select a voice" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {VOICE_OPTIONS.map((v) => (
+                      <SelectItem key={v.id} value={v.id}>
+                        <span className="font-medium">{v.name}</span>
+                        <span className="text-muted-foreground"> — {v.description}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={previewing}
+                  onClick={async () => {
+                    setPreviewing(true);
+                    try {
+                      const voice = getVoiceById(form.voice_id);
+                      const businessName = form.business_name.trim() || "our office";
+                      const sample = `Hi, thanks for calling ${businessName}. How can I help you today?`;
+                      const res = await speak({
+                        data: { text: sample, voiceId: voice.id },
+                      });
+                      if (!res.success) {
+                        toast.error(res.error);
+                        return;
+                      }
+                      const audio = new Audio(`data:audio/mpeg;base64,${res.audioBase64}`);
+                      await audio.play();
+                    } catch (err) {
+                      toast.error(err instanceof Error ? err.message : "Preview failed");
+                    } finally {
+                      setPreviewing(false);
+                    }
+                  }}
+                >
+                  <Play className="h-3.5 w-3.5 mr-1.5" />
+                  {previewing ? "Loading…" : "Preview"}
+                </Button>
+              </div>
             </Field>
           </div>
 
