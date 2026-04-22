@@ -105,14 +105,14 @@ function AnalyticsPage() {
         title="Analytics"
         description="Call volume, peak hours, and conversation insights"
       />
-      <div className="p-8 space-y-6">
+      <div className="p-4 md:p-8 space-y-4 md:space-y-6">
         {loading ? (
           <div className="rounded-xl border border-border bg-card p-12 text-center text-muted-foreground">
             Loading analytics…
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
               <MetricCard label="Call Volume" value={callVolume} color="text-[var(--gold)]" />
               <MetricCard label="Total Conversations" value={totalConversations} color="text-emerald-600" />
               <MetricCard label="Peak Hour" value={peakHour} color="text-blue-600" />
@@ -122,11 +122,11 @@ function AnalyticsPage() {
               title="Call Volume — Last 14 Days"
               description="Number of conversations per day"
             >
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={daily}>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={daily} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="date" stroke="var(--muted-foreground)" fontSize={12} />
-                  <YAxis stroke="var(--muted-foreground)" fontSize={12} allowDecimals={false} />
+                  <XAxis dataKey="date" stroke="var(--muted-foreground)" fontSize={11} />
+                  <YAxis stroke="var(--muted-foreground)" fontSize={11} allowDecimals={false} />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: "var(--card)",
@@ -139,57 +139,63 @@ function AnalyticsPage() {
               </ResponsiveContainer>
             </ChartCard>
 
-            <ChartCard
-              title="Calls by Hour of Day"
-              description="When your customers are most likely to call"
-            >
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={hourly}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="hour" stroke="var(--muted-foreground)" fontSize={11} interval={1} />
-                  <YAxis stroke="var(--muted-foreground)" fontSize={12} allowDecimals={false} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "var(--card)",
-                      border: "1px solid var(--border)",
-                      borderRadius: "0.5rem",
-                    }}
-                  />
-                  <Bar dataKey="calls" radius={[6, 6, 0, 0]}>
-                    {hourly.map((_, i) => (
-                      <Cell key={i} fill={i === peakHourIdx ? "oklch(0.6 0.18 30)" : "var(--gold)"} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartCard>
+            {/* Hour-of-day chart hidden on mobile to keep page readable */}
+            <div className="hidden md:block">
+              <ChartCard
+                title="Calls by Hour of Day"
+                description="When your customers are most likely to call"
+              >
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={hourly}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                    <XAxis dataKey="hour" stroke="var(--muted-foreground)" fontSize={11} interval={1} />
+                    <YAxis stroke="var(--muted-foreground)" fontSize={12} allowDecimals={false} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "var(--card)",
+                        border: "1px solid var(--border)",
+                        borderRadius: "0.5rem",
+                      }}
+                    />
+                    <Bar dataKey="calls" radius={[6, 6, 0, 0]}>
+                      {hourly.map((_, i) => (
+                        <Cell key={i} fill={i === peakHourIdx ? "oklch(0.6 0.18 30)" : "var(--gold)"} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartCard>
+            </div>
 
-            <ChartCard
-              title="Total Conversations Over Time"
-              description="Cumulative growth across the last 14 days"
-            >
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart
-                  data={daily.reduce<{ date: string; total: number }[]>((acc, d, i) => {
-                    const prev = i === 0 ? 0 : acc[i - 1].total;
-                    acc.push({ date: d.date, total: prev + d.calls });
-                    return acc;
-                  }, [])}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="date" stroke="var(--muted-foreground)" fontSize={12} />
-                  <YAxis stroke="var(--muted-foreground)" fontSize={12} allowDecimals={false} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "var(--card)",
-                      border: "1px solid var(--border)",
-                      borderRadius: "0.5rem",
-                    }}
-                  />
-                  <Bar dataKey="total" fill="oklch(0.6 0.15 160)" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartCard>
+            {/* Cumulative chart desktop-only */}
+            <div className="hidden md:block">
+              <ChartCard
+                title="Total Conversations Over Time"
+                description="Cumulative growth across the last 14 days"
+              >
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart
+                    data={daily.reduce<{ date: string; total: number }[]>((acc, d, i) => {
+                      const prev = i === 0 ? 0 : acc[i - 1].total;
+                      acc.push({ date: d.date, total: prev + d.calls });
+                      return acc;
+                    }, [])}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                    <XAxis dataKey="date" stroke="var(--muted-foreground)" fontSize={12} />
+                    <YAxis stroke="var(--muted-foreground)" fontSize={12} allowDecimals={false} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "var(--card)",
+                        border: "1px solid var(--border)",
+                        borderRadius: "0.5rem",
+                      }}
+                    />
+                    <Bar dataKey="total" fill="oklch(0.6 0.15 160)" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartCard>
+            </div>
           </>
         )}
       </div>

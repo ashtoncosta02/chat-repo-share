@@ -12,18 +12,18 @@ export function PageHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="border-b border-border bg-card px-8 py-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
+    <div className="border-b border-border bg-card px-4 py-4 md:px-8 md:py-6">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+        <div className="min-w-0">
           {breadcrumb && (
             <p className="mb-2 text-sm text-muted-foreground">{breadcrumb}</p>
           )}
-          <h1 className="font-display text-3xl font-semibold text-foreground">{title}</h1>
+          <h1 className="font-display text-2xl md:text-3xl font-semibold text-foreground">{title}</h1>
           {description && (
             <p className="mt-1 text-sm text-muted-foreground">{description}</p>
           )}
         </div>
-        {action && <div>{action}</div>}
+        {action && <div className="flex-shrink-0">{action}</div>}
       </div>
     </div>
   );
