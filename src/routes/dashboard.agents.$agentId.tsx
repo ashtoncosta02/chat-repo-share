@@ -58,6 +58,61 @@ function AgentDetailPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioElRef = useRef<HTMLAudioElement | null>(null);
+  const conversationIdRef = useRef<string | null>(null);
+  const conversationStartRef = useRef<Date | null>(null);
+  const messageCountRef = useRef<number>(0);
+
+  // Persist a single message to the DB (best-effort, non-blocking UX)
+  const persistMessage = async (role: "user" | "assistant", content: string) => {
+    if (!user) return;
+    try {
+      if (!conversationIdRef.current) {
+        const startedAt = new Date();
+        conversationStartRef.current = startedAt;
+        const { data, error } = await supabase
+          .from("conversations")
+          .insert({
+            user_id: user.id,
+            agent_id: agentId,
+            started_at: startedAt.toISOString(),
+            message_count: 0,
+            duration_seconds: 0,
+          })
+          .select("id")
+          .single();
+        if (error || !data) {
+          console.error("create conversation failed", error);
+          return;
+        }
+        conversationIdRef.current = data.id;
+      }
+
+      const convId = conversationIdRef.current;
+      messageCountRef.current += 1;
+
+      const { error: msgErr } = await supabase.from("messages").insert({
+        conversation_id: convId,
+        user_id: user.id,
+        role,
+        content,
+      });
+      if (msgErr) console.error("insert message failed", msgErr);
+
+      const start = conversationStartRef.current ?? new Date();
+      const duration = Math.max(0, Math.round((Date.now() - start.getTime()) / 1000));
+      const { error: updErr } = await supabase
+        .from("conversations")
+        .update({
+          message_count: messageCountRef.current,
+          duration_seconds: duration,
+          ended_at: new Date().toISOString(),
+        })
+        .eq("id", convId);
+      if (updErr) console.error("update conversation failed", updErr);
+    } catch (e) {
+      console.error("persistMessage error", e);
+    }
+  };
 
   const assistantName = agent?.assistant_name?.trim() || "Ava";
 
@@ -76,6 +131,8 @@ function AgentDetailPage() {
           const name = a.assistant_name?.trim() || "Ava";
           const greeting = `Hi there! This is ${name} with ${a.business_name}. How can I help you today?`;
           setMessages([{ role: "assistant", content: greeting, ts: new Date() }]);
+          // Persist greeting (creates the conversation row)
+          persistMessage("assistant", greeting);
           // Speak the greeting
           if (voiceOn) playReply(greeting);
         }
@@ -122,6 +179,8 @@ function AgentDetailPage() {
     setMessages((m) => [...m, userMsg]);
     setInput("");
     setSending(true);
+    // Persist user message (fire-and-forget)
+    persistMessage("user", userMsg.content);
     try {
       const history = [...messages, userMsg].map((m) => ({ role: m.role, content: m.content }));
       const res = await chat({
@@ -135,6 +194,7 @@ function AgentDetailPage() {
         return;
       }
       setMessages((m) => [...m, { role: "assistant", content: res.reply, ts: new Date() }]);
+      persistMessage("assistant", res.reply);
       if (voiceOn) playReply(res.reply);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Chat failed");
