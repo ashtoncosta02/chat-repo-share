@@ -54,7 +54,7 @@ function DashboardHome() {
           </Link>
         }
       />
-      <div className="p-8 space-y-6">
+      <div className="p-4 md:p-8 space-y-4 md:space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StatCard
             icon={<Bot className="h-5 w-5 text-[var(--gold)]" />}
@@ -79,7 +79,7 @@ function DashboardHome() {
         </div>
 
         <div className="rounded-xl border border-border bg-card">
-          <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <div className="flex items-center justify-between border-b border-border px-4 md:px-6 py-4">
             <h2 className="font-semibold text-foreground">Your Agents</h2>
             <Link to="/dashboard/new-agent">
               <Button variant="outline" size="sm">
@@ -110,16 +110,16 @@ function DashboardHome() {
                   <Link
                     to="/dashboard/agents/$agentId"
                     params={{ agentId: a.id }}
-                    className="flex items-center justify-between px-6 py-4 hover:bg-muted/50 transition"
+                    className="flex items-center justify-between px-4 md:px-6 py-4 hover:bg-muted/50 transition gap-3"
                   >
-                    <div>
-                      <div className="font-medium text-foreground">{a.business_name}</div>
+                    <div className="min-w-0">
+                      <div className="font-medium text-foreground truncate">{a.business_name}</div>
                       {a.industry && (
-                        <div className="text-sm text-muted-foreground">{a.industry}</div>
+                        <div className="text-sm text-muted-foreground truncate">{a.industry}</div>
                       )}
                     </div>
                     <span
-                      className={`text-xs px-2 py-1 rounded-full font-medium ${
+                      className={`text-xs px-2 py-1 rounded-full font-medium flex-shrink-0 ${
                         a.is_live
                           ? "bg-emerald-100 text-emerald-700"
                           : "bg-muted text-muted-foreground"

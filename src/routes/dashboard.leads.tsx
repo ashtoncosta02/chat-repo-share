@@ -45,7 +45,7 @@ function LeadsPage() {
         title="Leads"
         description="Contact info captured automatically from conversations"
       />
-      <div className="p-8 space-y-6">
+      <div className="p-4 md:p-8 space-y-4 md:space-y-6">
         <div className="rounded-xl border border-[oklch(0.85_0.08_75)] bg-[oklch(0.97_0.04_80)] p-5 flex items-start gap-3">
           <span className="text-[var(--gold)] text-xl">✨</span>
           <div>
@@ -75,10 +75,10 @@ function LeadsPage() {
           ) : (
             <ul className="divide-y divide-border">
               {leads.map((l) => (
-                <li key={l.id} className="px-6 py-4 flex items-center justify-between">
-                  <div>
-                    <div className="font-medium text-foreground">{l.name ?? "Unknown"}</div>
-                    <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+                <li key={l.id} className="px-4 md:px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="font-medium text-foreground truncate">{l.name ?? "Unknown"}</div>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-muted-foreground">
                       {l.phone && (
                         <a href={`tel:${l.phone}`} className="flex items-center gap-1 hover:text-[var(--gold)]">
                           <Phone className="h-3 w-3" />
@@ -86,14 +86,14 @@ function LeadsPage() {
                         </a>
                       )}
                       {l.email && (
-                        <a href={`mailto:${l.email}`} className="flex items-center gap-1 hover:text-[var(--gold)]">
+                        <a href={`mailto:${l.email}`} className="flex items-center gap-1 hover:text-[var(--gold)] break-all">
                           <Mail className="h-3 w-3" />
                           {l.email}
                         </a>
                       )}
                     </div>
                   </div>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-muted-foreground flex-shrink-0">
                     {new Date(l.created_at).toLocaleDateString()}
                   </span>
                 </li>
