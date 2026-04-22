@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { chatWithAgent } from "@/server/agent-chat";
 import { speakText, transcribeAudio } from "@/server/agent-voice";
+import { extractLeadFromChat } from "@/server/agent-lead-extract";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mic, MicOff, Send, Bot, ArrowLeft, Calendar, Clock, Volume2, VolumeX } from "lucide-react";
