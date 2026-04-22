@@ -207,7 +207,9 @@ function AgentDetailPage() {
           if (!greetingPersistedRef.current) {
             greetingPersistedRef.current = true;
             persistMessage("assistant", greeting);
-            if (voiceOn) playReply(greeting);
+            // Pass voice id explicitly — `agent` state hasn't flushed yet here,
+            // so playReply's `agent?.voice_id` lookup would fall back to default.
+            if (voiceOn) playReply(greeting, a.voice_id ?? undefined);
           }
         }
         setLoading(false);
@@ -228,11 +230,11 @@ function AgentDetailPage() {
     };
   }, []);
 
-  const playReply = async (text: string) => {
+  const playReply = async (text: string, voiceIdOverride?: string) => {
     try {
       setSpeaking(true);
       const res = await speak({
-        data: { text, voiceId: agent?.voice_id ?? undefined },
+        data: { text, voiceId: voiceIdOverride ?? agent?.voice_id ?? undefined },
       });
       if (!res.success) {
         toast.error(res.error);
