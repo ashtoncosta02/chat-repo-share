@@ -183,7 +183,6 @@ Rules:
           });
 
           // Bump message_count on conversation
-          await supabaseAdmin.rpc as unknown;
           await supabaseAdmin
             .from("conversations")
             .update({
