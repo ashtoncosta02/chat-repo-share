@@ -478,9 +478,14 @@ function AgentDetailPage() {
         </div>
       </div>
 
+      {/* Phone number setup */}
+      <div className="px-8 pb-4">
+        <PhoneNumberSetup agentId={agent.id} />
+      </div>
+
       {/* Chat surface */}
       <div className="flex-1 px-8 pb-4">
-        <div ref={scrollRef} className="h-[42vh] overflow-y-auto space-y-4 py-4">
+
           {messages.map((m, i) => (
             <MessageBubble key={i} msg={m} />
           ))}
