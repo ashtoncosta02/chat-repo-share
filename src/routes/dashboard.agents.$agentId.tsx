@@ -583,3 +583,15 @@ function blobToBase64(blob: Blob): Promise<string> {
     reader.readAsDataURL(blob);
   });
 }
+
+// Prefer the first non-empty trimmed string; falls back to the second.
+function pickStr(
+  next: string | null | undefined,
+  prev: string | null | undefined,
+): string | null {
+  const n = next?.trim();
+  if (n) return n;
+  const p = prev?.trim();
+  if (p) return p;
+  return null;
+}
