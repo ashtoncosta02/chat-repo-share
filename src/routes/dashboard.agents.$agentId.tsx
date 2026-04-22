@@ -179,6 +179,8 @@ function AgentDetailPage() {
     setMessages((m) => [...m, userMsg]);
     setInput("");
     setSending(true);
+    // Persist user message (fire-and-forget)
+    persistMessage("user", userMsg.content);
     try {
       const history = [...messages, userMsg].map((m) => ({ role: m.role, content: m.content }));
       const res = await chat({
@@ -192,6 +194,7 @@ function AgentDetailPage() {
         return;
       }
       setMessages((m) => [...m, { role: "assistant", content: res.reply, ts: new Date() }]);
+      persistMessage("assistant", res.reply);
       if (voiceOn) playReply(res.reply);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Chat failed");
