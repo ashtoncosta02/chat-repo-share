@@ -96,6 +96,16 @@ export const Route = createFileRoute("/api/public/twilio/voice")({
 
           const audioUrl = await synthesizeAndUpload(greetingText, agent.voice_id);
 
+          // Start recording the whole call (fire-and-forget). Twilio will
+          // POST to /api/public/twilio/recording when the recording is
+          // ready (after the call ends).
+          if (callSid) {
+            void startCallRecording({
+              callSid,
+              callbackUrl: `${originFromRequest(request)}/api/public/twilio/recording?cid=${conversationId}`,
+            });
+          }
+
           return gatherTwiml({
             audioUrl,
             fallbackText: greetingText,
