@@ -47,7 +47,7 @@ function ConversationDetailPage() {
     (async () => {
       const { data: c } = await supabase
         .from("conversations")
-        .select("id, agent_id, message_count, duration_seconds, started_at, ended_at")
+        .select("id, agent_id, message_count, duration_seconds, started_at, ended_at, recording_url")
         .eq("id", conversationId)
         .maybeSingle();
       if (cancelled) return;
