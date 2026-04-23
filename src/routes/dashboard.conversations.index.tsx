@@ -28,7 +28,7 @@ function ConversationsPage() {
     if (!user) return;
     supabase
       .from("conversations")
-      .select("id, message_count, duration_seconds, started_at, agent_id")
+      .select("id, message_count, duration_seconds, started_at, agent_id, recording_url")
       .order("started_at", { ascending: false })
       .then(({ data }) => {
         setConvs(data ?? []);
