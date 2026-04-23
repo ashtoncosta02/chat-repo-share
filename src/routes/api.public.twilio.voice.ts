@@ -33,6 +33,7 @@ export const Route = createFileRoute("/api/public/twilio/voice")({
           const form = await request.formData();
           const from = String(form.get("From") || "").trim();
           const to = String(form.get("To") || "").trim();
+          const callSid = String(form.get("CallSid") || "").trim();
 
           if (!from || !to) {
             return fallbackHangup("Sorry, we couldn't process this call.");
