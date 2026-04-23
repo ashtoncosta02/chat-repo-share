@@ -133,6 +133,52 @@ function fallbackHangup(text: string) {
   return xmlResponse(xml);
 }
 
+/**
+ * Tell Twilio to start recording the in-progress call. Twilio will POST
+ * to `callbackUrl` once the recording is processed (after the call ends).
+ */
+async function startCallRecording(opts: {
+  callSid: string;
+  callbackUrl: string;
+}) {
+  const lovableKey = process.env.LOVABLE_API_KEY;
+  const twilioKey = process.env.TWILIO_API_KEY;
+  if (!lovableKey || !twilioKey) {
+    console.error("voice: cannot start recording — connector keys missing");
+    return;
+  }
+  try {
+    const res = await fetch(
+      `https://connector-gateway.lovable.dev/twilio/Calls/${encodeURIComponent(
+        opts.callSid,
+      )}/Recordings.json`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${lovableKey}`,
+          "X-Connection-Api-Key": twilioKey,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          RecordingStatusCallback: opts.callbackUrl,
+          RecordingStatusCallbackMethod: "POST",
+          RecordingChannels: "dual",
+          RecordingTrack: "both",
+        }).toString(),
+      },
+    );
+    if (!res.ok) {
+      console.error(
+        "voice: start recording failed",
+        res.status,
+        await res.text(),
+      );
+    }
+  } catch (e) {
+    console.error("voice: startCallRecording error", e);
+  }
+}
+
 // Keep buildVoiceSystemPrompt referenced so the import isn't tree-shaken
 // when this file is the only consumer at certain build phases.
 void buildVoiceSystemPrompt;
