@@ -33,6 +33,7 @@ export const Route = createFileRoute("/api/public/twilio/voice")({
           const form = await request.formData();
           const from = String(form.get("From") || "").trim();
           const to = String(form.get("To") || "").trim();
+          const callSid = String(form.get("CallSid") || "").trim();
 
           if (!from || !to) {
             return fallbackHangup("Sorry, we couldn't process this call.");
@@ -95,6 +96,16 @@ export const Route = createFileRoute("/api/public/twilio/voice")({
 
           const audioUrl = await synthesizeAndUpload(greetingText, agent.voice_id);
 
+          // Start recording the whole call (fire-and-forget). Twilio will
+          // POST to /api/public/twilio/recording when the recording is
+          // ready (after the call ends).
+          if (callSid) {
+            void startCallRecording({
+              callSid,
+              callbackUrl: `${originFromRequest(request)}/api/public/twilio/recording?cid=${conversationId}`,
+            });
+          }
+
           return gatherTwiml({
             audioUrl,
             fallbackText: greetingText,
@@ -120,6 +131,52 @@ function fallbackHangup(text: string) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")}</Say><Hangup/></Response>`;
   return xmlResponse(xml);
+}
+
+/**
+ * Tell Twilio to start recording the in-progress call. Twilio will POST
+ * to `callbackUrl` once the recording is processed (after the call ends).
+ */
+async function startCallRecording(opts: {
+  callSid: string;
+  callbackUrl: string;
+}) {
+  const lovableKey = process.env.LOVABLE_API_KEY;
+  const twilioKey = process.env.TWILIO_API_KEY;
+  if (!lovableKey || !twilioKey) {
+    console.error("voice: cannot start recording — connector keys missing");
+    return;
+  }
+  try {
+    const res = await fetch(
+      `https://connector-gateway.lovable.dev/twilio/Calls/${encodeURIComponent(
+        opts.callSid,
+      )}/Recordings.json`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${lovableKey}`,
+          "X-Connection-Api-Key": twilioKey,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          RecordingStatusCallback: opts.callbackUrl,
+          RecordingStatusCallbackMethod: "POST",
+          RecordingChannels: "dual",
+          RecordingTrack: "both",
+        }).toString(),
+      },
+    );
+    if (!res.ok) {
+      console.error(
+        "voice: start recording failed",
+        res.status,
+        await res.text(),
+      );
+    }
+  } catch (e) {
+    console.error("voice: startCallRecording error", e);
+  }
 }
 
 // Keep buildVoiceSystemPrompt referenced so the import isn't tree-shaken

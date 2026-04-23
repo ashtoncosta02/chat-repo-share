@@ -91,6 +91,7 @@ export type Database = {
           ended_at: string | null
           id: string
           message_count: number
+          recording_url: string | null
           started_at: string
           user_id: string
         }
@@ -101,6 +102,7 @@ export type Database = {
           ended_at?: string | null
           id?: string
           message_count?: number
+          recording_url?: string | null
           started_at?: string
           user_id: string
         }
@@ -111,6 +113,7 @@ export type Database = {
           ended_at?: string | null
           id?: string
           message_count?: number
+          recording_url?: string | null
           started_at?: string
           user_id?: string
         }

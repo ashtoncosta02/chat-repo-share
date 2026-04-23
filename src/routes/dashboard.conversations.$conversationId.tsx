@@ -2,7 +2,7 @@ import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Bot, User as UserIcon, Clock, MessageSquare } from "lucide-react";
+import { ArrowLeft, Bot, User as UserIcon, Clock, MessageSquare, Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/dashboard/conversations/$conversationId")({
@@ -17,6 +17,7 @@ interface Conversation {
   duration_seconds: number;
   started_at: string;
   ended_at: string | null;
+  recording_url: string | null;
 }
 
 interface Message {
@@ -46,7 +47,7 @@ function ConversationDetailPage() {
     (async () => {
       const { data: c } = await supabase
         .from("conversations")
-        .select("id, agent_id, message_count, duration_seconds, started_at, ended_at")
+        .select("id, agent_id, message_count, duration_seconds, started_at, ended_at, recording_url")
         .eq("id", conversationId)
         .maybeSingle();
       if (cancelled) return;
@@ -114,7 +115,23 @@ function ConversationDetailPage() {
         </div>
       </div>
 
-      <div className="px-8 pb-12">
+      <div className="px-8 pb-12 space-y-6">
+        {conv.recording_url && (
+          <div className="rounded-xl border border-border bg-card p-5">
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground mb-3">
+              <Mic className="h-4 w-4 text-[var(--gold)]" />
+              Call recording
+            </div>
+            <audio
+              controls
+              preload="metadata"
+              src={conv.recording_url}
+              className="w-full"
+            >
+              Your browser does not support the audio element.
+            </audio>
+          </div>
+        )}
         <div className="rounded-xl border border-border bg-card p-6">
           {messages.length === 0 ? (
             <div className="text-center text-muted-foreground py-12">

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/dashboard/PageHeader";
-import { MessageSquare, ChevronRight } from "lucide-react";
+import { MessageSquare, ChevronRight, Mic } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/conversations/")({
   head: () => ({ meta: [{ title: "Conversations — Agent Factory" }] }),
@@ -16,6 +16,7 @@ interface ConvRow {
   duration_seconds: number;
   started_at: string;
   agent_id: string | null;
+  recording_url: string | null;
 }
 
 function ConversationsPage() {
@@ -27,7 +28,7 @@ function ConversationsPage() {
     if (!user) return;
     supabase
       .from("conversations")
-      .select("id, message_count, duration_seconds, started_at, agent_id")
+      .select("id, message_count, duration_seconds, started_at, agent_id, recording_url")
       .order("started_at", { ascending: false })
       .then(({ data }) => {
         setConvs(data ?? []);
@@ -72,8 +73,14 @@ function ConversationsPage() {
                     className="px-6 py-4 flex items-center justify-between hover:bg-muted/40 transition"
                   >
                     <div>
-                      <div className="font-medium text-foreground">
+                      <div className="font-medium text-foreground flex items-center gap-2">
                         {new Date(c.started_at).toLocaleString()}
+                        {c.recording_url && (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-[oklch(0.95_0.05_75)] text-[var(--gold)]">
+                            <Mic className="h-3 w-3" />
+                            Recording
+                          </span>
+                        )}
                       </div>
                       <div className="text-sm text-muted-foreground mt-1">
                         {c.message_count} messages · {Math.round(c.duration_seconds / 60)}m
