@@ -23,6 +23,7 @@ import { Route as DashboardConversationsConversationIdRouteImport } from './rout
 import { Route as DashboardAgentsAgentIdRouteImport } from './routes/dashboard.agents.$agentId'
 import { Route as ApiPublicTwilioVoiceRouteImport } from './routes/api.public.twilio.voice'
 import { Route as ApiPublicTwilioSmsRouteImport } from './routes/api.public.twilio.sms'
+import { Route as ApiPublicTwilioRecordingRouteImport } from './routes/api.public.twilio.recording'
 import { Route as ApiPublicTwilioVoiceTurnRouteImport } from './routes/api.public.twilio.voice.turn'
 
 const DashboardRoute = DashboardRouteImport.update({
@@ -97,6 +98,12 @@ const ApiPublicTwilioSmsRoute = ApiPublicTwilioSmsRouteImport.update({
   path: '/api/public/twilio/sms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTwilioRecordingRoute =
+  ApiPublicTwilioRecordingRouteImport.update({
+    id: '/api/public/twilio/recording',
+    path: '/api/public/twilio/recording',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicTwilioVoiceTurnRoute =
   ApiPublicTwilioVoiceTurnRouteImport.update({
     id: '/turn',
@@ -117,6 +124,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
   '/dashboard/conversations/': typeof DashboardConversationsIndexRoute
+  '/api/public/twilio/recording': typeof ApiPublicTwilioRecordingRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
   '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRouteWithChildren
   '/api/public/twilio/voice/turn': typeof ApiPublicTwilioVoiceTurnRoute
@@ -132,6 +140,7 @@ export interface FileRoutesByTo {
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
   '/dashboard/conversations': typeof DashboardConversationsIndexRoute
+  '/api/public/twilio/recording': typeof ApiPublicTwilioRecordingRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
   '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRouteWithChildren
   '/api/public/twilio/voice/turn': typeof ApiPublicTwilioVoiceTurnRoute
@@ -150,6 +159,7 @@ export interface FileRoutesById {
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
   '/dashboard/conversations/': typeof DashboardConversationsIndexRoute
+  '/api/public/twilio/recording': typeof ApiPublicTwilioRecordingRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
   '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRouteWithChildren
   '/api/public/twilio/voice/turn': typeof ApiPublicTwilioVoiceTurnRoute
@@ -169,6 +179,7 @@ export interface FileRouteTypes {
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
     | '/dashboard/conversations/'
+    | '/api/public/twilio/recording'
     | '/api/public/twilio/sms'
     | '/api/public/twilio/voice'
     | '/api/public/twilio/voice/turn'
@@ -184,6 +195,7 @@ export interface FileRouteTypes {
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
     | '/dashboard/conversations'
+    | '/api/public/twilio/recording'
     | '/api/public/twilio/sms'
     | '/api/public/twilio/voice'
     | '/api/public/twilio/voice/turn'
@@ -201,6 +213,7 @@ export interface FileRouteTypes {
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
     | '/dashboard/conversations/'
+    | '/api/public/twilio/recording'
     | '/api/public/twilio/sms'
     | '/api/public/twilio/voice'
     | '/api/public/twilio/voice/turn'
@@ -210,6 +223,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRouteWithChildren
+  ApiPublicTwilioRecordingRoute: typeof ApiPublicTwilioRecordingRoute
   ApiPublicTwilioSmsRoute: typeof ApiPublicTwilioSmsRoute
   ApiPublicTwilioVoiceRoute: typeof ApiPublicTwilioVoiceRouteWithChildren
 }
@@ -314,6 +328,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTwilioSmsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/twilio/recording': {
+      id: '/api/public/twilio/recording'
+      path: '/api/public/twilio/recording'
+      fullPath: '/api/public/twilio/recording'
+      preLoaderRoute: typeof ApiPublicTwilioRecordingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/twilio/voice/turn': {
       id: '/api/public/twilio/voice/turn'
       path: '/turn'
@@ -380,6 +401,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRouteWithChildren,
+  ApiPublicTwilioRecordingRoute: ApiPublicTwilioRecordingRoute,
   ApiPublicTwilioSmsRoute: ApiPublicTwilioSmsRoute,
   ApiPublicTwilioVoiceRoute: ApiPublicTwilioVoiceRouteWithChildren,
 }
