@@ -16,6 +16,7 @@ interface ConvRow {
   duration_seconds: number;
   started_at: string;
   agent_id: string | null;
+  recording_url: string | null;
 }
 
 function ConversationsPage() {
