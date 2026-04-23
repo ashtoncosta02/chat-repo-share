@@ -2,7 +2,7 @@ import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Bot, User as UserIcon, Clock, MessageSquare } from "lucide-react";
+import { ArrowLeft, Bot, User as UserIcon, Clock, MessageSquare, Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/dashboard/conversations/$conversationId")({
