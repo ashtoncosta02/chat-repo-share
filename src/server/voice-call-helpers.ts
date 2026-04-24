@@ -44,13 +44,15 @@ export async function synthesizeAndUpload(
         },
         body: JSON.stringify({
           text: safeText,
-          model_id: "eleven_turbo_v2",
+          // Flash v2.5 = ElevenLabs' lowest-latency model (~75ms TTFB).
+          // Big win vs turbo_v2 for phone calls where every ms is dead air.
+          model_id: "eleven_flash_v2_5",
           voice_settings: {
-            stability: 0.45,
+            stability: 0.4,
             similarity_boost: 0.7,
-            style: 0.2,
+            style: 0,
             use_speaker_boost: true,
-            speed: 1.08,
+            speed: 1.05,
           },
         }),
       },
@@ -181,7 +183,11 @@ export function gatherTwiml(opts: {
   const xml =
     `<?xml version="1.0" encoding="UTF-8"?>` +
     `<Response>` +
-    `<Gather input="speech" action="${escapeXml(actionUrl)}" method="POST" speechTimeout="auto" speechModel="phone_call" language="en-US">` +
+    // speechTimeout="1" → end-of-speech detection fires after just 1s of
+    // silence (vs "auto" which can wait 2-3s). timeout="6" caps how long
+    // we wait for the caller to start speaking. actionOnEmptyResult makes
+    // sure we still post back even on silence so the call continues.
+    `<Gather input="speech" action="${escapeXml(actionUrl)}" method="POST" speechTimeout="1" timeout="6" actionOnEmptyResult="true" speechModel="phone_call" language="en-US">` +
     speak +
     `</Gather>` +
     // If <Gather> times out without speech, prompt once more then hang up.

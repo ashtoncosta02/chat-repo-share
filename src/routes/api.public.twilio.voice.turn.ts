@@ -134,6 +134,9 @@ export const Route = createFileRoute("/api/public/twilio/voice/turn")({
                 },
                 body: JSON.stringify({
                   model: "google/gemini-2.5-flash-lite",
+                  // Cap output → faster generation + forces concise replies,
+                  // which is exactly what we want for spoken phone responses.
+                  max_tokens: 120,
                   messages: [
                     { role: "system", content: buildVoiceSystemPrompt(agent) },
                     ...priorMessages,
