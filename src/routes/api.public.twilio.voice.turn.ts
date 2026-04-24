@@ -4,8 +4,8 @@ import {
   buildVoiceSystemPrompt,
   gatherTwiml,
   originFromRequest,
+  prepareStreamingAudioUrl,
   shouldTransfer,
-  synthesizeAndUpload,
   xmlResponse,
 } from "@/server/voice-call-helpers";
 
@@ -118,6 +118,8 @@ export const Route = createFileRoute("/api/public/twilio/voice/turn")({
           // is fire-and-forget and may not have landed yet.
           priorMessages.push({ role: "user", content: utterance });
 
+          const leadInfoComplete = hasLeadInfo(utterance, priorMessages);
+
           // Call the AI gateway with the fastest model for voice latency.
           const apiKey = process.env.LOVABLE_API_KEY;
           let reply =
@@ -136,9 +138,16 @@ export const Route = createFileRoute("/api/public/twilio/voice/turn")({
                   model: "google/gemini-2.5-flash-lite",
                   // Cap output → faster generation + forces concise replies,
                   // which is exactly what we want for spoken phone responses.
-                  max_tokens: 120,
+                  max_tokens: 80,
                   messages: [
-                    { role: "system", content: buildVoiceSystemPrompt(agent) },
+                    {
+                      role: "system",
+                      content:
+                        buildVoiceSystemPrompt(agent) +
+                        (leadInfoComplete
+                          ? "\n\nThe caller has provided their information. Say a brief thank you and goodbye. Do not ask another question."
+                          : ""),
+                    },
                     ...priorMessages,
                   ],
                 }),
@@ -175,26 +184,34 @@ export const Route = createFileRoute("/api/public/twilio/voice/turn")({
             .update({ message_count: priorMessages.length + 1 })
             .eq("id", conversationId);
 
-          const audioUrl = await synthesizeAndUpload(reply, agent.voice_id);
+          const shouldEnd = leadInfoComplete || shouldCloseCall(reply);
+          const finalReply = shouldEnd ? closingReply(reply) : reply;
+          const baseUrl = originFromRequest(request);
+          const audioUrl = await prepareStreamingAudioUrl(
+            finalReply,
+            agent.voice_id,
+            baseUrl,
+          );
 
           // If the agent indicated a handoff and we have an emergency
           // number, dial it after speaking the reply.
           const transferTo =
-            agent.emergency_number && shouldTransfer(reply)
+            agent.emergency_number && shouldTransfer(finalReply)
               ? agent.emergency_number
               : null;
 
-          if (transferTo) {
+          if (transferTo || shouldEnd) {
             await markCallEnded(conversationId);
           }
 
           return gatherTwiml({
             audioUrl,
-            fallbackText: reply,
+            fallbackText: finalReply,
             conversationId,
             callerNumber,
             destinationNumber,
-            baseUrl: originFromRequest(request),
+            baseUrl,
+            hangup: shouldEnd,
             transferTo,
           });
         } catch (e) {
