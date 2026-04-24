@@ -233,6 +233,45 @@ function endCall(text: string) {
   );
 }
 
+function hasLeadInfo(
+  utterance: string,
+  priorMessages: { role: "user" | "assistant"; content: string }[],
+) {
+  const recentText = [...priorMessages.slice(-4).map((m) => m.content), utterance]
+    .join(" ")
+    .toLowerCase();
+  const current = utterance.toLowerCase();
+  const hasEmail = /[\w.+-]+@[\w.-]+\.[a-z]{2,}/i.test(recentText);
+  const hasPhone = (recentText.match(/\d/g) || []).length >= 7;
+  const hasNameSignal =
+    /\b(my name is|this is|i am|i'm|name's|name is)\b/.test(recentText) ||
+    /\b[A-Z][a-z]+\s+[A-Z][a-z]+\b/.test(utterance);
+  const justProvidedInfo =
+    /\b(email|phone|number|name|contact|reach me|call me|text me)\b/.test(current) ||
+    hasEmail ||
+    hasPhone;
+  const assistantAskedForInfo = priorMessages
+    .slice(-4)
+    .some(
+      (m) =>
+        m.role === "assistant" &&
+        /\b(name|phone|number|email|contact|message|details)\b/i.test(m.content),
+    );
+
+  return assistantAskedForInfo && justProvidedInfo && (hasNameSignal || hasEmail || hasPhone);
+}
+
+function shouldCloseCall(reply: string) {
+  return /\b(thank you|thanks).{0,80}\b(goodbye|bye|have a great|we'?ll be in touch|we will be in touch)\b/i.test(
+    reply,
+  );
+}
+
+function closingReply(reply: string) {
+  if (shouldCloseCall(reply)) return reply.slice(0, 220);
+  return "Thank you, I have your information. We'll be in touch soon. Goodbye.";
+}
+
 async function markCallEnded(conversationId: string) {
   await supabaseAdmin
     .from("conversations")
