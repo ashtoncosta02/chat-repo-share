@@ -90,6 +90,146 @@ export async function synthesizeAndUpload(
   }
 }
 
+export async function prepareStreamingAudioUrl(
+  text: string,
+  voiceId: string | null,
+  baseUrl: string,
+): Promise<string | null> {
+  if (!process.env.ELEVENLABS_API_KEY || !process.env.LOVABLE_API_KEY) {
+    console.error("voice-call: streaming audio secrets missing");
+    return null;
+  }
+
+  const safeText = prepareForTts(text).slice(0, 650);
+  if (!safeText) return null;
+
+  const payload = Buffer.from(
+    JSON.stringify({
+      t: safeText,
+      v: voiceId || "EXAVITQu4vr4xnSDxMaL",
+      exp: Date.now() + 5 * 60 * 1000,
+    }),
+  ).toString("base64url");
+  const sig = await signAudioPayload(payload);
+  return `${baseUrl}/api/public/voice/stream/${payload}.${sig}`;
+}
+
+export async function streamSynthesizedAudio(token: string): Promise<Response> {
+  const payload = await verifyAudioToken(token);
+  const apiKey = process.env.ELEVENLABS_API_KEY;
+  if (!payload || !apiKey) return silentWavResponse();
+
+  try {
+    const ttsRes = await fetch(
+      `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(payload.v)}/stream?output_format=mp3_22050_32&optimize_streaming_latency=4`,
+      {
+        method: "POST",
+        headers: {
+          "xi-api-key": apiKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text: payload.t,
+          model_id: "eleven_flash_v2_5",
+          voice_settings: {
+            stability: 0.35,
+            similarity_boost: 0.65,
+            style: 0,
+            use_speaker_boost: false,
+            speed: 1.08,
+          },
+        }),
+      },
+    );
+
+    if (!ttsRes.ok || !ttsRes.body) {
+      console.error(
+        "voice-call: ElevenLabs stream failed",
+        ttsRes.status,
+        await ttsRes.text(),
+      );
+      return silentWavResponse();
+    }
+
+    return new Response(ttsRes.body, {
+      status: 200,
+      headers: {
+        "Content-Type": "audio/mpeg",
+        "Cache-Control": "no-store",
+      },
+    });
+  } catch (e) {
+    console.error("voice-call: streamSynthesizedAudio error", e);
+    return silentWavResponse();
+  }
+}
+
+type AudioTokenPayload = { t: string; v: string; exp: number };
+
+async function signAudioPayload(payload: string) {
+  const secret = process.env.LOVABLE_API_KEY || "";
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const signature = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new TextEncoder().encode(payload),
+  );
+  return Buffer.from(signature).toString("base64url");
+}
+
+async function verifyAudioToken(token: string): Promise<AudioTokenPayload | null> {
+  const [payload, signature] = token.split(".");
+  if (!payload || !signature) return null;
+  const expected = await signAudioPayload(payload);
+  if (signature !== expected) return null;
+
+  try {
+    const parsed = JSON.parse(
+      Buffer.from(payload, "base64url").toString("utf8"),
+    ) as AudioTokenPayload;
+    if (!parsed.t || !parsed.v || Date.now() > parsed.exp) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function silentWavResponse() {
+  const sampleRate = 8000;
+  const samples = sampleRate / 4;
+  const dataSize = samples * 2;
+  const buffer = new ArrayBuffer(44 + dataSize);
+  const view = new DataView(buffer);
+  writeAscii(view, 0, "RIFF");
+  view.setUint32(4, 36 + dataSize, true);
+  writeAscii(view, 8, "WAVEfmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeAscii(view, 36, "data");
+  view.setUint32(40, dataSize, true);
+  return new Response(buffer, {
+    status: 200,
+    headers: { "Content-Type": "audio/wav", "Cache-Control": "no-store" },
+  });
+}
+
+function writeAscii(view: DataView, offset: number, value: string) {
+  for (let i = 0; i < value.length; i += 1) {
+    view.setUint8(offset + i, value.charCodeAt(i));
+  }
+}
+
 /**
  * Build the system prompt for the voice agent — same shape as the
  * SMS/chat prompts but tuned for being spoken aloud over the phone.
