@@ -26,7 +26,7 @@ export const Route = createFileRoute("/api/public/voice/audio/$id")({
         const id = rawId.replace(/\.mp3$/i, "");
         if (!id) return new Response("missing id", { status: 400 });
 
-        const entry = consumeAudio(id);
+        const entry = await consumeAudio(id);
         if (!entry) return new Response("expired", { status: 404 });
 
         const apiKey = process.env.ELEVENLABS_API_KEY;
