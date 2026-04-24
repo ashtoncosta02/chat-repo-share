@@ -246,7 +246,7 @@ export function buildVoiceSystemPrompt(agent: {
   emergency_number: string | null;
   escalation_triggers: string | null;
   assistant_name: string | null;
-}) {
+}, callerNumber?: string) {
   const name = agent.assistant_name || "Ava";
   return `You are ${name}, a warm and professional AI receptionist for ${agent.business_name}${agent.industry ? ` (${agent.industry})` : ""}.
 
@@ -255,6 +255,10 @@ You are speaking with the caller live over the phone. Your reply will be spoken 
 - Aim for 1 short sentence. Only use 2 short sentences if truly necessary.
 - If you must read a phone number, say each digit separately.
 - Pause naturally with commas. Avoid long lists.
+- Never introduce yourself again after the first greeting. Never restart the conversation.
+- You are answering the caller's questions. Never speak as if you are the caller/customer.
+- If the caller asks whether they can bring someone in, book, buy, visit, or get help, answer from the business's perspective.
+- The caller's phone number from caller ID is ${callerNumber || "already available"}. Do not ask for their phone number for texting or callbacks unless they explicitly ask to use a different number.
 
 Tone: ${agent.tone || "warm, friendly, professional"}.
 Primary goal: ${agent.primary_goal || "Help the caller and capture their contact info if appropriate."}
@@ -274,7 +278,7 @@ Escalate to a human if: ${agent.escalation_triggers || "(use judgment)"}
 
 Rules:
 - Be extremely concise.
-- If the caller asks to book, offer to text them the booking link.
+- If the caller asks to book, answer directly and say you can follow up at the number they called from.
 - If you don't know an answer, offer to take a message or transfer them.
 - If they ask for a human or it's an emergency, say you'll transfer them now.`;
 }
@@ -324,10 +328,10 @@ export function gatherTwiml(opts: {
     `<?xml version="1.0" encoding="UTF-8"?>` +
     `<Response>` +
     // speechTimeout="1" → end-of-speech detection fires after just 1s of
-    // silence (vs "auto" which can wait 2-3s). timeout="6" caps how long
-    // we wait for the caller to start speaking. actionOnEmptyResult makes
-    // sure we still post back even on silence so the call continues.
-    `<Gather input="speech" action="${escapeXml(actionUrl)}" method="POST" speechTimeout="1" timeout="6" actionOnEmptyResult="true" speechModel="phone_call" language="en-US">` +
+    // silence (vs "auto" which can wait 2-3s). timeout="5" caps how long
+    // we wait for the caller to start speaking. We intentionally do not use
+    // actionOnEmptyResult so silence never gets sent to the AI as a fake turn.
+    `<Gather input="speech" action="${escapeXml(actionUrl)}" method="POST" speechTimeout="1" timeout="5" speechModel="phone_call" language="en-US">` +
     speak +
     `</Gather>` +
     // If <Gather> times out without speech, prompt once more then hang up.

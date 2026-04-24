@@ -4,7 +4,6 @@ import {
   buildVoiceSystemPrompt,
   gatherTwiml,
   originFromRequest,
-  prepareStreamingAudioUrl,
   xmlResponse,
 } from "@/server/voice-call-helpers";
 
@@ -82,7 +81,9 @@ export const Route = createFileRoute("/api/public/twilio/voice")({
           }
           const conversationId = newConv.id;
 
-          // Greeting — same style as the in-app chat
+          // Greeting — keep phone calls on Twilio's native <Say> path for
+          // the fastest possible first audio. External TTS adds another
+          // network hop and is noticeably slower on live calls.
           const assistantName = agent.assistant_name || "Ava";
           const greetingText = `Hi, thanks for calling ${agent.business_name}. This is ${assistantName}. How can I help you today?`;
 
@@ -95,11 +96,6 @@ export const Route = createFileRoute("/api/public/twilio/voice")({
           });
 
           const baseUrl = originFromRequest(request);
-          const audioUrl = await prepareStreamingAudioUrl(
-            greetingText,
-            agent.voice_id,
-            baseUrl,
-          );
 
           // Start recording the whole call (fire-and-forget). Twilio will
           // POST to /api/public/twilio/recording when the recording is
@@ -112,7 +108,7 @@ export const Route = createFileRoute("/api/public/twilio/voice")({
           }
 
           return gatherTwiml({
-            audioUrl,
+            audioUrl: null,
             fallbackText: greetingText,
             conversationId,
             callerNumber: from,
