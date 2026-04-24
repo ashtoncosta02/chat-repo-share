@@ -1,47 +1,48 @@
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
 /**
- * In-memory cache mapping short ids → { text, voiceId } pairs.
+ * Persistent cache mapping short ids → { text, voiceId } pairs.
  *
- * Used by the inbound voice flow to avoid the round-trip of uploading
- * each TTS clip to Supabase Storage. Instead we register the text,
- * hand Twilio a URL like /api/public/voice/audio/<id>.mp3, and stream
- * ElevenLabs straight through when Twilio fetches it.
+ * Used by the inbound voice flow to avoid uploading each TTS clip to
+ * Supabase Storage. We register the text in the `voice_audio_cache`
+ * table, hand Twilio a URL like /api/public/voice/audio/<id>.mp3,
+ * and stream ElevenLabs straight through when Twilio fetches it.
  *
- * Entries auto-expire after 2 minutes — Twilio always fetches the
- * audio within seconds of the TwiML response, so anything older is
- * stale and safe to drop.
+ * We use the database (not in-memory) because Cloudflare Workers
+ * spin up many isolates and the audio fetch from Twilio is almost
+ * always a different isolate than the one that returned the TwiML.
  *
- * Note: this lives in module scope, which means each Worker isolate
- * has its own copy. That's fine because Twilio fetches the audio URL
- * within the same call's connection window, almost always hitting the
- * same isolate that just generated the TwiML response.
+ * The conversations cleanup cron deletes rows older than 1 hour.
  */
 
-type Entry = { text: string; voiceId: string | null; expiresAt: number };
-
-const TTL_MS = 2 * 60 * 1000;
-const cache = new Map<string, Entry>();
-
-function sweep() {
-  const now = Date.now();
-  for (const [k, v] of cache) {
-    if (v.expiresAt < now) cache.delete(k);
-  }
-}
-
-export function registerAudio(text: string, voiceId: string | null): string {
-  sweep();
+export async function registerAudio(
+  text: string,
+  voiceId: string | null,
+): Promise<string> {
   const id = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
-  cache.set(id, { text, voiceId, expiresAt: Date.now() + TTL_MS });
+  const { error } = await supabaseAdmin.from("voice_audio_cache").insert({
+    id,
+    text,
+    voice_id: voiceId,
+  });
+  if (error) {
+    console.error("voice-audio-cache: insert failed", error);
+  }
   return id;
 }
 
-export function consumeAudio(id: string): { text: string; voiceId: string | null } | null {
-  const entry = cache.get(id);
-  if (!entry) return null;
-  if (entry.expiresAt < Date.now()) {
-    cache.delete(id);
+export async function consumeAudio(
+  id: string,
+): Promise<{ text: string; voiceId: string | null } | null> {
+  const { data, error } = await supabaseAdmin
+    .from("voice_audio_cache")
+    .select("text, voice_id")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) {
+    console.error("voice-audio-cache: select failed", error);
     return null;
   }
-  // Don't delete — Twilio sometimes retries/refetches.
-  return { text: entry.text, voiceId: entry.voiceId };
+  if (!data) return null;
+  return { text: data.text, voiceId: data.voice_id };
 }
