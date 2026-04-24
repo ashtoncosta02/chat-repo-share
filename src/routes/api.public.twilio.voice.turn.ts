@@ -82,7 +82,7 @@ export const Route = createFileRoute("/api/public/twilio/voice/turn")({
             .select("role, content")
             .eq("conversation_id", conversationId)
             .order("created_at", { ascending: true })
-            .limit(8);
+            .limit(6);
 
           // Fire-and-forget: persist caller utterance + capture lead.
           // These don't gate the AI response.
