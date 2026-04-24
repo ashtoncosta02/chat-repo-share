@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   Bot,
@@ -103,6 +103,7 @@ function Hero() {
 }
 
 function PricingCard() {
+  const navigate = useNavigate();
   const [businessName, setBusinessName] = useState("");
   const [email, setEmail] = useState("");
 
@@ -123,7 +124,14 @@ function PricingCard() {
         className="mt-8 space-y-4"
         onSubmit={(e) => {
           e.preventDefault();
-          // Wire to checkout in a later step
+          navigate({
+            to: "/auth",
+            search: {
+              mode: "signup",
+              email: email || undefined,
+              business: businessName || undefined,
+            },
+          });
         }}
       >
         <input
