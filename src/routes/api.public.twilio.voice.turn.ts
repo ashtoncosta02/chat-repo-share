@@ -76,7 +76,12 @@ export const Route = createFileRoute("/api/public/twilio/voice/turn")({
             return endCall("Sorry, I didn't catch that. Please call back any time.");
           }
 
-          const utterance = normalizeSpeechForContext(speech, callerNumber, confidence);
+          const utterance = speech;
+          const modelUtterance = normalizeSpeechForContext(
+            speech,
+            callerNumber,
+            confidence,
+          );
 
           // Pull recent message history in parallel with persisting the
           // caller's utterance. We don't await the insert before calling
@@ -120,9 +125,9 @@ export const Route = createFileRoute("/api/public/twilio/voice/turn")({
           }));
           // Append the current utterance manually since the insert above
           // is fire-and-forget and may not have landed yet.
-          priorMessages.push({ role: "user", content: utterance });
+          priorMessages.push({ role: "user", content: modelUtterance });
 
-          const leadInfoComplete = hasLeadInfo(utterance, priorMessages);
+          const leadInfoComplete = hasLeadInfo(modelUtterance, priorMessages);
 
           // Call the AI gateway with the fastest model for voice latency.
           const apiKey = process.env.LOVABLE_API_KEY;
