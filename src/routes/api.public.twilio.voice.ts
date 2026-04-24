@@ -4,7 +4,7 @@ import {
   buildVoiceSystemPrompt,
   gatherTwiml,
   originFromRequest,
-  prepareAudioUrl,
+  synthesizeAndUpload,
   xmlResponse,
 } from "@/server/voice-call-helpers";
 
@@ -94,7 +94,7 @@ export const Route = createFileRoute("/api/public/twilio/voice")({
             content: greetingText,
           });
 
-          const audioUrl = await prepareAudioUrl(greetingText, agent.voice_id, originFromRequest(request));
+          const audioUrl = await synthesizeAndUpload(greetingText, agent.voice_id);
 
           // Start recording the whole call (fire-and-forget). Twilio will
           // POST to /api/public/twilio/recording when the recording is
