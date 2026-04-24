@@ -4,8 +4,8 @@ import {
   buildVoiceSystemPrompt,
   gatherTwiml,
   originFromRequest,
-  prepareAudioUrl,
   shouldTransfer,
+  synthesizeAndUpload,
   xmlResponse,
 } from "@/server/voice-call-helpers";
 
@@ -175,7 +175,7 @@ export const Route = createFileRoute("/api/public/twilio/voice/turn")({
             .update({ message_count: priorMessages.length + 1 })
             .eq("id", conversationId);
 
-          const audioUrl = await prepareAudioUrl(reply, agent.voice_id, originFromRequest(request));
+          const audioUrl = await synthesizeAndUpload(reply, agent.voice_id);
 
           // If the agent indicated a handoff and we have an emergency
           // number, dial it after speaking the reply.
