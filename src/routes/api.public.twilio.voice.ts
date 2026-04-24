@@ -4,7 +4,7 @@ import {
   buildVoiceSystemPrompt,
   gatherTwiml,
   originFromRequest,
-  synthesizeAndUpload,
+  prepareStreamingAudioUrl,
   xmlResponse,
 } from "@/server/voice-call-helpers";
 
@@ -94,7 +94,12 @@ export const Route = createFileRoute("/api/public/twilio/voice")({
             content: greetingText,
           });
 
-          const audioUrl = await synthesizeAndUpload(greetingText, agent.voice_id);
+          const baseUrl = originFromRequest(request);
+          const audioUrl = await prepareStreamingAudioUrl(
+            greetingText,
+            agent.voice_id,
+            baseUrl,
+          );
 
           // Start recording the whole call (fire-and-forget). Twilio will
           // POST to /api/public/twilio/recording when the recording is
@@ -112,7 +117,7 @@ export const Route = createFileRoute("/api/public/twilio/voice")({
             conversationId,
             callerNumber: from,
             destinationNumber: to,
-            baseUrl: originFromRequest(request),
+            baseUrl,
           });
         } catch (e) {
           console.error("voice webhook error:", e);

@@ -24,6 +24,7 @@ import { Route as DashboardAgentsAgentIdRouteImport } from './routes/dashboard.a
 import { Route as ApiPublicTwilioVoiceRouteImport } from './routes/api.public.twilio.voice'
 import { Route as ApiPublicTwilioSmsRouteImport } from './routes/api.public.twilio.sms'
 import { Route as ApiPublicTwilioRecordingRouteImport } from './routes/api.public.twilio.recording'
+import { Route as ApiPublicVoiceStreamTokenRouteImport } from './routes/api.public.voice.stream.$token'
 import { Route as ApiPublicTwilioVoiceTurnRouteImport } from './routes/api.public.twilio.voice.turn'
 
 const DashboardRoute = DashboardRouteImport.update({
@@ -104,6 +105,12 @@ const ApiPublicTwilioRecordingRoute =
     path: '/api/public/twilio/recording',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicVoiceStreamTokenRoute =
+  ApiPublicVoiceStreamTokenRouteImport.update({
+    id: '/api/public/voice/stream/$token',
+    path: '/api/public/voice/stream/$token',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicTwilioVoiceTurnRoute =
   ApiPublicTwilioVoiceTurnRouteImport.update({
     id: '/turn',
@@ -128,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
   '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRouteWithChildren
   '/api/public/twilio/voice/turn': typeof ApiPublicTwilioVoiceTurnRoute
+  '/api/public/voice/stream/$token': typeof ApiPublicVoiceStreamTokenRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -144,6 +152,7 @@ export interface FileRoutesByTo {
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
   '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRouteWithChildren
   '/api/public/twilio/voice/turn': typeof ApiPublicTwilioVoiceTurnRoute
+  '/api/public/voice/stream/$token': typeof ApiPublicVoiceStreamTokenRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -163,6 +172,7 @@ export interface FileRoutesById {
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
   '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRouteWithChildren
   '/api/public/twilio/voice/turn': typeof ApiPublicTwilioVoiceTurnRoute
+  '/api/public/voice/stream/$token': typeof ApiPublicVoiceStreamTokenRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -183,6 +193,7 @@ export interface FileRouteTypes {
     | '/api/public/twilio/sms'
     | '/api/public/twilio/voice'
     | '/api/public/twilio/voice/turn'
+    | '/api/public/voice/stream/$token'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -199,6 +210,7 @@ export interface FileRouteTypes {
     | '/api/public/twilio/sms'
     | '/api/public/twilio/voice'
     | '/api/public/twilio/voice/turn'
+    | '/api/public/voice/stream/$token'
   id:
     | '__root__'
     | '/'
@@ -217,6 +229,7 @@ export interface FileRouteTypes {
     | '/api/public/twilio/sms'
     | '/api/public/twilio/voice'
     | '/api/public/twilio/voice/turn'
+    | '/api/public/voice/stream/$token'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -226,6 +239,7 @@ export interface RootRouteChildren {
   ApiPublicTwilioRecordingRoute: typeof ApiPublicTwilioRecordingRoute
   ApiPublicTwilioSmsRoute: typeof ApiPublicTwilioSmsRoute
   ApiPublicTwilioVoiceRoute: typeof ApiPublicTwilioVoiceRouteWithChildren
+  ApiPublicVoiceStreamTokenRoute: typeof ApiPublicVoiceStreamTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -335,6 +349,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTwilioRecordingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/voice/stream/$token': {
+      id: '/api/public/voice/stream/$token'
+      path: '/api/public/voice/stream/$token'
+      fullPath: '/api/public/voice/stream/$token'
+      preLoaderRoute: typeof ApiPublicVoiceStreamTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/twilio/voice/turn': {
       id: '/api/public/twilio/voice/turn'
       path: '/turn'
@@ -404,6 +425,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicTwilioRecordingRoute: ApiPublicTwilioRecordingRoute,
   ApiPublicTwilioSmsRoute: ApiPublicTwilioSmsRoute,
   ApiPublicTwilioVoiceRoute: ApiPublicTwilioVoiceRouteWithChildren,
+  ApiPublicVoiceStreamTokenRoute: ApiPublicVoiceStreamTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
