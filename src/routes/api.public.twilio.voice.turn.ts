@@ -40,6 +40,7 @@ export const Route = createFileRoute("/api/public/twilio/voice/turn")({
           const form = await request.formData();
           const speech = String(form.get("SpeechResult") || "").trim().slice(0, 1500);
           const callStatus = String(form.get("CallStatus") || "");
+          const confidence = Number(form.get("Confidence") || "0");
 
           // If Twilio reports the call ended, just return an empty 200.
           if (callStatus === "completed") {
@@ -72,7 +73,11 @@ export const Route = createFileRoute("/api/public/twilio/voice/turn")({
             return endCall("Sorry, this AI agent is unavailable right now.");
           }
 
-          const utterance = speech || "(caller did not say anything)";
+          if (!speech) {
+            return endCall("Sorry, I didn't catch that. Please call back any time.");
+          }
+
+          const utterance = normalizeSpeechForContext(speech, callerNumber, confidence);
 
           // Pull recent message history in parallel with persisting the
           // caller's utterance. We don't await the insert before calling
@@ -143,7 +148,7 @@ export const Route = createFileRoute("/api/public/twilio/voice/turn")({
                     {
                       role: "system",
                       content:
-                        buildVoiceSystemPrompt(agent) +
+                        buildVoiceSystemPrompt(agent, callerNumber) +
                         (leadInfoComplete
                           ? "\n\nThe caller has provided their information. Say a brief thank you and goodbye. Do not ask another question."
                           : ""),
@@ -188,11 +193,6 @@ export const Route = createFileRoute("/api/public/twilio/voice/turn")({
             .eq("id", conversationId);
 
           const baseUrl = originFromRequest(request);
-          const audioUrl = await prepareStreamingAudioUrl(
-            finalReply,
-            agent.voice_id,
-            baseUrl,
-          );
 
           // If the agent indicated a handoff and we have an emergency
           // number, dial it after speaking the reply.
@@ -206,7 +206,7 @@ export const Route = createFileRoute("/api/public/twilio/voice/turn")({
           }
 
           return gatherTwiml({
-            audioUrl,
+            audioUrl: null,
             fallbackText: finalReply,
             conversationId,
             callerNumber,
@@ -232,6 +232,21 @@ function endCall(text: string) {
   return xmlResponse(
     `<?xml version="1.0" encoding="UTF-8"?><Response><Say voice="Polly.Joanna">${safe}</Say><Hangup/></Response>`,
   );
+}
+
+function normalizeSpeechForContext(
+  speech: string,
+  callerNumber: string,
+  confidence: number,
+) {
+  const callerContext = callerNumber
+    ? ` Caller ID phone number: ${callerNumber}.`
+    : " Caller ID phone number is already available.";
+  const confidenceContext =
+    confidence > 0 && confidence < 0.55
+      ? " Speech recognition confidence is low, so ask one short clarifying question if the request is unclear."
+      : "";
+  return `${speech}${callerContext}${confidenceContext}`;
 }
 
 function hasLeadInfo(
