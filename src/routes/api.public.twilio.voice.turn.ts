@@ -170,6 +170,9 @@ export const Route = createFileRoute("/api/public/twilio/voice/turn")({
             console.error("voice-turn: LOVABLE_API_KEY missing");
           }
 
+          const shouldEnd = leadInfoComplete || shouldCloseCall(reply);
+          const finalReply = shouldEnd ? closingReply(reply) : reply;
+
           // Synthesize speech immediately. Persist the assistant reply &
           // bump the message count in the background — they don't block
           // the TwiML response.
@@ -177,15 +180,13 @@ export const Route = createFileRoute("/api/public/twilio/voice/turn")({
             user_id: agent.user_id,
             conversation_id: conversationId,
             role: "assistant",
-            content: reply,
+            content: finalReply,
           });
           void supabaseAdmin
             .from("conversations")
             .update({ message_count: priorMessages.length + 1 })
             .eq("id", conversationId);
 
-          const shouldEnd = leadInfoComplete || shouldCloseCall(reply);
-          const finalReply = shouldEnd ? closingReply(reply) : reply;
           const baseUrl = originFromRequest(request);
           const audioUrl = await prepareStreamingAudioUrl(
             finalReply,
