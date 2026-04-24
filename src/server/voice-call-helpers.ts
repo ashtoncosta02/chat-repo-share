@@ -19,14 +19,14 @@ import { registerAudio } from "@/server/voice-audio-cache";
  * The audio is generated on-demand when Twilio hits the URL — this
  * avoids the ~500-1000ms round-trip of uploading to Supabase.
  */
-export function prepareAudioUrl(
+export async function prepareAudioUrl(
   text: string,
   voiceId: string | null,
   baseUrl: string,
-): string | null {
+): Promise<string | null> {
   const safe = prepareForTts(text).slice(0, 900);
   if (!safe) return null;
-  const id = registerAudio(safe, voiceId);
+  const id = await registerAudio(safe, voiceId);
   return `${baseUrl}/api/public/voice/audio/${id}.mp3`;
 }
 
