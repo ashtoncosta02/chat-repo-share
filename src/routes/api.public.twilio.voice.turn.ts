@@ -4,8 +4,8 @@ import {
   buildVoiceSystemPrompt,
   gatherTwiml,
   originFromRequest,
+  prepareAudioUrl,
   shouldTransfer,
-  synthesizeAndUpload,
   xmlResponse,
 } from "@/server/voice-call-helpers";
 
