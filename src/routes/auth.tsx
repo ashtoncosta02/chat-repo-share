@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { z } from "zod";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +10,14 @@ import { toast } from "sonner";
 import { AgentFactoryLogo } from "@/components/AgentFactoryLogo";
 import { Eye, EyeOff } from "lucide-react";
 
+const authSearchSchema = z.object({
+  mode: z.enum(["signin", "signup"]).optional(),
+  email: z.string().optional(),
+  business: z.string().optional(),
+});
+
 export const Route = createFileRoute("/auth")({
+  validateSearch: authSearchSchema,
   head: () => ({
     meta: [
       { title: "Sign in — Agent Factory" },
@@ -57,10 +65,12 @@ function PasswordInput({
 function AuthPage() {
   const { user, signIn, signUp, loading } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const search = Route.useSearch();
+  const [email, setEmail] = useState(search.email ?? "");
   const [password, setPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
+  const [displayName, setDisplayName] = useState(search.business ?? "");
   const [submitting, setSubmitting] = useState(false);
+  const defaultTab = search.mode === "signin" ? "signin" : search.mode === "signup" ? "signup" : "signin";
 
   useEffect(() => {
     if (!loading && user) navigate({ to: "/dashboard" });
@@ -94,7 +104,7 @@ function AuthPage() {
           <AgentFactoryLogo className="text-center" />
         </Link>
         <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
-          <Tabs defaultValue="signin">
+          <Tabs defaultValue={defaultTab}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign in</TabsTrigger>
               <TabsTrigger value="signup">Create account</TabsTrigger>
