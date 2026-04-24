@@ -1,15 +1,34 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { prepareForTts } from "@/server/agent-voice";
+import { registerAudio } from "@/server/voice-audio-cache";
 
 /**
  * Helpers shared by the inbound voice webhook routes
  * (/api/public/twilio/voice and /api/public/twilio/voice/turn).
  *
- * Twilio's <Play> verb needs a publicly fetchable URL. We generate
- * speech with ElevenLabs, upload the MP3 to the public `call-audio`
- * bucket, and return that URL. A separate cron job deletes anything
- * older than 24h so storage stays bounded.
+ * Twilio's <Play> verb needs a publicly fetchable URL. The fastest
+ * path is `prepareAudioUrl`: register the text in an in-memory cache
+ * and return a URL to /api/public/voice/audio/<id>.mp3 which streams
+ * MP3 from ElevenLabs on demand. No upload, no Supabase storage hop.
+ *
+ * `synthesizeAndUpload` is kept as a fallback for non-streaming uses.
  */
+
+/**
+ * Register the text+voice and return a Twilio-playable URL.
+ * The audio is generated on-demand when Twilio hits the URL — this
+ * avoids the ~500-1000ms round-trip of uploading to Supabase.
+ */
+export function prepareAudioUrl(
+  text: string,
+  voiceId: string | null,
+  baseUrl: string,
+): string | null {
+  const safe = prepareForTts(text).slice(0, 900);
+  if (!safe) return null;
+  const id = registerAudio(safe, voiceId);
+  return `${baseUrl}/api/public/voice/audio/${id}.mp3`;
+}
 
 const PUBLIC_BUCKET = "call-audio";
 

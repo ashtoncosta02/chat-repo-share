@@ -4,8 +4,8 @@ import {
   buildVoiceSystemPrompt,
   gatherTwiml,
   originFromRequest,
+  prepareAudioUrl,
   shouldTransfer,
-  synthesizeAndUpload,
   xmlResponse,
 } from "@/server/voice-call-helpers";
 
@@ -82,7 +82,7 @@ export const Route = createFileRoute("/api/public/twilio/voice/turn")({
             .select("role, content")
             .eq("conversation_id", conversationId)
             .order("created_at", { ascending: true })
-            .limit(8);
+            .limit(6);
 
           // Fire-and-forget: persist caller utterance + capture lead.
           // These don't gate the AI response.
@@ -175,7 +175,7 @@ export const Route = createFileRoute("/api/public/twilio/voice/turn")({
             .update({ message_count: priorMessages.length + 1 })
             .eq("id", conversationId);
 
-          const audioUrl = await synthesizeAndUpload(reply, agent.voice_id);
+          const audioUrl = prepareAudioUrl(reply, agent.voice_id, originFromRequest(request));
 
           // If the agent indicated a handoff and we have an emergency
           // number, dial it after speaking the reply.
