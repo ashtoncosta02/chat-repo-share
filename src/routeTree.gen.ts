@@ -18,6 +18,7 @@ import { Route as DashboardPhoneNumbersRouteImport } from './routes/dashboard.ph
 import { Route as DashboardNewAgentRouteImport } from './routes/dashboard.new-agent'
 import { Route as DashboardLeadsRouteImport } from './routes/dashboard.leads'
 import { Route as DashboardConversationsRouteImport } from './routes/dashboard.conversations'
+import { Route as DashboardChatWidgetRouteImport } from './routes/dashboard.chat-widget'
 import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard.analytics'
 import { Route as DashboardConversationsIndexRouteImport } from './routes/dashboard.conversations.index'
 import { Route as DashboardConversationsConversationIdRouteImport } from './routes/dashboard.conversations.$conversationId'
@@ -74,6 +75,11 @@ const DashboardLeadsRoute = DashboardLeadsRouteImport.update({
 const DashboardConversationsRoute = DashboardConversationsRouteImport.update({
   id: '/conversations',
   path: '/conversations',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardChatWidgetRoute = DashboardChatWidgetRouteImport.update({
+  id: '/chat-widget',
+  path: '/chat-widget',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardAnalyticsRoute = DashboardAnalyticsRouteImport.update({
@@ -148,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
+  '/dashboard/chat-widget': typeof DashboardChatWidgetRoute
   '/dashboard/conversations': typeof DashboardConversationsRouteWithChildren
   '/dashboard/leads': typeof DashboardLeadsRoute
   '/dashboard/new-agent': typeof DashboardNewAgentRoute
@@ -170,6 +177,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
+  '/dashboard/chat-widget': typeof DashboardChatWidgetRoute
   '/dashboard/leads': typeof DashboardLeadsRoute
   '/dashboard/new-agent': typeof DashboardNewAgentRoute
   '/dashboard/phone-numbers': typeof DashboardPhoneNumbersRoute
@@ -193,6 +201,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
+  '/dashboard/chat-widget': typeof DashboardChatWidgetRoute
   '/dashboard/conversations': typeof DashboardConversationsRouteWithChildren
   '/dashboard/leads': typeof DashboardLeadsRoute
   '/dashboard/new-agent': typeof DashboardNewAgentRoute
@@ -218,6 +227,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/dashboard/analytics'
+    | '/dashboard/chat-widget'
     | '/dashboard/conversations'
     | '/dashboard/leads'
     | '/dashboard/new-agent'
@@ -240,6 +250,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard/analytics'
+    | '/dashboard/chat-widget'
     | '/dashboard/leads'
     | '/dashboard/new-agent'
     | '/dashboard/phone-numbers'
@@ -262,6 +273,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/dashboard/analytics'
+    | '/dashboard/chat-widget'
     | '/dashboard/conversations'
     | '/dashboard/leads'
     | '/dashboard/new-agent'
@@ -358,6 +370,13 @@ declare module '@tanstack/react-router' {
       path: '/conversations'
       fullPath: '/dashboard/conversations'
       preLoaderRoute: typeof DashboardConversationsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/chat-widget': {
+      id: '/dashboard/chat-widget'
+      path: '/chat-widget'
+      fullPath: '/dashboard/chat-widget'
+      preLoaderRoute: typeof DashboardChatWidgetRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/analytics': {
@@ -466,6 +485,7 @@ const DashboardConversationsRouteWithChildren =
 
 interface DashboardRouteChildren {
   DashboardAnalyticsRoute: typeof DashboardAnalyticsRoute
+  DashboardChatWidgetRoute: typeof DashboardChatWidgetRoute
   DashboardConversationsRoute: typeof DashboardConversationsRouteWithChildren
   DashboardLeadsRoute: typeof DashboardLeadsRoute
   DashboardNewAgentRoute: typeof DashboardNewAgentRoute
@@ -476,6 +496,7 @@ interface DashboardRouteChildren {
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardAnalyticsRoute: DashboardAnalyticsRoute,
+  DashboardChatWidgetRoute: DashboardChatWidgetRoute,
   DashboardConversationsRoute: DashboardConversationsRouteWithChildren,
   DashboardLeadsRoute: DashboardLeadsRoute,
   DashboardNewAgentRoute: DashboardNewAgentRoute,
@@ -515,12 +536,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
