@@ -13,6 +13,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as WidgetAgentIdRouteImport } from './routes/widget.$agentId'
 import { Route as DashboardPhoneNumbersRouteImport } from './routes/dashboard.phone-numbers'
 import { Route as DashboardNewAgentRouteImport } from './routes/dashboard.new-agent'
 import { Route as DashboardLeadsRouteImport } from './routes/dashboard.leads'
@@ -49,6 +50,11 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => DashboardRoute,
+} as any)
+const WidgetAgentIdRoute = WidgetAgentIdRouteImport.update({
+  id: '/widget/$agentId',
+  path: '/widget/$agentId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardPhoneNumbersRoute = DashboardPhoneNumbersRouteImport.update({
   id: '/phone-numbers',
@@ -146,6 +152,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/leads': typeof DashboardLeadsRoute
   '/dashboard/new-agent': typeof DashboardNewAgentRoute
   '/dashboard/phone-numbers': typeof DashboardPhoneNumbersRoute
+  '/widget/$agentId': typeof WidgetAgentIdRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
@@ -166,6 +173,7 @@ export interface FileRoutesByTo {
   '/dashboard/leads': typeof DashboardLeadsRoute
   '/dashboard/new-agent': typeof DashboardNewAgentRoute
   '/dashboard/phone-numbers': typeof DashboardPhoneNumbersRoute
+  '/widget/$agentId': typeof WidgetAgentIdRoute
   '/dashboard': typeof DashboardIndexRoute
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
@@ -189,6 +197,7 @@ export interface FileRoutesById {
   '/dashboard/leads': typeof DashboardLeadsRoute
   '/dashboard/new-agent': typeof DashboardNewAgentRoute
   '/dashboard/phone-numbers': typeof DashboardPhoneNumbersRoute
+  '/widget/$agentId': typeof WidgetAgentIdRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
@@ -213,6 +222,7 @@ export interface FileRouteTypes {
     | '/dashboard/leads'
     | '/dashboard/new-agent'
     | '/dashboard/phone-numbers'
+    | '/widget/$agentId'
     | '/dashboard/'
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
@@ -233,6 +243,7 @@ export interface FileRouteTypes {
     | '/dashboard/leads'
     | '/dashboard/new-agent'
     | '/dashboard/phone-numbers'
+    | '/widget/$agentId'
     | '/dashboard'
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
@@ -255,6 +266,7 @@ export interface FileRouteTypes {
     | '/dashboard/leads'
     | '/dashboard/new-agent'
     | '/dashboard/phone-numbers'
+    | '/widget/$agentId'
     | '/dashboard/'
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
@@ -273,6 +285,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRouteWithChildren
+  WidgetAgentIdRoute: typeof WidgetAgentIdRoute
   ApiPublicTwilioRecordingRoute: typeof ApiPublicTwilioRecordingRoute
   ApiPublicTwilioSmsRoute: typeof ApiPublicTwilioSmsRoute
   ApiPublicTwilioVoiceRoute: typeof ApiPublicTwilioVoiceRouteWithChildren
@@ -311,6 +324,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/'
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRoute
+    }
+    '/widget/$agentId': {
+      id: '/widget/$agentId'
+      path: '/widget/$agentId'
+      fullPath: '/widget/$agentId'
+      preLoaderRoute: typeof WidgetAgentIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/dashboard/phone-numbers': {
       id: '/dashboard/phone-numbers'
@@ -483,6 +503,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRouteWithChildren,
+  WidgetAgentIdRoute: WidgetAgentIdRoute,
   ApiPublicTwilioRecordingRoute: ApiPublicTwilioRecordingRoute,
   ApiPublicTwilioSmsRoute: ApiPublicTwilioSmsRoute,
   ApiPublicTwilioVoiceRoute: ApiPublicTwilioVoiceRouteWithChildren,
