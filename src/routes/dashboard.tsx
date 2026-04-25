@@ -1,8 +1,9 @@
 import { createFileRoute, Outlet, Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { LayoutDashboard, BarChart3, User, MessageSquare, Plus, Sparkles, Phone, Menu, X, Code2 } from "lucide-react";
+import { LayoutDashboard, BarChart3, User, MessageSquare, Plus, Phone, Menu, X, Code2 } from "lucide-react";
 import { AgentFactoryLogo } from "@/components/AgentFactoryLogo";
+import { OwnerChatWidget } from "@/components/dashboard/OwnerChatWidget";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -152,14 +153,8 @@ function DashboardLayout() {
         <Outlet />
       </main>
 
-      {/* Floating action */}
-      <Link
-        to="/dashboard/new-agent"
-        className="fixed bottom-6 right-6 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--gold)] text-white shadow-lg hover:scale-105 transition-transform"
-        aria-label="New agent"
-      >
-        <Sparkles className="h-6 w-6" />
-      </Link>
+      {/* Floating help chat */}
+      <OwnerChatWidget />
     </div>
   );
 }
