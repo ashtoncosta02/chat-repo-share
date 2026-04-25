@@ -70,7 +70,7 @@ function buildScript(origin: string): string {
 })();`;
 }
 
-export const Route = createFileRoute("/api/public/widget/embed/js")({
+export const Route = createFileRoute("/api/public/widget/embed.js")({
   server: {
     handlers: {
       OPTIONS: async () =>
