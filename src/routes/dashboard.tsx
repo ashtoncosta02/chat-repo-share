@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { LayoutDashboard, BarChart3, User, MessageSquare, Plus, Phone, Menu, X, Code2 } from "lucide-react";
 import { AgentFactoryLogo } from "@/components/AgentFactoryLogo";
 import { OwnerChatWidget } from "@/components/dashboard/OwnerChatWidget";
+import { ChatWidgetPage } from "./dashboard.chat-widget";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -150,7 +151,11 @@ function DashboardLayout() {
 
       {/* Main */}
       <main className="flex-1 overflow-auto pt-14 md:pt-0">
-        <Outlet />
+        {location.pathname === "/dashboard/chat-widget" ? (
+          <ChatWidgetPage />
+        ) : (
+          <Outlet />
+        )}
       </main>
 
       {/* Floating help chat */}

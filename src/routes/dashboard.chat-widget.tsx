@@ -18,7 +18,7 @@ interface AgentRow {
   is_live: boolean;
 }
 
-function ChatWidgetPage() {
+export function ChatWidgetPage() {
   const { user } = useAuth();
   const [agents, setAgents] = useState<AgentRow[]>([]);
   const [loading, setLoading] = useState(true);

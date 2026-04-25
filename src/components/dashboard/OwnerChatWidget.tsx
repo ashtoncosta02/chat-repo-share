@@ -1,22 +1,53 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { MessageSquare, X, Send, Sparkles } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth-context";
 
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;
 }
 
-const STORAGE_KEY = "af-owner-chat-messages";
+interface AgentOption {
+  id: string;
+  business_name: string;
+  assistant_name: string | null;
+  is_live: boolean;
+}
 
 const STARTERS = [
-  "How do I create my first agent?",
-  "Where do I get the chat widget embed code?",
-  "Why isn't my phone number ringing the AI?",
+  "What services does this business offer?",
+  "How can I book or request a follow-up?",
+  "What should I know before getting started?",
 ];
 
+function getSessionToken(agentId: string | null): string {
+  const key = `af-dashboard-business-chat:${agentId || "none"}`;
+  try {
+    const existing = sessionStorage.getItem(key);
+    if (existing) return existing;
+    const token =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    sessionStorage.setItem(key, token);
+    return token;
+  } catch {
+    return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+}
+
+function getStorageKey(agentId: string | null) {
+  return `af-business-chat-messages:${agentId || "none"}`;
+}
+
 export function OwnerChatWidget() {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
+  const [agents, setAgents] = useState<AgentOption[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [agentsLoading, setAgentsLoading] = useState(true);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -24,29 +55,65 @@ export function OwnerChatWidget() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Load persisted history
+  const selectedAgent = useMemo(
+    () => agents.find((agent) => agent.id === selectedId) ?? null,
+    [agents, selectedId]
+  );
+
+  const sessionToken = useMemo(() => getSessionToken(selectedId), [selectedId]);
+  const storageKey = useMemo(() => getStorageKey(selectedId), [selectedId]);
+
   useEffect(() => {
+    if (!user) return;
+    setAgentsLoading(true);
+    supabase
+      .from("agents")
+      .select("id, business_name, assistant_name, is_live")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        const rows = data ?? [];
+        setAgents(rows);
+        setSelectedId((prev) => prev ?? rows[0]?.id ?? null);
+        setAgentsLoading(false);
+      });
+  }, [user]);
+
+  useEffect(() => {
+    if (!selectedAgent) {
+      setMessages([]);
+      return;
+    }
+
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(storageKey);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) setMessages(parsed);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMessages(parsed);
+          return;
+        }
       }
     } catch {
       /* ignore */
     }
-  }, []);
 
-  // Persist
+    setMessages([
+      {
+        role: "assistant",
+        content: `Hi! I'm ${selectedAgent.assistant_name || "the assistant"} for ${selectedAgent.business_name}. What can I help you with today?`,
+      },
+    ]);
+  }, [selectedAgent, storageKey]);
+
   useEffect(() => {
+    if (!selectedAgent) return;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-30)));
+      localStorage.setItem(storageKey, JSON.stringify(messages.slice(-30)));
     } catch {
       /* ignore */
     }
-  }, [messages]);
+  }, [messages, selectedAgent, storageKey]);
 
-  // Autoscroll
   useEffect(() => {
     scrollRef.current?.scrollTo({
       top: scrollRef.current.scrollHeight,
@@ -54,14 +121,13 @@ export function OwnerChatWidget() {
     });
   }, [messages, sending, open]);
 
-  // Focus on open
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 50);
   }, [open]);
 
   async function ask(text: string) {
     const trimmed = text.trim();
-    if (!trimmed || sending) return;
+    if (!trimmed || sending || !selectedAgent) return;
 
     setError(null);
     setInput("");
@@ -70,10 +136,15 @@ export function OwnerChatWidget() {
     setSending(true);
 
     try {
-      const resp = await fetch("/api/public/owner-chat", {
+      const resp = await fetch("/api/public/widget/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: next }),
+        body: JSON.stringify({
+          agentId: selectedAgent.id,
+          sessionToken,
+          messages: next,
+          pageUrl: typeof window !== "undefined" ? window.location.href : undefined,
+        }),
       });
 
       if (!resp.ok || !resp.body) {
@@ -147,10 +218,19 @@ export function OwnerChatWidget() {
   }
 
   function clearChat() {
-    setMessages([]);
+    setMessages(
+      selectedAgent
+        ? [
+            {
+              role: "assistant",
+              content: `Hi! I'm ${selectedAgent.assistant_name || "the assistant"} for ${selectedAgent.business_name}. What can I help you with today?`,
+            },
+          ]
+        : []
+    );
     setError(null);
     try {
-      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(storageKey);
     } catch {
       /* ignore */
     }
@@ -158,28 +238,26 @@ export function OwnerChatWidget() {
 
   return (
     <>
-      {/* Panel */}
       {open && (
         <div
           className="fixed bottom-24 right-4 md:right-6 z-30 w-[calc(100vw-2rem)] sm:w-[380px] h-[min(560px,calc(100vh-8rem))] rounded-2xl bg-card border border-border shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200"
           role="dialog"
-          aria-label="Help chat"
+          aria-label="Business chat"
         >
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[var(--gold)] to-[oklch(0.78_0.13_75)] text-white flex-shrink-0">
+          <div className="flex items-center justify-between gap-3 px-4 py-3 bg-gradient-to-r from-[var(--gold)] to-[oklch(0.78_0.13_75)] text-white flex-shrink-0">
             <div className="flex items-center gap-2 min-w-0">
               <Sparkles className="h-4 w-4 flex-shrink-0" />
               <div className="min-w-0">
                 <div className="text-sm font-semibold truncate">
-                  Agent Factory Help
+                  {selectedAgent?.assistant_name || "Business Assistant"}
                 </div>
                 <div className="text-[11px] opacity-90 truncate">
-                  Ask anything about your account
+                  {selectedAgent?.business_name || "Ask about your business"}
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-1 flex-shrink-0">
-              {messages.length > 0 && (
+              {messages.length > 1 && (
                 <button
                   type="button"
                   onClick={clearChat}
@@ -192,7 +270,7 @@ export function OwnerChatWidget() {
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                aria-label="Close help chat"
+                aria-label="Close business chat"
                 className="rounded-md p-1.5 hover:bg-white/15 transition-colors"
               >
                 <X className="h-4 w-4" />
@@ -200,54 +278,76 @@ export function OwnerChatWidget() {
             </div>
           </div>
 
-          {/* Messages */}
+          {agents.length > 1 && (
+            <div className="border-b border-border bg-card px-3 py-2">
+              <select
+                value={selectedId ?? ""}
+                onChange={(e) => setSelectedId(e.target.value)}
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-[var(--gold)]/30"
+                aria-label="Choose business agent"
+              >
+                {agents.map((agent) => (
+                  <option key={agent.id} value={agent.id}>
+                    {agent.business_name}{agent.is_live ? "" : " (draft)"}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div
             ref={scrollRef}
             className="flex-1 overflow-y-auto px-3 py-3 bg-[oklch(0.97_0.012_85)] space-y-2"
           >
-            {messages.length === 0 && (
-              <div className="space-y-3 pt-2">
-                <div className="rounded-lg bg-card border border-border p-3 text-sm text-foreground">
-                  Hi! I'm here to help you get the most out of Agent Factory.
-                  Ask me anything — or pick one of these:
-                </div>
-                <div className="space-y-1.5">
-                  {STARTERS.map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => void ask(s)}
-                      className="w-full text-left text-sm rounded-lg border border-border bg-card hover:bg-muted px-3 py-2 transition-colors"
+            {agentsLoading ? (
+              <div className="rounded-lg bg-card border border-border p-3 text-sm text-muted-foreground">
+                Loading chat…
+              </div>
+            ) : !selectedAgent ? (
+              <div className="rounded-lg bg-card border border-border p-3 text-sm text-foreground">
+                Create an agent first, then this bubble will answer customer questions about that business.
+              </div>
+            ) : (
+              <>
+                {messages.map((m, i) => (
+                  <div
+                    key={i}
+                    className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+                  >
+                    <div
+                      className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed shadow-sm whitespace-pre-wrap break-words ${
+                        m.role === "user"
+                          ? "bg-[var(--gold)] text-white"
+                          : "bg-card text-foreground border border-border"
+                      }`}
                     >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {messages.map((m, i) => (
-              <div
-                key={i}
-                className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed shadow-sm whitespace-pre-wrap break-words ${
-                    m.role === "user"
-                      ? "bg-[var(--gold)] text-white"
-                      : "bg-card text-foreground border border-border"
-                  }`}
-                >
-                  {m.role === "assistant" ? (
-                    <div className="af-md">
-                      <ReactMarkdown>{m.content || "…"}</ReactMarkdown>
+                      {m.role === "assistant" ? (
+                        <div className="af-md">
+                          <ReactMarkdown>{m.content || "…"}</ReactMarkdown>
+                        </div>
+                      ) : (
+                        m.content
+                      )}
                     </div>
-                  ) : (
-                    m.content
-                  )}
-                </div>
-              </div>
-            ))}
+                  </div>
+                ))}
+
+                {messages.length <= 1 && !sending && (
+                  <div className="space-y-1.5 pt-1">
+                    {STARTERS.map((starter) => (
+                      <button
+                        key={starter}
+                        type="button"
+                        onClick={() => void ask(starter)}
+                        className="w-full text-left text-sm rounded-lg border border-border bg-card hover:bg-muted px-3 py-2 transition-colors"
+                      >
+                        {starter}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
 
             {sending && messages[messages.length - 1]?.role === "user" && (
               <div className="flex justify-start">
@@ -268,7 +368,6 @@ export function OwnerChatWidget() {
             )}
           </div>
 
-          {/* Input */}
           <form
             onSubmit={onSubmit}
             className="flex-shrink-0 flex gap-2 p-3 border-t border-border bg-card"
@@ -278,14 +377,14 @@ export function OwnerChatWidget() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask a question…"
-              disabled={sending}
+              placeholder="Ask about the business…"
+              disabled={sending || !selectedAgent}
               className="flex-1 rounded-full border border-border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--gold)]/30 disabled:opacity-60"
               maxLength={2000}
             />
             <button
               type="submit"
-              disabled={!input.trim() || sending}
+              disabled={!input.trim() || sending || !selectedAgent}
               aria-label="Send"
               className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--gold)] text-white hover:bg-[var(--gold)]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
             >
@@ -305,19 +404,14 @@ export function OwnerChatWidget() {
         </div>
       )}
 
-      {/* Bubble */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        aria-label={open ? "Close help chat" : "Open help chat"}
+        aria-label={open ? "Close business chat" : "Open business chat"}
         aria-expanded={open}
         className="fixed bottom-6 right-6 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--gold)] text-white shadow-lg hover:scale-105 transition-transform"
       >
-        {open ? (
-          <X className="h-6 w-6" />
-        ) : (
-          <MessageSquare className="h-6 w-6" />
-        )}
+        {open ? <X className="h-6 w-6" /> : <MessageSquare className="h-6 w-6" />}
       </button>
     </>
   );
