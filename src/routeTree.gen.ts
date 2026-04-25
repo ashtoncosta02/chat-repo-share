@@ -13,17 +13,22 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as WidgetAgentIdRouteImport } from './routes/widget.$agentId'
 import { Route as DashboardPhoneNumbersRouteImport } from './routes/dashboard.phone-numbers'
 import { Route as DashboardNewAgentRouteImport } from './routes/dashboard.new-agent'
 import { Route as DashboardLeadsRouteImport } from './routes/dashboard.leads'
 import { Route as DashboardConversationsRouteImport } from './routes/dashboard.conversations'
+import { Route as DashboardChatWidgetRouteImport } from './routes/dashboard.chat-widget'
 import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard.analytics'
 import { Route as DashboardConversationsIndexRouteImport } from './routes/dashboard.conversations.index'
 import { Route as DashboardConversationsConversationIdRouteImport } from './routes/dashboard.conversations.$conversationId'
 import { Route as DashboardAgentsAgentIdRouteImport } from './routes/dashboard.agents.$agentId'
+import { Route as ApiPublicWidgetEmbedDotjsRouteImport } from './routes/api.public.widget.embed[.]js'
+import { Route as ApiPublicWidgetChatRouteImport } from './routes/api.public.widget.chat'
 import { Route as ApiPublicTwilioVoiceRouteImport } from './routes/api.public.twilio.voice'
 import { Route as ApiPublicTwilioSmsRouteImport } from './routes/api.public.twilio.sms'
 import { Route as ApiPublicTwilioRecordingRouteImport } from './routes/api.public.twilio.recording'
+import { Route as ApiPublicWidgetConfigAgentIdRouteImport } from './routes/api.public.widget.config.$agentId'
 import { Route as ApiPublicVoiceStreamTokenRouteImport } from './routes/api.public.voice.stream.$token'
 import { Route as ApiPublicTwilioVoiceTurnRouteImport } from './routes/api.public.twilio.voice.turn'
 
@@ -47,6 +52,11 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardRoute,
 } as any)
+const WidgetAgentIdRoute = WidgetAgentIdRouteImport.update({
+  id: '/widget/$agentId',
+  path: '/widget/$agentId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardPhoneNumbersRoute = DashboardPhoneNumbersRouteImport.update({
   id: '/phone-numbers',
   path: '/phone-numbers',
@@ -65,6 +75,11 @@ const DashboardLeadsRoute = DashboardLeadsRouteImport.update({
 const DashboardConversationsRoute = DashboardConversationsRouteImport.update({
   id: '/conversations',
   path: '/conversations',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardChatWidgetRoute = DashboardChatWidgetRouteImport.update({
+  id: '/chat-widget',
+  path: '/chat-widget',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardAnalyticsRoute = DashboardAnalyticsRouteImport.update({
@@ -89,6 +104,17 @@ const DashboardAgentsAgentIdRoute = DashboardAgentsAgentIdRouteImport.update({
   path: '/agents/$agentId',
   getParentRoute: () => DashboardRoute,
 } as any)
+const ApiPublicWidgetEmbedDotjsRoute =
+  ApiPublicWidgetEmbedDotjsRouteImport.update({
+    id: '/api/public/widget/embed.js',
+    path: '/api/public/widget/embed.js',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicWidgetChatRoute = ApiPublicWidgetChatRouteImport.update({
+  id: '/api/public/widget/chat',
+  path: '/api/public/widget/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicTwilioVoiceRoute = ApiPublicTwilioVoiceRouteImport.update({
   id: '/api/public/twilio/voice',
   path: '/api/public/twilio/voice',
@@ -103,6 +129,12 @@ const ApiPublicTwilioRecordingRoute =
   ApiPublicTwilioRecordingRouteImport.update({
     id: '/api/public/twilio/recording',
     path: '/api/public/twilio/recording',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicWidgetConfigAgentIdRoute =
+  ApiPublicWidgetConfigAgentIdRouteImport.update({
+    id: '/api/public/widget/config/$agentId',
+    path: '/api/public/widget/config/$agentId',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicVoiceStreamTokenRoute =
@@ -123,10 +155,12 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
+  '/dashboard/chat-widget': typeof DashboardChatWidgetRoute
   '/dashboard/conversations': typeof DashboardConversationsRouteWithChildren
   '/dashboard/leads': typeof DashboardLeadsRoute
   '/dashboard/new-agent': typeof DashboardNewAgentRoute
   '/dashboard/phone-numbers': typeof DashboardPhoneNumbersRoute
+  '/widget/$agentId': typeof WidgetAgentIdRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
@@ -134,16 +168,21 @@ export interface FileRoutesByFullPath {
   '/api/public/twilio/recording': typeof ApiPublicTwilioRecordingRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
   '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRouteWithChildren
+  '/api/public/widget/chat': typeof ApiPublicWidgetChatRoute
+  '/api/public/widget/embed.js': typeof ApiPublicWidgetEmbedDotjsRoute
   '/api/public/twilio/voice/turn': typeof ApiPublicTwilioVoiceTurnRoute
   '/api/public/voice/stream/$token': typeof ApiPublicVoiceStreamTokenRoute
+  '/api/public/widget/config/$agentId': typeof ApiPublicWidgetConfigAgentIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
+  '/dashboard/chat-widget': typeof DashboardChatWidgetRoute
   '/dashboard/leads': typeof DashboardLeadsRoute
   '/dashboard/new-agent': typeof DashboardNewAgentRoute
   '/dashboard/phone-numbers': typeof DashboardPhoneNumbersRoute
+  '/widget/$agentId': typeof WidgetAgentIdRoute
   '/dashboard': typeof DashboardIndexRoute
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
@@ -151,8 +190,11 @@ export interface FileRoutesByTo {
   '/api/public/twilio/recording': typeof ApiPublicTwilioRecordingRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
   '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRouteWithChildren
+  '/api/public/widget/chat': typeof ApiPublicWidgetChatRoute
+  '/api/public/widget/embed.js': typeof ApiPublicWidgetEmbedDotjsRoute
   '/api/public/twilio/voice/turn': typeof ApiPublicTwilioVoiceTurnRoute
   '/api/public/voice/stream/$token': typeof ApiPublicVoiceStreamTokenRoute
+  '/api/public/widget/config/$agentId': typeof ApiPublicWidgetConfigAgentIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -160,10 +202,12 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
+  '/dashboard/chat-widget': typeof DashboardChatWidgetRoute
   '/dashboard/conversations': typeof DashboardConversationsRouteWithChildren
   '/dashboard/leads': typeof DashboardLeadsRoute
   '/dashboard/new-agent': typeof DashboardNewAgentRoute
   '/dashboard/phone-numbers': typeof DashboardPhoneNumbersRoute
+  '/widget/$agentId': typeof WidgetAgentIdRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
@@ -171,8 +215,11 @@ export interface FileRoutesById {
   '/api/public/twilio/recording': typeof ApiPublicTwilioRecordingRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
   '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRouteWithChildren
+  '/api/public/widget/chat': typeof ApiPublicWidgetChatRoute
+  '/api/public/widget/embed.js': typeof ApiPublicWidgetEmbedDotjsRoute
   '/api/public/twilio/voice/turn': typeof ApiPublicTwilioVoiceTurnRoute
   '/api/public/voice/stream/$token': typeof ApiPublicVoiceStreamTokenRoute
+  '/api/public/widget/config/$agentId': typeof ApiPublicWidgetConfigAgentIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -181,10 +228,12 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/dashboard/analytics'
+    | '/dashboard/chat-widget'
     | '/dashboard/conversations'
     | '/dashboard/leads'
     | '/dashboard/new-agent'
     | '/dashboard/phone-numbers'
+    | '/widget/$agentId'
     | '/dashboard/'
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
@@ -192,16 +241,21 @@ export interface FileRouteTypes {
     | '/api/public/twilio/recording'
     | '/api/public/twilio/sms'
     | '/api/public/twilio/voice'
+    | '/api/public/widget/chat'
+    | '/api/public/widget/embed.js'
     | '/api/public/twilio/voice/turn'
     | '/api/public/voice/stream/$token'
+    | '/api/public/widget/config/$agentId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/dashboard/analytics'
+    | '/dashboard/chat-widget'
     | '/dashboard/leads'
     | '/dashboard/new-agent'
     | '/dashboard/phone-numbers'
+    | '/widget/$agentId'
     | '/dashboard'
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
@@ -209,18 +263,23 @@ export interface FileRouteTypes {
     | '/api/public/twilio/recording'
     | '/api/public/twilio/sms'
     | '/api/public/twilio/voice'
+    | '/api/public/widget/chat'
+    | '/api/public/widget/embed.js'
     | '/api/public/twilio/voice/turn'
     | '/api/public/voice/stream/$token'
+    | '/api/public/widget/config/$agentId'
   id:
     | '__root__'
     | '/'
     | '/auth'
     | '/dashboard'
     | '/dashboard/analytics'
+    | '/dashboard/chat-widget'
     | '/dashboard/conversations'
     | '/dashboard/leads'
     | '/dashboard/new-agent'
     | '/dashboard/phone-numbers'
+    | '/widget/$agentId'
     | '/dashboard/'
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
@@ -228,18 +287,25 @@ export interface FileRouteTypes {
     | '/api/public/twilio/recording'
     | '/api/public/twilio/sms'
     | '/api/public/twilio/voice'
+    | '/api/public/widget/chat'
+    | '/api/public/widget/embed.js'
     | '/api/public/twilio/voice/turn'
     | '/api/public/voice/stream/$token'
+    | '/api/public/widget/config/$agentId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRouteWithChildren
+  WidgetAgentIdRoute: typeof WidgetAgentIdRoute
   ApiPublicTwilioRecordingRoute: typeof ApiPublicTwilioRecordingRoute
   ApiPublicTwilioSmsRoute: typeof ApiPublicTwilioSmsRoute
   ApiPublicTwilioVoiceRoute: typeof ApiPublicTwilioVoiceRouteWithChildren
+  ApiPublicWidgetChatRoute: typeof ApiPublicWidgetChatRoute
+  ApiPublicWidgetEmbedDotjsRoute: typeof ApiPublicWidgetEmbedDotjsRoute
   ApiPublicVoiceStreamTokenRoute: typeof ApiPublicVoiceStreamTokenRoute
+  ApiPublicWidgetConfigAgentIdRoute: typeof ApiPublicWidgetConfigAgentIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -272,6 +338,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/widget/$agentId': {
+      id: '/widget/$agentId'
+      path: '/widget/$agentId'
+      fullPath: '/widget/$agentId'
+      preLoaderRoute: typeof WidgetAgentIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard/phone-numbers': {
       id: '/dashboard/phone-numbers'
       path: '/phone-numbers'
@@ -298,6 +371,13 @@ declare module '@tanstack/react-router' {
       path: '/conversations'
       fullPath: '/dashboard/conversations'
       preLoaderRoute: typeof DashboardConversationsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/chat-widget': {
+      id: '/dashboard/chat-widget'
+      path: '/chat-widget'
+      fullPath: '/dashboard/chat-widget'
+      preLoaderRoute: typeof DashboardChatWidgetRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/analytics': {
@@ -328,6 +408,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAgentsAgentIdRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/api/public/widget/embed.js': {
+      id: '/api/public/widget/embed.js'
+      path: '/api/public/widget/embed.js'
+      fullPath: '/api/public/widget/embed.js'
+      preLoaderRoute: typeof ApiPublicWidgetEmbedDotjsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/widget/chat': {
+      id: '/api/public/widget/chat'
+      path: '/api/public/widget/chat'
+      fullPath: '/api/public/widget/chat'
+      preLoaderRoute: typeof ApiPublicWidgetChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/twilio/voice': {
       id: '/api/public/twilio/voice'
       path: '/api/public/twilio/voice'
@@ -347,6 +441,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/twilio/recording'
       fullPath: '/api/public/twilio/recording'
       preLoaderRoute: typeof ApiPublicTwilioRecordingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/widget/config/$agentId': {
+      id: '/api/public/widget/config/$agentId'
+      path: '/api/public/widget/config/$agentId'
+      fullPath: '/api/public/widget/config/$agentId'
+      preLoaderRoute: typeof ApiPublicWidgetConfigAgentIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/voice/stream/$token': {
@@ -385,6 +486,7 @@ const DashboardConversationsRouteWithChildren =
 
 interface DashboardRouteChildren {
   DashboardAnalyticsRoute: typeof DashboardAnalyticsRoute
+  DashboardChatWidgetRoute: typeof DashboardChatWidgetRoute
   DashboardConversationsRoute: typeof DashboardConversationsRouteWithChildren
   DashboardLeadsRoute: typeof DashboardLeadsRoute
   DashboardNewAgentRoute: typeof DashboardNewAgentRoute
@@ -395,6 +497,7 @@ interface DashboardRouteChildren {
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardAnalyticsRoute: DashboardAnalyticsRoute,
+  DashboardChatWidgetRoute: DashboardChatWidgetRoute,
   DashboardConversationsRoute: DashboardConversationsRouteWithChildren,
   DashboardLeadsRoute: DashboardLeadsRoute,
   DashboardNewAgentRoute: DashboardNewAgentRoute,
@@ -422,20 +525,15 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRouteWithChildren,
+  WidgetAgentIdRoute: WidgetAgentIdRoute,
   ApiPublicTwilioRecordingRoute: ApiPublicTwilioRecordingRoute,
   ApiPublicTwilioSmsRoute: ApiPublicTwilioSmsRoute,
   ApiPublicTwilioVoiceRoute: ApiPublicTwilioVoiceRouteWithChildren,
+  ApiPublicWidgetChatRoute: ApiPublicWidgetChatRoute,
+  ApiPublicWidgetEmbedDotjsRoute: ApiPublicWidgetEmbedDotjsRoute,
   ApiPublicVoiceStreamTokenRoute: ApiPublicVoiceStreamTokenRoute,
+  ApiPublicWidgetConfigAgentIdRoute: ApiPublicWidgetConfigAgentIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

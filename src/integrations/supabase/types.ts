@@ -313,6 +313,85 @@ export type Database = {
         }
         Relationships: []
       }
+      widget_conversations: {
+        Row: {
+          agent_id: string
+          created_at: string
+          id: string
+          page_url: string | null
+          session_token: string
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+          visitor_email: string | null
+          visitor_name: string | null
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          id?: string
+          page_url?: string | null
+          session_token: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+          visitor_email?: string | null
+          visitor_name?: string | null
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          id?: string
+          page_url?: string | null
+          session_token?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
+          visitor_email?: string | null
+          visitor_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "widget_conversations_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      widget_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          role: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          role: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "widget_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "widget_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
