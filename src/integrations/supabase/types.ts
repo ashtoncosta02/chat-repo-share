@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_google_calendar: {
+        Row: {
+          access_token: string
+          agent_id: string
+          booking_buffer_minutes: number
+          business_hours: Json
+          calendar_id: string
+          calendar_name: string | null
+          created_at: string
+          default_event_duration_minutes: number
+          google_email: string
+          google_user_id: string | null
+          id: string
+          refresh_token: string
+          scope: string | null
+          timezone: string
+          token_expires_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          agent_id: string
+          booking_buffer_minutes?: number
+          business_hours?: Json
+          calendar_id?: string
+          calendar_name?: string | null
+          created_at?: string
+          default_event_duration_minutes?: number
+          google_email: string
+          google_user_id?: string | null
+          id?: string
+          refresh_token: string
+          scope?: string | null
+          timezone?: string
+          token_expires_at: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          agent_id?: string
+          booking_buffer_minutes?: number
+          business_hours?: Json
+          calendar_id?: string
+          calendar_name?: string | null
+          created_at?: string
+          default_event_duration_minutes?: number
+          google_email?: string
+          google_user_id?: string | null
+          id?: string
+          refresh_token?: string
+          scope?: string | null
+          timezone?: string
+          token_expires_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       agents: {
         Row: {
           answer_mode: string
@@ -80,6 +140,60 @@ export type Database = {
           updated_at?: string
           user_id?: string
           voice_id?: string | null
+        }
+        Relationships: []
+      }
+      calendar_bookings: {
+        Row: {
+          agent_id: string
+          conversation_id: string | null
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          ends_at: string
+          google_event_id: string | null
+          id: string
+          reason: string | null
+          source: string
+          starts_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_id: string
+          conversation_id?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          ends_at: string
+          google_event_id?: string | null
+          id?: string
+          reason?: string | null
+          source?: string
+          starts_at: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string
+          conversation_id?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          ends_at?: string
+          google_event_id?: string | null
+          id?: string
+          reason?: string | null
+          source?: string
+          starts_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
