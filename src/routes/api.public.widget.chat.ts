@@ -290,7 +290,7 @@ export const Route = createFileRoute("/api/public/widget/chat")({
                   agentId,
                   userId: agent.user_id,
                   conversationId,
-                  args: parsedArgs as Parameters<typeof bookAppointment>[0]["args"],
+                  args: parsedArgs as unknown as Parameters<typeof bookAppointment>[0]["args"],
                 });
               } else {
                 toolResult = { error: `Unknown tool: ${call.function.name}` };
