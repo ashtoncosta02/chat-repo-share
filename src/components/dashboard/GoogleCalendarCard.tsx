@@ -63,19 +63,20 @@ export function GoogleCalendarCard({ agentId }: Props) {
         toast.error(res.error);
         return;
       }
-      const popup = window.open(res.url, "google-calendar-oauth", "width=520,height=640");
-      if (!popup) {
-        // Popup blocked — fall back to full redirect
-        window.location.href = res.url;
+      // Open in a top-level new tab. Google blocks its sign-in page inside iframes
+      // (X-Frame-Options: DENY), so a popup spawned from the Lovable preview iframe
+      // gets ERR_BLOCKED_BY_RESPONSE. Using _blank with noopener escapes the iframe.
+      const newTab = window.open(res.url, "_blank", "noopener,noreferrer");
+      if (!newTab) {
+        // Popup blocked entirely — fall back to top-level redirect of the parent frame
+        try {
+          window.top!.location.href = res.url;
+        } catch {
+          window.location.href = res.url;
+        }
         return;
       }
-      // Poll for popup close, then refresh
-      const interval = setInterval(() => {
-        if (popup.closed) {
-          clearInterval(interval);
-          setTimeout(load, 500);
-        }
-      }, 500);
+      toast.success("Opened Google in a new tab. Come back here when you're done.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to connect");
     } finally {
