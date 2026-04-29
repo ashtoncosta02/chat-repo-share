@@ -8,6 +8,7 @@ import {
   getCalendarConfig,
   isCalendarConnected,
 } from "@/server/widget-booking-tools";
+import { captureLeadFromWidget } from "@/server/widget-lead-capture";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
