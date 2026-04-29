@@ -24,7 +24,7 @@ export const startGoogleCalendarConnect = createServerFn({ method: "POST" })
 
       const request = getRequest();
       const redirectUri = getRedirectUri(request);
-      const state = signState({ user_id: auth.userId, agent_id: data.agent_id });
+      const state = signState({ user_id: auth.userId, agent_id: data.agent_id, redirect_uri: redirectUri });
       const url = buildAuthUrl(redirectUri, state);
       return { success: true as const, url };
     } catch (e) {
