@@ -3,7 +3,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/dashboard/PageHeader";
-import { Calendar, Mail, Phone, User as UserIcon, Clock } from "lucide-react";
+import { Calendar, Mail, Phone, User as UserIcon, Clock, Plus, X } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { createManualBooking } from "@/server/google-calendar.functions";
 
 export const Route = createFileRoute("/dashboard/bookings")({
   head: () => ({ meta: [{ title: "Bookings — Agent Factory" }] }),
