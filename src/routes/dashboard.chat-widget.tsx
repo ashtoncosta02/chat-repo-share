@@ -39,6 +39,13 @@ export function ChatWidgetPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [copied, setCopied] = useState<"script" | "tag" | null>(null);
 
+  // Draft customization state (per selected agent)
+  const [draftColor, setDraftColor] = useState("#b8893a");
+  const [draftGreeting, setDraftGreeting] = useState("");
+  const [draftPosition, setDraftPosition] = useState<"bottom-right" | "bottom-left">("bottom-right");
+  const [saving, setSaving] = useState(false);
+  const [previewKey, setPreviewKey] = useState(0);
+
   useEffect(() => {
     if (!user) return;
     supabase
@@ -58,6 +65,14 @@ export function ChatWidgetPage() {
     [agents, selectedId]
   );
 
+  // Sync draft when agent selection changes
+  useEffect(() => {
+    if (!selected) return;
+    setDraftColor(selected.widget_color || "#b8893a");
+    setDraftGreeting(selected.widget_greeting || "");
+    setDraftPosition((selected.widget_position as "bottom-right" | "bottom-left") || "bottom-right");
+  }, [selected]);
+
   const origin =
     typeof window !== "undefined" ? window.location.origin : "";
 
@@ -66,6 +81,12 @@ export function ChatWidgetPage() {
     : "";
 
   const previewUrl = selected ? `/widget/${selected.id}` : "";
+
+  const isDirty =
+    !!selected &&
+    (draftColor !== (selected.widget_color || "#b8893a") ||
+      draftGreeting !== (selected.widget_greeting || "") ||
+      draftPosition !== ((selected.widget_position as string) || "bottom-right"));
 
   async function copy(value: string, kind: "script" | "tag") {
     try {
@@ -76,6 +97,42 @@ export function ChatWidgetPage() {
     } catch {
       toast.error("Couldn't copy. Select and copy manually.");
     }
+  }
+
+  async function saveCustomization() {
+    if (!selected) return;
+    if (!/^#[0-9a-f]{6}$/i.test(draftColor)) {
+      toast.error("Color must be a 6-digit hex like #b8893a");
+      return;
+    }
+    setSaving(true);
+    const { error } = await supabase
+      .from("agents")
+      .update({
+        widget_color: draftColor,
+        widget_greeting: draftGreeting.trim() || null,
+        widget_position: draftPosition,
+      })
+      .eq("id", selected.id);
+    setSaving(false);
+    if (error) {
+      toast.error("Couldn't save changes");
+      return;
+    }
+    setAgents((prev) =>
+      prev.map((a) =>
+        a.id === selected.id
+          ? {
+              ...a,
+              widget_color: draftColor,
+              widget_greeting: draftGreeting.trim() || null,
+              widget_position: draftPosition,
+            }
+          : a
+      )
+    );
+    setPreviewKey((k) => k + 1);
+    toast.success("Widget updated");
   }
 
   return (
