@@ -191,13 +191,15 @@ interface BookArgs {
 export async function bookAppointment(params: {
   agentId: string;
   userId: string;
-  conversationId: string;
+  conversationId: string | null;
+  source?: "widget" | "manual";
   args: BookArgs;
 }): Promise<
   | { ok: true; booking_id: string; start: string; end: string; event_link: string | null }
   | { error: string }
 > {
   const { agentId, userId, conversationId, args } = params;
+  const source = params.source ?? "widget";
   const cfg = await getCalendarConfig(agentId);
   if (!cfg) return { error: "Calendar not connected" };
 
