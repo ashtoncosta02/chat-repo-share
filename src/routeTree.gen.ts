@@ -29,6 +29,7 @@ import { Route as ApiPublicWidgetChatRouteImport } from './routes/api.public.wid
 import { Route as ApiPublicTwilioVoiceRouteImport } from './routes/api.public.twilio.voice'
 import { Route as ApiPublicTwilioSmsRouteImport } from './routes/api.public.twilio.sms'
 import { Route as ApiPublicTwilioRecordingRouteImport } from './routes/api.public.twilio.recording'
+import { Route as ApiPublicGoogleCalendarCallbackRouteImport } from './routes/api.public.google-calendar.callback'
 import { Route as ApiPublicWidgetConfigAgentIdRouteImport } from './routes/api.public.widget.config.$agentId'
 import { Route as ApiPublicVoiceStreamTokenRouteImport } from './routes/api.public.voice.stream.$token'
 import { Route as ApiPublicTwilioVoiceTurnRouteImport } from './routes/api.public.twilio.voice.turn'
@@ -137,6 +138,12 @@ const ApiPublicTwilioRecordingRoute =
     path: '/api/public/twilio/recording',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicGoogleCalendarCallbackRoute =
+  ApiPublicGoogleCalendarCallbackRouteImport.update({
+    id: '/api/public/google-calendar/callback',
+    path: '/api/public/google-calendar/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicWidgetConfigAgentIdRoute =
   ApiPublicWidgetConfigAgentIdRouteImport.update({
     id: '/api/public/widget/config/$agentId',
@@ -172,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
   '/dashboard/conversations/': typeof DashboardConversationsIndexRoute
+  '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
   '/api/public/twilio/recording': typeof ApiPublicTwilioRecordingRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
   '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRouteWithChildren
@@ -195,6 +203,7 @@ export interface FileRoutesByTo {
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
   '/dashboard/conversations': typeof DashboardConversationsIndexRoute
+  '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
   '/api/public/twilio/recording': typeof ApiPublicTwilioRecordingRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
   '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRouteWithChildren
@@ -221,6 +230,7 @@ export interface FileRoutesById {
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
   '/dashboard/conversations/': typeof DashboardConversationsIndexRoute
+  '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
   '/api/public/twilio/recording': typeof ApiPublicTwilioRecordingRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
   '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRouteWithChildren
@@ -248,6 +258,7 @@ export interface FileRouteTypes {
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
     | '/dashboard/conversations/'
+    | '/api/public/google-calendar/callback'
     | '/api/public/twilio/recording'
     | '/api/public/twilio/sms'
     | '/api/public/twilio/voice'
@@ -271,6 +282,7 @@ export interface FileRouteTypes {
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
     | '/dashboard/conversations'
+    | '/api/public/google-calendar/callback'
     | '/api/public/twilio/recording'
     | '/api/public/twilio/sms'
     | '/api/public/twilio/voice'
@@ -296,6 +308,7 @@ export interface FileRouteTypes {
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
     | '/dashboard/conversations/'
+    | '/api/public/google-calendar/callback'
     | '/api/public/twilio/recording'
     | '/api/public/twilio/sms'
     | '/api/public/twilio/voice'
@@ -312,6 +325,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRouteWithChildren
   WidgetAgentIdRoute: typeof WidgetAgentIdRoute
   ApiPublicOwnerChatRoute: typeof ApiPublicOwnerChatRoute
+  ApiPublicGoogleCalendarCallbackRoute: typeof ApiPublicGoogleCalendarCallbackRoute
   ApiPublicTwilioRecordingRoute: typeof ApiPublicTwilioRecordingRoute
   ApiPublicTwilioSmsRoute: typeof ApiPublicTwilioSmsRoute
   ApiPublicTwilioVoiceRoute: typeof ApiPublicTwilioVoiceRouteWithChildren
@@ -463,6 +477,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTwilioRecordingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/google-calendar/callback': {
+      id: '/api/public/google-calendar/callback'
+      path: '/api/public/google-calendar/callback'
+      fullPath: '/api/public/google-calendar/callback'
+      preLoaderRoute: typeof ApiPublicGoogleCalendarCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/widget/config/$agentId': {
       id: '/api/public/widget/config/$agentId'
       path: '/api/public/widget/config/$agentId'
@@ -547,6 +568,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRouteWithChildren,
   WidgetAgentIdRoute: WidgetAgentIdRoute,
   ApiPublicOwnerChatRoute: ApiPublicOwnerChatRoute,
+  ApiPublicGoogleCalendarCallbackRoute: ApiPublicGoogleCalendarCallbackRoute,
   ApiPublicTwilioRecordingRoute: ApiPublicTwilioRecordingRoute,
   ApiPublicTwilioSmsRoute: ApiPublicTwilioSmsRoute,
   ApiPublicTwilioVoiceRoute: ApiPublicTwilioVoiceRouteWithChildren,
