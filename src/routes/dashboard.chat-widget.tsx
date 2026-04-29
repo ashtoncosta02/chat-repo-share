@@ -16,7 +16,21 @@ interface AgentRow {
   id: string;
   business_name: string;
   is_live: boolean;
+  widget_color: string | null;
+  widget_greeting: string | null;
+  widget_position: "bottom-right" | "bottom-left" | null;
 }
+
+const PRESET_COLORS = [
+  "#b8893a", // gold (default)
+  "#0ea5e9", // sky
+  "#10b981", // emerald
+  "#6366f1", // indigo
+  "#ec4899", // pink
+  "#ef4444", // red
+  "#f59e0b", // amber
+  "#1f2937", // slate
+];
 
 export function ChatWidgetPage() {
   const { user } = useAuth();
