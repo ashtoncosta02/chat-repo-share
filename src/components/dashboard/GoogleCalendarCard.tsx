@@ -54,31 +54,20 @@ export function GoogleCalendarCard({ agentId }: Props) {
   const handleConnect = async () => {
     setBusy(true);
     setManualUrl(null);
-    const authTab = window.open("about:blank", "_blank");
     try {
       const accessToken = await getAccessToken();
       if (!accessToken) {
-        authTab?.close();
         toast.error("Please sign in again.");
         return;
       }
       const res = await startConnect({ data: { accessToken, agent_id: agentId } });
       if (!res.success) {
-        authTab?.close();
         toast.error(res.error);
         return;
       }
-      if (!authTab) {
-        setManualUrl(res.url);
-        toast.error("Popup blocked. Use the manual Google link below.");
-        return;
-      }
-      authTab.opener = null;
-      authTab.location.href = res.url;
-      authTab.focus();
-      toast.success("Opened Google in a new tab. Come back here when you're done.");
+      setManualUrl(res.url);
+      toast.success("Google authorization link is ready.");
     } catch (e) {
-      authTab?.close();
       toast.error(e instanceof Error ? e.message : "Failed to connect");
     } finally {
       setBusy(false);
