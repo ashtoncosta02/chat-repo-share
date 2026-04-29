@@ -1,5 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import {
+  BOOKING_TOOLS,
+  bookAppointment,
+  buildBookingPromptAddendum,
+  findAvailableSlots,
+  getCalendarConfig,
+  isCalendarConnected,
+} from "@/server/widget-booking-tools";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -59,20 +67,95 @@ function buildSystemPrompt(agent: {
   return sections.join("\n\n");
 }
 
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+// Wrap a final assistant message as a single SSE event so the existing client
+// parser (which expects OpenAI-style `data: {choices:[{delta:{content}}]}`) works.
+function sseFromText(text: string, conversationId: string): Response {
+  const encoder = new TextEncoder();
+  const chunks = [
+    `data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}\n\n`,
+    `data: [DONE]\n\n`,
+  ];
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      for (const c of chunks) controller.enqueue(encoder.encode(c));
+      controller.close();
+    },
+  });
+  return new Response(stream, {
+    status: 200,
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache, no-transform",
+      "X-Conversation-Id": conversationId,
+    },
+  });
+}
+
+interface ToolCall {
+  id: string;
+  type: "function";
+  function: { name: string; arguments: string };
+}
+
+interface AIMessage {
+  role: "system" | "user" | "assistant" | "tool";
+  content: string | null;
+  tool_calls?: ToolCall[];
+  tool_call_id?: string;
+  name?: string;
+}
+
+async function callAI(
+  apiKey: string,
+  body: {
+    messages: AIMessage[];
+    tools?: typeof BOOKING_TOOLS;
+  },
+): Promise<
+  | { ok: true; message: AIMessage }
+  | { ok: false; status: number; error: string }
+> {
+  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-3-flash-preview",
+      messages: body.messages,
+      tools: body.tools,
+      stream: false,
+    }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    return { ok: false, status: res.status, error: text };
+  }
+  const json = await res.json();
+  const message = json.choices?.[0]?.message as AIMessage | undefined;
+  if (!message) return { ok: false, status: 500, error: "No message in AI response" };
+  return { ok: true, message };
+}
+
 export const Route = createFileRoute("/api/public/widget/chat")({
   server: {
     handlers: {
-      OPTIONS: async () =>
-        new Response(null, { status: 204, headers: corsHeaders }),
+      OPTIONS: async () => new Response(null, { status: 204, headers: corsHeaders }),
       POST: async ({ request }) => {
         let body: ChatRequest;
         try {
           body = (await request.json()) as ChatRequest;
         } catch {
-          return new Response(JSON.stringify({ error: "Invalid JSON" }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
+          return jsonResponse({ error: "Invalid JSON" }, 400);
         }
 
         const { agentId, sessionToken, messages, pageUrl } = body;
@@ -85,22 +168,14 @@ export const Route = createFileRoute("/api/public/widget/chat")({
           !Array.isArray(messages) ||
           messages.length === 0
         ) {
-          return new Response(JSON.stringify({ error: "Missing fields" }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
+          return jsonResponse({ error: "Missing fields" }, 400);
         }
 
-        // Lightweight per-message cap to prevent abuse
         const lastUser = messages[messages.length - 1];
         if (!lastUser || lastUser.role !== "user" || lastUser.content.length > 4000) {
-          return new Response(JSON.stringify({ error: "Invalid message" }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
+          return jsonResponse({ error: "Invalid message" }, 400);
         }
 
-        // Load agent config
         const { data: agent, error: agentErr } = await supabaseAdmin
           .from("agents")
           .select(
@@ -109,14 +184,9 @@ export const Route = createFileRoute("/api/public/widget/chat")({
           .eq("id", agentId)
           .maybeSingle();
 
-        if (agentErr || !agent) {
-          return new Response(JSON.stringify({ error: "Agent not found" }), {
-            status: 404,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
+        if (agentErr || !agent) return jsonResponse({ error: "Agent not found" }, 404);
 
-        // Find or create the conversation for this session
+        // Find or create conversation
         const { data: existingConvo } = await supabaseAdmin
           .from("widget_conversations")
           .select("id")
@@ -140,157 +210,126 @@ export const Route = createFileRoute("/api/public/widget/chat")({
             })
             .select("id")
             .single();
-
-          if (newConvoErr || !newConvo) {
-            return new Response(
-              JSON.stringify({ error: "Failed to create conversation" }),
-              {
-                status: 500,
-                headers: { ...corsHeaders, "Content-Type": "application/json" },
-              }
-            );
-          }
+          if (newConvoErr || !newConvo) return jsonResponse({ error: "Failed to create conversation" }, 500);
           conversationId = newConvo.id;
         }
 
-        // Persist the user's incoming message
         await supabaseAdmin.from("widget_messages").insert({
           conversation_id: conversationId,
           role: "user",
           content: lastUser.content,
         });
 
-        // Build prompt and call Lovable AI Gateway (streaming)
-        const systemPrompt = buildSystemPrompt(agent);
         const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
-        if (!LOVABLE_API_KEY) {
-          return new Response(
-            JSON.stringify({ error: "AI gateway not configured" }),
-            {
-              status: 500,
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            }
-          );
+        if (!LOVABLE_API_KEY) return jsonResponse({ error: "AI gateway not configured" }, 500);
+
+        // Build base system prompt
+        let systemPrompt = buildSystemPrompt(agent);
+
+        // If calendar is connected, enable booking tools
+        const calendarOn = await isCalendarConnected(agentId);
+        let tools: typeof BOOKING_TOOLS | undefined;
+        if (calendarOn) {
+          const cfg = await getCalendarConfig(agentId);
+          if (cfg) {
+            systemPrompt += "\n\n" + buildBookingPromptAddendum(cfg);
+            tools = BOOKING_TOOLS;
+          }
         }
 
-        const upstream = await fetch(
-          "https://ai.gateway.lovable.dev/v1/chat/completions",
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${LOVABLE_API_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              model: "google/gemini-3-flash-preview",
-              messages: [
-                { role: "system", content: systemPrompt },
-                ...messages.slice(-20).map((m) => ({
-                  role: m.role,
-                  content: m.content.slice(0, 4000),
-                })),
-              ],
-              stream: true,
-            }),
-          }
-        );
+        const aiMessages: AIMessage[] = [
+          { role: "system", content: systemPrompt },
+          ...messages.slice(-20).map((m) => ({
+            role: m.role,
+            content: m.content.slice(0, 4000),
+          })),
+        ];
 
-        if (!upstream.ok) {
-          if (upstream.status === 429) {
-            return new Response(
-              JSON.stringify({
-                error: "Rate limit reached. Please try again in a moment.",
-              }),
-              {
-                status: 429,
-                headers: { ...corsHeaders, "Content-Type": "application/json" },
-              }
-            );
+        // Tool-call loop (max 3 rounds to avoid runaway)
+        let finalText = "";
+        for (let round = 0; round < 3; round++) {
+          const result = await callAI(LOVABLE_API_KEY, { messages: aiMessages, tools });
+          if (!result.ok) {
+            if (result.status === 429)
+              return jsonResponse({ error: "Rate limit reached. Please try again in a moment." }, 429);
+            if (result.status === 402)
+              return jsonResponse({ error: "AI credits exhausted. Please contact support." }, 402);
+            console.error("AI gateway error:", result.status, result.error);
+            return jsonResponse({ error: "AI gateway error" }, 500);
           }
-          if (upstream.status === 402) {
-            return new Response(
-              JSON.stringify({
-                error: "AI credits exhausted. Please contact support.",
-              }),
-              {
-                status: 402,
-                headers: { ...corsHeaders, "Content-Type": "application/json" },
-              }
-            );
+
+          const msg = result.message;
+          const toolCalls = msg.tool_calls || [];
+
+          if (toolCalls.length === 0) {
+            finalText = (msg.content || "").trim();
+            break;
           }
-          const detail = await upstream.text();
-          console.error("AI gateway error:", upstream.status, detail);
-          return new Response(JSON.stringify({ error: "AI gateway error" }), {
-            status: 500,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+
+          // Push assistant tool-call message and execute tools
+          aiMessages.push({
+            role: "assistant",
+            content: msg.content || "",
+            tool_calls: toolCalls,
           });
-        }
 
-        // Tee the stream: forward to client, accumulate to persist on close
-        const upstreamBody = upstream.body;
-        if (!upstreamBody) {
-          return new Response(JSON.stringify({ error: "No stream body" }), {
-            status: 500,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-
-        const decoder = new TextDecoder();
-        let assistantContent = "";
-        let textBuffer = "";
-
-        const transform = new TransformStream<Uint8Array, Uint8Array>({
-          transform(chunk, controller) {
-            controller.enqueue(chunk);
-            // Parse SSE lines for accumulation
-            textBuffer += decoder.decode(chunk, { stream: true });
-            let nl: number;
-            while ((nl = textBuffer.indexOf("\n")) !== -1) {
-              let line = textBuffer.slice(0, nl);
-              textBuffer = textBuffer.slice(nl + 1);
-              if (line.endsWith("\r")) line = line.slice(0, -1);
-              if (!line.startsWith("data: ")) continue;
-              const json = line.slice(6).trim();
-              if (json === "[DONE]") continue;
-              try {
-                const parsed = JSON.parse(json);
-                const delta = parsed.choices?.[0]?.delta?.content;
-                if (typeof delta === "string") assistantContent += delta;
-              } catch {
-                // partial JSON — wait for more
-                textBuffer = line + "\n" + textBuffer;
-                break;
-              }
+          for (const call of toolCalls) {
+            let parsedArgs: Record<string, unknown> = {};
+            try {
+              parsedArgs = JSON.parse(call.function.arguments || "{}");
+            } catch {
+              /* ignore */
             }
-          },
-          async flush() {
-            if (assistantContent.trim()) {
-              try {
-                await supabaseAdmin.from("widget_messages").insert({
-                  conversation_id: conversationId,
-                  role: "assistant",
-                  content: assistantContent,
+
+            let toolResult: unknown;
+            try {
+              if (call.function.name === "find_available_slots") {
+                toolResult = await findAvailableSlots(agentId, parsedArgs as { date: string });
+              } else if (call.function.name === "book_appointment") {
+                toolResult = await bookAppointment({
+                  agentId,
+                  userId: agent.user_id,
+                  conversationId,
+                  args: parsedArgs as unknown as Parameters<typeof bookAppointment>[0]["args"],
                 });
-                await supabaseAdmin
-                  .from("widget_conversations")
-                  .update({ updated_at: new Date().toISOString() })
-                  .eq("id", conversationId);
-              } catch (err) {
-                console.error("Failed to persist assistant message:", err);
+              } else {
+                toolResult = { error: `Unknown tool: ${call.function.name}` };
               }
+            } catch (err) {
+              console.error("Tool execution error:", call.function.name, err);
+              toolResult = { error: "Tool execution failed" };
             }
-          },
-        });
 
-        return new Response(upstreamBody.pipeThrough(transform), {
-          status: 200,
-          headers: {
-            ...corsHeaders,
-            "Content-Type": "text/event-stream",
-            "Cache-Control": "no-cache, no-transform",
-            "X-Conversation-Id": conversationId,
-          },
-        });
+            aiMessages.push({
+              role: "tool",
+              tool_call_id: call.id,
+              name: call.function.name,
+              content: JSON.stringify(toolResult),
+            });
+          }
+          // continue loop for follow-up completion
+        }
+
+        if (!finalText) {
+          finalText = "Sorry, I had trouble completing that. Could you try again?";
+        }
+
+        // Persist assistant reply
+        try {
+          await supabaseAdmin.from("widget_messages").insert({
+            conversation_id: conversationId,
+            role: "assistant",
+            content: finalText,
+          });
+          await supabaseAdmin
+            .from("widget_conversations")
+            .update({ updated_at: new Date().toISOString() })
+            .eq("id", conversationId);
+        } catch (err) {
+          console.error("Failed to persist assistant message:", err);
+        }
+
+        return sseFromText(finalText, conversationId);
       },
     },
   },
