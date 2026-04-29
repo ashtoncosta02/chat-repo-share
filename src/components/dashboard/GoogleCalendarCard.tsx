@@ -54,31 +54,20 @@ export function GoogleCalendarCard({ agentId }: Props) {
   const handleConnect = async () => {
     setBusy(true);
     setManualUrl(null);
-    const authTab = window.open("about:blank", "_blank");
     try {
       const accessToken = await getAccessToken();
       if (!accessToken) {
-        authTab?.close();
         toast.error("Please sign in again.");
         return;
       }
       const res = await startConnect({ data: { accessToken, agent_id: agentId } });
       if (!res.success) {
-        authTab?.close();
         toast.error(res.error);
         return;
       }
-      if (!authTab) {
-        setManualUrl(res.url);
-        toast.error("Popup blocked. Use the manual Google link below.");
-        return;
-      }
-      authTab.opener = null;
-      authTab.location.href = res.url;
-      authTab.focus();
-      toast.success("Opened Google in a new tab. Come back here when you're done.");
+      setManualUrl(res.url);
+      toast.success("Google authorization link is ready.");
     } catch (e) {
-      authTab?.close();
       toast.error(e instanceof Error ? e.message : "Failed to connect");
     } finally {
       setBusy(false);
@@ -158,15 +147,20 @@ export function GoogleCalendarCard({ agentId }: Props) {
         </div>
       </div>
       {manualUrl && !conn && (
-        <a
-          href={manualUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
-        >
-          <ExternalLink className="h-4 w-4" />
-          Open Google Calendar authorization
-        </a>
+        <div className="mt-4 flex flex-col gap-2 rounded-xl border border-border bg-background/60 p-3">
+          <p className="text-sm text-muted-foreground">
+            Click the link below to open Google in a real browser tab.
+          </p>
+          <a
+            href={manualUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+          >
+            <ExternalLink className="h-4 w-4" />
+            Open Google Calendar authorization
+          </a>
+        </div>
       )}
     </div>
   );
