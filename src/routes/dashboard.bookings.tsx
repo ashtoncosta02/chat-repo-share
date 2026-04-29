@@ -38,15 +38,27 @@ function BookingsPage() {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<BookingRow[]>([]);
   const [agents, setAgents] = useState<Record<string, string>>({});
+  const [calendarAgentIds, setCalendarAgentIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>("upcoming");
+  const [showDialog, setShowDialog] = useState(false);
+
+  const refresh = async () => {
+    const { data: bks } = await supabase
+      .from("calendar_bookings")
+      .select(
+        "id, starts_at, ends_at, status, source, customer_name, customer_email, customer_phone, reason, google_event_id, created_at, agent_id",
+      )
+      .order("starts_at", { ascending: true });
+    setBookings((bks ?? []) as BookingRow[]);
+  };
 
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const [{ data: bks }, { data: ags }] = await Promise.all([
+      const [{ data: bks }, { data: ags }, { data: cals }] = await Promise.all([
         supabase
           .from("calendar_bookings")
           .select(
@@ -54,18 +66,28 @@ function BookingsPage() {
           )
           .order("starts_at", { ascending: true }),
         supabase.from("agents").select("id, business_name"),
+        supabase.from("agent_google_calendar").select("agent_id"),
       ]);
       if (cancelled) return;
       setBookings((bks ?? []) as BookingRow[]);
       const map: Record<string, string> = {};
       for (const a of (ags ?? []) as AgentMini[]) map[a.id] = a.business_name;
       setAgents(map);
+      setCalendarAgentIds(((cals ?? []) as { agent_id: string }[]).map((c) => c.agent_id));
       setLoading(false);
     })();
     return () => {
       cancelled = true;
     };
   }, [user]);
+
+  const bookableAgents = useMemo(
+    () =>
+      Object.entries(agents)
+        .filter(([id]) => calendarAgentIds.includes(id))
+        .map(([id, name]) => ({ id, name })),
+    [agents, calendarAgentIds],
+  );
 
   const now = Date.now();
   const upcoming = useMemo(
