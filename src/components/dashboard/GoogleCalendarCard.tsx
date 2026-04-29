@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
-import { Calendar, Check, Loader2, Unlink } from "lucide-react";
+import { Calendar, Check, ExternalLink, Loader2, Unlink } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -25,6 +25,7 @@ export function GoogleCalendarCard({ agentId }: Props) {
   const [conn, setConn] = useState<Connection | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [manualUrl, setManualUrl] = useState<string | null>(null);
 
   const load = async () => {
     const { data } = await supabase
@@ -52,32 +53,32 @@ export function GoogleCalendarCard({ agentId }: Props) {
 
   const handleConnect = async () => {
     setBusy(true);
+    setManualUrl(null);
+    const authTab = window.open("about:blank", "_blank");
     try {
       const accessToken = await getAccessToken();
       if (!accessToken) {
+        authTab?.close();
         toast.error("Please sign in again.");
         return;
       }
       const res = await startConnect({ data: { accessToken, agent_id: agentId } });
       if (!res.success) {
+        authTab?.close();
         toast.error(res.error);
         return;
       }
-      // Open in a top-level new tab. Google blocks its sign-in page inside iframes
-      // (X-Frame-Options: DENY), so a popup spawned from the Lovable preview iframe
-      // gets ERR_BLOCKED_BY_RESPONSE. Using _blank with noopener escapes the iframe.
-      const newTab = window.open(res.url, "_blank", "noopener,noreferrer");
-      if (!newTab) {
-        // Popup blocked entirely — fall back to top-level redirect of the parent frame
-        try {
-          window.top!.location.href = res.url;
-        } catch {
-          window.location.href = res.url;
-        }
+      if (!authTab) {
+        setManualUrl(res.url);
+        toast.error("Popup blocked. Use the manual Google link below.");
         return;
       }
+      authTab.opener = null;
+      authTab.location.href = res.url;
+      authTab.focus();
       toast.success("Opened Google in a new tab. Come back here when you're done.");
     } catch (e) {
+      authTab?.close();
       toast.error(e instanceof Error ? e.message : "Failed to connect");
     } finally {
       setBusy(false);
@@ -156,6 +157,17 @@ export function GoogleCalendarCard({ agentId }: Props) {
           )}
         </div>
       </div>
+      {manualUrl && !conn && (
+        <a
+          href={manualUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+        >
+          <ExternalLink className="h-4 w-4" />
+          Open Google Calendar authorization
+        </a>
+      )}
     </div>
   );
 }
