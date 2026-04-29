@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { LayoutDashboard, BarChart3, User, MessageSquare, Plus, Phone, Menu, X, Code2 } from "lucide-react";
+import { LayoutDashboard, BarChart3, User, MessageSquare, Plus, Phone, Menu, X, Code2, Calendar } from "lucide-react";
 import { AgentFactoryLogo } from "@/components/AgentFactoryLogo";
 import { OwnerChatWidget } from "@/components/dashboard/OwnerChatWidget";
 import { ChatWidgetPage } from "./dashboard.chat-widget";
@@ -21,6 +21,7 @@ const navItems = [
   { to: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/dashboard/leads", label: "Leads", icon: User },
   { to: "/dashboard/conversations", label: "Conversations", icon: MessageSquare },
+  { to: "/dashboard/bookings", label: "Bookings", icon: Calendar },
   { to: "/dashboard/phone-numbers", label: "Phone Numbers", icon: Phone },
   { to: "/dashboard/chat-widget", label: "Chat Widget", icon: Code2 },
   { to: "/dashboard/new-agent", label: "New Agent", icon: Plus },
