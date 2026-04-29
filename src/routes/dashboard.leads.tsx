@@ -1,9 +1,19 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/dashboard/PageHeader";
-import { User, Phone, Mail } from "lucide-react";
+import { User, Phone, Mail, MessageSquare, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/dashboard/leads")({
   head: () => ({ meta: [{ title: "Leads — Agent Factory" }] }),
@@ -16,86 +26,235 @@ interface LeadRow {
   phone: string | null;
   email: string | null;
   notes: string | null;
+  status: string;
+  source: string | null;
+  agent_id: string | null;
+  conversation_id: string | null;
   created_at: string;
+  last_message_at: string | null;
+}
+
+interface AgentOpt {
+  id: string;
+  business_name: string;
+}
+
+const STATUS_OPTIONS = ["new", "contacted", "won", "lost"] as const;
+
+function statusVariant(s: string): "default" | "secondary" | "outline" | "destructive" {
+  if (s === "won") return "default";
+  if (s === "lost") return "destructive";
+  if (s === "contacted") return "secondary";
+  return "outline";
 }
 
 function LeadsPage() {
   const { user } = useAuth();
   const [leads, setLeads] = useState<LeadRow[]>([]);
+  const [agents, setAgents] = useState<AgentOpt[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [agentFilter, setAgentFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  const load = async () => {
+    setLoading(true);
+    const [leadsRes, agentsRes] = await Promise.all([
+      supabase
+        .from("leads")
+        .select(
+          "id, name, phone, email, notes, status, source, agent_id, conversation_id, created_at, last_message_at",
+        )
+        .order("created_at", { ascending: false })
+        .limit(500),
+      supabase.from("agents").select("id, business_name").order("business_name"),
+    ]);
+    setLeads(leadsRes.data ?? []);
+    setAgents(agentsRes.data ?? []);
+    setLoading(false);
+  };
 
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("leads")
-      .select("id, name, phone, email, notes, created_at")
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        setLeads(data ?? []);
-        setLoading(false);
-      });
+    load();
   }, [user]);
 
-  const withPhone = leads.filter((l) => l.phone).length;
-  const withEmail = leads.filter((l) => l.email).length;
+  const updateStatus = async (id: string, status: string) => {
+    setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, status } : l)));
+    await supabase.from("leads").update({ status }).eq("id", id);
+  };
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return leads.filter((l) => {
+      if (agentFilter !== "all" && l.agent_id !== agentFilter) return false;
+      if (statusFilter !== "all" && l.status !== statusFilter) return false;
+      if (q) {
+        const hay = `${l.name ?? ""} ${l.email ?? ""} ${l.phone ?? ""} ${l.notes ?? ""}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [leads, search, agentFilter, statusFilter]);
+
+  const agentName = (id: string | null) =>
+    id ? agents.find((a) => a.id === id)?.business_name ?? "—" : "—";
+
+  const stats = useMemo(
+    () => ({
+      total: leads.length,
+      new: leads.filter((l) => l.status === "new").length,
+      won: leads.filter((l) => l.status === "won").length,
+      withContact: leads.filter((l) => l.email || l.phone).length,
+    }),
+    [leads],
+  );
 
   return (
     <div>
       <PageHeader
         title="Leads"
-        description="Contact info captured automatically from conversations"
+        description="Contact info captured automatically from chats, calls, and bookings"
       />
       <div className="p-4 md:p-8 space-y-4 md:space-y-6">
-        <div className="rounded-xl border border-[oklch(0.85_0.08_75)] bg-[oklch(0.97_0.04_80)] p-5 flex items-start gap-3">
-          <span className="text-[var(--gold)] text-xl">✨</span>
-          <div>
-            <div className="font-semibold text-foreground mb-1">Automatic Lead Capture</div>
-            <p className="text-sm text-muted-foreground">
-              When someone shares their name, phone, or email with your AI agent, it
-              automatically appears here. Click the phone number to call them back instantly.
-            </p>
-          </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Stat label="Total" value={stats.total} />
+          <Stat label="New" value={stats.new} />
+          <Stat label="Booked" value={stats.won} accent="text-emerald-600" />
+          <Stat label="With Contact" value={stats.withContact} />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatRow label="Total Leads" value={leads.length} color="text-foreground" />
-          <StatRow label="With Phone" value={withPhone} color="text-emerald-600" />
-          <StatRow label="With Email" value={withEmail} color="text-blue-600" />
+        <div className="flex flex-col md:flex-row gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search name, email, phone, notes…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Select value={agentFilter} onValueChange={setAgentFilter}>
+            <SelectTrigger className="md:w-56">
+              <SelectValue placeholder="All agents" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All agents</SelectItem>
+              {agents.map((a) => (
+                <SelectItem key={a.id} value={a.id}>
+                  {a.business_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="md:w-44">
+              <SelectValue placeholder="All statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              {STATUS_OPTIONS.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s[0].toUpperCase() + s.slice(1)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="rounded-xl border border-border bg-card">
           {loading ? (
             <div className="p-8 text-center text-muted-foreground">Loading…</div>
-          ) : leads.length === 0 ? (
+          ) : filtered.length === 0 ? (
             <EmptyState
               icon={<User className="h-16 w-16 text-muted-foreground/40" />}
-              title="No leads yet"
-              description="Leads show up here automatically when someone shares their contact info with your AI agent."
+              title={leads.length === 0 ? "No leads yet" : "No leads match your filters"}
+              description={
+                leads.length === 0
+                  ? "Leads show up here automatically when someone shares contact info with your agent or books an appointment."
+                  : "Try clearing the search or filters."
+              }
             />
           ) : (
             <ul className="divide-y divide-border">
-              {leads.map((l) => (
-                <li key={l.id} className="px-4 md:px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="font-medium text-foreground truncate">{l.name ?? "Unknown"}</div>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-muted-foreground">
-                      {l.phone && (
-                        <a href={`tel:${l.phone}`} className="flex items-center gap-1 hover:text-[var(--gold)]">
-                          <Phone className="h-3 w-3" />
-                          {l.phone}
-                        </a>
-                      )}
-                      {l.email && (
-                        <a href={`mailto:${l.email}`} className="flex items-center gap-1 hover:text-[var(--gold)] break-all">
-                          <Mail className="h-3 w-3" />
-                          {l.email}
-                        </a>
+              {filtered.map((l) => (
+                <li key={l.id} className="px-4 md:px-6 py-4">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-foreground truncate">
+                          {l.name ?? "Unknown"}
+                        </span>
+                        <Badge variant={statusVariant(l.status)} className="capitalize">
+                          {l.status}
+                        </Badge>
+                        {l.source && (
+                          <span className="text-xs text-muted-foreground capitalize">
+                            via {l.source}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-muted-foreground">
+                        {l.phone && (
+                          <a
+                            href={`tel:${l.phone}`}
+                            className="flex items-center gap-1 hover:text-[var(--gold)]"
+                          >
+                            <Phone className="h-3 w-3" />
+                            {l.phone}
+                          </a>
+                        )}
+                        {l.email && (
+                          <a
+                            href={`mailto:${l.email}`}
+                            className="flex items-center gap-1 hover:text-[var(--gold)] break-all"
+                          >
+                            <Mail className="h-3 w-3" />
+                            {l.email}
+                          </a>
+                        )}
+                        <span>· {agentName(l.agent_id)}</span>
+                      </div>
+                      {l.notes && (
+                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                          {l.notes}
+                        </p>
                       )}
                     </div>
+                    <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(l.created_at).toLocaleDateString()}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        {l.conversation_id && (
+                          <Button asChild variant="ghost" size="sm">
+                            <Link
+                              to="/dashboard/conversations/$conversationId"
+                              params={{ conversationId: l.conversation_id }}
+                            >
+                              <MessageSquare className="h-3.5 w-3.5 mr-1" />
+                              Chat
+                            </Link>
+                          </Button>
+                        )}
+                        <Select
+                          value={l.status}
+                          onValueChange={(v) => updateStatus(l.id, v)}
+                        >
+                          <SelectTrigger className="h-8 w-32 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {STATUS_OPTIONS.map((s) => (
+                              <SelectItem key={s} value={s} className="capitalize">
+                                {s}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                   </div>
-                  <span className="text-xs text-muted-foreground flex-shrink-0">
-                    {new Date(l.created_at).toLocaleDateString()}
-                  </span>
                 </li>
               ))}
             </ul>
@@ -106,11 +265,21 @@ function LeadsPage() {
   );
 }
 
-function StatRow({ label, value, color }: { label: string; value: number; color: string }) {
+function Stat({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: number;
+  accent?: string;
+}) {
   return (
-    <div className="rounded-xl border border-border bg-card p-5 flex items-center justify-between">
+    <div className="rounded-xl border border-border bg-card p-4 flex items-center justify-between">
       <span className="text-sm font-medium text-foreground">{label}</span>
-      <span className={`font-display text-3xl font-semibold ${color}`}>{value}</span>
+      <span className={`font-display text-2xl font-semibold ${accent ?? "text-foreground"}`}>
+        {value}
+      </span>
     </div>
   );
 }
