@@ -191,13 +191,15 @@ interface BookArgs {
 export async function bookAppointment(params: {
   agentId: string;
   userId: string;
-  conversationId: string;
+  conversationId: string | null;
+  source?: "widget" | "manual";
   args: BookArgs;
 }): Promise<
   | { ok: true; booking_id: string; start: string; end: string; event_link: string | null }
   | { error: string }
 > {
   const { agentId, userId, conversationId, args } = params;
+  const source = params.source ?? "widget";
   const cfg = await getCalendarConfig(agentId);
   if (!cfg) return { error: "Calendar not connected" };
 
@@ -237,7 +239,7 @@ export async function bookAppointment(params: {
 
   const summary = `${businessName} — ${args.customer_name}`;
   const descriptionLines = [
-    `Booked via website chat`,
+    source === "manual" ? `Booked manually` : `Booked via website chat`,
     `Name: ${args.customer_name}`,
     `Email: ${args.customer_email}`,
   ];
@@ -260,7 +262,7 @@ export async function bookAppointment(params: {
       agent_id: agentId,
       user_id: userId,
       conversation_id: conversationId,
-      source: "widget",
+      source,
       status: "confirmed",
       starts_at: start.toISOString(),
       ends_at: end.toISOString(),

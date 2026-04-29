@@ -3,7 +3,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/dashboard/PageHeader";
-import { Calendar, Mail, Phone, User as UserIcon, Clock } from "lucide-react";
+import { Calendar, Mail, Phone, User as UserIcon, Clock, Plus, X } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { createManualBooking } from "@/server/google-calendar.functions";
 
 export const Route = createFileRoute("/dashboard/bookings")({
   head: () => ({ meta: [{ title: "Bookings — Agent Factory" }] }),
@@ -36,15 +38,27 @@ function BookingsPage() {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<BookingRow[]>([]);
   const [agents, setAgents] = useState<Record<string, string>>({});
+  const [calendarAgentIds, setCalendarAgentIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>("upcoming");
+  const [showDialog, setShowDialog] = useState(false);
+
+  const refresh = async () => {
+    const { data: bks } = await supabase
+      .from("calendar_bookings")
+      .select(
+        "id, starts_at, ends_at, status, source, customer_name, customer_email, customer_phone, reason, google_event_id, created_at, agent_id",
+      )
+      .order("starts_at", { ascending: true });
+    setBookings((bks ?? []) as BookingRow[]);
+  };
 
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const [{ data: bks }, { data: ags }] = await Promise.all([
+      const [{ data: bks }, { data: ags }, { data: cals }] = await Promise.all([
         supabase
           .from("calendar_bookings")
           .select(
@@ -52,18 +66,28 @@ function BookingsPage() {
           )
           .order("starts_at", { ascending: true }),
         supabase.from("agents").select("id, business_name"),
+        supabase.from("agent_google_calendar").select("agent_id"),
       ]);
       if (cancelled) return;
       setBookings((bks ?? []) as BookingRow[]);
       const map: Record<string, string> = {};
       for (const a of (ags ?? []) as AgentMini[]) map[a.id] = a.business_name;
       setAgents(map);
+      setCalendarAgentIds(((cals ?? []) as { agent_id: string }[]).map((c) => c.agent_id));
       setLoading(false);
     })();
     return () => {
       cancelled = true;
     };
   }, [user]);
+
+  const bookableAgents = useMemo(
+    () =>
+      Object.entries(agents)
+        .filter(([id]) => calendarAgentIds.includes(id))
+        .map(([id, name]) => ({ id, name })),
+    [agents, calendarAgentIds],
+  );
 
   const now = Date.now();
   const upcoming = useMemo(
@@ -93,6 +117,17 @@ function BookingsPage() {
       <PageHeader
         title="Bookings"
         description="Appointments booked by your AI agents on your Google Calendar"
+        action={
+          bookableAgents.length > 0 ? (
+            <button
+              onClick={() => setShowDialog(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--gold)] text-white text-sm font-medium hover:opacity-90"
+            >
+              <Plus className="h-4 w-4" />
+              New Booking
+            </button>
+          ) : null
+        }
       />
       <div className="p-4 md:p-8 space-y-4 md:space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -119,7 +154,7 @@ function BookingsPage() {
               title={tab === "upcoming" ? "No upcoming bookings" : "No past bookings"}
               description={
                 tab === "upcoming"
-                  ? "When your AI agent books an appointment for a visitor, it will show up here."
+                  ? "When your AI agent books an appointment for a visitor, it will show up here. Or click \"New Booking\" to add one manually."
                   : "Past appointments will appear here once they've ended."
               }
             />
@@ -132,6 +167,17 @@ function BookingsPage() {
           )}
         </div>
       </div>
+
+      {showDialog && (
+        <NewBookingDialog
+          agents={bookableAgents}
+          onClose={() => setShowDialog(false)}
+          onCreated={async () => {
+            setShowDialog(false);
+            await refresh();
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -252,5 +298,206 @@ function TabBtn({
     >
       {children}
     </button>
+  );
+}
+
+function NewBookingDialog({
+  agents,
+  onClose,
+  onCreated,
+}: {
+  agents: { id: string; name: string }[];
+  onClose: () => void;
+  onCreated: () => void;
+}) {
+  const createBooking = useServerFn(createManualBooking);
+  const [agentId, setAgentId] = useState(agents[0]?.id ?? "");
+  const [date, setDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().slice(0, 10);
+  });
+  const [time, setTime] = useState("10:00");
+  const [duration, setDuration] = useState(30);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [reason, setReason] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setSubmitting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) {
+        setError("Not signed in");
+        return;
+      }
+      // Build local datetime then convert to ISO
+      const startLocal = new Date(`${date}T${time}:00`);
+      if (isNaN(startLocal.getTime())) {
+        setError("Invalid date/time");
+        return;
+      }
+      const result = await createBooking({
+        data: {
+          accessToken,
+          agent_id: agentId,
+          start_iso: startLocal.toISOString(),
+          duration_minutes: duration,
+          customer_name: name.trim(),
+          customer_email: email.trim(),
+          customer_phone: phone.trim() || undefined,
+          reason: reason.trim() || undefined,
+        },
+      });
+      if (!result.success) {
+        setError(result.error ?? "Failed to create booking");
+        return;
+      }
+      onCreated();
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : "Failed to create booking");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-card rounded-xl border border-border w-full max-w-lg max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h2 className="font-display text-xl font-semibold text-foreground">New Booking</h2>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <form onSubmit={submit} className="p-6 space-y-4">
+          <Field label="Agent">
+            <select
+              value={agentId}
+              onChange={(e) => setAgentId(e.target.value)}
+              required
+              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground"
+            >
+              {agents.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Date">
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                required
+                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground"
+              />
+            </Field>
+            <Field label="Time">
+              <input
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                required
+                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground"
+              />
+            </Field>
+          </div>
+          <Field label="Duration (minutes)">
+            <input
+              type="number"
+              min={5}
+              max={480}
+              value={duration}
+              onChange={(e) => setDuration(Number(e.target.value))}
+              required
+              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground"
+            />
+          </Field>
+          <Field label="Customer name">
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground"
+            />
+          </Field>
+          <Field label="Customer email">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground"
+            />
+          </Field>
+          <Field label="Phone (optional)">
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground"
+            />
+          </Field>
+          <Field label="Reason (optional)">
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              rows={2}
+              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground"
+            />
+          </Field>
+          {error && (
+            <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              {error}
+            </div>
+          )}
+          <div className="flex gap-2 justify-end pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg border border-border text-foreground hover:bg-muted text-sm"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="px-4 py-2 rounded-lg bg-[var(--gold)] text-white text-sm font-medium hover:opacity-90 disabled:opacity-50"
+            >
+              {submitting ? "Creating…" : "Create Booking"}
+            </button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            The customer will receive a calendar invite by email and the event will be added to your Google Calendar.
+          </p>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="block text-sm font-medium text-foreground mb-1">{label}</span>
+      {children}
+    </label>
   );
 }
