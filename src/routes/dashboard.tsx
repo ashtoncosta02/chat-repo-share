@@ -21,6 +21,7 @@ const navItems = [
   { to: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/dashboard/leads", label: "Leads", icon: User },
   { to: "/dashboard/conversations", label: "Conversations", icon: MessageSquare },
+  { to: "/dashboard/bookings", label: "Bookings", icon: Calendar },
   { to: "/dashboard/phone-numbers", label: "Phone Numbers", icon: Phone },
   { to: "/dashboard/chat-widget", label: "Chat Widget", icon: Code2 },
   { to: "/dashboard/new-agent", label: "New Agent", icon: Plus },
