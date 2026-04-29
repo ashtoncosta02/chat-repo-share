@@ -117,6 +117,17 @@ function BookingsPage() {
       <PageHeader
         title="Bookings"
         description="Appointments booked by your AI agents on your Google Calendar"
+        action={
+          bookableAgents.length > 0 ? (
+            <button
+              onClick={() => setShowDialog(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--gold)] text-white text-sm font-medium hover:opacity-90"
+            >
+              <Plus className="h-4 w-4" />
+              New Booking
+            </button>
+          ) : null
+        }
       />
       <div className="p-4 md:p-8 space-y-4 md:space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -143,7 +154,7 @@ function BookingsPage() {
               title={tab === "upcoming" ? "No upcoming bookings" : "No past bookings"}
               description={
                 tab === "upcoming"
-                  ? "When your AI agent books an appointment for a visitor, it will show up here."
+                  ? "When your AI agent books an appointment for a visitor, it will show up here. Or click \"New Booking\" to add one manually."
                   : "Past appointments will appear here once they've ended."
               }
             />
@@ -156,6 +167,17 @@ function BookingsPage() {
           )}
         </div>
       </div>
+
+      {showDialog && (
+        <NewBookingDialog
+          agents={bookableAgents}
+          onClose={() => setShowDialog(false)}
+          onCreated={async () => {
+            setShowDialog(false);
+            await refresh();
+          }}
+        />
+      )}
     </div>
   );
 }
