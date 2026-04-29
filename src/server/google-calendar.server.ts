@@ -41,7 +41,8 @@ function getOrigin(request: Request): string {
   if (forwardedHost) {
     const forwardedProto = request.headers.get("x-forwarded-proto") || "https";
     const forwardedOrigin = `${forwardedProto}://${forwardedHost}`;
-    if (!isLocalOrigin(forwardedOrigin) && !isPrivatePreviewOrigin(forwardedOrigin)) return forwardedOrigin;
+    if (!isLocalOrigin(forwardedOrigin) && !isPrivatePreviewOrigin(forwardedOrigin))
+      return forwardedOrigin;
   }
 
   const url = new URL(request.url);
@@ -67,13 +68,19 @@ function stateSecret() {
   return process.env.SUPABASE_SERVICE_ROLE_KEY || "fallback-state-secret";
 }
 
-export function signState(payload: { user_id: string; agent_id: string; redirect_uri?: string }): string {
+export function signState(payload: {
+  user_id: string;
+  agent_id: string;
+  redirect_uri?: string;
+}): string {
   const body = Buffer.from(JSON.stringify({ ...payload, t: Date.now() })).toString("base64url");
   const sig = createHmac("sha256", stateSecret()).update(body).digest("base64url");
   return `${body}.${sig}`;
 }
 
-export function verifyState(state: string): { user_id: string; agent_id: string; redirect_uri?: string } | null {
+export function verifyState(
+  state: string,
+): { user_id: string; agent_id: string; redirect_uri?: string } | null {
   const parts = state.split(".");
   if (parts.length !== 2) return null;
   const [body, sig] = parts;
@@ -87,7 +94,11 @@ export function verifyState(state: string): { user_id: string; agent_id: string;
     const decoded = JSON.parse(Buffer.from(body, "base64url").toString("utf8"));
     if (Date.now() - decoded.t > 10 * 60 * 1000) return null; // 10 min
     if (!decoded.user_id || !decoded.agent_id) return null;
-    return { user_id: decoded.user_id, agent_id: decoded.agent_id, redirect_uri: decoded.redirect_uri };
+    return {
+      user_id: decoded.user_id,
+      agent_id: decoded.agent_id,
+      redirect_uri: decoded.redirect_uri,
+    };
   } catch {
     return null;
   }
@@ -165,7 +176,9 @@ export async function fetchUserInfo(accessToken: string): Promise<{ id: string; 
 }
 
 // Get a valid access token for an agent connection, refreshing if needed.
-export async function getValidAccessToken(agentId: string): Promise<{ token: string; calendar_id: string; timezone: string } | null> {
+export async function getValidAccessToken(
+  agentId: string,
+): Promise<{ token: string; calendar_id: string; timezone: string } | null> {
   const { data, error } = await supabaseAdmin
     .from("agent_google_calendar")
     .select("access_token, refresh_token, token_expires_at, calendar_id, timezone")
@@ -189,7 +202,11 @@ export async function getValidAccessToken(agentId: string): Promise<{ token: str
         token_expires_at: newExpiresAt,
       })
       .eq("agent_id", agentId);
-    return { token: refreshed.access_token, calendar_id: data.calendar_id, timezone: data.timezone };
+    return {
+      token: refreshed.access_token,
+      calendar_id: data.calendar_id,
+      timezone: data.timezone,
+    };
   } catch (e) {
     console.error("refresh failed", e);
     return null;
