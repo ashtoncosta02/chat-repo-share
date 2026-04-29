@@ -239,7 +239,7 @@ export async function bookAppointment(params: {
 
   const summary = `${businessName} — ${args.customer_name}`;
   const descriptionLines = [
-    `Booked via website chat`,
+    source === "manual" ? `Booked manually` : `Booked via website chat`,
     `Name: ${args.customer_name}`,
     `Email: ${args.customer_email}`,
   ];
