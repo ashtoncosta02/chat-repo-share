@@ -46,7 +46,7 @@ export const Route = createFileRoute("/api/public/google-calendar/callback")({
         }
 
         try {
-          const redirectUri = getRedirectUri(request);
+          const redirectUri = verified.redirect_uri || getRedirectUri(request);
           const tokens = await exchangeCode(code, redirectUri);
           if (!tokens.refresh_token) {
             return htmlResponse(
