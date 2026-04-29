@@ -390,7 +390,7 @@ export function ChatWidgetPage() {
               <div className="rounded-xl border border-border bg-[oklch(0.96_0.012_85)] overflow-hidden h-[560px] flex items-end justify-end p-5">
                 {previewUrl && (
                   <iframe
-                    key={previewUrl}
+                    key={`${previewUrl}-${previewKey}`}
                     src={previewUrl}
                     title="Widget preview"
                     className="w-full max-w-[360px] h-full rounded-2xl bg-white shadow-2xl border-none"
