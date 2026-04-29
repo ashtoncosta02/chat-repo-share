@@ -90,7 +90,8 @@ export const createManualBooking = createServerFn({ method: "POST" })
     const result = await bookAppointment({
       agentId: data.agent_id,
       userId: auth.userId,
-      conversationId: null as unknown as string, // manual bookings have no conversation
+      conversationId: null,
+      source: "manual",
       args: {
         start_iso: data.start_iso,
         duration_minutes: data.duration_minutes,
