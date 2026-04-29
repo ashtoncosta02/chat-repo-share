@@ -46,7 +46,8 @@ function getOrigin(request: Request): string {
   const forwardedHost = request.headers.get("x-forwarded-host");
   if (forwardedHost) {
     const forwardedProto = request.headers.get("x-forwarded-proto") || "https";
-    return `${forwardedProto}://${forwardedHost}`;
+    const forwardedOrigin = `${forwardedProto}://${forwardedHost}`;
+    if (!isLocalOrigin(forwardedOrigin) && !isPrivatePreviewOrigin(forwardedOrigin)) return forwardedOrigin;
   }
 
   const url = new URL(request.url);
