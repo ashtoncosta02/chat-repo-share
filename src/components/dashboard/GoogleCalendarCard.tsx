@@ -45,10 +45,20 @@ export function GoogleCalendarCard({ agentId }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agentId]);
 
+  const getAccessToken = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token ?? null;
+  };
+
   const handleConnect = async () => {
     setBusy(true);
     try {
-      const res = await startConnect({ data: { agent_id: agentId } });
+      const accessToken = await getAccessToken();
+      if (!accessToken) {
+        toast.error("Please sign in again.");
+        return;
+      }
+      const res = await startConnect({ data: { accessToken, agent_id: agentId } });
       if (!res.success) {
         toast.error(res.error);
         return;
