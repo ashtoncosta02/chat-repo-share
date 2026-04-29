@@ -43,10 +43,10 @@ export function ChatWidgetPage() {
     if (!user) return;
     supabase
       .from("agents")
-      .select("id, business_name, is_live")
+      .select("id, business_name, is_live, widget_color, widget_greeting, widget_position")
       .order("created_at", { ascending: false })
       .then(({ data }) => {
-        const rows = data ?? [];
+        const rows = (data ?? []) as AgentRow[];
         setAgents(rows);
         setSelectedId((prev) => prev ?? rows[0]?.id ?? null);
         setLoading(false);
