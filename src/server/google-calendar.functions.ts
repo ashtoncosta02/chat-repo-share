@@ -57,3 +57,50 @@ export const disconnectGoogleCalendar = createServerFn({ method: "POST" })
     if (error) return { success: false as const, error: error.message };
     return { success: true as const };
   });
+
+export const createManualBooking = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        accessToken: z.string().min(1),
+        agent_id: z.string().uuid(),
+        start_iso: z.string().min(1),
+        duration_minutes: z.number().int().min(5).max(480),
+        customer_name: z.string().min(1).max(200),
+        customer_email: z.string().email(),
+        customer_phone: z.string().max(50).optional(),
+        reason: z.string().max(500).optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const auth = await getAuthenticatedUserId(data.accessToken);
+    if ("error" in auth) return { success: false as const, error: auth.error };
+
+    // Verify the agent belongs to this user
+    const { data: agent } = await supabaseAdmin
+      .from("agents")
+      .select("id, user_id")
+      .eq("id", data.agent_id)
+      .maybeSingle();
+    if (!agent || agent.user_id !== auth.userId) {
+      return { success: false as const, error: "Agent not found" };
+    }
+
+    const result = await bookAppointment({
+      agentId: data.agent_id,
+      userId: auth.userId,
+      conversationId: null as unknown as string, // manual bookings have no conversation
+      args: {
+        start_iso: data.start_iso,
+        duration_minutes: data.duration_minutes,
+        customer_name: data.customer_name,
+        customer_email: data.customer_email,
+        customer_phone: data.customer_phone,
+        reason: data.reason,
+      },
+    });
+
+    if ("error" in result) return { success: false as const, error: result.error };
+    return { success: true as const, booking_id: result.booking_id, event_link: result.event_link };
+  });
