@@ -39,6 +39,7 @@ import { Mic, MicOff, Send, Bot, ArrowLeft, Calendar, Clock, Volume2, VolumeX, P
 import { toast } from "sonner";
 import { PhoneNumberSetup } from "@/components/dashboard/PhoneNumberSetup";
 import { AnswerModeCard } from "@/components/dashboard/AnswerModeCard";
+import { GoogleCalendarCard } from "@/components/dashboard/GoogleCalendarCard";
 import { VOICE_OPTIONS, DEFAULT_VOICE_ID, getVoiceById } from "@/lib/voices";
 
 export const Route = createFileRoute("/dashboard/agents/$agentId")({
@@ -504,6 +505,7 @@ function AgentDetailPage() {
           value={agent.answer_mode}
           onChange={(next) => setAgent((prev) => (prev ? { ...prev, answer_mode: next } : prev))}
         />
+        <GoogleCalendarCard agentId={agent.id} />
       </div>
 
       {/* Chat surface */}
