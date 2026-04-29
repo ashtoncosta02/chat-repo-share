@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
-import { Calendar, Check, ExternalLink, Loader2, Unlink } from "lucide-react";
+import { Calendar, Check, Copy, ExternalLink, Loader2, Unlink } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -149,8 +149,27 @@ export function GoogleCalendarCard({ agentId }: Props) {
       {manualUrl && !conn && (
         <div className="mt-4 flex flex-col gap-2 rounded-xl border border-border bg-background/60 p-3">
           <p className="text-sm text-muted-foreground">
-            Click the link below to open Google in a real browser tab.
+            If Google opens as blocked, copy this authorization URL and paste it into your browser address bar.
           </p>
+          <div className="flex gap-2">
+            <input
+              value={manualUrl}
+              readOnly
+              className="min-w-0 flex-1 rounded-md border border-input bg-background px-3 py-2 text-xs text-foreground"
+              onFocus={(event) => event.currentTarget.select()}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                await navigator.clipboard.writeText(manualUrl);
+                toast.success("Authorization URL copied");
+              }}
+            >
+              <Copy className="h-4 w-4" />
+            </Button>
+          </div>
           <a
             href={manualUrl}
             target="_blank"
