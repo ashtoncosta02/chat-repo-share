@@ -46,7 +46,7 @@ export const Route = createFileRoute("/api/public/google-calendar/callback")({
         }
 
         try {
-          const redirectUri = getRedirectUri(request);
+          const redirectUri = verified.redirect_uri || getRedirectUri(request);
           const tokens = await exchangeCode(code, redirectUri);
           if (!tokens.refresh_token) {
             return htmlResponse(
@@ -60,22 +60,20 @@ export const Route = createFileRoute("/api/public/google-calendar/callback")({
           const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
 
           // Upsert by agent_id
-          const { error } = await supabaseAdmin
-            .from("agent_google_calendar")
-            .upsert(
-              {
-                agent_id: verified.agent_id,
-                user_id: verified.user_id,
-                google_email: userInfo.email,
-                google_user_id: userInfo.id,
-                access_token: tokens.access_token,
-                refresh_token: tokens.refresh_token,
-                token_expires_at: expiresAt,
-                scope: tokens.scope,
-                calendar_id: "primary",
-              },
-              { onConflict: "agent_id" },
-            );
+          const { error } = await supabaseAdmin.from("agent_google_calendar").upsert(
+            {
+              agent_id: verified.agent_id,
+              user_id: verified.user_id,
+              google_email: userInfo.email,
+              google_user_id: userInfo.id,
+              access_token: tokens.access_token,
+              refresh_token: tokens.refresh_token,
+              token_expires_at: expiresAt,
+              scope: tokens.scope,
+              calendar_id: "primary",
+            },
+            { onConflict: "agent_id" },
+          );
 
           if (error) {
             console.error("upsert failed", error);
