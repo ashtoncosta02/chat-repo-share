@@ -14,7 +14,31 @@ export const SCOPES = [
   "https://www.googleapis.com/auth/calendar.readonly",
 ].join(" ");
 
+function isLocalOrigin(origin: string): boolean {
+  try {
+    const host = new URL(origin).hostname;
+    return host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0";
+  } catch {
+    return false;
+  }
+}
+
 function getOrigin(request: Request): string {
+  const origin = request.headers.get("origin");
+  if (origin && !isLocalOrigin(origin)) return origin;
+
+  const referer = request.headers.get("referer");
+  if (referer) {
+    const refererOrigin = new URL(referer).origin;
+    if (!isLocalOrigin(refererOrigin)) return refererOrigin;
+  }
+
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  if (forwardedHost) {
+    const forwardedProto = request.headers.get("x-forwarded-proto") || "https";
+    return `${forwardedProto}://${forwardedHost}`;
+  }
+
   const url = new URL(request.url);
   return `${url.protocol}//${url.host}`;
 }
