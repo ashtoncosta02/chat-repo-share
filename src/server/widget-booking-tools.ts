@@ -280,6 +280,45 @@ export async function bookAppointment(params: {
     return { error: "Booking saved to calendar but failed to record. Please contact us." };
   }
 
+  // Upsert a lead so booked customers always show in the leads dashboard.
+  try {
+    const { data: existingLead } = await supabaseAdmin
+      .from("leads")
+      .select("id")
+      .eq("agent_id", agentId)
+      .eq("email", args.customer_email)
+      .maybeSingle();
+    const now = new Date().toISOString();
+    if (existingLead) {
+      await supabaseAdmin
+        .from("leads")
+        .update({
+          name: args.customer_name,
+          email: args.customer_email,
+          phone: args.customer_phone || null,
+          notes: `Booked appointment${args.reason ? `: ${args.reason}` : ""}`,
+          status: "won",
+          last_message_at: now,
+        })
+        .eq("id", existingLead.id);
+    } else {
+      await supabaseAdmin.from("leads").insert({
+        user_id: userId,
+        agent_id: agentId,
+        conversation_id: conversationId,
+        name: args.customer_name,
+        email: args.customer_email,
+        phone: args.customer_phone || null,
+        notes: `Booked appointment${args.reason ? `: ${args.reason}` : ""}`,
+        source,
+        status: "won",
+        last_message_at: now,
+      });
+    }
+  } catch (e) {
+    console.error("booking lead upsert failed:", e);
+  }
+
   return {
     ok: true,
     booking_id: booking.id,
