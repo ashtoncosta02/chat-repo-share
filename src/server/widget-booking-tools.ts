@@ -262,7 +262,7 @@ export async function bookAppointment(params: {
       agent_id: agentId,
       user_id: userId,
       conversation_id: conversationId,
-      source: "widget",
+      source,
       status: "confirmed",
       starts_at: start.toISOString(),
       ends_at: end.toISOString(),
