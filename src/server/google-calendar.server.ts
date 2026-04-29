@@ -6,6 +6,7 @@ const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo";
 const CALENDAR_API = "https://www.googleapis.com/calendar/v3";
+const LOVABLE_DEV_ORIGIN = "https://project--d1e796ad-671c-47e1-843b-cdecc02fe11f-dev.lovable.app";
 
 export const SCOPES = [
   "openid",
@@ -23,14 +24,23 @@ function isLocalOrigin(origin: string): boolean {
   }
 }
 
+function isPrivatePreviewOrigin(origin: string): boolean {
+  try {
+    const host = new URL(origin).hostname;
+    return host.endsWith(".lovableproject.com") || host.startsWith("id-preview--");
+  } catch {
+    return false;
+  }
+}
+
 function getOrigin(request: Request): string {
   const origin = request.headers.get("origin");
-  if (origin && !isLocalOrigin(origin)) return origin;
+  if (origin && !isLocalOrigin(origin) && !isPrivatePreviewOrigin(origin)) return origin;
 
   const referer = request.headers.get("referer");
   if (referer) {
     const refererOrigin = new URL(referer).origin;
-    if (!isLocalOrigin(refererOrigin)) return refererOrigin;
+    if (!isLocalOrigin(refererOrigin) && !isPrivatePreviewOrigin(refererOrigin)) return refererOrigin;
   }
 
   const forwardedHost = request.headers.get("x-forwarded-host");
@@ -40,6 +50,7 @@ function getOrigin(request: Request): string {
   }
 
   const url = new URL(request.url);
+  if (isLocalOrigin(url.origin) || isPrivatePreviewOrigin(url.origin)) return LOVABLE_DEV_ORIGIN;
   return `${url.protocol}//${url.host}`;
 }
 
