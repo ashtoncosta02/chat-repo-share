@@ -356,7 +356,7 @@ function NewBookingDialog({
         },
       });
       if (!result.success) {
-        setError(result.error);
+        setError(result.error ?? "Failed to create booking");
         return;
       }
       onCreated();
