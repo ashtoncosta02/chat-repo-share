@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getRequest } from "@tanstack/react-start/server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { buildAuthUrl, getRedirectUri, signState } from "./google-calendar.server";
+import { bookAppointment } from "./widget-booking-tools";
 
 async function getAuthenticatedUserId(accessToken: string) {
   const { data, error } = await supabaseAdmin.auth.getUser(accessToken);
