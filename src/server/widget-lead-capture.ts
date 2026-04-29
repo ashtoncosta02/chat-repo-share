@@ -140,12 +140,17 @@ export async function captureLeadFromWidget(args: CaptureArgs): Promise<void> {
 
     if (existingId) {
       // Patch with any new info; never overwrite with null.
-      const patch: Record<string, unknown> = { last_message_at: now };
+      const patch: {
+        last_message_at: string;
+        name?: string;
+        phone?: string;
+        email?: string;
+        notes?: string;
+      } = { last_message_at: now };
       if (lead.name) patch.name = lead.name;
       if (lead.phone) patch.phone = lead.phone;
       if (lead.email) patch.email = lead.email;
       if (lead.notes) patch.notes = lead.notes;
-      if (!existingId) return;
       await supabaseAdmin.from("leads").update(patch).eq("id", existingId);
     } else {
       await supabaseAdmin.from("leads").insert({
