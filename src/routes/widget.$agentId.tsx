@@ -77,12 +77,10 @@ function WidgetChat() {
           return;
         }
         setConfig(data);
-        setMessages([
-          {
-            role: "assistant",
-            content: `Hi! I'm ${data.assistantName} from ${data.businessName}. How can I help you today?`,
-          },
-        ]);
+        const greeting =
+          (data.widgetGreeting && data.widgetGreeting.trim()) ||
+          `Hi! I'm ${data.assistantName} from ${data.businessName}. How can I help you today?`;
+        setMessages([{ role: "assistant", content: greeting }]);
       })
       .catch(() => {
         if (!cancelled) setConfigError("Failed to load");
