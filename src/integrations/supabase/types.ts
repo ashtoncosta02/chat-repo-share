@@ -96,6 +96,9 @@ export type Database = {
           updated_at: string
           user_id: string
           voice_id: string | null
+          widget_color: string | null
+          widget_greeting: string | null
+          widget_position: string
         }
         Insert: {
           answer_mode?: string
@@ -118,6 +121,9 @@ export type Database = {
           updated_at?: string
           user_id: string
           voice_id?: string | null
+          widget_color?: string | null
+          widget_greeting?: string | null
+          widget_position?: string
         }
         Update: {
           answer_mode?: string
@@ -140,6 +146,9 @@ export type Database = {
           updated_at?: string
           user_id?: string
           voice_id?: string | null
+          widget_color?: string | null
+          widget_greeting?: string | null
+          widget_position?: string
         }
         Relationships: []
       }
