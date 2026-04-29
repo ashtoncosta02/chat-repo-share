@@ -185,7 +185,118 @@ export function ChatWidgetPage() {
                 </p>
               </div>
 
-              {/* Embed snippet */}
+              {/* Customization */}
+              <div className="rounded-xl border border-border bg-card p-5 space-y-5">
+                <div>
+                  <h2 className="text-sm font-semibold text-foreground">
+                    Customize appearance
+                  </h2>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Match the widget to your brand. Changes apply instantly to embedded sites.
+                  </p>
+                </div>
+
+                {/* Color */}
+                <div>
+                  <label className="text-sm font-medium text-foreground block mb-2">
+                    Brand color
+                  </label>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {PRESET_COLORS.map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => setDraftColor(c)}
+                        aria-label={`Use color ${c}`}
+                        className={`h-8 w-8 rounded-full border-2 transition-transform ${
+                          draftColor.toLowerCase() === c.toLowerCase()
+                            ? "border-foreground scale-110"
+                            : "border-transparent hover:scale-105"
+                        }`}
+                        style={{ background: c }}
+                      />
+                    ))}
+                    <div className="flex items-center gap-2 ml-1">
+                      <input
+                        type="color"
+                        value={draftColor}
+                        onChange={(e) => setDraftColor(e.target.value)}
+                        className="h-8 w-8 rounded cursor-pointer border border-border bg-transparent"
+                        aria-label="Pick custom color"
+                      />
+                      <input
+                        type="text"
+                        value={draftColor}
+                        onChange={(e) => setDraftColor(e.target.value)}
+                        className="w-24 rounded-md border border-border bg-background px-2 py-1 text-xs font-mono uppercase focus:outline-none focus:ring-2 focus:ring-[var(--gold)]/30"
+                        maxLength={7}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Greeting */}
+                <div>
+                  <label className="text-sm font-medium text-foreground block mb-2">
+                    Greeting message
+                  </label>
+                  <textarea
+                    value={draftGreeting}
+                    onChange={(e) => setDraftGreeting(e.target.value)}
+                    placeholder={
+                      selected
+                        ? `Hi! I'm ${selected.business_name}'s assistant. How can I help?`
+                        : ""
+                    }
+                    rows={2}
+                    maxLength={300}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--gold)]/30 resize-none"
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Leave blank to use the default greeting. {draftGreeting.length}/300
+                  </p>
+                </div>
+
+                {/* Position */}
+                <div>
+                  <label className="text-sm font-medium text-foreground block mb-2">
+                    Bubble position
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(["bottom-right", "bottom-left"] as const).map((pos) => (
+                      <button
+                        key={pos}
+                        type="button"
+                        onClick={() => setDraftPosition(pos)}
+                        className={`rounded-md border px-3 py-2 text-sm transition-colors ${
+                          draftPosition === pos
+                            ? "border-[var(--gold)] bg-[oklch(0.96_0.04_75)] text-foreground font-medium"
+                            : "border-border bg-background text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {pos === "bottom-right" ? "Bottom right" : "Bottom left"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+                  {isDirty && (
+                    <span className="text-xs text-muted-foreground mr-auto">
+                      Unsaved changes
+                    </span>
+                  )}
+                  <Button
+                    onClick={saveCustomization}
+                    disabled={!isDirty || saving}
+                    className="bg-[var(--gold)] hover:bg-[var(--gold)]/90 text-white"
+                  >
+                    {saving ? "Saving…" : "Save changes"}
+                  </Button>
+                </div>
+              </div>
+
+
               <div className="rounded-xl border border-border bg-card p-5">
                 <div className="flex items-center gap-2 mb-2">
                   <Code2 className="h-4 w-4 text-[var(--gold)]" />
