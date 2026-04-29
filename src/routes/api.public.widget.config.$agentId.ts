@@ -15,7 +15,7 @@ export const Route = createFileRoute("/api/public/widget/config/$agentId")({
       GET: async ({ params }) => {
         const { data: agent, error } = await supabaseAdmin
           .from("agents")
-          .select("id, business_name, assistant_name, tone, is_live")
+          .select("id, business_name, assistant_name, tone, is_live, widget_color, widget_greeting, widget_position")
           .eq("id", params.agentId)
           .maybeSingle();
 
@@ -33,6 +33,9 @@ export const Route = createFileRoute("/api/public/widget/config/$agentId")({
             assistantName: agent.assistant_name || "Assistant",
             tone: agent.tone,
             isLive: agent.is_live,
+            widgetColor: agent.widget_color || "#b8893a",
+            widgetGreeting: agent.widget_greeting || null,
+            widgetPosition: agent.widget_position || "bottom-right",
           }),
           {
             status: 200,

@@ -23,6 +23,20 @@ interface WidgetConfig {
   assistantName: string;
   tone: string | null;
   isLive: boolean;
+  widgetColor: string;
+  widgetGreeting: string | null;
+  widgetPosition: "bottom-right" | "bottom-left";
+}
+
+function lighten(hex: string, amount = 0.18): string {
+  const m = /^#?([a-f\d]{6})$/i.exec(hex);
+  if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  r = Math.min(255, Math.round(r + (255 - r) * amount));
+  g = Math.min(255, Math.round(g + (255 - g) * amount));
+  b = Math.min(255, Math.round(b + (255 - b) * amount));
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
 }
 
 function getOrCreateSessionToken(agentId: string): string {
@@ -63,12 +77,10 @@ function WidgetChat() {
           return;
         }
         setConfig(data);
-        setMessages([
-          {
-            role: "assistant",
-            content: `Hi! I'm ${data.assistantName} from ${data.businessName}. How can I help you today?`,
-          },
-        ]);
+        const greeting =
+          (data.widgetGreeting && data.widgetGreeting.trim()) ||
+          `Hi! I'm ${data.assistantName} from ${data.businessName}. How can I help you today?`;
+        setMessages([{ role: "assistant", content: greeting }]);
       })
       .catch(() => {
         if (!cancelled) setConfigError("Failed to load");
@@ -203,6 +215,10 @@ function WidgetChat() {
     );
   }
 
+  const brand = config?.widgetColor || "#b8893a";
+  const brandLight = lighten(brand, 0.2);
+  const headerGradient = `linear-gradient(135deg, ${brand}, ${brandLight})`;
+
   return (
     <div
       style={{
@@ -219,7 +235,7 @@ function WidgetChat() {
       <div
         style={{
           padding: "16px 20px",
-          background: "linear-gradient(135deg, #b8893a, #d4a857)",
+          background: headerGradient,
           color: "#fff",
           display: "flex",
           alignItems: "center",
@@ -282,7 +298,7 @@ function WidgetChat() {
                 maxWidth: "80%",
                 padding: "10px 14px",
                 borderRadius: 14,
-                background: m.role === "user" ? "#b8893a" : "#fff",
+                background: m.role === "user" ? brand : "#fff",
                 color: m.role === "user" ? "#fff" : "#1a1a1a",
                 fontSize: 14,
                 lineHeight: 1.45,
@@ -357,7 +373,7 @@ function WidgetChat() {
           type="submit"
           disabled={!input.trim() || sending || !config}
           style={{
-            background: "linear-gradient(135deg, #b8893a, #d4a857)",
+            background: headerGradient,
             color: "#fff",
             border: "none",
             borderRadius: 20,
@@ -378,7 +394,7 @@ function WidgetChat() {
         .af-md p:last-child { margin-bottom: 0; }
         .af-md ul, .af-md ol { margin: 6px 0 6px 18px; padding: 0; }
         .af-md li { margin-bottom: 2px; }
-        .af-md a { color: #b8893a; text-decoration: underline; }
+        .af-md a { color: ${brand}; text-decoration: underline; }
         .af-md code { background: #f0ece1; padding: 1px 4px; border-radius: 3px; font-size: 12px; }
       `}</style>
     </div>
