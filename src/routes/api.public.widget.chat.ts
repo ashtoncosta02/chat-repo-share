@@ -330,6 +330,23 @@ export const Route = createFileRoute("/api/public/widget/chat")({
           console.error("Failed to persist assistant message:", err);
         }
 
+        // Fire-and-forget lead capture — never block the response.
+        // Only run when there's enough context (>=2 user messages) to avoid
+        // wasting tokens on a single "hi".
+        const userMsgCount = messages.filter((m) => m.role === "user").length;
+        if (userMsgCount >= 2) {
+          const allMessages = [
+            ...messages.map((m) => ({ role: m.role, content: m.content })),
+            { role: "assistant" as const, content: finalText },
+          ];
+          captureLeadFromWidget({
+            agentId,
+            userId: agent.user_id,
+            conversationId,
+            messages: allMessages,
+          }).catch((e) => console.error("lead capture bg error:", e));
+        }
+
         return sseFromText(finalText, conversationId);
       },
     },
