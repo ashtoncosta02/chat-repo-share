@@ -23,6 +23,20 @@ interface WidgetConfig {
   assistantName: string;
   tone: string | null;
   isLive: boolean;
+  widgetColor: string;
+  widgetGreeting: string | null;
+  widgetPosition: "bottom-right" | "bottom-left";
+}
+
+function lighten(hex: string, amount = 0.18): string {
+  const m = /^#?([a-f\d]{6})$/i.exec(hex);
+  if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  r = Math.min(255, Math.round(r + (255 - r) * amount));
+  g = Math.min(255, Math.round(g + (255 - g) * amount));
+  b = Math.min(255, Math.round(b + (255 - b) * amount));
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
 }
 
 function getOrCreateSessionToken(agentId: string): string {
