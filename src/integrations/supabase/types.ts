@@ -253,32 +253,44 @@ export type Database = {
       leads: {
         Row: {
           agent_id: string | null
+          conversation_id: string | null
           created_at: string
           email: string | null
           id: string
+          last_message_at: string | null
           name: string | null
           notes: string | null
           phone: string | null
+          source: string | null
+          status: string
           user_id: string
         }
         Insert: {
           agent_id?: string | null
+          conversation_id?: string | null
           created_at?: string
           email?: string | null
           id?: string
+          last_message_at?: string | null
           name?: string | null
           notes?: string | null
           phone?: string | null
+          source?: string | null
+          status?: string
           user_id: string
         }
         Update: {
           agent_id?: string | null
+          conversation_id?: string | null
           created_at?: string
           email?: string | null
           id?: string
+          last_message_at?: string | null
           name?: string | null
           notes?: string | null
           phone?: string | null
+          source?: string | null
+          status?: string
           user_id?: string
         }
         Relationships: [
