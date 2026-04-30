@@ -58,6 +58,53 @@ export const disconnectGoogleCalendar = createServerFn({ method: "POST" })
     return { success: true as const };
   });
 
+const dayHoursSchema = z.object({
+  enabled: z.boolean(),
+  start: z.string().regex(/^\d{1,2}:\d{2}$/),
+  end: z.string().regex(/^\d{1,2}:\d{2}$/),
+});
+
+const businessHoursSchema = z.object({
+  sunday: dayHoursSchema,
+  monday: dayHoursSchema,
+  tuesday: dayHoursSchema,
+  wednesday: dayHoursSchema,
+  thursday: dayHoursSchema,
+  friday: dayHoursSchema,
+  saturday: dayHoursSchema,
+});
+
+export const updateCalendarSettings = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        accessToken: z.string().min(1),
+        agent_id: z.string().uuid(),
+        timezone: z.string().min(1).max(64),
+        default_event_duration_minutes: z.number().int().min(5).max(480),
+        booking_buffer_minutes: z.number().int().min(0).max(240),
+        business_hours: businessHoursSchema,
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const auth = await getAuthenticatedUserId(data.accessToken);
+    if ("error" in auth) return { success: false as const, error: auth.error };
+
+    const { error } = await supabaseAdmin
+      .from("agent_google_calendar")
+      .update({
+        timezone: data.timezone,
+        default_event_duration_minutes: data.default_event_duration_minutes,
+        booking_buffer_minutes: data.booking_buffer_minutes,
+        business_hours: data.business_hours,
+      })
+      .eq("agent_id", data.agent_id)
+      .eq("user_id", auth.userId);
+    if (error) return { success: false as const, error: error.message };
+    return { success: true as const };
+  });
+
 export const createManualBooking = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
     z
