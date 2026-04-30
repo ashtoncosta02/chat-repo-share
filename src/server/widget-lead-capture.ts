@@ -116,15 +116,8 @@ export async function captureLeadFromWidget(args: CaptureArgs): Promise<void> {
         .maybeSingle();
       if (data?.id) existingId = data.id;
     }
-    if (!existingId && lead.phone) {
-      const { data } = await supabaseAdmin
-        .from("leads")
-        .select("id")
-        .eq("agent_id", args.agentId)
-        .eq("phone", lead.phone)
-        .maybeSingle();
-      if (data?.id) existingId = data.id;
-    }
+    // Note: deduping is by email only (per product decision). Phone numbers
+    // are too often shared (households, businesses) to use as a dedup key.
     if (!existingId) {
       // Also dedupe by conversation: don't double-insert for same conversation.
       const { data } = await supabaseAdmin
