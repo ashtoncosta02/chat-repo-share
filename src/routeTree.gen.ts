@@ -21,9 +21,11 @@ import { Route as DashboardConversationsRouteImport } from './routes/dashboard.c
 import { Route as DashboardChatWidgetRouteImport } from './routes/dashboard.chat-widget'
 import { Route as DashboardBookingsRouteImport } from './routes/dashboard.bookings'
 import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard.analytics'
+import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
 import { Route as DashboardConversationsIndexRouteImport } from './routes/dashboard.conversations.index'
 import { Route as DashboardConversationsConversationIdRouteImport } from './routes/dashboard.conversations.$conversationId'
 import { Route as DashboardAgentsAgentIdRouteImport } from './routes/dashboard.agents.$agentId'
+import { Route as DashboardAdminUsersRouteImport } from './routes/dashboard.admin.users'
 import { Route as ApiPublicOwnerChatRouteImport } from './routes/api.public.owner-chat'
 import { Route as ApiPublicWidgetEmbedDotjsRouteImport } from './routes/api.public.widget.embed[.]js'
 import { Route as ApiPublicWidgetChatRouteImport } from './routes/api.public.widget.chat'
@@ -95,6 +97,11 @@ const DashboardAnalyticsRoute = DashboardAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardAdminRoute = DashboardAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardConversationsIndexRoute =
   DashboardConversationsIndexRouteImport.update({
     id: '/',
@@ -111,6 +118,11 @@ const DashboardAgentsAgentIdRoute = DashboardAgentsAgentIdRouteImport.update({
   id: '/agents/$agentId',
   path: '/agents/$agentId',
   getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardAdminUsersRoute = DashboardAdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => DashboardAdminRoute,
 } as any)
 const ApiPublicOwnerChatRoute = ApiPublicOwnerChatRouteImport.update({
   id: '/api/public/owner-chat',
@@ -173,6 +185,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRouteWithChildren
+  '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/bookings': typeof DashboardBookingsRoute
   '/dashboard/chat-widget': typeof DashboardChatWidgetRoute
@@ -183,6 +196,7 @@ export interface FileRoutesByFullPath {
   '/widget/$agentId': typeof WidgetAgentIdRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/api/public/owner-chat': typeof ApiPublicOwnerChatRoute
+  '/dashboard/admin/users': typeof DashboardAdminUsersRoute
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
   '/dashboard/conversations/': typeof DashboardConversationsIndexRoute
@@ -199,6 +213,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/bookings': typeof DashboardBookingsRoute
   '/dashboard/chat-widget': typeof DashboardChatWidgetRoute
@@ -208,6 +223,7 @@ export interface FileRoutesByTo {
   '/widget/$agentId': typeof WidgetAgentIdRoute
   '/dashboard': typeof DashboardIndexRoute
   '/api/public/owner-chat': typeof ApiPublicOwnerChatRoute
+  '/dashboard/admin/users': typeof DashboardAdminUsersRoute
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
   '/dashboard/conversations': typeof DashboardConversationsIndexRoute
@@ -226,6 +242,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRouteWithChildren
+  '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/bookings': typeof DashboardBookingsRoute
   '/dashboard/chat-widget': typeof DashboardChatWidgetRoute
@@ -236,6 +253,7 @@ export interface FileRoutesById {
   '/widget/$agentId': typeof WidgetAgentIdRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/api/public/owner-chat': typeof ApiPublicOwnerChatRoute
+  '/dashboard/admin/users': typeof DashboardAdminUsersRoute
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
   '/dashboard/conversations/': typeof DashboardConversationsIndexRoute
@@ -255,6 +273,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/dashboard/admin'
     | '/dashboard/analytics'
     | '/dashboard/bookings'
     | '/dashboard/chat-widget'
@@ -265,6 +284,7 @@ export interface FileRouteTypes {
     | '/widget/$agentId'
     | '/dashboard/'
     | '/api/public/owner-chat'
+    | '/dashboard/admin/users'
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
     | '/dashboard/conversations/'
@@ -281,6 +301,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/dashboard/admin'
     | '/dashboard/analytics'
     | '/dashboard/bookings'
     | '/dashboard/chat-widget'
@@ -290,6 +311,7 @@ export interface FileRouteTypes {
     | '/widget/$agentId'
     | '/dashboard'
     | '/api/public/owner-chat'
+    | '/dashboard/admin/users'
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
     | '/dashboard/conversations'
@@ -307,6 +329,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/dashboard/admin'
     | '/dashboard/analytics'
     | '/dashboard/bookings'
     | '/dashboard/chat-widget'
@@ -317,6 +340,7 @@ export interface FileRouteTypes {
     | '/widget/$agentId'
     | '/dashboard/'
     | '/api/public/owner-chat'
+    | '/dashboard/admin/users'
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
     | '/dashboard/conversations/'
@@ -433,6 +457,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAnalyticsRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/admin': {
+      id: '/dashboard/admin'
+      path: '/admin'
+      fullPath: '/dashboard/admin'
+      preLoaderRoute: typeof DashboardAdminRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/conversations/': {
       id: '/dashboard/conversations/'
       path: '/'
@@ -453,6 +484,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/agents/$agentId'
       preLoaderRoute: typeof DashboardAgentsAgentIdRouteImport
       parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/admin/users': {
+      id: '/dashboard/admin/users'
+      path: '/users'
+      fullPath: '/dashboard/admin/users'
+      preLoaderRoute: typeof DashboardAdminUsersRouteImport
+      parentRoute: typeof DashboardAdminRoute
     }
     '/api/public/owner-chat': {
       id: '/api/public/owner-chat'
@@ -527,6 +565,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface DashboardAdminRouteChildren {
+  DashboardAdminUsersRoute: typeof DashboardAdminUsersRoute
+}
+
+const DashboardAdminRouteChildren: DashboardAdminRouteChildren = {
+  DashboardAdminUsersRoute: DashboardAdminUsersRoute,
+}
+
+const DashboardAdminRouteWithChildren = DashboardAdminRoute._addFileChildren(
+  DashboardAdminRouteChildren,
+)
+
 interface DashboardConversationsRouteChildren {
   DashboardConversationsConversationIdRoute: typeof DashboardConversationsConversationIdRoute
   DashboardConversationsIndexRoute: typeof DashboardConversationsIndexRoute
@@ -545,6 +595,7 @@ const DashboardConversationsRouteWithChildren =
   )
 
 interface DashboardRouteChildren {
+  DashboardAdminRoute: typeof DashboardAdminRouteWithChildren
   DashboardAnalyticsRoute: typeof DashboardAnalyticsRoute
   DashboardBookingsRoute: typeof DashboardBookingsRoute
   DashboardChatWidgetRoute: typeof DashboardChatWidgetRoute
@@ -557,6 +608,7 @@ interface DashboardRouteChildren {
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardAdminRoute: DashboardAdminRouteWithChildren,
   DashboardAnalyticsRoute: DashboardAnalyticsRoute,
   DashboardBookingsRoute: DashboardBookingsRoute,
   DashboardChatWidgetRoute: DashboardChatWidgetRoute,
