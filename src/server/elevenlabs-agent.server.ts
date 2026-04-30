@@ -152,7 +152,8 @@ function buildAgentPayload(p: AgentBusinessProfile): ElevenLabsAgentConfig {
       },
       tts: {
         voice_id: p.voice_id || "EXAVITQu4vr4xnSDxMaL",
-        model_id: "eleven_turbo_v2_5",
+        // English agents require turbo or flash v2 family. Flash v2 is fastest.
+        model_id: "eleven_flash_v2",
         stability: 0.5,
         similarity_boost: 0.75,
         speed: 1.0,
