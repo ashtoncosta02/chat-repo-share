@@ -1,7 +1,8 @@
 import { createFileRoute, Outlet, Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { LayoutDashboard, BarChart3, User, MessageSquare, Plus, Phone, Menu, X, Code2, Calendar } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { LayoutDashboard, BarChart3, User, MessageSquare, Phone, Menu, X, Code2, Calendar } from "lucide-react";
 import { AgentFactoryLogo } from "@/components/AgentFactoryLogo";
 import { OwnerChatWidget } from "@/components/dashboard/OwnerChatWidget";
 import { ChatWidgetPage } from "./dashboard.chat-widget";
@@ -10,7 +11,7 @@ export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
       { title: "Dashboard — Agent Factory" },
-      { name: "description", content: "Manage your AI voice agents." },
+      { name: "description", content: "Manage your AI Receptionist." },
     ],
   }),
   component: DashboardLayout,
@@ -24,7 +25,6 @@ const navItems = [
   { to: "/dashboard/bookings", label: "Bookings", icon: Calendar },
   { to: "/dashboard/phone-numbers", label: "Phone Numbers", icon: Phone },
   { to: "/dashboard/chat-widget", label: "Chat Widget", icon: Code2 },
-  { to: "/dashboard/new-agent", label: "New Agent", icon: Plus },
 ] as const;
 
 function DashboardLayout() {
@@ -32,10 +32,38 @@ function DashboardLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
   }, [user, loading, navigate]);
+
+  // Gate: if a signed-in user has no completed receptionist, send them to onboarding.
+  // The onboarding route itself is excluded so the wizard can render.
+  useEffect(() => {
+    if (loading || !user) return;
+    if (location.pathname === "/dashboard/onboarding") {
+      setOnboardingChecked(true);
+      return;
+    }
+    let cancelled = false;
+    supabase
+      .from("agents")
+      .select("id, onboarding_completed")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return;
+        if (!data || !data.onboarding_completed) {
+          navigate({ to: "/dashboard/onboarding" });
+        } else {
+          setOnboardingChecked(true);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user, loading, location.pathname, navigate]);
 
   // Close drawer on route change
   useEffect(() => {
