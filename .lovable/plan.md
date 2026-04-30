@@ -4,21 +4,16 @@ Ordered so the most impactful customer-facing work ships first, your private adm
 
 ---
 
-## 1. Lead capture polish (next up — "must-do")
+## 1. Lead capture polish ✅ DONE
 
-The widget already chats and books, but visitors who don't book often still share a name/email mid-conversation. Right now those don't reliably land in the `leads` table or surface anywhere useful.
-
-**What we'll build**
-- Auto-extract name/email/phone from widget chats (server-side, after each visitor message) and upsert into `leads` with `agent_id` + source.
-- Link leads to `widget_conversations` so you can jump from a lead → full chat transcript.
-- Upgrade `dashboard.leads.tsx`: search, filter by agent, show last message preview, "View conversation" link, mark as contacted/won/lost.
-- Also pull customer info from `calendar_bookings` so booked customers show as leads too (deduped by email).
-
-**Why now:** Bookings + leads = the core business value of the widget. Without this, customers can't see ROI.
+- Auto-extract name/email/phone from widget chats via Lovable AI Gateway after each visitor message → upsert into `leads` (server-side, fire-and-forget).
+- Dedupe by email only (per product decision — phones too often shared).
+- Booked customers from `calendar_bookings` (widget OR manual) auto-upsert into leads with `status=won`, deduped by email.
+- Leads dashboard has search, agent filter, status filter (new/contacted/won/lost), "Chat" link to full transcript, status pipeline editor.
 
 ---
 
-## 2. Agent analytics (per-agent performance)
+## 2. Agent analytics (next up — per-agent performance)
 
 Customer-facing analytics so each user sees how their agent(s) perform.
 
