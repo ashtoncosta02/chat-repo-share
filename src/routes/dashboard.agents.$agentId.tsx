@@ -1020,6 +1020,16 @@ function AgentDetailPage() {
                 e.preventDefault();
                 if (!user) return;
                 setDeleting(true);
+                // Best-effort: remove the live ElevenLabs agent first.
+                try {
+                  const { data: session } = await supabase.auth.getSession();
+                  const token = session.session?.access_token;
+                  if (token) {
+                    await deleteEl({ data: { accessToken: token, agentId: agent.id } });
+                  }
+                } catch (e) {
+                  console.error("EL delete failed (non-blocking):", e);
+                }
                 // Clean up dependent rows first (no FK cascade defined).
                 const { data: convs } = await supabase
                   .from("conversations")
