@@ -147,7 +147,7 @@ function buildAgentPayload(p: AgentBusinessProfile): ElevenLabsAgentConfig {
         prompt: {
           prompt: buildSystemPrompt(p),
           // Fast + cheap reasoning model for natural phone conversation.
-          llm: "gemini-2.0-flash-001",
+          llm: "gemini-2.0-flash",
         },
       },
       tts: {
