@@ -156,3 +156,34 @@ export const getReceptionistPreviewToken = createServerFn({ method: "POST" })
 // Phone-to-EL linking happens via the platform owner uploading Twilio
 // account creds in the ElevenLabs dashboard. Once imported there, EL handles
 // inbound calls automatically.
+
+const DeleteInput = z.object({
+  accessToken: z.string().min(1),
+  agentId: z.string().uuid(),
+});
+
+/** Removes the EL agent for this receptionist (called before DB delete). */
+export const deleteReceptionistAgent = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => DeleteInput.parse(input))
+  .handler(async ({ data }) => {
+    const auth = await authUser(data.accessToken);
+    if ("error" in auth) return { success: false as const, error: auth.error };
+
+    const { data: row } = await supabaseAdmin
+      .from("agents")
+      .select("elevenlabs_agent_id")
+      .eq("id", data.agentId)
+      .eq("user_id", auth.userId)
+      .maybeSingle();
+    if (!row?.elevenlabs_agent_id) return { success: true as const };
+    try {
+      await deleteElevenLabsAgent(row.elevenlabs_agent_id);
+      return { success: true as const };
+    } catch (e) {
+      console.error("deleteReceptionistAgent error:", e);
+      return {
+        success: false as const,
+        error: e instanceof Error ? e.message : "Could not delete voice agent.",
+      };
+    }
+  });
