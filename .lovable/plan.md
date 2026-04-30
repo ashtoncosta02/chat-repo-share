@@ -13,17 +13,12 @@ Ordered so the most impactful customer-facing work ships first, your private adm
 
 ---
 
-## 2. Agent analytics (next up — per-agent performance)
+## 2. Agent analytics ✅ DONE
 
-Customer-facing analytics so each user sees how their agent(s) perform.
-
-**What we'll build**
-- New `dashboard.analytics.tsx` (route exists — currently empty/basic).
-- Per-agent cards showing: conversations (7d / 30d), messages, leads captured, bookings made, conversion rate (conversations → bookings).
-- Simple time-series chart (recharts) of conversations and bookings over the last 30 days.
-- Top pages widget loaded on (from `widget_conversations.page_url`).
-
-**Why:** Customers need proof the agent is working to keep paying.
+- `dashboard.analytics.tsx` ships with: 5 metric cards (conversations, chat, voice, leads, bookings + conversion rate), daily time-series line chart (chats/voice/leads/bookings), and an hour-of-day bar chart with peak hour callout.
+- Date range selector (7/14/30/90 days) and per-receptionist filter (auto-hidden when only 1 receptionist exists, since that's the hard product limit).
+- Per-receptionist leaderboard table also auto-hides when only 1 receptionist.
+- Copy reflects "AI Receptionist" branding.
 
 ---
 
