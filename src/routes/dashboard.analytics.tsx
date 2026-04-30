@@ -25,7 +25,7 @@ import {
 } from "recharts";
 
 export const Route = createFileRoute("/dashboard/analytics")({
-  head: () => ({ meta: [{ title: "Analytics — Agent Factory" }] }),
+  head: () => ({ meta: [{ title: "Analytics — AI Receptionist" }] }),
   component: AnalyticsPage,
 });
 
@@ -224,23 +224,25 @@ function AnalyticsPage() {
     <div>
       <PageHeader
         title="Analytics"
-        description="Conversations, leads, bookings, and conversion across your agents"
+        description="Conversations, leads, bookings, and conversion for your AI receptionist"
       />
       <div className="p-4 md:p-8 space-y-4 md:space-y-6">
         <div className="flex flex-col sm:flex-row gap-2">
-          <Select value={agentFilter} onValueChange={setAgentFilter}>
-            <SelectTrigger className="sm:w-64">
-              <SelectValue placeholder="All agents" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All agents</SelectItem>
-              {agents.map((a) => (
-                <SelectItem key={a.id} value={a.id}>
-                  {a.business_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {agents.length > 1 && (
+            <Select value={agentFilter} onValueChange={setAgentFilter}>
+              <SelectTrigger className="sm:w-64">
+                <SelectValue placeholder="All receptionists" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All receptionists</SelectItem>
+                {agents.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.business_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <Select value={range} onValueChange={(v) => setRange(v as RangeKey)}>
             <SelectTrigger className="sm:w-48">
               <SelectValue />
@@ -299,45 +301,47 @@ function AnalyticsPage() {
               </ResponsiveContainer>
             </ChartCard>
 
-            <ChartCard
-              title="Per-Agent Performance"
-              description="Ranked by total conversations in this range"
-            >
-              {leaderboard.length === 0 ? (
-                <div className="text-sm text-muted-foreground py-8 text-center">
-                  No activity in this range yet.
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-left text-muted-foreground border-b border-border">
-                        <th className="py-2 pr-4 font-medium">Agent</th>
-                        <th className="py-2 px-4 font-medium text-right">Conversations</th>
-                        <th className="py-2 px-4 font-medium text-right">Leads</th>
-                        <th className="py-2 px-4 font-medium text-right">Bookings</th>
-                        <th className="py-2 pl-4 font-medium text-right">Conversion</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {leaderboard.map((row, i) => (
-                        <tr key={i} className="border-b border-border/50 last:border-0">
-                          <td className="py-3 pr-4 font-medium text-foreground truncate max-w-[200px]">
-                            {row.name}
-                          </td>
-                          <td className="py-3 px-4 text-right">{row.convs}</td>
-                          <td className="py-3 px-4 text-right text-emerald-600">{row.leads}</td>
-                          <td className="py-3 px-4 text-right text-blue-600">{row.bookings}</td>
-                          <td className="py-3 pl-4 text-right text-muted-foreground">
-                            {row.conversion}%
-                          </td>
+            {agents.length > 1 && (
+              <ChartCard
+                title="Per-Receptionist Performance"
+                description="Ranked by total conversations in this range"
+              >
+                {leaderboard.length === 0 ? (
+                  <div className="text-sm text-muted-foreground py-8 text-center">
+                    No activity in this range yet.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left text-muted-foreground border-b border-border">
+                          <th className="py-2 pr-4 font-medium">Receptionist</th>
+                          <th className="py-2 px-4 font-medium text-right">Conversations</th>
+                          <th className="py-2 px-4 font-medium text-right">Leads</th>
+                          <th className="py-2 px-4 font-medium text-right">Bookings</th>
+                          <th className="py-2 pl-4 font-medium text-right">Conversion</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </ChartCard>
+                      </thead>
+                      <tbody>
+                        {leaderboard.map((row, i) => (
+                          <tr key={i} className="border-b border-border/50 last:border-0">
+                            <td className="py-3 pr-4 font-medium text-foreground truncate max-w-[200px]">
+                              {row.name}
+                            </td>
+                            <td className="py-3 px-4 text-right">{row.convs}</td>
+                            <td className="py-3 px-4 text-right text-emerald-600">{row.leads}</td>
+                            <td className="py-3 px-4 text-right text-blue-600">{row.bookings}</td>
+                            <td className="py-3 pl-4 text-right text-muted-foreground">
+                              {row.conversion}%
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </ChartCard>
+            )}
 
             <div className="hidden md:block">
               <ChartCard
