@@ -163,30 +163,54 @@ function OnboardingWizard() {
         sms_followup: f.sms_followup,
       }));
 
-    const { error } = await supabase.from("agents").insert({
-      user_id: user.id,
-      business_name: profile.business_name.trim(),
-      assistant_name: profile.assistant_name.trim() || "Ava",
-      industry: profile.industry.trim() || null,
-      tone: profile.tone.trim() || null,
-      primary_goal: profile.primary_goal.trim() || null,
-      services: profile.services.trim() || null,
-      booking_link: profile.booking_link.trim() || null,
-      emergency_number: profile.emergency_number.trim() || null,
-      pricing_notes: profile.pricing_notes.trim() || null,
-      escalation_triggers: profile.escalation_triggers.trim() || null,
-      source_url: url.trim() || null,
-      voice_id: voiceId,
-      faqs_structured: cleanFaqs,
-      sms_followup_enabled: smsFollowup,
-      onboarding_completed: true,
-      is_live: true,
-    });
-    setFinishing(false);
-    if (error) {
-      toast.error("Couldn't create your receptionist", { description: error.message });
+    const { data: inserted, error } = await supabase
+      .from("agents")
+      .insert({
+        user_id: user.id,
+        business_name: profile.business_name.trim(),
+        assistant_name: profile.assistant_name.trim() || "Ava",
+        industry: profile.industry.trim() || null,
+        tone: profile.tone.trim() || null,
+        primary_goal: profile.primary_goal.trim() || null,
+        services: profile.services.trim() || null,
+        booking_link: profile.booking_link.trim() || null,
+        emergency_number: profile.emergency_number.trim() || null,
+        pricing_notes: profile.pricing_notes.trim() || null,
+        escalation_triggers: profile.escalation_triggers.trim() || null,
+        source_url: url.trim() || null,
+        voice_id: voiceId,
+        faqs_structured: cleanFaqs,
+        sms_followup_enabled: smsFollowup,
+        onboarding_completed: true,
+        is_live: true,
+      })
+      .select("id")
+      .single();
+    if (error || !inserted) {
+      setFinishing(false);
+      toast.error("Couldn't create your receptionist", {
+        description: error?.message || "No row returned",
+      });
       return;
     }
+
+    // Provision the live ElevenLabs voice agent so the test page works
+    // immediately. Failure is non-fatal — user can re-sync from the
+    // dashboard by saving any change.
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const token = session.session?.access_token;
+      if (token) {
+        const r = await syncEl({
+          data: { accessToken: token, agentId: inserted.id },
+        });
+        if (!r.success) console.error("EL provision failed:", r.error);
+      }
+    } catch (e) {
+      console.error("EL provision exception:", e);
+    }
+
+    setFinishing(false);
     toast.success("Your AI Receptionist is live!");
     navigate({ to: "/dashboard" });
   };
