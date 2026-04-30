@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, StatCard } from "@/components/dashboard/PageHeader";
-import { Bot, CheckCircle2, MessageSquare, Phone, ChevronRight } from "lucide-react";
+import { Bot, Calendar, CheckCircle2, MessageSquare, Phone, ChevronRight } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/")({
   head: () => ({ meta: [{ title: "Dashboard — Agent Factory" }] }),
@@ -25,6 +25,7 @@ function DashboardHome() {
   const [agent, setAgent] = useState<AgentRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ conversations: 0, leads: 0, voiceCalls: 0 });
+  const [calendarConnected, setCalendarConnected] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -45,7 +46,7 @@ function DashboardHome() {
       setAgent(agentRow as AgentRow);
 
       // Pull lightweight counts in parallel
-      const [chats, leads, calls] = await Promise.all([
+      const [chats, leads, calls, cal] = await Promise.all([
         supabase
           .from("widget_conversations")
           .select("id", { count: "exact", head: true })
@@ -58,6 +59,10 @@ function DashboardHome() {
           .from("conversations")
           .select("id", { count: "exact", head: true })
           .eq("agent_id", agentRow.id),
+        supabase
+          .from("agent_google_calendar")
+          .select("id", { head: true, count: "exact" })
+          .eq("agent_id", agentRow.id),
       ]);
 
       if (cancelled) return;
@@ -66,6 +71,7 @@ function DashboardHome() {
         leads: leads.count ?? 0,
         voiceCalls: calls.count ?? 0,
       });
+      setCalendarConnected((cal.count ?? 0) > 0);
       setLoading(false);
     })();
     return () => {
@@ -145,6 +151,21 @@ function DashboardHome() {
               </div>
             </div>
             <div className="flex items-center gap-3 shrink-0">
+              <span
+                className={`hidden sm:inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full font-medium ${
+                  calendarConnected
+                    ? "bg-emerald-50 text-emerald-700"
+                    : "bg-amber-50 text-amber-700"
+                }`}
+                title={
+                  calendarConnected
+                    ? "Google Calendar connected — bookings enabled"
+                    : "Connect Google Calendar to let your receptionist book appointments"
+                }
+              >
+                <Calendar className="h-3 w-3" />
+                {calendarConnected ? "Calendar on" : "Calendar off"}
+              </span>
               <span
                 className={`text-xs px-2 py-1 rounded-full font-medium ${
                   agent.is_live
