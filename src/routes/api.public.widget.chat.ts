@@ -9,6 +9,7 @@ import {
   isCalendarConnected,
 } from "@/server/widget-booking-tools";
 import { captureLeadFromWidget } from "@/server/widget-lead-capture";
+import { coerceFaqs, faqsToPromptText, faqAllowsSms } from "@/lib/faqs";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -37,6 +38,8 @@ function buildSystemPrompt(agent: {
   industry: string | null;
   services: string | null;
   faqs: string | null;
+  faqs_structured: unknown;
+  sms_followup_enabled: boolean | null;
   pricing_notes: string | null;
   booking_link: string | null;
   emergency_number: string | null;
@@ -47,7 +50,7 @@ function buildSystemPrompt(agent: {
   const tone = agent.tone || "friendly and professional";
 
   const sections: string[] = [
-    `You are ${name}, the AI chat assistant for ${agent.business_name}.`,
+    `You are ${name}, the AI receptionist for ${agent.business_name}.`,
     `Tone: ${tone}. Be concise — keep responses to 1–3 short sentences unless the user asks for detail. Use plain language. Format with markdown when helpful (lists, bold).`,
     `Your job: answer visitor questions about the business, qualify leads, and capture contact info (name, email) when they show interest in booking, pricing, or follow-up.`,
   ];
@@ -56,7 +59,29 @@ function buildSystemPrompt(agent: {
   if (agent.primary_goal) sections.push(`Primary goal of this conversation: ${agent.primary_goal}.`);
   if (agent.services) sections.push(`Services offered:\n${agent.services}`);
   if (agent.pricing_notes) sections.push(`Pricing notes:\n${agent.pricing_notes}`);
-  if (agent.faqs) sections.push(`FAQs:\n${agent.faqs}`);
+
+  // Structured FAQs (preferred) with optional SMS-follow-up offer.
+  const structured = coerceFaqs(agent.faqs_structured);
+  const smsDefault = agent.sms_followup_enabled ?? false;
+  if (structured.length > 0) {
+    sections.push(`FAQs:\n${faqsToPromptText(structured)}`);
+    const smsTopics = structured
+      .filter((f) => faqAllowsSms(f, smsDefault))
+      .map((f) => f.question.trim())
+      .filter(Boolean);
+    if (smsTopics.length > 0) {
+      sections.push(
+        `SMS follow-up: After answering one of these FAQs, you may offer to text the visitor the answer. Ask "Would you like me to text that to you?" then ask for their phone number.\nSMS-eligible topics:\n${smsTopics.map((q) => `- ${q}`).join("\n")}`
+      );
+    } else if (smsDefault) {
+      sections.push(
+        `SMS follow-up: After answering any FAQ, you may offer to text the visitor the answer. Ask "Would you like me to text that to you?" then ask for their phone number.`
+      );
+    }
+  } else if (agent.faqs) {
+    sections.push(`FAQs:\n${agent.faqs}`);
+  }
+
   if (agent.booking_link) sections.push(`Booking link to share when relevant: ${agent.booking_link}`);
   if (agent.emergency_number) sections.push(`For urgent issues, share this emergency number: ${agent.emergency_number}.`);
   if (agent.escalation_triggers) sections.push(`Escalate (suggest contacting a human) when: ${agent.escalation_triggers}.`);
@@ -180,7 +205,7 @@ export const Route = createFileRoute("/api/public/widget/chat")({
         const { data: agent, error: agentErr } = await supabaseAdmin
           .from("agents")
           .select(
-            "id, user_id, business_name, assistant_name, tone, industry, services, faqs, pricing_notes, booking_link, emergency_number, primary_goal, escalation_triggers"
+            "id, user_id, business_name, assistant_name, tone, industry, services, faqs, faqs_structured, sms_followup_enabled, pricing_notes, booking_link, emergency_number, primary_goal, escalation_triggers"
           )
           .eq("id", agentId)
           .maybeSingle();

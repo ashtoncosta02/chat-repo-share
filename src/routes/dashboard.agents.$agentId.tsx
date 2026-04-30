@@ -35,15 +35,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Mic, MicOff, Send, Bot, ArrowLeft, Calendar, Clock, Volume2, VolumeX, Pencil, Trash2, Play } from "lucide-react";
+import { Mic, MicOff, Send, Bot, ArrowLeft, Calendar, Clock, Volume2, VolumeX, Pencil, Trash2, Play, Plus, X as XIcon, MessageSquare } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { PhoneNumberSetup } from "@/components/dashboard/PhoneNumberSetup";
 import { AnswerModeCard } from "@/components/dashboard/AnswerModeCard";
 import { GoogleCalendarCard } from "@/components/dashboard/GoogleCalendarCard";
 import { VOICE_OPTIONS, DEFAULT_VOICE_ID, getVoiceById } from "@/lib/voices";
+import { coerceFaqs, newFaq, parseLegacyFaqs, type StructuredFaq } from "@/lib/faqs";
 
 export const Route = createFileRoute("/dashboard/agents/$agentId")({
-  head: () => ({ meta: [{ title: "Agent — Agent Factory" }] }),
+  head: () => ({ meta: [{ title: "AI Receptionist — Agent Factory" }] }),
   component: AgentDetailPage,
 });
 
@@ -58,6 +60,8 @@ interface Agent {
   booking_link: string | null;
   emergency_number: string | null;
   faqs: string | null;
+  faqs_structured: unknown;
+  sms_followup_enabled: boolean;
   pricing_notes: string | null;
   escalation_triggers: string | null;
   is_live: boolean;
@@ -100,7 +104,8 @@ function AgentDetailPage() {
     services: "",
     booking_link: "",
     emergency_number: "",
-    faqs: "",
+    faqs_structured: [] as StructuredFaq[],
+    sms_followup_enabled: false,
     pricing_notes: "",
     escalation_triggers: "",
     voice_id: DEFAULT_VOICE_ID,
@@ -422,7 +427,7 @@ function AgentDetailPage() {
   if (!agent) {
     return (
       <div className="p-12 text-center">
-        <p className="text-muted-foreground mb-4">Agent not found.</p>
+        <p className="text-muted-foreground mb-4">Receptionist not found.</p>
         <Link to="/dashboard">
           <Button variant="outline">Back to Dashboard</Button>
         </Link>
@@ -457,7 +462,11 @@ function AgentDetailPage() {
                 services: agent.services ?? "",
                 booking_link: agent.booking_link ?? "",
                 emergency_number: agent.emergency_number ?? "",
-                faqs: agent.faqs ?? "",
+                faqs_structured: (() => {
+                  const s = coerceFaqs(agent.faqs_structured);
+                  return s.length > 0 ? s : parseLegacyFaqs(agent.faqs);
+                })(),
+                sms_followup_enabled: agent.sms_followup_enabled ?? false,
                 pricing_notes: agent.pricing_notes ?? "",
                 escalation_triggers: agent.escalation_triggers ?? "",
                 voice_id: agent.voice_id ?? DEFAULT_VOICE_ID,
@@ -632,9 +641,9 @@ function AgentDetailPage() {
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit agent</DialogTitle>
+            <DialogTitle>Edit receptionist</DialogTitle>
             <DialogDescription>
-              Update what your AI agent knows about your business.
+              Update what your AI receptionist knows about your business.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-2">
@@ -685,14 +694,113 @@ function AgentDetailPage() {
                 rows={3}
               />
             </div>
+            <div className="rounded-lg border border-border p-3 space-y-3 bg-muted/30">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <Label className="text-sm">SMS follow-up by default</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {assistantName} can offer to text callers an FAQ answer for their reference.
+                  </p>
+                </div>
+                <Switch
+                  checked={edit.sms_followup_enabled}
+                  onCheckedChange={(v) =>
+                    setEdit({ ...edit, sms_followup_enabled: v })
+                  }
+                />
+              </div>
+            </div>
             <div>
-              <Label htmlFor="ed-faq">FAQs</Label>
-              <Textarea
-                id="ed-faq"
-                value={edit.faqs}
-                onChange={(e) => setEdit({ ...edit, faqs: e.target.value })}
-                rows={4}
-              />
+              <div className="flex items-center justify-between mb-2">
+                <Label>FAQs</Label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    setEdit({ ...edit, faqs_structured: [...edit.faqs_structured, newFaq()] })
+                  }
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Add FAQ
+                </Button>
+              </div>
+              {edit.faqs_structured.length === 0 ? (
+                <p className="text-xs text-muted-foreground py-3 text-center border border-dashed border-border rounded-md">
+                  No FAQs yet. Click "Add FAQ" to create one.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {edit.faqs_structured.map((faq, idx) => {
+                    const smsOn = faq.sms_followup ?? edit.sms_followup_enabled;
+                    return (
+                      <div
+                        key={faq.id}
+                        className="rounded-lg border border-border bg-card p-3 space-y-2"
+                      >
+                        <div className="flex items-start gap-2">
+                          <Input
+                            placeholder="Question (e.g. What are your hours?)"
+                            value={faq.question}
+                            onChange={(e) => {
+                              const next = [...edit.faqs_structured];
+                              next[idx] = { ...faq, question: e.target.value };
+                              setEdit({ ...edit, faqs_structured: next });
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="text-muted-foreground hover:text-destructive shrink-0"
+                            onClick={() => {
+                              const next = edit.faqs_structured.filter((_, i) => i !== idx);
+                              setEdit({ ...edit, faqs_structured: next });
+                            }}
+                            aria-label="Remove FAQ"
+                          >
+                            <XIcon className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <Textarea
+                          placeholder="Answer"
+                          value={faq.answer}
+                          rows={2}
+                          onChange={(e) => {
+                            const next = [...edit.faqs_structured];
+                            next[idx] = { ...faq, answer: e.target.value };
+                            setEdit({ ...edit, faqs_structured: next });
+                          }}
+                        />
+                        <button
+                          type="button"
+                          className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition"
+                          onClick={() => {
+                            const next = [...edit.faqs_structured];
+                            // Cycle: undefined (default) -> true -> false -> undefined
+                            const cur = faq.sms_followup;
+                            const newVal =
+                              cur === undefined ? true : cur === true ? false : undefined;
+                            next[idx] = { ...faq, sms_followup: newVal };
+                            setEdit({ ...edit, faqs_structured: next });
+                          }}
+                        >
+                          <MessageSquare className="h-3.5 w-3.5" />
+                          SMS follow-up:{" "}
+                          <span
+                            className={`font-medium ${smsOn ? "text-emerald-600" : "text-muted-foreground"}`}
+                          >
+                            {faq.sms_followup === undefined
+                              ? `default (${edit.sms_followup_enabled ? "on" : "off"})`
+                              : faq.sms_followup
+                                ? "always on"
+                                : "always off"}
+                          </span>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
             <div>
               <Label htmlFor="ed-pricing">Pricing notes</Label>
@@ -799,6 +907,15 @@ function AgentDetailPage() {
               onClick={async () => {
                 if (!user) return;
                 setSaving(true);
+                // Strip blank FAQs and serialize for jsonb storage.
+                const cleanFaqs = edit.faqs_structured
+                  .map((f) => ({
+                    id: f.id,
+                    question: f.question.trim(),
+                    answer: f.answer.trim(),
+                    sms_followup: f.sms_followup,
+                  }))
+                  .filter((f) => f.question || f.answer);
                 const payload = {
                   business_name: edit.business_name.trim(),
                   assistant_name: edit.assistant_name.trim() || null,
@@ -807,7 +924,9 @@ function AgentDetailPage() {
                   services: edit.services.trim() || null,
                   booking_link: edit.booking_link.trim() || null,
                   emergency_number: edit.emergency_number.trim() || null,
-                  faqs: edit.faqs.trim() || null,
+                  faqs: null, // legacy column — structured is the source of truth now
+                  faqs_structured: cleanFaqs,
+                  sms_followup_enabled: edit.sms_followup_enabled,
                   pricing_notes: edit.pricing_notes.trim() || null,
                   escalation_triggers: edit.escalation_triggers.trim() || null,
                   voice_id: edit.voice_id || DEFAULT_VOICE_ID,
@@ -823,7 +942,7 @@ function AgentDetailPage() {
                 }
                 setAgent({ ...agent, ...payload });
                 setEditOpen(false);
-                toast.success("Agent updated");
+                toast.success("Receptionist updated");
               }}
             >
               {saving ? "Saving…" : "Save changes"}
@@ -836,7 +955,7 @@ function AgentDetailPage() {
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this agent?</AlertDialogTitle>
+            <AlertDialogTitle>Delete this receptionist?</AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently remove <strong>{agent.business_name}</strong> along with its
               conversations, messages, and leads. This cannot be undone.
@@ -868,11 +987,11 @@ function AgentDetailPage() {
                   toast.error("Couldn't delete agent", { description: error.message });
                   return;
                 }
-                toast.success("Agent deleted");
+                toast.success("Receptionist deleted");
                 navigate({ to: "/dashboard" });
               }}
             >
-              {deleting ? "Deleting…" : "Delete agent"}
+              {deleting ? "Deleting…" : "Delete receptionist"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

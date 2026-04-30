@@ -42,7 +42,7 @@ export function AnswerModeCard({ agentId, value, onChange }: Props) {
         </h2>
       </div>
       <p className="text-sm text-muted-foreground mb-4">
-        Choose how your AI agent picks up incoming calls. (Affects voice calls only —
+        Choose how your AI receptionist picks up incoming calls. (Affects voice calls only —
         SMS is always answered immediately.)
       </p>
 

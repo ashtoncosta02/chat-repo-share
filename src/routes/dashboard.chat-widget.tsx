@@ -162,10 +162,10 @@ export function ChatWidgetPage() {
           <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
             {/* Left: configuration */}
             <div className="space-y-6">
-              {/* Agent picker */}
+              {/* Receptionist picker (always 1, but kept as a labeled summary for clarity) */}
               <div className="rounded-xl border border-border bg-card p-5">
                 <label className="text-sm font-medium text-foreground block mb-2">
-                  Agent
+                  Receptionist
                 </label>
                 <select
                   value={selectedId ?? ""}
@@ -180,7 +180,7 @@ export function ChatWidgetPage() {
                   ))}
                 </select>
                 <p className="mt-2 text-xs text-muted-foreground">
-                  The widget uses this agent's business info, services, FAQs,
+                  The widget uses your receptionist's business info, services, FAQs,
                   and tone to answer questions.
                 </p>
               </div>

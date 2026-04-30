@@ -116,7 +116,7 @@ function BookingsPage() {
     <div>
       <PageHeader
         title="Bookings"
-        description="Appointments booked by your AI agents on your Google Calendar"
+        description="Appointments booked by your AI receptionist on your Google Calendar"
         action={
           bookableAgents.length > 0 ? (
             <button
@@ -154,7 +154,7 @@ function BookingsPage() {
               title={tab === "upcoming" ? "No upcoming bookings" : "No past bookings"}
               description={
                 tab === "upcoming"
-                  ? "When your AI agent books an appointment for a visitor, it will show up here. Or click \"New Booking\" to add one manually."
+                  ? "When your AI receptionist books an appointment for a visitor, it will show up here. Or click \"New Booking\" to add one manually."
                   : "Past appointments will appear here once they've ended."
               }
             />

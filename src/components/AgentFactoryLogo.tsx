@@ -5,7 +5,7 @@ export function AgentFactoryLogo({ className = "" }: { className?: string }) {
         <span className="text-foreground font-semibold">Agent</span>{" "}
         <span className="text-[var(--gold)] italic font-semibold">Factory</span>
       </h1>
-      <p className="mt-1 text-xs text-muted-foreground tracking-wide">AI Voice Platform</p>
+      <p className="mt-1 text-xs text-muted-foreground tracking-wide">AI Receptionist Platform</p>
     </div>
   );
 }
