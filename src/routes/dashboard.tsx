@@ -46,7 +46,7 @@ function DashboardLayout() {
   // The onboarding route itself is excluded so the wizard can render.
   useEffect(() => {
     if (loading || !user) return;
-    if (location.pathname === "/dashboard/onboarding") {
+    if (location.pathname === "/dashboard/onboarding" || location.pathname.startsWith("/dashboard/admin")) {
       setOnboardingChecked(true);
       return;
     }
