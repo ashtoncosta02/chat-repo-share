@@ -427,7 +427,7 @@ function AgentDetailPage() {
   if (!agent) {
     return (
       <div className="p-12 text-center">
-        <p className="text-muted-foreground mb-4">Agent not found.</p>
+        <p className="text-muted-foreground mb-4">Receptionist not found.</p>
         <Link to="/dashboard">
           <Button variant="outline">Back to Dashboard</Button>
         </Link>
@@ -641,9 +641,9 @@ function AgentDetailPage() {
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit agent</DialogTitle>
+            <DialogTitle>Edit receptionist</DialogTitle>
             <DialogDescription>
-              Update what your AI agent knows about your business.
+              Update what your AI receptionist knows about your business.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-2">
@@ -955,7 +955,7 @@ function AgentDetailPage() {
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this agent?</AlertDialogTitle>
+            <AlertDialogTitle>Delete this receptionist?</AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently remove <strong>{agent.business_name}</strong> along with its
               conversations, messages, and leads. This cannot be undone.
@@ -987,11 +987,11 @@ function AgentDetailPage() {
                   toast.error("Couldn't delete agent", { description: error.message });
                   return;
                 }
-                toast.success("Agent deleted");
+                toast.success("Receptionist deleted");
                 navigate({ to: "/dashboard" });
               }}
             >
-              {deleting ? "Deleting…" : "Delete agent"}
+              {deleting ? "Deleting…" : "Delete receptionist"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
