@@ -959,12 +959,37 @@ function AgentDetailPage() {
                   .from("agents")
                   .update(payload)
                   .eq("id", agent.id);
-                setSaving(false);
                 if (error) {
+                  setSaving(false);
                   toast.error("Couldn't save changes", { description: error.message });
                   return;
                 }
-                setAgent({ ...agent, ...payload });
+
+                // Push the latest config to the live ElevenLabs agent so
+                // callers immediately hear the new prompt + voice + FAQs.
+                let elAgentId = agent.elevenlabs_agent_id;
+                try {
+                  const { data: session } = await supabase.auth.getSession();
+                  const token = session.session?.access_token;
+                  if (token) {
+                    const r = await syncEl({
+                      data: { accessToken: token, agentId: agent.id },
+                    });
+                    if (r.success) {
+                      elAgentId = r.elevenlabs_agent_id;
+                    } else {
+                      console.error("EL sync failed:", r.error);
+                      toast.warning("Saved, but voice agent didn't sync", {
+                        description: r.error,
+                      });
+                    }
+                  }
+                } catch (e) {
+                  console.error("EL sync exception:", e);
+                }
+
+                setSaving(false);
+                setAgent({ ...agent, ...payload, elevenlabs_agent_id: elAgentId });
                 setEditOpen(false);
                 toast.success("Receptionist updated");
               }}
