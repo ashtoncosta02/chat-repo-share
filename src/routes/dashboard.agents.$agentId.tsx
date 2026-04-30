@@ -462,7 +462,11 @@ function AgentDetailPage() {
                 services: agent.services ?? "",
                 booking_link: agent.booking_link ?? "",
                 emergency_number: agent.emergency_number ?? "",
-                faqs: agent.faqs ?? "",
+                faqs_structured: (() => {
+                  const s = coerceFaqs(agent.faqs_structured);
+                  return s.length > 0 ? s : parseLegacyFaqs(agent.faqs);
+                })(),
+                sms_followup_enabled: agent.sms_followup_enabled ?? false,
                 pricing_notes: agent.pricing_notes ?? "",
                 escalation_triggers: agent.escalation_triggers ?? "",
                 voice_id: agent.voice_id ?? DEFAULT_VOICE_ID,
