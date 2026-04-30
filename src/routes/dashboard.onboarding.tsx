@@ -61,6 +61,7 @@ function OnboardingWizard() {
   const navigate = useNavigate();
   const scrape = useServerFn(scrapeBusinessFromUrl);
   const speak = useServerFn(speakText);
+  const syncEl = useServerFn(syncReceptionistAgent);
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [checkingExisting, setCheckingExisting] = useState(true);
