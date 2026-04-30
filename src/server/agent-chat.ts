@@ -146,6 +146,23 @@ The current time is ${nowIso}. The business timezone is ${calendarTimezone}. All
         ? `\n\nFor bookings, share the booking link: ${a.booking_link}`
         : `\n\nYou cannot book meetings — offer to take the customer's name and contact info instead.`;
 
+    // Build FAQ section: prefer structured, fall back to legacy text blob.
+    const structured = coerceFaqs(a.faqs_structured);
+    const smsDefault = a.sms_followup_enabled ?? false;
+    const faqSection = structured.length > 0 ? faqsToPromptText(structured) : a.faqs || "(none provided)";
+
+    // Determine which FAQs are SMS-eligible so the AI can offer to text the answer.
+    const smsEligibleQuestions = structured
+      .filter((f) => faqAllowsSms(f, smsDefault))
+      .map((f) => f.question.trim())
+      .filter(Boolean);
+
+    const smsInstructions = smsEligibleQuestions.length > 0
+      ? `\n\nSMS follow-up: For these specific FAQ topics, after answering, you may offer to text the caller the answer for their reference. Ask "Would you like me to text that to you?" If yes, ask for their phone number. SMS-eligible topics:\n${smsEligibleQuestions.map((q) => `- ${q}`).join("\n")}`
+      : smsDefault
+        ? `\n\nSMS follow-up: After answering any FAQ, you may offer to text the answer for the caller's reference. Ask "Would you like me to text that to you?" then ask for their phone number.`
+        : "";
+
     const system = `You are ${name}, a warm and professional AI receptionist for ${a.business_name}${a.industry ? ` (${a.industry})` : ""}.
 
 Tone: ${a.tone || "warm, friendly, professional"}.
@@ -155,13 +172,13 @@ Services:
 ${a.services || "(none provided)"}
 
 FAQs:
-${a.faqs || "(none provided)"}
+${faqSection}
 
 Pricing notes:
 ${a.pricing_notes || "(none provided)"}
 
 Emergency / handoff number: ${a.emergency_number || "(none)"}
-Escalate to a human if: ${a.escalation_triggers || "(use judgment)"}${bookingInstructions}
+Escalate to a human if: ${a.escalation_triggers || "(use judgment)"}${bookingInstructions}${smsInstructions}
 
 Rules:
 - The opening greeting has already been delivered. Do NOT introduce yourself again, do NOT say your name again, and do NOT say "this is ${name}" or "I'm ${name}" in any follow-up reply. Just answer the user's message directly.
