@@ -78,7 +78,8 @@ function DashboardLayout() {
   // The onboarding wizard at /dashboard/onboarding renders inside this layout
   // but does NOT need the gate to pass first.
   const isOnboardingRoute = location.pathname === "/dashboard/onboarding";
-  if (loading || !user || (!isOnboardingRoute && !onboardingChecked)) {
+  const isAdminRoute = location.pathname.startsWith("/dashboard/admin");
+  if (loading || !user || (!isOnboardingRoute && !isAdminRoute && !onboardingChecked)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-muted-foreground">Loading…</div>
