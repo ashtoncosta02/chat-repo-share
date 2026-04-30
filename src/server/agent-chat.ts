@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { checkFreeBusy, createEvent } from "./google-calendar.server";
+import { coerceFaqs, faqsToPromptText, faqAllowsSms } from "@/lib/faqs";
 
 const ChatInput = z.object({
   agent: z.object({
@@ -14,6 +15,8 @@ const ChatInput = z.object({
     booking_link: z.string().nullable().optional(),
     emergency_number: z.string().nullable().optional(),
     faqs: z.string().nullable().optional(),
+    faqs_structured: z.unknown().optional(),
+    sms_followup_enabled: z.boolean().optional(),
     pricing_notes: z.string().nullable().optional(),
     escalation_triggers: z.string().nullable().optional(),
     assistant_name: z.string().optional(),
