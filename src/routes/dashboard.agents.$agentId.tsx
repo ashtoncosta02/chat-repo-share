@@ -35,15 +35,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Mic, MicOff, Send, Bot, ArrowLeft, Calendar, Clock, Volume2, VolumeX, Pencil, Trash2, Play } from "lucide-react";
+import { Mic, MicOff, Send, Bot, ArrowLeft, Calendar, Clock, Volume2, VolumeX, Pencil, Trash2, Play, Plus, X as XIcon, MessageSquare } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { PhoneNumberSetup } from "@/components/dashboard/PhoneNumberSetup";
 import { AnswerModeCard } from "@/components/dashboard/AnswerModeCard";
 import { GoogleCalendarCard } from "@/components/dashboard/GoogleCalendarCard";
 import { VOICE_OPTIONS, DEFAULT_VOICE_ID, getVoiceById } from "@/lib/voices";
+import { coerceFaqs, newFaq, parseLegacyFaqs, type StructuredFaq } from "@/lib/faqs";
 
 export const Route = createFileRoute("/dashboard/agents/$agentId")({
-  head: () => ({ meta: [{ title: "Agent — Agent Factory" }] }),
+  head: () => ({ meta: [{ title: "AI Receptionist — Agent Factory" }] }),
   component: AgentDetailPage,
 });
 
@@ -58,6 +60,8 @@ interface Agent {
   booking_link: string | null;
   emergency_number: string | null;
   faqs: string | null;
+  faqs_structured: unknown;
+  sms_followup_enabled: boolean;
   pricing_notes: string | null;
   escalation_triggers: string | null;
   is_live: boolean;
@@ -100,7 +104,8 @@ function AgentDetailPage() {
     services: "",
     booking_link: "",
     emergency_number: "",
-    faqs: "",
+    faqs_structured: [] as StructuredFaq[],
+    sms_followup_enabled: false,
     pricing_notes: "",
     escalation_triggers: "",
     voice_id: DEFAULT_VOICE_ID,
