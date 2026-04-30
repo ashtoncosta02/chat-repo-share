@@ -37,7 +37,7 @@ function AdminOverviewPage() {
   }
 
   const stats = data && "stats" in data ? data.stats : null;
-  const recentSignups = data && "recentSignups" in data ? data.recentSignups : [];
+  const recentSignups = (data && "recentSignups" in data ? data.recentSignups : []) ?? [];
 
   return (
     <div className="min-h-full">

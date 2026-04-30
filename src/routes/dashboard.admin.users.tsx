@@ -11,8 +11,18 @@ export const Route = createFileRoute("/dashboard/admin/users")({
   component: AdminUsersPage,
 });
 
-type UsersResp = Awaited<ReturnType<typeof getAdminUsers>>;
-type AdminUser = UsersResp extends { users: infer U } ? (U extends Array<infer Item> ? Item : never) : never;
+type AdminUser = {
+  user_id: string;
+  email: string | null;
+  display_name: string | null;
+  created_at: string;
+  is_admin: boolean;
+  agent: { business_name: string; is_live: boolean; onboarding_completed: boolean } | null;
+  widget_conversations: number;
+  voice_conversations: number;
+  bookings: number;
+  leads: number;
+};
 
 function AdminUsersPage() {
   const { session } = useAuth();
