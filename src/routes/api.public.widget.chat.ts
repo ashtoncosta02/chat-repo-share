@@ -205,7 +205,7 @@ export const Route = createFileRoute("/api/public/widget/chat")({
         const { data: agent, error: agentErr } = await supabaseAdmin
           .from("agents")
           .select(
-            "id, user_id, business_name, assistant_name, tone, industry, services, faqs, pricing_notes, booking_link, emergency_number, primary_goal, escalation_triggers"
+            "id, user_id, business_name, assistant_name, tone, industry, services, faqs, faqs_structured, sms_followup_enabled, pricing_notes, booking_link, emergency_number, primary_goal, escalation_triggers"
           )
           .eq("id", agentId)
           .maybeSingle();
