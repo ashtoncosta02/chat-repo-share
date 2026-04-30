@@ -1,8 +1,9 @@
 import { createFileRoute, Outlet, Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { supabase } from "@/integrations/supabase/client";
-import { LayoutDashboard, BarChart3, User, MessageSquare, Phone, Menu, X, Code2, Calendar } from "lucide-react";
+import { LayoutDashboard, BarChart3, User, MessageSquare, Phone, Menu, X, Code2, Calendar, Shield } from "lucide-react";
 import { AgentFactoryLogo } from "@/components/AgentFactoryLogo";
 import { OwnerChatWidget } from "@/components/dashboard/OwnerChatWidget";
 import { ChatWidgetPage } from "./dashboard.chat-widget";
@@ -27,8 +28,11 @@ const navItems = [
   { to: "/dashboard/chat-widget", label: "Chat Widget", icon: Code2 },
 ] as const;
 
+const adminNavItem = { to: "/dashboard/admin", label: "Admin", icon: Shield } as const;
+
 function DashboardLayout() {
   const { user, loading, signOut } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -85,28 +89,31 @@ function DashboardLayout() {
   const isActive = (to: string, exact?: boolean) =>
     exact ? location.pathname === to : location.pathname.startsWith(to);
 
-  const NavLinks = () => (
-    <>
-      {navItems.map((item) => {
-        const Icon = item.icon;
-        const active = isActive(item.to, "exact" in item ? item.exact : false);
-        return (
-          <Link
-            key={item.to}
-            to={item.to}
-            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-              active
-                ? "bg-[oklch(0.96_0.04_75)] text-[var(--gold-foreground)] font-medium"
-                : "text-foreground/80 hover:bg-muted"
-            }`}
-          >
-            <Icon className="h-4 w-4" />
-            {item.label}
-          </Link>
-        );
-      })}
-    </>
-  );
+  const NavLinks = () => {
+    const items = isAdmin ? [...navItems, adminNavItem] : navItems;
+    return (
+      <>
+        {items.map((item) => {
+          const Icon = item.icon;
+          const active = isActive(item.to, "exact" in item ? item.exact : false);
+          return (
+            <Link
+              key={item.to}
+              to={item.to}
+              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                active
+                  ? "bg-[oklch(0.96_0.04_75)] text-[var(--gold-foreground)] font-medium"
+                  : "text-foreground/80 hover:bg-muted"
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              {item.label}
+            </Link>
+          );
+        })}
+      </>
+    );
+  };
 
   return (
     <div className="flex min-h-screen bg-[oklch(0.97_0.012_85)]">
