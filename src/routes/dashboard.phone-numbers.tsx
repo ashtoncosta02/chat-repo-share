@@ -77,7 +77,7 @@ function PhoneNumbersPage() {
     <div>
       <PageHeader
         title="Phone Numbers"
-        description="Real phone numbers connected to your AI agents"
+        description="Real phone numbers connected to your AI receptionist"
       />
       <div className="p-4 md:p-8 space-y-4 md:space-y-6">
         <div className="rounded-xl border border-[oklch(0.85_0.08_75)] bg-[oklch(0.97_0.04_80)] p-4 md:p-5 flex items-start gap-3">

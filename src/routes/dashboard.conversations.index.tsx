@@ -61,7 +61,7 @@ function ConversationsPage() {
             <EmptyState
               icon={<MessageSquare className="h-16 w-16 text-muted-foreground/40" />}
               title="No conversations yet"
-              description="Conversations are saved here automatically every time someone talks to one of your AI agents."
+              description="Conversations are saved here automatically every time someone talks to your AI receptionist."
             />
           ) : (
             <ul className="divide-y divide-border">
