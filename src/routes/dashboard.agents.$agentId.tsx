@@ -512,6 +512,26 @@ function AgentDetailPage() {
 
       {/* Phone number + answer mode */}
       <div className="px-4 md:px-8 pb-4 space-y-4">
+        <LiveVoicePreview
+          agentId={agent.id}
+          hasElevenLabsAgent={Boolean(agent.elevenlabs_agent_id)}
+          onProvisioned={() => {
+            // Refresh the agent row so the button copy flips from
+            // "Provision & test" to "Start voice test".
+            void supabase
+              .from("agents")
+              .select("elevenlabs_agent_id")
+              .eq("id", agent.id)
+              .maybeSingle()
+              .then(({ data }) => {
+                if (data?.elevenlabs_agent_id) {
+                  setAgent((prev) =>
+                    prev ? { ...prev, elevenlabs_agent_id: data.elevenlabs_agent_id } : prev,
+                  );
+                }
+              });
+          }}
+        />
         <PhoneNumberSetup agentId={agent.id} />
         <AnswerModeCard
           agentId={agent.id}
