@@ -85,12 +85,15 @@ export type Database = {
           emergency_number: string | null
           escalation_triggers: string | null
           faqs: string | null
+          faqs_structured: Json
           id: string
           industry: string | null
           is_live: boolean
+          onboarding_completed: boolean
           pricing_notes: string | null
           primary_goal: string | null
           services: string | null
+          sms_followup_enabled: boolean
           source_url: string | null
           tone: string | null
           updated_at: string
@@ -110,12 +113,15 @@ export type Database = {
           emergency_number?: string | null
           escalation_triggers?: string | null
           faqs?: string | null
+          faqs_structured?: Json
           id?: string
           industry?: string | null
           is_live?: boolean
+          onboarding_completed?: boolean
           pricing_notes?: string | null
           primary_goal?: string | null
           services?: string | null
+          sms_followup_enabled?: boolean
           source_url?: string | null
           tone?: string | null
           updated_at?: string
@@ -135,12 +141,15 @@ export type Database = {
           emergency_number?: string | null
           escalation_triggers?: string | null
           faqs?: string | null
+          faqs_structured?: Json
           id?: string
           industry?: string | null
           is_live?: boolean
+          onboarding_completed?: boolean
           pricing_notes?: string | null
           primary_goal?: string | null
           services?: string | null
+          sms_followup_enabled?: boolean
           source_url?: string | null
           tone?: string | null
           updated_at?: string
