@@ -41,6 +41,8 @@ import { toast } from "sonner";
 import { PhoneNumberSetup } from "@/components/dashboard/PhoneNumberSetup";
 import { AnswerModeCard } from "@/components/dashboard/AnswerModeCard";
 import { GoogleCalendarCard } from "@/components/dashboard/GoogleCalendarCard";
+import { LiveVoicePreview } from "@/components/dashboard/LiveVoicePreview";
+import { syncReceptionistAgent } from "@/server/elevenlabs-agent.functions";
 import { VOICE_OPTIONS, DEFAULT_VOICE_ID, getVoiceById } from "@/lib/voices";
 import { coerceFaqs, newFaq, parseLegacyFaqs, type StructuredFaq } from "@/lib/faqs";
 
