@@ -41,6 +41,8 @@ import { toast } from "sonner";
 import { PhoneNumberSetup } from "@/components/dashboard/PhoneNumberSetup";
 import { AnswerModeCard } from "@/components/dashboard/AnswerModeCard";
 import { GoogleCalendarCard } from "@/components/dashboard/GoogleCalendarCard";
+import { LiveVoicePreview } from "@/components/dashboard/LiveVoicePreview";
+import { syncReceptionistAgent, deleteReceptionistAgent } from "@/server/elevenlabs-agent.functions";
 import { VOICE_OPTIONS, DEFAULT_VOICE_ID, getVoiceById } from "@/lib/voices";
 import { coerceFaqs, newFaq, parseLegacyFaqs, type StructuredFaq } from "@/lib/faqs";
 
@@ -67,6 +69,7 @@ interface Agent {
   is_live: boolean;
   answer_mode: "immediate" | "after_4_rings";
   voice_id: string | null;
+  elevenlabs_agent_id: string | null;
 }
 
 interface Msg {
@@ -82,6 +85,8 @@ function AgentDetailPage() {
   const speak = useServerFn(speakText);
   const transcribe = useServerFn(transcribeAudio);
   const extractLead = useServerFn(extractLeadFromChat);
+  const syncEl = useServerFn(syncReceptionistAgent);
+  const deleteEl = useServerFn(deleteReceptionistAgent);
 
   const [agent, setAgent] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(true);
@@ -508,6 +513,26 @@ function AgentDetailPage() {
 
       {/* Phone number + answer mode */}
       <div className="px-4 md:px-8 pb-4 space-y-4">
+        <LiveVoicePreview
+          agentId={agent.id}
+          hasElevenLabsAgent={Boolean(agent.elevenlabs_agent_id)}
+          onProvisioned={() => {
+            // Refresh the agent row so the button copy flips from
+            // "Provision & test" to "Start voice test".
+            void supabase
+              .from("agents")
+              .select("elevenlabs_agent_id")
+              .eq("id", agent.id)
+              .maybeSingle()
+              .then(({ data }) => {
+                if (data?.elevenlabs_agent_id) {
+                  setAgent((prev) =>
+                    prev ? { ...prev, elevenlabs_agent_id: data.elevenlabs_agent_id } : prev,
+                  );
+                }
+              });
+          }}
+        />
         <PhoneNumberSetup agentId={agent.id} />
         <AnswerModeCard
           agentId={agent.id}
@@ -935,12 +960,37 @@ function AgentDetailPage() {
                   .from("agents")
                   .update(payload)
                   .eq("id", agent.id);
-                setSaving(false);
                 if (error) {
+                  setSaving(false);
                   toast.error("Couldn't save changes", { description: error.message });
                   return;
                 }
-                setAgent({ ...agent, ...payload });
+
+                // Push the latest config to the live ElevenLabs agent so
+                // callers immediately hear the new prompt + voice + FAQs.
+                let elAgentId = agent.elevenlabs_agent_id;
+                try {
+                  const { data: session } = await supabase.auth.getSession();
+                  const token = session.session?.access_token;
+                  if (token) {
+                    const r = await syncEl({
+                      data: { accessToken: token, agentId: agent.id },
+                    });
+                    if (r.success) {
+                      elAgentId = r.elevenlabs_agent_id;
+                    } else {
+                      console.error("EL sync failed:", r.error);
+                      toast.warning("Saved, but voice agent didn't sync", {
+                        description: r.error,
+                      });
+                    }
+                  }
+                } catch (e) {
+                  console.error("EL sync exception:", e);
+                }
+
+                setSaving(false);
+                setAgent({ ...agent, ...payload, elevenlabs_agent_id: elAgentId });
                 setEditOpen(false);
                 toast.success("Receptionist updated");
               }}
@@ -970,6 +1020,16 @@ function AgentDetailPage() {
                 e.preventDefault();
                 if (!user) return;
                 setDeleting(true);
+                // Best-effort: remove the live ElevenLabs agent first.
+                try {
+                  const { data: session } = await supabase.auth.getSession();
+                  const token = session.session?.access_token;
+                  if (token) {
+                    await deleteEl({ data: { accessToken: token, agentId: agent.id } });
+                  }
+                } catch (e) {
+                  console.error("EL delete failed (non-blocking):", e);
+                }
                 // Clean up dependent rows first (no FK cascade defined).
                 const { data: convs } = await supabase
                   .from("conversations")
