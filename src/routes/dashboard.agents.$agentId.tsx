@@ -69,6 +69,7 @@ interface Agent {
   is_live: boolean;
   answer_mode: "immediate" | "after_4_rings";
   voice_id: string | null;
+  elevenlabs_agent_id: string | null;
 }
 
 interface Msg {
