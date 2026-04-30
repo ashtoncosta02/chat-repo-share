@@ -907,6 +907,15 @@ function AgentDetailPage() {
               onClick={async () => {
                 if (!user) return;
                 setSaving(true);
+                // Strip blank FAQs and serialize for jsonb storage.
+                const cleanFaqs = edit.faqs_structured
+                  .map((f) => ({
+                    id: f.id,
+                    question: f.question.trim(),
+                    answer: f.answer.trim(),
+                    sms_followup: f.sms_followup,
+                  }))
+                  .filter((f) => f.question || f.answer);
                 const payload = {
                   business_name: edit.business_name.trim(),
                   assistant_name: edit.assistant_name.trim() || null,
@@ -915,7 +924,9 @@ function AgentDetailPage() {
                   services: edit.services.trim() || null,
                   booking_link: edit.booking_link.trim() || null,
                   emergency_number: edit.emergency_number.trim() || null,
-                  faqs: edit.faqs.trim() || null,
+                  faqs: null, // legacy column — structured is the source of truth now
+                  faqs_structured: cleanFaqs,
+                  sms_followup_enabled: edit.sms_followup_enabled,
                   pricing_notes: edit.pricing_notes.trim() || null,
                   escalation_triggers: edit.escalation_triggers.trim() || null,
                   voice_id: edit.voice_id || DEFAULT_VOICE_ID,
@@ -931,7 +942,7 @@ function AgentDetailPage() {
                 }
                 setAgent({ ...agent, ...payload });
                 setEditOpen(false);
-                toast.success("Agent updated");
+                toast.success("Receptionist updated");
               }}
             >
               {saving ? "Saving…" : "Save changes"}
