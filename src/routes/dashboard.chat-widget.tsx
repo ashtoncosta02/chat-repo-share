@@ -148,12 +148,12 @@ export function ChatWidgetPage() {
         ) : agents.length === 0 ? (
           <EmptyState
             icon={<MessageSquare className="h-10 w-10 text-muted-foreground" />}
-            title="No agents yet"
-            description="Create an agent first — the chat widget uses your agent's business info, services, and FAQs to answer visitors."
+            title="No receptionist yet"
+            description="Finish setting up your AI Receptionist first — the chat widget uses your business info, services, and FAQs to answer visitors."
             action={
-              <Link to="/dashboard/new-agent">
+              <Link to="/dashboard/onboarding">
                 <Button className="bg-[var(--gold)] hover:bg-[var(--gold)]/90 text-white">
-                  <Plus className="mr-2 h-4 w-4" /> Create Agent
+                  <Plus className="mr-2 h-4 w-4" /> Set up receptionist
                 </Button>
               </Link>
             }
