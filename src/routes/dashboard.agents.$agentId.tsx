@@ -694,14 +694,113 @@ function AgentDetailPage() {
                 rows={3}
               />
             </div>
+            <div className="rounded-lg border border-border p-3 space-y-3 bg-muted/30">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <Label className="text-sm">SMS follow-up by default</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {assistantName} can offer to text callers an FAQ answer for their reference.
+                  </p>
+                </div>
+                <Switch
+                  checked={edit.sms_followup_enabled}
+                  onCheckedChange={(v) =>
+                    setEdit({ ...edit, sms_followup_enabled: v })
+                  }
+                />
+              </div>
+            </div>
             <div>
-              <Label htmlFor="ed-faq">FAQs</Label>
-              <Textarea
-                id="ed-faq"
-                value={edit.faqs}
-                onChange={(e) => setEdit({ ...edit, faqs: e.target.value })}
-                rows={4}
-              />
+              <div className="flex items-center justify-between mb-2">
+                <Label>FAQs</Label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    setEdit({ ...edit, faqs_structured: [...edit.faqs_structured, newFaq()] })
+                  }
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Add FAQ
+                </Button>
+              </div>
+              {edit.faqs_structured.length === 0 ? (
+                <p className="text-xs text-muted-foreground py-3 text-center border border-dashed border-border rounded-md">
+                  No FAQs yet. Click "Add FAQ" to create one.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {edit.faqs_structured.map((faq, idx) => {
+                    const smsOn = faq.sms_followup ?? edit.sms_followup_enabled;
+                    return (
+                      <div
+                        key={faq.id}
+                        className="rounded-lg border border-border bg-card p-3 space-y-2"
+                      >
+                        <div className="flex items-start gap-2">
+                          <Input
+                            placeholder="Question (e.g. What are your hours?)"
+                            value={faq.question}
+                            onChange={(e) => {
+                              const next = [...edit.faqs_structured];
+                              next[idx] = { ...faq, question: e.target.value };
+                              setEdit({ ...edit, faqs_structured: next });
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="text-muted-foreground hover:text-destructive shrink-0"
+                            onClick={() => {
+                              const next = edit.faqs_structured.filter((_, i) => i !== idx);
+                              setEdit({ ...edit, faqs_structured: next });
+                            }}
+                            aria-label="Remove FAQ"
+                          >
+                            <XIcon className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <Textarea
+                          placeholder="Answer"
+                          value={faq.answer}
+                          rows={2}
+                          onChange={(e) => {
+                            const next = [...edit.faqs_structured];
+                            next[idx] = { ...faq, answer: e.target.value };
+                            setEdit({ ...edit, faqs_structured: next });
+                          }}
+                        />
+                        <button
+                          type="button"
+                          className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition"
+                          onClick={() => {
+                            const next = [...edit.faqs_structured];
+                            // Cycle: undefined (default) -> true -> false -> undefined
+                            const cur = faq.sms_followup;
+                            const newVal =
+                              cur === undefined ? true : cur === true ? false : undefined;
+                            next[idx] = { ...faq, sms_followup: newVal };
+                            setEdit({ ...edit, faqs_structured: next });
+                          }}
+                        >
+                          <MessageSquare className="h-3.5 w-3.5" />
+                          SMS follow-up:{" "}
+                          <span
+                            className={`font-medium ${smsOn ? "text-emerald-600" : "text-muted-foreground"}`}
+                          >
+                            {faq.sms_followup === undefined
+                              ? `default (${edit.sms_followup_enabled ? "on" : "off"})`
+                              : faq.sms_followup
+                                ? "always on"
+                                : "always off"}
+                          </span>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
             <div>
               <Label htmlFor="ed-pricing">Pricing notes</Label>
