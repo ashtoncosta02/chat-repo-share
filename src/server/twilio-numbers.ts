@@ -240,7 +240,7 @@ export const purchasePhoneNumber = createServerFn({ method: "POST" })
         .select()
         .single();
 
-      if (insertErr) {
+      if (insertErr || !inserted) {
         console.error("phone_numbers insert error:", insertErr);
         return {
           success: false as const,
@@ -248,7 +248,33 @@ export const purchasePhoneNumber = createServerFn({ method: "POST" })
         };
       }
 
-      return { success: true as const, phoneNumber: inserted };
+      // Auto-link to ElevenLabs (best-effort, non-blocking).
+      const { data: agentForEl } = await supabaseAdmin
+        .from("agents")
+        .select("elevenlabs_agent_id, business_name")
+        .eq("id", data.agentId)
+        .maybeSingle();
+
+      let elPhoneId: string | null = null;
+      if (agentForEl?.elevenlabs_agent_id) {
+        elPhoneId = await tryLinkToElevenLabs({
+          phoneNumber: String(json.phone_number),
+          label: `${agentForEl.business_name} — AI Receptionist`,
+          agentId: agentForEl.elevenlabs_agent_id,
+        });
+        if (elPhoneId) {
+          await supabaseAdmin
+            .from("phone_numbers")
+            .update({ elevenlabs_phone_number_id: elPhoneId })
+            .eq("id", inserted.id);
+        }
+      }
+
+      return {
+        success: true as const,
+        phoneNumber: inserted,
+        connectedToAi: Boolean(elPhoneId),
+      };
     } catch (e) {
       console.error("purchasePhoneNumber error:", e);
       return {
