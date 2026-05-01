@@ -190,15 +190,17 @@ export const purchasePhoneNumber = createServerFn({ method: "POST" })
       // Once published, you can re-sync to point at the production URL.
       const baseUrl = `https://project--${PROJECT_ID}-dev.lovable.app`;
       const smsWebhook = `${baseUrl}/api/public/twilio/sms`;
+      const voiceWebhook = `${baseUrl}/api/public/twilio/voice`;
 
-      // Voice routing is handled by ElevenLabs after the number is imported
-      // into the EL workspace (Twilio → ElevenLabs telephony bridge). We only
-      // wire SMS here; EL takes over VoiceUrl on its side.
+      // Route voice through our webhook first so we can inject saved lead context,
+      // then register the call with ElevenLabs and return their TwiML.
       const body = new URLSearchParams({
         PhoneNumber: data.phoneNumber,
         FriendlyName: `${agent.business_name} — Agent Factory`,
         SmsUrl: smsWebhook,
         SmsMethod: "POST",
+        VoiceUrl: voiceWebhook,
+        VoiceMethod: "POST",
       });
       const res = await fetch(`${GATEWAY_URL}/IncomingPhoneNumbers.json`, {
         method: "POST",
@@ -363,11 +365,11 @@ export const syncTwilioWebhooks = createServerFn({ method: "POST" })
       const PROJECT_ID = "d1e796ad-671c-47e1-843b-cdecc02fe11f";
       // Use the -dev subdomain so webhooks work before the project is published.
       const baseUrl = `https://project--${PROJECT_ID}-dev.lovable.app`;
-      // Only re-sync SMS. Voice is owned by ElevenLabs once the number is
-      // imported into the EL workspace.
       const body = new URLSearchParams({
         SmsUrl: `${baseUrl}/api/public/twilio/sms`,
         SmsMethod: "POST",
+        VoiceUrl: `${baseUrl}/api/public/twilio/voice`,
+        VoiceMethod: "POST",
       });
       const res = await fetch(
         `${GATEWAY_URL}/IncomingPhoneNumbers/${row.twilio_sid}.json`,
