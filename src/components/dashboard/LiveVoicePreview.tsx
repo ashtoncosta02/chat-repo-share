@@ -77,18 +77,26 @@ function LiveVoicePreviewInner({
         onProvisioned?.();
       }
 
-      // 2. Get a short-lived WebRTC token.
+      // 2. Get a short-lived token + signed URL.
       const t = await getToken({ data: { accessToken: token, agentId } });
       if (!t.success) throw new Error(t.error);
 
       // 3. Ask for mic permission.
       await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      // 4. Open the WebRTC session.
-      await conversation.startSession({
-        conversationToken: t.token,
-        connectionType: "webrtc",
-      });
+      // 4. Open the session. Prefer WebSocket — WebRTC negotiation often
+      // fails inside sandboxed iframes (LiveKit "v1 RTC path not found").
+      if (t.signedUrl) {
+        await conversation.startSession({
+          signedUrl: t.signedUrl,
+          connectionType: "websocket",
+        });
+      } else {
+        await conversation.startSession({
+          conversationToken: t.token,
+          connectionType: "webrtc",
+        });
+      }
     } catch (e) {
       console.error("LiveVoicePreview start failed:", e);
       toast.error("Couldn't start voice test", {
