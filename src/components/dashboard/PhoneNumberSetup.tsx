@@ -240,7 +240,7 @@ export function PhoneNumberSetup({ agentId }: Props) {
                     ) : (
                       <Sparkles className="h-3.5 w-3.5 mr-1" />
                     )}
-                    Connect to AI
+                    Connect to receptionist
                   </Button>
                 )}
                 <Button
