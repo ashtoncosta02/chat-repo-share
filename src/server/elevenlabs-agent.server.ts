@@ -385,6 +385,7 @@ export async function placeOutboundCall(opts: {
   agentPhoneNumberId: string;
   toNumber: string;
   dynamicVariables?: Record<string, string>;
+  firstMessage?: string;
 }): Promise<{ conversation_id: string | null; call_sid: string | null }> {
   const apiKey = requireKey();
   const body: Record<string, unknown> = {
@@ -392,9 +393,14 @@ export async function placeOutboundCall(opts: {
     agent_phone_number_id: opts.agentPhoneNumberId,
     to_number: opts.toNumber,
   };
-  if (opts.dynamicVariables && Object.keys(opts.dynamicVariables).length > 0) {
+  if ((opts.dynamicVariables && Object.keys(opts.dynamicVariables).length > 0) || opts.firstMessage) {
     body.conversation_initiation_client_data = {
-      dynamic_variables: opts.dynamicVariables,
+      ...(opts.firstMessage
+        ? { conversation_config_override: { agent: { first_message: opts.firstMessage } } }
+        : {}),
+      ...(opts.dynamicVariables && Object.keys(opts.dynamicVariables).length > 0
+        ? { dynamic_variables: opts.dynamicVariables }
+        : {}),
     };
   }
 
