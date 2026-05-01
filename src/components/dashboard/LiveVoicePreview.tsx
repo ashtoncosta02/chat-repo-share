@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { useConversation } from "@elevenlabs/react";
+import { ConversationProvider, useConversation } from "@elevenlabs/react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,15 @@ interface LiveVoicePreviewProps {
  * Real-time voice preview using the same ElevenLabs agent that handles
  * inbound phone calls. What the user hears here is exactly what callers hear.
  */
-export function LiveVoicePreview({
+export function LiveVoicePreview(props: LiveVoicePreviewProps) {
+  return (
+    <ConversationProvider>
+      <LiveVoicePreviewInner {...props} />
+    </ConversationProvider>
+  );
+}
+
+function LiveVoicePreviewInner({
   agentId,
   hasElevenLabsAgent,
   onProvisioned,
