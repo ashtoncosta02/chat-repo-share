@@ -29,12 +29,12 @@ export const Route = createFileRoute("/api/public/twilio/voice")({
           const fromDigits = digitsOnly(from);
           const { data: leadRows } = await supabaseAdmin
             .from("leads")
-            .select("name, notes")
+            .select("name, phone, notes")
             .eq("agent_id", agent.id)
             .eq("user_id", agent.user_id)
             .order("created_at", { ascending: false })
             .limit(200);
-          const lead = (leadRows || []).find((row) => samePhone(fromDigits, "phone" in row ? String(row.phone || "") : ""));
+          const lead = (leadRows || []).find((row) => samePhone(fromDigits, String(row.phone || "")));
 
           const firstName = (lead?.name ?? "").trim().split(/\s+/)[0] ?? "";
           const twiml = await registerTwilioCall({
