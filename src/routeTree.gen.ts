@@ -29,14 +29,10 @@ import { Route as DashboardAdminUsersRouteImport } from './routes/dashboard.admi
 import { Route as ApiPublicOwnerChatRouteImport } from './routes/api.public.owner-chat'
 import { Route as ApiPublicWidgetEmbedDotjsRouteImport } from './routes/api.public.widget.embed[.]js'
 import { Route as ApiPublicWidgetChatRouteImport } from './routes/api.public.widget.chat'
-import { Route as ApiPublicTwilioVoiceRouteImport } from './routes/api.public.twilio.voice'
 import { Route as ApiPublicTwilioSmsRouteImport } from './routes/api.public.twilio.sms'
-import { Route as ApiPublicTwilioRecordingRouteImport } from './routes/api.public.twilio.recording'
 import { Route as ApiPublicGoogleCalendarCallbackRouteImport } from './routes/api.public.google-calendar.callback'
 import { Route as ApiPublicElevenlabsPostcallRouteImport } from './routes/api.public.elevenlabs.postcall'
 import { Route as ApiPublicWidgetConfigAgentIdRouteImport } from './routes/api.public.widget.config.$agentId'
-import { Route as ApiPublicVoiceStreamTokenRouteImport } from './routes/api.public.voice.stream.$token'
-import { Route as ApiPublicTwilioVoiceTurnRouteImport } from './routes/api.public.twilio.voice.turn'
 
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
@@ -141,22 +137,11 @@ const ApiPublicWidgetChatRoute = ApiPublicWidgetChatRouteImport.update({
   path: '/api/public/widget/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicTwilioVoiceRoute = ApiPublicTwilioVoiceRouteImport.update({
-  id: '/api/public/twilio/voice',
-  path: '/api/public/twilio/voice',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicTwilioSmsRoute = ApiPublicTwilioSmsRouteImport.update({
   id: '/api/public/twilio/sms',
   path: '/api/public/twilio/sms',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicTwilioRecordingRoute =
-  ApiPublicTwilioRecordingRouteImport.update({
-    id: '/api/public/twilio/recording',
-    path: '/api/public/twilio/recording',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const ApiPublicGoogleCalendarCallbackRoute =
   ApiPublicGoogleCalendarCallbackRouteImport.update({
     id: '/api/public/google-calendar/callback',
@@ -174,18 +159,6 @@ const ApiPublicWidgetConfigAgentIdRoute =
     id: '/api/public/widget/config/$agentId',
     path: '/api/public/widget/config/$agentId',
     getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicVoiceStreamTokenRoute =
-  ApiPublicVoiceStreamTokenRouteImport.update({
-    id: '/api/public/voice/stream/$token',
-    path: '/api/public/voice/stream/$token',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicTwilioVoiceTurnRoute =
-  ApiPublicTwilioVoiceTurnRouteImport.update({
-    id: '/turn',
-    path: '/turn',
-    getParentRoute: () => ApiPublicTwilioVoiceRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -209,13 +182,9 @@ export interface FileRoutesByFullPath {
   '/dashboard/conversations/': typeof DashboardConversationsIndexRoute
   '/api/public/elevenlabs/postcall': typeof ApiPublicElevenlabsPostcallRoute
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
-  '/api/public/twilio/recording': typeof ApiPublicTwilioRecordingRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
-  '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRouteWithChildren
   '/api/public/widget/chat': typeof ApiPublicWidgetChatRoute
   '/api/public/widget/embed.js': typeof ApiPublicWidgetEmbedDotjsRoute
-  '/api/public/twilio/voice/turn': typeof ApiPublicTwilioVoiceTurnRoute
-  '/api/public/voice/stream/$token': typeof ApiPublicVoiceStreamTokenRoute
   '/api/public/widget/config/$agentId': typeof ApiPublicWidgetConfigAgentIdRoute
 }
 export interface FileRoutesByTo {
@@ -237,13 +206,9 @@ export interface FileRoutesByTo {
   '/dashboard/conversations': typeof DashboardConversationsIndexRoute
   '/api/public/elevenlabs/postcall': typeof ApiPublicElevenlabsPostcallRoute
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
-  '/api/public/twilio/recording': typeof ApiPublicTwilioRecordingRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
-  '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRouteWithChildren
   '/api/public/widget/chat': typeof ApiPublicWidgetChatRoute
   '/api/public/widget/embed.js': typeof ApiPublicWidgetEmbedDotjsRoute
-  '/api/public/twilio/voice/turn': typeof ApiPublicTwilioVoiceTurnRoute
-  '/api/public/voice/stream/$token': typeof ApiPublicVoiceStreamTokenRoute
   '/api/public/widget/config/$agentId': typeof ApiPublicWidgetConfigAgentIdRoute
 }
 export interface FileRoutesById {
@@ -268,13 +233,9 @@ export interface FileRoutesById {
   '/dashboard/conversations/': typeof DashboardConversationsIndexRoute
   '/api/public/elevenlabs/postcall': typeof ApiPublicElevenlabsPostcallRoute
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
-  '/api/public/twilio/recording': typeof ApiPublicTwilioRecordingRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
-  '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRouteWithChildren
   '/api/public/widget/chat': typeof ApiPublicWidgetChatRoute
   '/api/public/widget/embed.js': typeof ApiPublicWidgetEmbedDotjsRoute
-  '/api/public/twilio/voice/turn': typeof ApiPublicTwilioVoiceTurnRoute
-  '/api/public/voice/stream/$token': typeof ApiPublicVoiceStreamTokenRoute
   '/api/public/widget/config/$agentId': typeof ApiPublicWidgetConfigAgentIdRoute
 }
 export interface FileRouteTypes {
@@ -300,13 +261,9 @@ export interface FileRouteTypes {
     | '/dashboard/conversations/'
     | '/api/public/elevenlabs/postcall'
     | '/api/public/google-calendar/callback'
-    | '/api/public/twilio/recording'
     | '/api/public/twilio/sms'
-    | '/api/public/twilio/voice'
     | '/api/public/widget/chat'
     | '/api/public/widget/embed.js'
-    | '/api/public/twilio/voice/turn'
-    | '/api/public/voice/stream/$token'
     | '/api/public/widget/config/$agentId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -328,13 +285,9 @@ export interface FileRouteTypes {
     | '/dashboard/conversations'
     | '/api/public/elevenlabs/postcall'
     | '/api/public/google-calendar/callback'
-    | '/api/public/twilio/recording'
     | '/api/public/twilio/sms'
-    | '/api/public/twilio/voice'
     | '/api/public/widget/chat'
     | '/api/public/widget/embed.js'
-    | '/api/public/twilio/voice/turn'
-    | '/api/public/voice/stream/$token'
     | '/api/public/widget/config/$agentId'
   id:
     | '__root__'
@@ -358,13 +311,9 @@ export interface FileRouteTypes {
     | '/dashboard/conversations/'
     | '/api/public/elevenlabs/postcall'
     | '/api/public/google-calendar/callback'
-    | '/api/public/twilio/recording'
     | '/api/public/twilio/sms'
-    | '/api/public/twilio/voice'
     | '/api/public/widget/chat'
     | '/api/public/widget/embed.js'
-    | '/api/public/twilio/voice/turn'
-    | '/api/public/voice/stream/$token'
     | '/api/public/widget/config/$agentId'
   fileRoutesById: FileRoutesById
 }
@@ -376,12 +325,9 @@ export interface RootRouteChildren {
   ApiPublicOwnerChatRoute: typeof ApiPublicOwnerChatRoute
   ApiPublicElevenlabsPostcallRoute: typeof ApiPublicElevenlabsPostcallRoute
   ApiPublicGoogleCalendarCallbackRoute: typeof ApiPublicGoogleCalendarCallbackRoute
-  ApiPublicTwilioRecordingRoute: typeof ApiPublicTwilioRecordingRoute
   ApiPublicTwilioSmsRoute: typeof ApiPublicTwilioSmsRoute
-  ApiPublicTwilioVoiceRoute: typeof ApiPublicTwilioVoiceRouteWithChildren
   ApiPublicWidgetChatRoute: typeof ApiPublicWidgetChatRoute
   ApiPublicWidgetEmbedDotjsRoute: typeof ApiPublicWidgetEmbedDotjsRoute
-  ApiPublicVoiceStreamTokenRoute: typeof ApiPublicVoiceStreamTokenRoute
   ApiPublicWidgetConfigAgentIdRoute: typeof ApiPublicWidgetConfigAgentIdRoute
 }
 
@@ -527,25 +473,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWidgetChatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/twilio/voice': {
-      id: '/api/public/twilio/voice'
-      path: '/api/public/twilio/voice'
-      fullPath: '/api/public/twilio/voice'
-      preLoaderRoute: typeof ApiPublicTwilioVoiceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/twilio/sms': {
       id: '/api/public/twilio/sms'
       path: '/api/public/twilio/sms'
       fullPath: '/api/public/twilio/sms'
       preLoaderRoute: typeof ApiPublicTwilioSmsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/twilio/recording': {
-      id: '/api/public/twilio/recording'
-      path: '/api/public/twilio/recording'
-      fullPath: '/api/public/twilio/recording'
-      preLoaderRoute: typeof ApiPublicTwilioRecordingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/google-calendar/callback': {
@@ -568,20 +500,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/widget/config/$agentId'
       preLoaderRoute: typeof ApiPublicWidgetConfigAgentIdRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/api/public/voice/stream/$token': {
-      id: '/api/public/voice/stream/$token'
-      path: '/api/public/voice/stream/$token'
-      fullPath: '/api/public/voice/stream/$token'
-      preLoaderRoute: typeof ApiPublicVoiceStreamTokenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/twilio/voice/turn': {
-      id: '/api/public/twilio/voice/turn'
-      path: '/turn'
-      fullPath: '/api/public/twilio/voice/turn'
-      preLoaderRoute: typeof ApiPublicTwilioVoiceTurnRouteImport
-      parentRoute: typeof ApiPublicTwilioVoiceRoute
     }
   }
 }
@@ -645,17 +563,6 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
   DashboardRouteChildren,
 )
 
-interface ApiPublicTwilioVoiceRouteChildren {
-  ApiPublicTwilioVoiceTurnRoute: typeof ApiPublicTwilioVoiceTurnRoute
-}
-
-const ApiPublicTwilioVoiceRouteChildren: ApiPublicTwilioVoiceRouteChildren = {
-  ApiPublicTwilioVoiceTurnRoute: ApiPublicTwilioVoiceTurnRoute,
-}
-
-const ApiPublicTwilioVoiceRouteWithChildren =
-  ApiPublicTwilioVoiceRoute._addFileChildren(ApiPublicTwilioVoiceRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
@@ -664,14 +571,20 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicOwnerChatRoute: ApiPublicOwnerChatRoute,
   ApiPublicElevenlabsPostcallRoute: ApiPublicElevenlabsPostcallRoute,
   ApiPublicGoogleCalendarCallbackRoute: ApiPublicGoogleCalendarCallbackRoute,
-  ApiPublicTwilioRecordingRoute: ApiPublicTwilioRecordingRoute,
   ApiPublicTwilioSmsRoute: ApiPublicTwilioSmsRoute,
-  ApiPublicTwilioVoiceRoute: ApiPublicTwilioVoiceRouteWithChildren,
   ApiPublicWidgetChatRoute: ApiPublicWidgetChatRoute,
   ApiPublicWidgetEmbedDotjsRoute: ApiPublicWidgetEmbedDotjsRoute,
-  ApiPublicVoiceStreamTokenRoute: ApiPublicVoiceStreamTokenRoute,
   ApiPublicWidgetConfigAgentIdRoute: ApiPublicWidgetConfigAgentIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
