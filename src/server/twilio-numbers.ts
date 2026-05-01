@@ -299,13 +299,22 @@ export const releasePhoneNumber = createServerFn({ method: "POST" })
 
     const { data: row, error: fetchErr } = await supabaseAdmin
       .from("phone_numbers")
-      .select("id, twilio_sid")
+      .select("id, twilio_sid, elevenlabs_phone_number_id")
       .eq("id", data.phoneNumberId)
       .eq("user_id", auth.userId)
       .maybeSingle();
     if (fetchErr || !row) return { success: false as const, error: "Number not found." };
 
     try {
+      // Unlink from ElevenLabs first (best-effort).
+      if (row.elevenlabs_phone_number_id) {
+        try {
+          await deleteElevenLabsPhoneNumber(row.elevenlabs_phone_number_id);
+        } catch (e) {
+          console.error("EL unlink failed (continuing with Twilio release):", e);
+        }
+      }
+
       const res = await fetch(`${GATEWAY_URL}/IncomingPhoneNumbers/${row.twilio_sid}.json`, {
         method: "DELETE",
         headers: gatewayHeaders(),
