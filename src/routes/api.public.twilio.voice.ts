@@ -26,15 +26,15 @@ export const Route = createFileRoute("/api/public/twilio/voice")({
             .maybeSingle();
           if (!agent?.elevenlabs_agent_id) return voiceMessage("Sorry, the receptionist is unavailable right now.");
 
-          const { data: lead } = await supabaseAdmin
+          const fromDigits = digitsOnly(from);
+          const { data: leadRows } = await supabaseAdmin
             .from("leads")
             .select("name, notes")
             .eq("agent_id", agent.id)
             .eq("user_id", agent.user_id)
-            .eq("phone", from)
             .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
+            .limit(200);
+          const lead = (leadRows || []).find((row) => samePhone(fromDigits, "phone" in row ? String(row.phone || "") : ""));
 
           const firstName = (lead?.name ?? "").trim().split(/\s+/)[0] ?? "";
           const twiml = await registerTwilioCall({
@@ -70,4 +70,13 @@ function voiceMessage(message: string) {
   return new Response(`<Response><Say>${safe}</Say><Hangup /></Response>`, {
     headers: { "Content-Type": "application/xml" },
   });
+}
+
+function digitsOnly(phone: string) {
+  return phone.replace(/\D/g, "");
+}
+
+function samePhone(aDigits: string, bPhone: string) {
+  const bDigits = digitsOnly(bPhone);
+  return Boolean(aDigits && bDigits && (aDigits.endsWith(bDigits) || bDigits.endsWith(aDigits)));
 }
