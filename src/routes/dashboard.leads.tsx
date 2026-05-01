@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/dashboard/PageHeader";
-import { User, Phone, Mail, MessageSquare, Search } from "lucide-react";
+import { User, Phone, Mail, MessageSquare, Search, PhoneCall, Bot, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -12,8 +12,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { aiCallbackLead } from "@/server/lead-callback.functions";
 
 export const Route = createFileRoute("/dashboard/leads")({
   head: () => ({ meta: [{ title: "Leads — Agent Factory" }] }),
