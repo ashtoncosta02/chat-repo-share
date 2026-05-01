@@ -6,6 +6,7 @@ import {
   updateElevenLabsAgent,
   deleteElevenLabsAgent,
   getConversationToken,
+  getConversationSignedUrl,
   type AgentBusinessProfile,
 } from "./elevenlabs-agent.server";
 
@@ -142,8 +143,19 @@ export const getReceptionistPreviewToken = createServerFn({ method: "POST" })
       };
     }
     try {
-      const token = await getConversationToken(row.elevenlabs_agent_id);
-      return { success: true as const, token, agentId: row.elevenlabs_agent_id };
+      const [token, signedUrl] = await Promise.all([
+        getConversationToken(row.elevenlabs_agent_id).catch(() => null),
+        getConversationSignedUrl(row.elevenlabs_agent_id).catch(() => null),
+      ]);
+      if (!token && !signedUrl) {
+        return { success: false as const, error: "Could not get preview credentials." };
+      }
+      return {
+        success: true as const,
+        token: token ?? "",
+        signedUrl: signedUrl ?? "",
+        agentId: row.elevenlabs_agent_id,
+      };
     } catch (e) {
       console.error("getReceptionistPreviewToken error:", e);
       return {

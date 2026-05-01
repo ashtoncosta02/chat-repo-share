@@ -253,6 +253,22 @@ export async function getConversationToken(agentId: string): Promise<string> {
   return json.token;
 }
 
+/** Get a signed WebSocket URL for the browser preview (more reliable than WebRTC in iframes). */
+export async function getConversationSignedUrl(agentId: string): Promise<string> {
+  const apiKey = requireKey();
+  const res = await fetch(
+    `${EL_BASE}/convai/conversation/get-signed-url?agent_id=${encodeURIComponent(agentId)}`,
+    { headers: { "xi-api-key": apiKey } },
+  );
+  if (!res.ok) {
+    const t = await res.text();
+    throw new Error(`ElevenLabs signed URL failed (${res.status}): ${t}`);
+  }
+  const json = (await res.json()) as { signed_url?: string };
+  if (!json.signed_url) throw new Error("ElevenLabs returned no signed_url");
+  return json.signed_url;
+}
+
 /** Import a Twilio number into ElevenLabs and link to an agent. */
 export async function importTwilioNumber(opts: {
   phoneNumber: string;
