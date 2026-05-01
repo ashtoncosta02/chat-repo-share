@@ -84,28 +84,19 @@ function LiveVoicePreviewInner({
       // 3. Ask for mic permission.
       await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      // 4. Open the session. Prefer WebRTC — it streams audio natively and
-      // sounds noticeably smoother than WebSocket (which chunk-decodes audio
-      // and tends to introduce glitches). Fall back to WebSocket if WebRTC
-      // can't be negotiated (rare, but happens in some sandboxed iframes).
-      if (t.token) {
-        try {
-          await conversation.startSession({
-            conversationToken: t.token,
-            connectionType: "webrtc",
-          });
-        } catch (rtcErr) {
-          console.warn("WebRTC failed, falling back to WebSocket:", rtcErr);
-          if (!t.signedUrl) throw rtcErr;
-          await conversation.startSession({
-            signedUrl: t.signedUrl,
-            connectionType: "websocket",
-          });
-        }
-      } else if (t.signedUrl) {
+      // 4. Open the session. Use WebSocket — WebRTC negotiation silently
+      // fails inside the Lovable preview iframe (LiveKit "v1 RTC path not
+      // found"), and the SDK doesn't throw, so the mic turns on but no audio
+      // ever plays. WebSocket is rock-solid here.
+      if (t.signedUrl) {
         await conversation.startSession({
           signedUrl: t.signedUrl,
           connectionType: "websocket",
+        });
+      } else if (t.token) {
+        await conversation.startSession({
+          conversationToken: t.token,
+          connectionType: "webrtc",
         });
       } else {
         throw new Error("No connection credentials returned.");
