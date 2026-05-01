@@ -139,6 +139,15 @@ interface ElevenLabsAgentConfig {
       prompt: {
         prompt: string;
         llm: string;
+        tools?: Array<{
+          type: "system";
+          name: string;
+          description?: string;
+          params: {
+            system_tool_type: "voicemail_detection";
+            voicemail_message?: string;
+          };
+        }>;
       };
     };
     tts: {
@@ -179,12 +188,24 @@ function buildAgentPayload(p: AgentBusinessProfile): ElevenLabsAgentConfig {
           prompt: buildSystemPrompt(p),
           // Fast + cheap reasoning model for natural phone conversation.
           llm: "gemini-2.0-flash",
+          tools: [
+            {
+              type: "system",
+              name: "voicemail_detection",
+              description:
+                "Use when an outbound callback reaches voicemail, an answering machine, a recorded greeting, a beep, or silence instead of a live person. Leave the configured voicemail message, then end the call.",
+              params: {
+                system_tool_type: "voicemail_detection",
+                voicemail_message: `Hi {{lead_name}}, this is ${p.assistant_name || "the receptionist"} from ${p.business_name}. I'm calling to follow up on your earlier inquiry. Please call us back when you have a chance. Thank you, goodbye.`,
+              },
+            },
+          ],
         },
       },
       tts: {
         voice_id: p.voice_id || "EXAVITQu4vr4xnSDxMaL",
-        // Conversational AI English agents currently require Turbo v2 or Flash v2.
-        model_id: "eleven_turbo_v2",
+        // English phone agents require an English v2 realtime model; Flash v2 is the default for agents.
+        model_id: "eleven_flash_v2",
         stability: 0.6,
         similarity_boost: 0.8,
         speed: 1.0,
@@ -192,7 +213,8 @@ function buildAgentPayload(p: AgentBusinessProfile): ElevenLabsAgentConfig {
       asr: {
         quality: "high",
         provider: "elevenlabs",
-        user_input_audio_format: "pcm_16000",
+        // Twilio phone calls arrive as μ-law 8kHz audio.
+        user_input_audio_format: "ulaw_8000",
       },
       turn: {
         // Stop responding when caller starts talking; resume after 700ms silence.
@@ -351,6 +373,42 @@ export function postCallWebhookUrl(): string {
   return `https://project--${PROJECT_ID}-dev.lovable.app/api/public/elevenlabs/postcall`;
 }
 
+/** Register a Twilio voice webhook call with ElevenLabs and return TwiML. */
+export async function registerTwilioCall(opts: {
+  agentId: string;
+  fromNumber: string;
+  toNumber: string;
+  direction: "inbound" | "outbound";
+  dynamicVariables?: Record<string, string>;
+}): Promise<string> {
+  const apiKey = requireKey();
+  const body: Record<string, unknown> = {
+    agent_id: opts.agentId,
+    from_number: opts.fromNumber,
+    to_number: opts.toNumber,
+    direction: opts.direction,
+  };
+  if (opts.dynamicVariables && Object.keys(opts.dynamicVariables).length > 0) {
+    body.conversation_initiation_client_data = {
+      dynamic_variables: opts.dynamicVariables,
+    };
+  }
+
+  const res = await fetch(`${EL_BASE}/convai/twilio/register-call`, {
+    method: "POST",
+    headers: {
+      "xi-api-key": apiKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    throw new Error(`ElevenLabs register call failed (${res.status}): ${text}`);
+  }
+  return text;
+}
+
 /**
  * Place an outbound call via Twilio + ElevenLabs.
  * `agentPhoneNumberId` must be the ElevenLabs phone-number id returned by
@@ -363,6 +421,7 @@ export async function placeOutboundCall(opts: {
   agentPhoneNumberId: string;
   toNumber: string;
   dynamicVariables?: Record<string, string>;
+  firstMessage?: string;
 }): Promise<{ conversation_id: string | null; call_sid: string | null }> {
   const apiKey = requireKey();
   const body: Record<string, unknown> = {
@@ -370,9 +429,14 @@ export async function placeOutboundCall(opts: {
     agent_phone_number_id: opts.agentPhoneNumberId,
     to_number: opts.toNumber,
   };
-  if (opts.dynamicVariables && Object.keys(opts.dynamicVariables).length > 0) {
+  if ((opts.dynamicVariables && Object.keys(opts.dynamicVariables).length > 0) || opts.firstMessage) {
     body.conversation_initiation_client_data = {
-      dynamic_variables: opts.dynamicVariables,
+      ...(opts.firstMessage
+        ? { conversation_config_override: { agent: { first_message: opts.firstMessage } } }
+        : {}),
+      ...(opts.dynamicVariables && Object.keys(opts.dynamicVariables).length > 0
+        ? { dynamic_variables: opts.dynamicVariables }
+        : {}),
     };
   }
 
