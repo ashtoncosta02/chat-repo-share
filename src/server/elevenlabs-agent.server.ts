@@ -303,6 +303,20 @@ export async function importTwilioNumber(opts: {
   return { phone_number_id: json.phone_number_id };
 }
 
+/** Remove a phone number from the ElevenLabs workspace. */
+export async function deleteElevenLabsPhoneNumber(phoneNumberId: string): Promise<void> {
+  const apiKey = requireKey();
+  const res = await fetch(`${EL_BASE}/convai/phone-numbers/${phoneNumberId}`, {
+    method: "DELETE",
+    headers: { "xi-api-key": apiKey },
+  });
+  // 404 = already gone, fine.
+  if (!res.ok && res.status !== 404) {
+    const t = await res.text();
+    throw new Error(`ElevenLabs delete phone number failed (${res.status}): ${t}`);
+  }
+}
+
 export function postCallWebhookUrl(): string {
   return `https://project--${PROJECT_ID}-dev.lovable.app/api/public/elevenlabs/postcall`;
 }
