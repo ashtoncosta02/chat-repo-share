@@ -139,6 +139,15 @@ interface ElevenLabsAgentConfig {
       prompt: {
         prompt: string;
         llm: string;
+        tools?: Array<{
+          type: "system";
+          name: string;
+          description?: string;
+          params: {
+            system_tool_type: "voicemail_detection";
+            voicemail_message?: string;
+          };
+        }>;
       };
     };
     tts: {
@@ -179,12 +188,24 @@ function buildAgentPayload(p: AgentBusinessProfile): ElevenLabsAgentConfig {
           prompt: buildSystemPrompt(p),
           // Fast + cheap reasoning model for natural phone conversation.
           llm: "gemini-2.0-flash",
+          tools: [
+            {
+              type: "system",
+              name: "voicemail_detection",
+              description:
+                "Use when an outbound callback reaches voicemail, an answering machine, a recorded greeting, a beep, or silence instead of a live person. Leave the configured voicemail message, then end the call.",
+              params: {
+                system_tool_type: "voicemail_detection",
+                voicemail_message: `Hi{{lead_name}}, this is ${p.assistant_name || "the receptionist"} from ${p.business_name}. I'm calling to follow up on your earlier inquiry. Please call us back when you have a chance. Thank you, goodbye.`,
+              },
+            },
+          ],
         },
       },
       tts: {
         voice_id: p.voice_id || "EXAVITQu4vr4xnSDxMaL",
-        // Conversational AI English agents currently require Turbo v2 or Flash v2.
-        model_id: "eleven_turbo_v2",
+        // English phone agents require an English v2 realtime model; Flash v2 is the default for agents.
+        model_id: "eleven_flash_v2",
         stability: 0.6,
         similarity_boost: 0.8,
         speed: 1.0,
@@ -192,7 +213,8 @@ function buildAgentPayload(p: AgentBusinessProfile): ElevenLabsAgentConfig {
       asr: {
         quality: "high",
         provider: "elevenlabs",
-        user_input_audio_format: "pcm_16000",
+        // Twilio phone calls arrive as μ-law 8kHz audio.
+        user_input_audio_format: "ulaw_8000",
       },
       turn: {
         // Stop responding when caller starts talking; resume after 700ms silence.
