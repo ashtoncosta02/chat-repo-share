@@ -91,13 +91,25 @@ export function buildSystemPrompt(p: AgentBusinessProfile): string {
     }
   }
 
+  // Caller context (filled in via dynamic variables when known — e.g. on
+  // outbound callbacks to a saved lead, or via the Twilio personalization
+  // webhook for inbound calls). When the variables are empty, treat the
+  // caller as new.
+  lines.push(``);
+  lines.push(`# Caller context (may be empty)`);
+  lines.push(`- Caller name (if known): {{lead_name}}`);
+  lines.push(`- Previous notes about this caller (if any): {{lead_notes}}`);
+  lines.push(`If "Caller name" is set, this person is a returning lead — greet them by their first name and naturally reference what you already know if it helps. If empty, treat them as a brand new caller and ask their name as usual.`);
+
   return lines.join("\n");
 }
 
 function buildFirstMessage(p: AgentBusinessProfile): string {
   const name = (p.assistant_name || "Ava").trim();
   const biz = p.business_name.trim();
-  return `Hi, thanks for calling ${biz}. This is ${name} — how can I help you today?`;
+  // {{lead_name}} resolves to "" when not provided, so the fallback reads
+  // naturally for unknown callers ("Hi, thanks for calling ...").
+  return `Hi {{lead_name}}, thanks for calling ${biz}. This is ${name} — how can I help you today?`;
 }
 
 interface ElevenLabsAgentConfig {
@@ -319,4 +331,56 @@ export async function deleteElevenLabsPhoneNumber(phoneNumberId: string): Promis
 
 export function postCallWebhookUrl(): string {
   return `https://project--${PROJECT_ID}-dev.lovable.app/api/public/elevenlabs/postcall`;
+}
+
+/**
+ * Place an outbound call via Twilio + ElevenLabs.
+ * `agentPhoneNumberId` must be the ElevenLabs phone-number id returned by
+ * `importTwilioNumber` (we store it on `phone_numbers.elevenlabs_phone_number_id`).
+ * `dynamicVariables` is injected into the agent prompt / first message
+ * (e.g. `{ lead_name: "Jordan", lead_notes: "asked about pricing" }`).
+ */
+export async function placeOutboundCall(opts: {
+  agentId: string;
+  agentPhoneNumberId: string;
+  toNumber: string;
+  dynamicVariables?: Record<string, string>;
+}): Promise<{ conversation_id: string | null; call_sid: string | null }> {
+  const apiKey = requireKey();
+  const body: Record<string, unknown> = {
+    agent_id: opts.agentId,
+    agent_phone_number_id: opts.agentPhoneNumberId,
+    to_number: opts.toNumber,
+  };
+  if (opts.dynamicVariables && Object.keys(opts.dynamicVariables).length > 0) {
+    body.conversation_initiation_client_data = {
+      dynamic_variables: opts.dynamicVariables,
+    };
+  }
+
+  const res = await fetch(`${EL_BASE}/convai/twilio/outbound-call`, {
+    method: "POST",
+    headers: {
+      "xi-api-key": apiKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const t = await res.text();
+    throw new Error(`ElevenLabs outbound call failed (${res.status}): ${t}`);
+  }
+  const json = (await res.json()) as {
+    success?: boolean;
+    message?: string;
+    conversation_id?: string | null;
+    callSid?: string | null;
+  };
+  if (json.success === false) {
+    throw new Error(`ElevenLabs outbound call rejected: ${json.message ?? "unknown reason"}`);
+  }
+  return {
+    conversation_id: json.conversation_id ?? null,
+    call_sid: json.callSid ?? null,
+  };
 }

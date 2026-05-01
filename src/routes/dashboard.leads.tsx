@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/dashboard/PageHeader";
-import { User, Phone, Mail, MessageSquare, Search } from "lucide-react";
+import { User, Phone, Mail, MessageSquare, Search, PhoneCall, Bot, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -12,8 +12,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { aiCallbackLead } from "@/server/lead-callback.functions";
 
 export const Route = createFileRoute("/dashboard/leads")({
   head: () => ({ meta: [{ title: "Leads — Agent Factory" }] }),
@@ -82,6 +90,32 @@ function LeadsPage() {
   const updateStatus = async (id: string, status: string) => {
     setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, status } : l)));
     await supabase.from("leads").update({ status }).eq("id", id);
+  };
+
+  const [callingId, setCallingId] = useState<string | null>(null);
+  const triggerAiCallback = async (leadId: string) => {
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess.session?.access_token;
+    if (!token) {
+      toast.error("Please sign in again.");
+      return;
+    }
+    setCallingId(leadId);
+    try {
+      const res = await aiCallbackLead({ data: { accessToken: token, leadId } });
+      if (res.success) {
+        toast.success("Receptionist is calling now.");
+        setLeads((prev) =>
+          prev.map((l) => (l.id === leadId ? { ...l, status: "contacted" } : l)),
+        );
+      } else {
+        toast.error(res.error);
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to start call.");
+    } finally {
+      setCallingId(null);
+    }
   };
 
   const filtered = useMemo(() => {
@@ -226,6 +260,32 @@ function LeadsPage() {
                         {new Date(l.created_at).toLocaleDateString()}
                       </span>
                       <div className="flex items-center gap-1">
+                        {l.phone && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" disabled={callingId === l.id}>
+                                {callingId === l.id ? (
+                                  <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                                ) : (
+                                  <PhoneCall className="h-3.5 w-3.5 mr-1" />
+                                )}
+                                Call back
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem asChild>
+                                <a href={`tel:${l.phone}`}>
+                                  <Phone className="h-3.5 w-3.5 mr-2" />
+                                  Call from my phone
+                                </a>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => triggerAiCallback(l.id)}>
+                                <Bot className="h-3.5 w-3.5 mr-2" />
+                                Have receptionist call now
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                         {l.conversation_id && (
                           <Button asChild variant="ghost" size="sm">
                             <Link
