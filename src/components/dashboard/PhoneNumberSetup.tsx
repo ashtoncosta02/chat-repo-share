@@ -136,7 +136,11 @@ export function PhoneNumberSetup({ agentId }: Props) {
         toast.error(res.error);
         return;
       }
-      toast.success(`${formatPhone(n.phoneNumber)} is yours!`);
+      if (res.connectedToAi) {
+        toast.success(`${formatPhone(n.phoneNumber)} is yours and connected to your AI receptionist!`);
+      } else {
+        toast.success(`${formatPhone(n.phoneNumber)} is yours! Click "Connect to AI" to finish hooking up voice.`);
+      }
       setResults((prev) => prev.filter((x) => x.phoneNumber !== n.phoneNumber));
       await loadOwned();
     } finally {
