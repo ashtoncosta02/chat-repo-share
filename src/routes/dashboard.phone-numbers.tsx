@@ -128,10 +128,10 @@ function PhoneNumbersPage() {
                       {n.elevenlabs_phone_number_id ? (
                         <div className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600">
                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                          AI receptionist connected
+                          Receptionist connected
                         </div>
                       ) : (
-                        <div className="mt-1.5 text-xs text-amber-600">Not connected to AI yet</div>
+                        <div className="mt-1.5 text-xs text-amber-600">Not connected to receptionist yet</div>
                       )}
                     </div>
                     <div className="flex items-center gap-3">
@@ -144,10 +144,8 @@ function PhoneNumbersPage() {
                           <Bot className="h-3.5 w-3.5" />
                           {n.agents?.business_name || "View agent"}
                         </Link>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">Unassigned</span>
-                      )}
-                      {!n.elevenlabs_phone_number_id && n.agent_id && (
+                      ) : null}
+                      {!n.elevenlabs_phone_number_id && (
                         <Button
                           size="sm"
                           variant="outline"
@@ -159,7 +157,7 @@ function PhoneNumbersPage() {
                           ) : (
                             <Sparkles className="h-3.5 w-3.5 mr-1" />
                           )}
-                          {linkingId === n.id ? "Connecting…" : "Connect to AI"}
+                          {linkingId === n.id ? "Connecting…" : "Connect to receptionist"}
                         </Button>
                       )}
                     </div>
