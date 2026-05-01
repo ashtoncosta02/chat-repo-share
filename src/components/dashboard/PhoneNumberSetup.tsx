@@ -56,7 +56,7 @@ export function PhoneNumberSetup({ agentId }: Props) {
     setLoadingOwned(true);
     const { data, error } = await supabase
       .from("phone_numbers")
-      .select("id, phone_number, friendly_name, locality, region, postal_code")
+      .select("id, phone_number, friendly_name, locality, region, postal_code, elevenlabs_phone_number_id")
       .eq("agent_id", agentId)
       .order("created_at", { ascending: false });
     if (error) {
