@@ -5,12 +5,13 @@ import {
   searchNumbersByPostalCode,
   purchasePhoneNumber,
   releasePhoneNumber,
+  linkExistingNumberToElevenLabs,
   type AvailableNumber,
 } from "@/server/twilio-numbers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Phone, Search, Check, Trash2, Loader2 } from "lucide-react";
+import { Phone, Search, Check, Trash2, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 interface OwnedNumber {
@@ -20,6 +21,7 @@ interface OwnedNumber {
   locality: string | null;
   region: string | null;
   postal_code: string | null;
+  elevenlabs_phone_number_id: string | null;
 }
 
 interface Props {
