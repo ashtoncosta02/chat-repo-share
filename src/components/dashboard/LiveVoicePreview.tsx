@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { useConversation } from "@elevenlabs/react";
+import { ConversationProvider, useConversation } from "@elevenlabs/react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
