@@ -1,8 +1,43 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import {
+  importTwilioNumber,
+  deleteElevenLabsPhoneNumber,
+} from "./elevenlabs-agent.server";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
+
+/**
+ * Best-effort: import a Twilio number into ElevenLabs and link it to the
+ * agent. Returns the EL phone_number_id on success, or null if the import
+ * failed (we log but never block the Twilio purchase on this).
+ */
+async function tryLinkToElevenLabs(opts: {
+  phoneNumber: string;
+  label: string;
+  agentId: string;
+}): Promise<string | null> {
+  const sid = process.env.TWILIO_ACCOUNT_SID;
+  const token = process.env.TWILIO_AUTH_TOKEN;
+  if (!sid || !token) {
+    console.warn("Skipping ElevenLabs import: TWILIO_ACCOUNT_SID/TWILIO_AUTH_TOKEN not set");
+    return null;
+  }
+  try {
+    const { phone_number_id } = await importTwilioNumber({
+      phoneNumber: opts.phoneNumber,
+      label: opts.label,
+      twilioAccountSid: sid,
+      twilioAuthToken: token,
+      agentId: opts.agentId,
+    });
+    return phone_number_id;
+  } catch (e) {
+    console.error("ElevenLabs phone import failed:", e);
+    return null;
+  }
+}
 
 function gatewayHeaders() {
   const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
