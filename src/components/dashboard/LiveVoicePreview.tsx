@@ -21,7 +21,15 @@ interface LiveVoicePreviewProps {
  * Real-time voice preview using the same ElevenLabs agent that handles
  * inbound phone calls. What the user hears here is exactly what callers hear.
  */
-export function LiveVoicePreview({
+export function LiveVoicePreview(props: LiveVoicePreviewProps) {
+  return (
+    <ConversationProvider>
+      <LiveVoicePreviewInner {...props} />
+    </ConversationProvider>
+  );
+}
+
+function LiveVoicePreviewInner({
   agentId,
   hasElevenLabsAgent,
   onProvisioned,
