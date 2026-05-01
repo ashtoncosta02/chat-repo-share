@@ -139,7 +139,7 @@ export function PhoneNumberSetup({ agentId }: Props) {
       if (res.connectedToAi) {
         toast.success(`${formatPhone(n.phoneNumber)} is yours and connected to your AI receptionist!`);
       } else {
-        toast.success(`${formatPhone(n.phoneNumber)} is yours! Click "Connect to AI" to finish hooking up voice.`);
+        toast.success(`${formatPhone(n.phoneNumber)} is yours! Click "Connect to receptionist" to finish hooking up voice.`);
       }
       setResults((prev) => prev.filter((x) => x.phoneNumber !== n.phoneNumber));
       await loadOwned();
@@ -221,10 +221,10 @@ export function PhoneNumberSetup({ agentId }: Props) {
                 {p.elevenlabs_phone_number_id ? (
                   <div className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                    AI receptionist connected
+                    Receptionist connected
                   </div>
                 ) : (
-                  <div className="mt-1.5 text-xs text-amber-600">Not connected to AI yet</div>
+                  <div className="mt-1.5 text-xs text-amber-600">Not connected to receptionist yet</div>
                 )}
               </div>
               <div className="flex items-center gap-2">
@@ -240,7 +240,7 @@ export function PhoneNumberSetup({ agentId }: Props) {
                     ) : (
                       <Sparkles className="h-3.5 w-3.5 mr-1" />
                     )}
-                    Connect to AI
+                    Connect to receptionist
                   </Button>
                 )}
                 <Button

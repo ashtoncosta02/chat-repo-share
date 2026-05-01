@@ -423,14 +423,38 @@ export const linkExistingNumberToElevenLabs = createServerFn({ method: "POST" })
     if (row.elevenlabs_phone_number_id) {
       return { success: true as const, alreadyLinked: true };
     }
-    if (!row.agent_id) {
-      return { success: false as const, error: "This number isn't assigned to a receptionist yet." };
+    // If the number isn't assigned to an agent yet, auto-assign it to the
+    // user's only receptionist (we enforce 1-receptionist-per-account).
+    let agentId = row.agent_id;
+    if (!agentId) {
+      const { data: agents } = await supabaseAdmin
+        .from("agents")
+        .select("id")
+        .eq("user_id", auth.userId)
+        .limit(2);
+      if (!agents || agents.length === 0) {
+        return {
+          success: false as const,
+          error: "Create your AI receptionist first, then connect this number.",
+        };
+      }
+      if (agents.length > 1) {
+        return {
+          success: false as const,
+          error: "Multiple receptionists found — please assign this number from the agent page.",
+        };
+      }
+      agentId = agents[0].id;
+      await supabaseAdmin
+        .from("phone_numbers")
+        .update({ agent_id: agentId })
+        .eq("id", row.id);
     }
 
     const { data: agent } = await supabaseAdmin
       .from("agents")
       .select("elevenlabs_agent_id, business_name")
-      .eq("id", row.agent_id)
+      .eq("id", agentId)
       .maybeSingle();
     if (!agent?.elevenlabs_agent_id) {
       return {
