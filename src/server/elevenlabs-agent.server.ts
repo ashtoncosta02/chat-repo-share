@@ -373,6 +373,42 @@ export function postCallWebhookUrl(): string {
   return `https://project--${PROJECT_ID}-dev.lovable.app/api/public/elevenlabs/postcall`;
 }
 
+/** Register a Twilio voice webhook call with ElevenLabs and return TwiML. */
+export async function registerTwilioCall(opts: {
+  agentId: string;
+  fromNumber: string;
+  toNumber: string;
+  direction: "inbound" | "outbound";
+  dynamicVariables?: Record<string, string>;
+}): Promise<string> {
+  const apiKey = requireKey();
+  const body: Record<string, unknown> = {
+    agent_id: opts.agentId,
+    from_number: opts.fromNumber,
+    to_number: opts.toNumber,
+    direction: opts.direction,
+  };
+  if (opts.dynamicVariables && Object.keys(opts.dynamicVariables).length > 0) {
+    body.conversation_initiation_client_data = {
+      dynamic_variables: opts.dynamicVariables,
+    };
+  }
+
+  const res = await fetch(`${EL_BASE}/convai/twilio/register-call`, {
+    method: "POST",
+    headers: {
+      "xi-api-key": apiKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    throw new Error(`ElevenLabs register call failed (${res.status}): ${text}`);
+  }
+  return text;
+}
+
 /**
  * Place an outbound call via Twilio + ElevenLabs.
  * `agentPhoneNumberId` must be the ElevenLabs phone-number id returned by
