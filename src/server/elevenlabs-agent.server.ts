@@ -21,7 +21,7 @@ export interface AgentBusinessProfile {
 }
 
 export function buildSystemPrompt(p: AgentBusinessProfile): string {
-  const name = (p.assistant_name || "Ava").trim();
+  const name = (p.assistant_name || "the receptionist").trim();
   const biz = p.business_name.trim();
   const tone = (p.tone || "warm and professional").trim();
   const goal = (p.primary_goal || "help the caller and capture their contact info").trim();
@@ -30,7 +30,7 @@ export function buildSystemPrompt(p: AgentBusinessProfile): string {
   lines.push(`You are ${name}, the AI receptionist for ${biz}.`);
   lines.push(`# Identity (STRICT)`);
   lines.push(`- Your name is "${name}". Never introduce yourself as anything else.`);
-  lines.push(`- Do NOT use any other name (for example, do not say "Ava" or "Assistant") under any circumstance, even if a caller asks.`);
+  lines.push(`- Do NOT use any other name under any circumstance, even if a caller asks.`);
   lines.push(`- If asked your name, answer exactly: "${name}".`);
   lines.push(``);
   lines.push(`Your tone is ${tone}. Speak naturally, like a real person on the phone — short sentences, contractions, no robotic phrasing.`);
@@ -52,7 +52,7 @@ export function buildSystemPrompt(p: AgentBusinessProfile): string {
   lines.push(`- No human response to your greeting after a few seconds.`);
   lines.push(`If you detect voicemail, do NOT try to have a conversation. Instead:`);
   lines.push(`1. Wait for the beep / for the greeting to finish.`);
-  lines.push(`2. Leave a short, friendly message: say who you are ("${name} from ${biz}"), why you're calling${p.assistant_name ? "" : ""} (a follow-up to their previous inquiry — reference {{lead_notes}} briefly if helpful), and a callback number or that you'll try again.`);
+  lines.push(`2. Leave a short, friendly message: say who you are ("${name} from ${biz}"), why you're calling (a follow-up to their previous inquiry — reference {{lead_notes}} briefly if helpful), and a callback number or that you'll try again.`);
   lines.push(`3. Keep the voicemail under 20 seconds. End with a polite goodbye.`);
   lines.push(`4. After leaving the message, end the call — do not keep talking to silence.`);
 
@@ -118,18 +118,17 @@ export function buildSystemPrompt(p: AgentBusinessProfile): string {
   lines.push(`- Caller name (if known): {{lead_name}}`);
   lines.push(`- Previous notes about this caller (if any): {{lead_notes}}`);
   lines.push(`If "Caller name" is set, this person is a returning lead — greet them by their first name and naturally reference what you already know if it helps. If empty, treat them as a brand new caller and ask their name as usual.`);
-  lines.push(`If call direction is "outbound", you are calling THEM — do NOT say "thanks for calling". Instead say something like "Hi {{lead_name}}, this is ${(p.assistant_name || "Ava").trim()} from ${biz} — I'm following up on your earlier inquiry, is now a good time?". Be ready for voicemail (see Voicemail handling above).`);
+  lines.push(`If call direction is "outbound", you are calling THEM — do NOT say "thanks for calling". Instead say something like "Hi {{lead_name}}, this is ${name} from ${biz} — I'm following up on your earlier inquiry, is now a good time?". Be ready for voicemail (see Voicemail handling above).`);
 
   return lines.join("\n");
 }
 
 function buildFirstMessage(p: AgentBusinessProfile): string {
-  const name = (p.assistant_name || "Ava").trim();
+  const name = (p.assistant_name || "the receptionist").trim();
   const biz = p.business_name.trim();
-  // For inbound calls {{call_direction}} is empty/"inbound" and {{lead_name}}
-  // is usually empty, so this reads "Hi, thanks for calling ...".
-  // For outbound callbacks the agent should override per the prompt rules above.
-  return `Hi {{lead_name}}, thanks for calling ${biz}. This is ${name} — how can I help you today?`;
+  // Keep the first sentence safe for both inbound calls and outbound callbacks.
+  // Direction-specific wording is handled by the system prompt after context is available.
+  return `Hi, this is ${name} from ${biz}.`;
 }
 
 interface ElevenLabsAgentConfig {
@@ -184,9 +183,8 @@ function buildAgentPayload(p: AgentBusinessProfile): ElevenLabsAgentConfig {
       },
       tts: {
         voice_id: p.voice_id || "EXAVITQu4vr4xnSDxMaL",
-        // Turbo v2.5: clean studio-quality voice with sub-300ms latency.
-        // Flash v2 is faster but produces audible artifacts on the browser preview.
-        model_id: "eleven_turbo_v2_5",
+        // Conversational AI English agents currently require Turbo v2 or Flash v2.
+        model_id: "eleven_turbo_v2",
         stability: 0.6,
         similarity_boost: 0.8,
         speed: 1.0,
