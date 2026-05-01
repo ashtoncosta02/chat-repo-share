@@ -92,6 +92,32 @@ function LeadsPage() {
     await supabase.from("leads").update({ status }).eq("id", id);
   };
 
+  const [callingId, setCallingId] = useState<string | null>(null);
+  const triggerAiCallback = async (leadId: string) => {
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess.session?.access_token;
+    if (!token) {
+      toast.error("Please sign in again.");
+      return;
+    }
+    setCallingId(leadId);
+    try {
+      const res = await aiCallbackLead({ data: { accessToken: token, leadId } });
+      if (res.success) {
+        toast.success("Receptionist is calling now.");
+        setLeads((prev) =>
+          prev.map((l) => (l.id === leadId ? { ...l, status: "contacted" } : l)),
+        );
+      } else {
+        toast.error(res.error);
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to start call.");
+    } finally {
+      setCallingId(null);
+    }
+  };
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return leads.filter((l) => {
