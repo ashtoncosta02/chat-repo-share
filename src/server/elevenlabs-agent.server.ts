@@ -196,7 +196,7 @@ function buildAgentPayload(p: AgentBusinessProfile): ElevenLabsAgentConfig {
                 "Use when an outbound callback reaches voicemail, an answering machine, a recorded greeting, a beep, or silence instead of a live person. Leave the configured voicemail message, then end the call.",
               params: {
                 system_tool_type: "voicemail_detection",
-                voicemail_message: `Hi{{lead_name}}, this is ${p.assistant_name || "the receptionist"} from ${p.business_name}. I'm calling to follow up on your earlier inquiry. Please call us back when you have a chance. Thank you, goodbye.`,
+                voicemail_message: `Hi {{lead_name}}, this is ${p.assistant_name || "the receptionist"} from ${p.business_name}. I'm calling to follow up on your earlier inquiry. Please call us back when you have a chance. Thank you, goodbye.`,
               },
             },
           ],
