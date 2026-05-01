@@ -152,10 +152,11 @@ function buildAgentPayload(p: AgentBusinessProfile): ElevenLabsAgentConfig {
       },
       tts: {
         voice_id: p.voice_id || "EXAVITQu4vr4xnSDxMaL",
-        // English agents require turbo or flash v2 family. Flash v2 is fastest.
-        model_id: "eleven_flash_v2",
-        stability: 0.5,
-        similarity_boost: 0.75,
+        // Turbo v2.5: clean studio-quality voice with sub-300ms latency.
+        // Flash v2 is faster but produces audible artifacts on the browser preview.
+        model_id: "eleven_turbo_v2_5",
+        stability: 0.6,
+        similarity_boost: 0.8,
         speed: 1.0,
       },
       asr: {
