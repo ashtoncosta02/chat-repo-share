@@ -332,3 +332,55 @@ export async function deleteElevenLabsPhoneNumber(phoneNumberId: string): Promis
 export function postCallWebhookUrl(): string {
   return `https://project--${PROJECT_ID}-dev.lovable.app/api/public/elevenlabs/postcall`;
 }
+
+/**
+ * Place an outbound call via Twilio + ElevenLabs.
+ * `agentPhoneNumberId` must be the ElevenLabs phone-number id returned by
+ * `importTwilioNumber` (we store it on `phone_numbers.elevenlabs_phone_number_id`).
+ * `dynamicVariables` is injected into the agent prompt / first message
+ * (e.g. `{ lead_name: "Jordan", lead_notes: "asked about pricing" }`).
+ */
+export async function placeOutboundCall(opts: {
+  agentId: string;
+  agentPhoneNumberId: string;
+  toNumber: string;
+  dynamicVariables?: Record<string, string>;
+}): Promise<{ conversation_id: string | null; call_sid: string | null }> {
+  const apiKey = requireKey();
+  const body: Record<string, unknown> = {
+    agent_id: opts.agentId,
+    agent_phone_number_id: opts.agentPhoneNumberId,
+    to_number: opts.toNumber,
+  };
+  if (opts.dynamicVariables && Object.keys(opts.dynamicVariables).length > 0) {
+    body.conversation_initiation_client_data = {
+      dynamic_variables: opts.dynamicVariables,
+    };
+  }
+
+  const res = await fetch(`${EL_BASE}/convai/twilio/outbound-call`, {
+    method: "POST",
+    headers: {
+      "xi-api-key": apiKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const t = await res.text();
+    throw new Error(`ElevenLabs outbound call failed (${res.status}): ${t}`);
+  }
+  const json = (await res.json()) as {
+    success?: boolean;
+    message?: string;
+    conversation_id?: string | null;
+    callSid?: string | null;
+  };
+  if (json.success === false) {
+    throw new Error(`ElevenLabs outbound call rejected: ${json.message ?? "unknown reason"}`);
+  }
+  return {
+    conversation_id: json.conversation_id ?? null,
+    call_sid: json.callSid ?? null,
+  };
+}
