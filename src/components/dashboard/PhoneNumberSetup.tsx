@@ -39,6 +39,7 @@ export function PhoneNumberSetup({ agentId }: Props) {
   const search = useServerFn(searchNumbersByPostalCode);
   const purchase = useServerFn(purchasePhoneNumber);
   const release = useServerFn(releasePhoneNumber);
+  const linkExisting = useServerFn(linkExistingNumberToElevenLabs);
 
   const [owned, setOwned] = useState<OwnedNumber[]>([]);
   const [loadingOwned, setLoadingOwned] = useState(true);
@@ -49,6 +50,7 @@ export function PhoneNumberSetup({ agentId }: Props) {
   const [searched, setSearched] = useState(false);
   const [buying, setBuying] = useState<string | null>(null);
   const [releasing, setReleasing] = useState<string | null>(null);
+  const [linking, setLinking] = useState<string | null>(null);
 
   const loadOwned = async () => {
     setLoadingOwned(true);
