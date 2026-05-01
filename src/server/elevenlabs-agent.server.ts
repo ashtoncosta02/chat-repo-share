@@ -114,9 +114,11 @@ export function buildSystemPrompt(p: AgentBusinessProfile): string {
   // caller as new.
   lines.push(``);
   lines.push(`# Caller context (may be empty)`);
+  lines.push(`- Call direction: {{call_direction}}  (inbound = they called you; outbound = you are calling them back)`);
   lines.push(`- Caller name (if known): {{lead_name}}`);
   lines.push(`- Previous notes about this caller (if any): {{lead_notes}}`);
   lines.push(`If "Caller name" is set, this person is a returning lead — greet them by their first name and naturally reference what you already know if it helps. If empty, treat them as a brand new caller and ask their name as usual.`);
+  lines.push(`If call direction is "outbound", you are calling THEM — do NOT say "thanks for calling". Instead say something like "Hi {{lead_name}}, this is ${(p.assistant_name || "Ava").trim()} from ${biz} — I'm following up on your earlier inquiry, is now a good time?". Be ready for voicemail (see Voicemail handling above).`);
 
   return lines.join("\n");
 }
@@ -124,8 +126,9 @@ export function buildSystemPrompt(p: AgentBusinessProfile): string {
 function buildFirstMessage(p: AgentBusinessProfile): string {
   const name = (p.assistant_name || "Ava").trim();
   const biz = p.business_name.trim();
-  // {{lead_name}} resolves to "" when not provided, so the fallback reads
-  // naturally for unknown callers ("Hi, thanks for calling ...").
+  // For inbound calls {{call_direction}} is empty/"inbound" and {{lead_name}}
+  // is usually empty, so this reads "Hi, thanks for calling ...".
+  // For outbound callbacks the agent should override per the prompt rules above.
   return `Hi {{lead_name}}, thanks for calling ${biz}. This is ${name} — how can I help you today?`;
 }
 
