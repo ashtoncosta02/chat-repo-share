@@ -69,6 +69,7 @@ export const aiCallbackLead = createServerFn({ method: "POST" })
         dynamicVariables: {
           lead_name: firstName,
           lead_notes: (lead.notes ?? "").slice(0, 500),
+          call_direction: "outbound",
         },
       });
       // Mark lead as contacted so it shows progress.
