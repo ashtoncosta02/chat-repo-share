@@ -397,3 +397,65 @@ export const syncTwilioWebhooks = createServerFn({ method: "POST" })
       };
     }
   });
+const LinkExistingInput = z.object({
+  accessToken: z.string().min(1),
+  phoneNumberId: z.string().uuid(),
+});
+
+/**
+ * One-click "Connect to AI" for numbers already in our DB that aren't yet
+ * linked to ElevenLabs (e.g. numbers imported manually before this flow
+ * existed, or where the auto-import failed at purchase time).
+ */
+export const linkExistingNumberToElevenLabs = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => LinkExistingInput.parse(input))
+  .handler(async ({ data }) => {
+    const auth = await getAuthenticatedUserId(data.accessToken);
+    if ("error" in auth) return { success: false as const, error: auth.error };
+
+    const { data: row, error: fetchErr } = await supabaseAdmin
+      .from("phone_numbers")
+      .select("id, phone_number, agent_id, elevenlabs_phone_number_id")
+      .eq("id", data.phoneNumberId)
+      .eq("user_id", auth.userId)
+      .maybeSingle();
+    if (fetchErr || !row) return { success: false as const, error: "Number not found." };
+    if (row.elevenlabs_phone_number_id) {
+      return { success: true as const, alreadyLinked: true };
+    }
+    if (!row.agent_id) {
+      return { success: false as const, error: "This number isn't assigned to a receptionist yet." };
+    }
+
+    const { data: agent } = await supabaseAdmin
+      .from("agents")
+      .select("elevenlabs_agent_id, business_name")
+      .eq("id", row.agent_id)
+      .maybeSingle();
+    if (!agent?.elevenlabs_agent_id) {
+      return {
+        success: false as const,
+        error: "Your AI receptionist isn't fully provisioned yet. Try the voice test first.",
+      };
+    }
+
+    const elPhoneId = await tryLinkToElevenLabs({
+      phoneNumber: row.phone_number,
+      label: `${agent.business_name} — AI Receptionist`,
+      agentId: agent.elevenlabs_agent_id,
+    });
+    if (!elPhoneId) {
+      return {
+        success: false as const,
+        error:
+          "Could not link to ElevenLabs. The number may already be imported under a different account.",
+      };
+    }
+
+    await supabaseAdmin
+      .from("phone_numbers")
+      .update({ elevenlabs_phone_number_id: elPhoneId })
+      .eq("id", row.id);
+
+    return { success: true as const, alreadyLinked: false };
+  });
