@@ -353,6 +353,7 @@ export type Database = {
           capabilities: Json
           country: string
           created_at: string
+          elevenlabs_phone_number_id: string | null
           friendly_name: string | null
           id: string
           locality: string | null
@@ -370,6 +371,7 @@ export type Database = {
           capabilities?: Json
           country?: string
           created_at?: string
+          elevenlabs_phone_number_id?: string | null
           friendly_name?: string | null
           id?: string
           locality?: string | null
@@ -387,6 +389,7 @@ export type Database = {
           capabilities?: Json
           country?: string
           created_at?: string
+          elevenlabs_phone_number_id?: string | null
           friendly_name?: string | null
           id?: string
           locality?: string | null
