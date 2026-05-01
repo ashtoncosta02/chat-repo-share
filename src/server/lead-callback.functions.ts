@@ -35,7 +35,7 @@ export const aiCallbackLead = createServerFn({ method: "POST" })
     // Find the user's receptionist (1-per-account) and a connected phone number.
     const { data: agent } = await supabaseAdmin
       .from("agents")
-      .select("id, elevenlabs_agent_id")
+      .select("id, elevenlabs_agent_id, assistant_name, business_name")
       .eq("user_id", auth.userId)
       .maybeSingle();
     if (!agent?.elevenlabs_agent_id) {
@@ -60,6 +60,8 @@ export const aiCallbackLead = createServerFn({ method: "POST" })
     }
 
     const firstName = (lead.name ?? "").trim().split(/\s+/)[0] ?? "";
+    const receptionistName = (agent.assistant_name || "the receptionist").trim();
+    const businessName = (agent.business_name || "your business").trim();
 
     try {
       const result = await placeOutboundCall({
@@ -67,8 +69,8 @@ export const aiCallbackLead = createServerFn({ method: "POST" })
         agentPhoneNumberId: phone.elevenlabs_phone_number_id,
         toNumber: lead.phone,
         firstMessage: firstName
-          ? `Hi ${firstName}, this is your AI receptionist calling back about your earlier inquiry. Is now a good time?`
-          : "Hi, this is your AI receptionist calling back about your earlier inquiry. Is now a good time?",
+          ? `Hi ${firstName}, this is ${receptionistName} from ${businessName}, calling back about your earlier inquiry. Is now a good time?`
+          : `Hi, this is ${receptionistName} from ${businessName}, calling back about your earlier inquiry. Is now a good time?`,
         dynamicVariables: {
           lead_name: firstName,
           lead_notes: (lead.notes ?? "").slice(0, 500),
