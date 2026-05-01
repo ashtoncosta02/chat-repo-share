@@ -66,6 +66,9 @@ export const aiCallbackLead = createServerFn({ method: "POST" })
         agentId: agent.elevenlabs_agent_id,
         agentPhoneNumberId: phone.elevenlabs_phone_number_id,
         toNumber: lead.phone,
+        firstMessage: firstName
+          ? `Hi ${firstName}, this is your AI receptionist calling back about your earlier inquiry. Is now a good time?`
+          : "Hi, this is your AI receptionist calling back about your earlier inquiry. Is now a good time?",
         dynamicVariables: {
           lead_name: firstName,
           lead_notes: (lead.notes ?? "").slice(0, 500),
