@@ -3,10 +3,10 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/dashboard/PageHeader";
-import { Phone, Bot, RefreshCw } from "lucide-react";
+import { Phone, Bot, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
-import { syncTwilioWebhooks } from "@/server/twilio-numbers";
+import { linkExistingNumberToElevenLabs } from "@/server/twilio-numbers";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard/phone-numbers")({
@@ -22,6 +22,7 @@ interface NumberRow {
   region: string | null;
   postal_code: string | null;
   agent_id: string | null;
+  elevenlabs_phone_number_id: string | null;
   created_at: string;
   agents: { business_name: string } | null;
 }
@@ -36,25 +37,30 @@ function PhoneNumbersPage() {
   const { user } = useAuth();
   const [numbers, setNumbers] = useState<NumberRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [syncingId, setSyncingId] = useState<string | null>(null);
-  const sync = useServerFn(syncTwilioWebhooks);
+  const [linkingId, setLinkingId] = useState<string | null>(null);
+  const linkExisting = useServerFn(linkExistingNumberToElevenLabs);
 
-  useEffect(() => {
-    if (!user) return;
+  const load = () => {
     supabase
       .from("phone_numbers")
       .select(
-        "id, phone_number, friendly_name, locality, region, postal_code, agent_id, created_at, agents(business_name)"
+        "id, phone_number, friendly_name, locality, region, postal_code, agent_id, elevenlabs_phone_number_id, created_at, agents(business_name)"
       )
       .order("created_at", { ascending: false })
       .then(({ data }) => {
         setNumbers((data ?? []) as unknown as NumberRow[]);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    if (!user) return;
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  async function handleSync(phoneNumberId: string) {
-    setSyncingId(phoneNumberId);
+  async function handleConnect(phoneNumberId: string) {
+    setLinkingId(phoneNumberId);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const accessToken = session?.access_token;
@@ -62,14 +68,15 @@ function PhoneNumbersPage() {
         toast.error("Please sign in again.");
         return;
       }
-      const res = await sync({ data: { accessToken, phoneNumberId } });
+      const res = await linkExisting({ data: { accessToken, phoneNumberId } });
       if (res.success) {
-        toast.success("Voice & SMS webhooks updated. Try calling the number now.");
+        toast.success(res.alreadyLinked ? "Already connected." : "Number connected to your AI receptionist!");
+        load();
       } else {
         toast.error(res.error);
       }
     } finally {
-      setSyncingId(null);
+      setLinkingId(null);
     }
   }
 
@@ -85,7 +92,7 @@ function PhoneNumbersPage() {
           <div>
             <div className="font-semibold text-foreground mb-1">Give your agents a real number</div>
             <p className="text-sm text-muted-foreground">
-              Open any agent and choose a phone number by ZIP code. Numbers you've claimed appear here.
+              Open any agent and choose a phone number by ZIP code. Numbers you've claimed appear here and connect to your AI receptionist automatically.
             </p>
           </div>
         </div>
@@ -118,6 +125,14 @@ function PhoneNumbersPage() {
                       <div className="text-xs text-muted-foreground mt-0.5">
                         {[n.locality, n.region, n.postal_code].filter(Boolean).join(", ") || "Active"}
                       </div>
+                      {n.elevenlabs_phone_number_id ? (
+                        <div className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          AI receptionist connected
+                        </div>
+                      ) : (
+                        <div className="mt-1.5 text-xs text-amber-600">Not connected to AI yet</div>
+                      )}
                     </div>
                     <div className="flex items-center gap-3">
                       {n.agent_id ? (
@@ -132,16 +147,21 @@ function PhoneNumbersPage() {
                       ) : (
                         <span className="text-xs text-muted-foreground">Unassigned</span>
                       )}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleSync(n.id)}
-                        disabled={syncingId === n.id}
-                        title="Re-point Twilio's voice & SMS webhooks at this app"
-                      >
-                        <RefreshCw className={`h-3.5 w-3.5 mr-1 ${syncingId === n.id ? "animate-spin" : ""}`} />
-                        {syncingId === n.id ? "Syncing…" : "Sync webhooks"}
-                      </Button>
+                      {!n.elevenlabs_phone_number_id && n.agent_id && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleConnect(n.id)}
+                          disabled={linkingId === n.id}
+                        >
+                          {linkingId === n.id ? (
+                            <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                          ) : (
+                            <Sparkles className="h-3.5 w-3.5 mr-1" />
+                          )}
+                          {linkingId === n.id ? "Connecting…" : "Connect to AI"}
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </li>
