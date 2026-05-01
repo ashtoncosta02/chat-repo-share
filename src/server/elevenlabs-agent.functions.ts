@@ -6,6 +6,7 @@ import {
   updateElevenLabsAgent,
   deleteElevenLabsAgent,
   getConversationToken,
+  getConversationSignedUrl,
   type AgentBusinessProfile,
 } from "./elevenlabs-agent.server";
 
