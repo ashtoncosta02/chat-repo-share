@@ -260,6 +260,32 @@ function LeadsPage() {
                         {new Date(l.created_at).toLocaleDateString()}
                       </span>
                       <div className="flex items-center gap-1">
+                        {l.phone && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" disabled={callingId === l.id}>
+                                {callingId === l.id ? (
+                                  <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                                ) : (
+                                  <PhoneCall className="h-3.5 w-3.5 mr-1" />
+                                )}
+                                Call back
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem asChild>
+                                <a href={`tel:${l.phone}`}>
+                                  <Phone className="h-3.5 w-3.5 mr-2" />
+                                  Call from my phone
+                                </a>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => triggerAiCallback(l.id)}>
+                                <Bot className="h-3.5 w-3.5 mr-2" />
+                                Have receptionist call now
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                         {l.conversation_id && (
                           <Button asChild variant="ghost" size="sm">
                             <Link
