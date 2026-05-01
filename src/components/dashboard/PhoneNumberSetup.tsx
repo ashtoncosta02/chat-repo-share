@@ -170,6 +170,26 @@ export function PhoneNumberSetup({ agentId }: Props) {
     }
   };
 
+  const handleConnect = async (id: string) => {
+    setLinking(id);
+    try {
+      const accessToken = await getAccessToken();
+      if (!accessToken) {
+        toast.error("Please sign in again.");
+        return;
+      }
+      const res = await linkExisting({ data: { accessToken, phoneNumberId: id } });
+      if (!res.success) {
+        toast.error(res.error);
+        return;
+      }
+      toast.success(res.alreadyLinked ? "Already connected." : "Number connected to your AI receptionist!");
+      await loadOwned();
+    } finally {
+      setLinking(null);
+    }
+  };
+
   return (
     <div className="border border-border rounded-2xl bg-card p-6">
       <div className="flex items-center gap-2 mb-1">
