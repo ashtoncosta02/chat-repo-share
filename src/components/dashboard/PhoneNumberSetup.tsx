@@ -5,12 +5,13 @@ import {
   searchNumbersByPostalCode,
   purchasePhoneNumber,
   releasePhoneNumber,
+  linkExistingNumberToElevenLabs,
   type AvailableNumber,
 } from "@/server/twilio-numbers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Phone, Search, Check, Trash2, Loader2 } from "lucide-react";
+import { Phone, Search, Check, Trash2, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 interface OwnedNumber {
@@ -20,6 +21,7 @@ interface OwnedNumber {
   locality: string | null;
   region: string | null;
   postal_code: string | null;
+  elevenlabs_phone_number_id: string | null;
 }
 
 interface Props {
@@ -37,6 +39,7 @@ export function PhoneNumberSetup({ agentId }: Props) {
   const search = useServerFn(searchNumbersByPostalCode);
   const purchase = useServerFn(purchasePhoneNumber);
   const release = useServerFn(releasePhoneNumber);
+  const linkExisting = useServerFn(linkExistingNumberToElevenLabs);
 
   const [owned, setOwned] = useState<OwnedNumber[]>([]);
   const [loadingOwned, setLoadingOwned] = useState(true);
@@ -47,12 +50,13 @@ export function PhoneNumberSetup({ agentId }: Props) {
   const [searched, setSearched] = useState(false);
   const [buying, setBuying] = useState<string | null>(null);
   const [releasing, setReleasing] = useState<string | null>(null);
+  const [linking, setLinking] = useState<string | null>(null);
 
   const loadOwned = async () => {
     setLoadingOwned(true);
     const { data, error } = await supabase
       .from("phone_numbers")
-      .select("id, phone_number, friendly_name, locality, region, postal_code")
+      .select("id, phone_number, friendly_name, locality, region, postal_code, elevenlabs_phone_number_id")
       .eq("agent_id", agentId)
       .order("created_at", { ascending: false });
     if (error) {
@@ -132,7 +136,11 @@ export function PhoneNumberSetup({ agentId }: Props) {
         toast.error(res.error);
         return;
       }
-      toast.success(`${formatPhone(n.phoneNumber)} is yours!`);
+      if (res.connectedToAi) {
+        toast.success(`${formatPhone(n.phoneNumber)} is yours and connected to your AI receptionist!`);
+      } else {
+        toast.success(`${formatPhone(n.phoneNumber)} is yours! Click "Connect to AI" to finish hooking up voice.`);
+      }
       setResults((prev) => prev.filter((x) => x.phoneNumber !== n.phoneNumber));
       await loadOwned();
     } finally {
@@ -162,6 +170,26 @@ export function PhoneNumberSetup({ agentId }: Props) {
     }
   };
 
+  const handleConnect = async (id: string) => {
+    setLinking(id);
+    try {
+      const accessToken = await getAccessToken();
+      if (!accessToken) {
+        toast.error("Please sign in again.");
+        return;
+      }
+      const res = await linkExisting({ data: { accessToken, phoneNumberId: id } });
+      if (!res.success) {
+        toast.error(res.error);
+        return;
+      }
+      toast.success(res.alreadyLinked ? "Already connected." : "Number connected to your AI receptionist!");
+      await loadOwned();
+    } finally {
+      setLinking(null);
+    }
+  };
+
   return (
     <div className="border border-border rounded-2xl bg-card p-6">
       <div className="flex items-center gap-2 mb-1">
@@ -182,7 +210,7 @@ export function PhoneNumberSetup({ agentId }: Props) {
               key={p.id}
               className="flex items-center justify-between rounded-xl border border-border bg-background px-4 py-3"
             >
-              <div>
+              <div className="min-w-0">
                 <div className="font-mono text-base font-semibold text-foreground">
                   {formatPhone(p.phone_number)}
                 </div>
@@ -190,20 +218,45 @@ export function PhoneNumberSetup({ agentId }: Props) {
                   {[p.locality, p.region, p.postal_code].filter(Boolean).join(", ") ||
                     "Active"}
                 </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-destructive hover:text-destructive"
-                disabled={releasing === p.id}
-                onClick={() => handleRelease(p.id)}
-              >
-                {releasing === p.id ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                {p.elevenlabs_phone_number_id ? (
+                  <div className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    AI receptionist connected
+                  </div>
                 ) : (
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <div className="mt-1.5 text-xs text-amber-600">Not connected to AI yet</div>
                 )}
-              </Button>
+              </div>
+              <div className="flex items-center gap-2">
+                {!p.elevenlabs_phone_number_id && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={linking === p.id}
+                    onClick={() => handleConnect(p.id)}
+                  >
+                    {linking === p.id ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
+                    ) : (
+                      <Sparkles className="h-3.5 w-3.5 mr-1" />
+                    )}
+                    Connect to AI
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive hover:text-destructive"
+                  disabled={releasing === p.id}
+                  onClick={() => handleRelease(p.id)}
+                >
+                  {releasing === p.id ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-3.5 w-3.5" />
+                  )}
+                </Button>
+              </div>
             </div>
           ))}
         </div>

@@ -1,8 +1,43 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import {
+  importTwilioNumber,
+  deleteElevenLabsPhoneNumber,
+} from "./elevenlabs-agent.server";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
+
+/**
+ * Best-effort: import a Twilio number into ElevenLabs and link it to the
+ * agent. Returns the EL phone_number_id on success, or null if the import
+ * failed (we log but never block the Twilio purchase on this).
+ */
+async function tryLinkToElevenLabs(opts: {
+  phoneNumber: string;
+  label: string;
+  agentId: string;
+}): Promise<string | null> {
+  const sid = process.env.TWILIO_ACCOUNT_SID;
+  const token = process.env.TWILIO_AUTH_TOKEN;
+  if (!sid || !token) {
+    console.warn("Skipping ElevenLabs import: TWILIO_ACCOUNT_SID/TWILIO_AUTH_TOKEN not set");
+    return null;
+  }
+  try {
+    const { phone_number_id } = await importTwilioNumber({
+      phoneNumber: opts.phoneNumber,
+      label: opts.label,
+      twilioAccountSid: sid,
+      twilioAuthToken: token,
+      agentId: opts.agentId,
+    });
+    return phone_number_id;
+  } catch (e) {
+    console.error("ElevenLabs phone import failed:", e);
+    return null;
+  }
+}
 
 function gatewayHeaders() {
   const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
@@ -205,7 +240,7 @@ export const purchasePhoneNumber = createServerFn({ method: "POST" })
         .select()
         .single();
 
-      if (insertErr) {
+      if (insertErr || !inserted) {
         console.error("phone_numbers insert error:", insertErr);
         return {
           success: false as const,
@@ -213,7 +248,33 @@ export const purchasePhoneNumber = createServerFn({ method: "POST" })
         };
       }
 
-      return { success: true as const, phoneNumber: inserted };
+      // Auto-link to ElevenLabs (best-effort, non-blocking).
+      const { data: agentForEl } = await supabaseAdmin
+        .from("agents")
+        .select("elevenlabs_agent_id, business_name")
+        .eq("id", data.agentId)
+        .maybeSingle();
+
+      let elPhoneId: string | null = null;
+      if (agentForEl?.elevenlabs_agent_id) {
+        elPhoneId = await tryLinkToElevenLabs({
+          phoneNumber: String(json.phone_number),
+          label: `${agentForEl.business_name} — AI Receptionist`,
+          agentId: agentForEl.elevenlabs_agent_id,
+        });
+        if (elPhoneId) {
+          await supabaseAdmin
+            .from("phone_numbers")
+            .update({ elevenlabs_phone_number_id: elPhoneId })
+            .eq("id", inserted.id);
+        }
+      }
+
+      return {
+        success: true as const,
+        phoneNumber: inserted,
+        connectedToAi: Boolean(elPhoneId),
+      };
     } catch (e) {
       console.error("purchasePhoneNumber error:", e);
       return {
@@ -238,13 +299,22 @@ export const releasePhoneNumber = createServerFn({ method: "POST" })
 
     const { data: row, error: fetchErr } = await supabaseAdmin
       .from("phone_numbers")
-      .select("id, twilio_sid")
+      .select("id, twilio_sid, elevenlabs_phone_number_id")
       .eq("id", data.phoneNumberId)
       .eq("user_id", auth.userId)
       .maybeSingle();
     if (fetchErr || !row) return { success: false as const, error: "Number not found." };
 
     try {
+      // Unlink from ElevenLabs first (best-effort).
+      if (row.elevenlabs_phone_number_id) {
+        try {
+          await deleteElevenLabsPhoneNumber(row.elevenlabs_phone_number_id);
+        } catch (e) {
+          console.error("EL unlink failed (continuing with Twilio release):", e);
+        }
+      }
+
       const res = await fetch(`${GATEWAY_URL}/IncomingPhoneNumbers/${row.twilio_sid}.json`, {
         method: "DELETE",
         headers: gatewayHeaders(),
@@ -326,4 +396,66 @@ export const syncTwilioWebhooks = createServerFn({ method: "POST" })
         error: e instanceof Error ? e.message : "Unexpected error syncing webhooks.",
       };
     }
+  });
+const LinkExistingInput = z.object({
+  accessToken: z.string().min(1),
+  phoneNumberId: z.string().uuid(),
+});
+
+/**
+ * One-click "Connect to AI" for numbers already in our DB that aren't yet
+ * linked to ElevenLabs (e.g. numbers imported manually before this flow
+ * existed, or where the auto-import failed at purchase time).
+ */
+export const linkExistingNumberToElevenLabs = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => LinkExistingInput.parse(input))
+  .handler(async ({ data }) => {
+    const auth = await getAuthenticatedUserId(data.accessToken);
+    if ("error" in auth) return { success: false as const, error: auth.error };
+
+    const { data: row, error: fetchErr } = await supabaseAdmin
+      .from("phone_numbers")
+      .select("id, phone_number, agent_id, elevenlabs_phone_number_id")
+      .eq("id", data.phoneNumberId)
+      .eq("user_id", auth.userId)
+      .maybeSingle();
+    if (fetchErr || !row) return { success: false as const, error: "Number not found." };
+    if (row.elevenlabs_phone_number_id) {
+      return { success: true as const, alreadyLinked: true };
+    }
+    if (!row.agent_id) {
+      return { success: false as const, error: "This number isn't assigned to a receptionist yet." };
+    }
+
+    const { data: agent } = await supabaseAdmin
+      .from("agents")
+      .select("elevenlabs_agent_id, business_name")
+      .eq("id", row.agent_id)
+      .maybeSingle();
+    if (!agent?.elevenlabs_agent_id) {
+      return {
+        success: false as const,
+        error: "Your AI receptionist isn't fully provisioned yet. Try the voice test first.",
+      };
+    }
+
+    const elPhoneId = await tryLinkToElevenLabs({
+      phoneNumber: row.phone_number,
+      label: `${agent.business_name} — AI Receptionist`,
+      agentId: agent.elevenlabs_agent_id,
+    });
+    if (!elPhoneId) {
+      return {
+        success: false as const,
+        error:
+          "Could not link to ElevenLabs. The number may already be imported under a different account.",
+      };
+    }
+
+    await supabaseAdmin
+      .from("phone_numbers")
+      .update({ elevenlabs_phone_number_id: elPhoneId })
+      .eq("id", row.id);
+
+    return { success: true as const, alreadyLinked: false };
   });
