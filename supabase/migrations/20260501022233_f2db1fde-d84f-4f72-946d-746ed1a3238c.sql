@@ -1,0 +1,1 @@
+ALTER TABLE public.phone_numbers ADD COLUMN elevenlabs_phone_number_id text;

@@ -1,100 +1,54 @@
-# Roadmap: Higher-Value Features
+# Auto-link Twilio numbers to ElevenLabs
 
-Ordered so the most impactful customer-facing work ships first, your private admin dashboard comes near the end, then domain, with voice rework parked for last.
+Right now when you (or a future client) buy a phone number in the dashboard, it's only registered with Twilio + the SMS webhook. The voice side still requires the manual ElevenLabs "Import a number from Twilio" step you just did. This plan automates that step end-to-end.
 
----
+## What changes for the user
 
-## 1. Lead capture polish ✅ DONE
+1. Click **Choose** on a number in the agent dashboard → number is purchased from Twilio AND auto-linked to ElevenLabs in one step.
+2. Owned numbers show a small **"AI receptionist connected ✓"** badge instead of the obsolete "Sync webhooks" button.
+3. Releasing a number also unlinks it from ElevenLabs so you don't get charged for ghost numbers.
 
-- Auto-extract name/email/phone from widget chats via Lovable AI Gateway after each visitor message → upsert into `leads` (server-side, fire-and-forget).
-- Dedupe by email only (per product decision — phones too often shared).
-- Booked customers from `calendar_bookings` (widget OR manual) auto-upsert into leads with `status=won`, deduped by email.
-- Leads dashboard has search, agent filter, status filter (new/contacted/won/lost), "Chat" link to full transcript, status pipeline editor.
+## Required from you (one-time, ~2 min)
 
----
+ElevenLabs' import API needs your **Twilio Account SID** and **Twilio Auth Token** (the connector gateway hides these, so we need them stored as separate secrets). I'll prompt you for both via Lovable's add-secret flow before writing the wiring.
 
-## 2. Agent analytics ✅ DONE
+- Where to find them: [Twilio Console](https://console.twilio.com/) → Account Dashboard → "Account Info" panel.
+- Stored as runtime secrets `TWILIO_ACCOUNT_SID` and `TWILIO_AUTH_TOKEN`. Never exposed to the browser.
 
-- `dashboard.analytics.tsx` ships with: 5 metric cards (conversations, chat, voice, leads, bookings + conversion rate), daily time-series line chart (chats/voice/leads/bookings), and an hour-of-day bar chart with peak hour callout.
-- Date range selector (7/14/30/90 days) and per-receptionist filter (auto-hidden when only 1 receptionist exists, since that's the hard product limit).
-- Per-receptionist leaderboard table also auto-hides when only 1 receptionist.
-- Copy reflects "AI Receptionist" branding.
+## Implementation
 
----
+**1. Database migration**
+Add one nullable column to `phone_numbers`:
+- `elevenlabs_phone_number_id text` — set when the number is registered with ElevenLabs; used to unlink later.
 
-## 3. Onboarding + billing gate
+**2. Server: `src/server/twilio-numbers.ts` — `purchasePhoneNumber`**
+After a successful Twilio purchase + DB insert, look up the agent's `elevenlabs_agent_id`. If present, call the existing `importTwilioNumber()` helper from `elevenlabs-agent.server.ts` using the new `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` env vars. On success, update the row with `elevenlabs_phone_number_id`. If the EL import fails, the Twilio purchase still succeeds — we just log it and surface a soft warning toast so the user isn't blocked (they can retry from the dashboard).
 
-Right now anyone can sign up and use everything. To make this a real product:
+**3. Server: `releasePhoneNumber`**
+Before deleting the Twilio number, if `elevenlabs_phone_number_id` is set, DELETE it from `https://api.elevenlabs.io/v1/convai/phone-numbers/{id}` (404 = already gone, ignore). Add a small helper `deleteElevenLabsPhoneNumber()` in `elevenlabs-agent.server.ts`.
 
-**What we'll build**
-- Onboarding flow: after signup, walk new users through (1) create first agent → (2) connect Google Calendar → (3) install widget snippet. Progress checklist on the dashboard until complete.
-- Stripe subscription (use the Stripe connector). Single plan to start, e.g. "Pro — $X/mo" with a 7-day trial.
-- `subscriptions` table tracking status. Gate widget chat + bookings behind active subscription (return polite "service unavailable" from `/api/public/widget/chat` if owner's subscription is past_due/canceled).
-- Billing page: current plan, manage via Stripe customer portal.
+**4. Server: new fallback `linkExistingNumberToElevenLabs` server fn**
+For numbers already in your DB (like the one you just imported manually), expose a one-click "Connect to AI" button. This calls `importTwilioNumber()` and saves the returned ID. Lets us recover from the rare case where step 2 failed.
 
-**Why:** Without billing, this isn't a business. Onboarding lifts activation — most users abandon products before connecting the value-creating piece (calendar + widget install).
+**5. UI: `src/components/dashboard/PhoneNumberSetup.tsx`**
+On each owned number row, replace the current display with a status indicator:
+- `elevenlabs_phone_number_id` set → green dot + "AI receptionist connected"
+- not set → "Connect to AI" button that calls the new server fn
 
----
+**6. UI: `src/routes/dashboard.phone-numbers.tsx`**
+Replace the "Sync webhooks" button with the same connection status badge. The sync-webhooks server function stays in the codebase (still used internally for SMS), just removed from the UI since it's no longer something the user needs to think about.
 
-## 4. Email notifications
+## Out of scope (for now)
 
-Owner + customer emails so people aren't surprised by bookings.
+- Migrating numbers between agents (only 1-receptionist-per-account anyway).
+- Bulk re-import of legacy numbers — the per-row "Connect to AI" button covers it.
+- Showing ElevenLabs call logs in the dashboard — already handled by existing post-call webhook (`api.public.elevenlabs.postcall.ts`).
 
-**What we'll build**
-- When a booking is created (widget OR manual): send confirmation email to customer (already partially happening via Google Calendar invite — add a branded follow-up) and a "new booking" alert to the agent owner.
-- Daily digest email to owner: bookings today, new leads, conversations count.
-- Use Resend via the existing infra.
+## Order of operations when you approve
 
-**Why:** Trust + retention. Owners want to know their AI is working without checking the dashboard.
-
----
-
-## 5. Private admin dashboard (just for you)
-
-A separate area only you can access to monitor the whole app.
-
-**What we'll build**
-- `user_roles` table + `has_role()` security definer function (the proper RLS pattern — never store roles on profiles).
-- Seed your user with the `admin` role.
-- New route group `dashboard.admin.*` gated by an admin-check loader that redirects non-admins.
-- **Overview page:** total users, active users (7d/30d), total agents, conversations, bookings, MRR (from Stripe), subscription breakdown (trial / active / churned).
-- **Users page:** list of all users with signup date, last active, # agents, # conversations, # bookings, plan status. Click into a user to see their agents and recent activity.
-- **Agents page:** all agents across all users, sortable by usage.
-- **System health:** recent errors (from a lightweight `error_logs` table we'd add), edge function failure rates, Lovable AI usage trend.
-- **Revenue page:** MRR over time, new subs, churn, trial → paid conversion.
-
-**Why at the end:** It's pure observability — needs the other features to exist first to be worth viewing. Doesn't ship value to your customers.
-
----
-
-## 6. Custom domain
-
-Get the app onto your own domain.
-
-**What we'll do**
-- Help you configure the custom domain in Lovable settings.
-- Update OAuth redirect URIs (Google Calendar, Supabase auth) to include the new domain.
-- Update widget embed script + CORS config so embeds keep working.
-- Update any hardcoded URLs (`NEXT_PUBLIC_SITE_URL` secret, email templates, OAuth callbacks).
-
-**Why near-end:** Easier to do once flows are stable so we don't have to repeat URL changes mid-development.
-
----
-
-## 7. Voice rework (deferred — last)
-
-Already in memory as parked. Will revisit with Twilio Media Streams + realtime LLM/TTS or a dedicated voice provider (Vapi/Retell/LiveKit) when we get there.
-
----
-
-# Suggested execution order
-
-1. Lead capture polish ← **start here**
-2. Agent analytics
-3. Onboarding + Stripe billing
-4. Email notifications
-5. Admin dashboard (your private view)
-6. Custom domain
-7. Voice rework
-
-Each item is a self-contained chunk we can ship and validate before the next. Approve this and I'll start with **Lead capture polish**.
+1. I'll prompt you for `TWILIO_ACCOUNT_SID` and `TWILIO_AUTH_TOKEN` via add-secret.
+2. Run the DB migration.
+3. Wire the server changes.
+4. Update the two UI surfaces.
+5. You click **"Connect to AI"** once on your existing number to backfill it.
+6. Done — every future number purchase is automatic.
