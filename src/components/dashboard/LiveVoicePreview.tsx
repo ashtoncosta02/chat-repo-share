@@ -70,12 +70,12 @@ function LiveVoicePreviewInner({
       const token = session.session?.access_token;
       if (!token) throw new Error("No session token. Sign in again.");
 
-      // 1. Make sure the EL agent exists / is up to date.
-      if (!hasElevenLabsAgent) {
-        const r = await sync({ data: { accessToken: token, agentId } });
-        if (!r.success) throw new Error(r.error);
-        onProvisioned?.();
-      }
+      // 1. Always sync the latest config (name, voice, FAQs, prompt) to
+      // ElevenLabs before opening the session — otherwise edits made in the
+      // dashboard won't be reflected in the voice test.
+      const r = await sync({ data: { accessToken: token, agentId } });
+      if (!r.success) throw new Error(r.error);
+      if (!hasElevenLabsAgent) onProvisioned?.();
 
       // 2. Get a short-lived token + signed URL.
       const t = await getToken({ data: { accessToken: token, agentId } });
