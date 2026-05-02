@@ -8,6 +8,7 @@ import {
   getConversationToken,
   getConversationSignedUrl,
   syncBookingToolsForAgent,
+  deleteBookingToolsForAgent,
   type AgentBusinessProfile,
 } from "./elevenlabs-agent.server";
 
@@ -70,6 +71,60 @@ function rowToProfile(row: AgentRow): AgentBusinessProfile {
 }
 
 /**
+ * Internal helper: re-sync booking tools and the EL agent for an agent row.
+ * No auth — call only from trusted server contexts (e.g. OAuth callback,
+ * disconnect handler, or after authorizing the user).
+ */
+export async function resyncReceptionistById(
+  agentDbId: string,
+): Promise<{ success: true; elevenlabs_agent_id: string } | { success: false; error: string }> {
+  const { data: row, error: rowErr } = await supabaseAdmin
+    .from("agents")
+    .select(
+      "id, user_id, business_name, assistant_name, industry, tone, primary_goal, services, booking_link, emergency_number, pricing_notes, escalation_triggers, voice_id, faqs_structured, elevenlabs_agent_id",
+    )
+    .eq("id", agentDbId)
+    .maybeSingle();
+  if (rowErr || !row) return { success: false, error: "Receptionist not found." };
+
+  const profile = rowToProfile(row as AgentRow);
+
+  try {
+    const toolSync = await syncBookingToolsForAgent(row.id).catch((e) => {
+      console.error("syncBookingToolsForAgent failed:", e);
+      return { toolIds: [], bookingPromptAddendum: null };
+    });
+    profile.booking_enabled = toolSync.toolIds.length > 0;
+    profile.booking_prompt_addendum = toolSync.bookingPromptAddendum;
+    profile.tool_ids = toolSync.toolIds;
+
+    let elAgentId = row.elevenlabs_agent_id;
+    if (elAgentId) {
+      await updateElevenLabsAgent(elAgentId, profile);
+    } else {
+      const created = await createElevenLabsAgent(profile);
+      elAgentId = created.agent_id;
+      const { error: updErr } = await supabaseAdmin
+        .from("agents")
+        .update({ elevenlabs_agent_id: elAgentId })
+        .eq("id", row.id);
+      if (updErr) {
+        console.error("Failed to save elevenlabs_agent_id:", updErr);
+        await deleteElevenLabsAgent(elAgentId).catch(() => {});
+        return { success: false, error: "Could not save voice agent ID." };
+      }
+    }
+    return { success: true, elevenlabs_agent_id: elAgentId };
+  } catch (e) {
+    console.error("resyncReceptionistById error:", e);
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Unexpected error syncing receptionist.",
+    };
+  }
+}
+
+/**
  * Create the EL agent if missing, otherwise update it in place so prompt
  * + voice + FAQs always match what's in our DB.
  */
@@ -79,52 +134,18 @@ export const syncReceptionistAgent = createServerFn({ method: "POST" })
     const auth = await authUser(data.accessToken);
     if ("error" in auth) return { success: false as const, error: auth.error };
 
-    const { data: row, error: rowErr } = await supabaseAdmin
+    // Verify ownership before touching EL.
+    const { data: owned } = await supabaseAdmin
       .from("agents")
-      .select(
-        "id, user_id, business_name, assistant_name, industry, tone, primary_goal, services, booking_link, emergency_number, pricing_notes, escalation_triggers, voice_id, faqs_structured, elevenlabs_agent_id",
-      )
+      .select("id")
       .eq("id", data.agentId)
       .eq("user_id", auth.userId)
       .maybeSingle();
-    if (rowErr || !row) return { success: false as const, error: "Receptionist not found." };
+    if (!owned) return { success: false as const, error: "Receptionist not found." };
 
-    const profile = rowToProfile(row as AgentRow);
-
-    try {
-      // Sync booking webhook tools FIRST so we can attach their ids to the agent.
-      const toolSync = await syncBookingToolsForAgent(row.id).catch((e) => {
-        console.error("syncBookingToolsForAgent failed:", e);
-        return { toolIds: [], bookingPromptAddendum: null };
-      });
-      profile.booking_enabled = toolSync.toolIds.length > 0;
-      profile.booking_prompt_addendum = toolSync.bookingPromptAddendum;
-      profile.tool_ids = toolSync.toolIds;
-
-      let elAgentId = row.elevenlabs_agent_id;
-      if (elAgentId) {
-        await updateElevenLabsAgent(elAgentId, profile);
-      } else {
-        const created = await createElevenLabsAgent(profile);
-        elAgentId = created.agent_id;
-        const { error: updErr } = await supabaseAdmin
-          .from("agents")
-          .update({ elevenlabs_agent_id: elAgentId })
-          .eq("id", row.id);
-        if (updErr) {
-          console.error("Failed to save elevenlabs_agent_id:", updErr);
-          await deleteElevenLabsAgent(elAgentId).catch(() => {});
-          return { success: false as const, error: "Could not save voice agent ID." };
-        }
-      }
-      return { success: true as const, elevenlabs_agent_id: elAgentId };
-    } catch (e) {
-      console.error("syncReceptionistAgent error:", e);
-      return {
-        success: false as const,
-        error: e instanceof Error ? e.message : "Unexpected error syncing receptionist.",
-      };
-    }
+    const result = await resyncReceptionistById(data.agentId);
+    if (!result.success) return { success: false as const, error: result.error };
+    return { success: true as const, elevenlabs_agent_id: result.elevenlabs_agent_id };
   });
 
 const TokenInput = z.object({
@@ -189,6 +210,11 @@ export const deleteReceptionistAgent = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const auth = await authUser(data.accessToken);
     if ("error" in auth) return { success: false as const, error: auth.error };
+
+    // Always try to clean up booking tools first (independent of agent existence).
+    await deleteBookingToolsForAgent(data.agentId).catch((e) => {
+      console.error("deleteBookingToolsForAgent error:", e);
+    });
 
     const { data: row } = await supabaseAdmin
       .from("agents")

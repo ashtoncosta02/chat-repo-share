@@ -6,6 +6,7 @@ import {
   verifyState,
 } from "@/server/google-calendar.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { resyncReceptionistById } from "@/server/elevenlabs-agent.functions";
 
 function htmlResponse(title: string, body: string, status = 200) {
   return new Response(
@@ -79,6 +80,11 @@ export const Route = createFileRoute("/api/public/google-calendar/callback")({
             console.error("upsert failed", error);
             return htmlResponse("Error", `<h1>Database error</h1><p>${error.message}</p>`, 500);
           }
+
+          // Provision booking webhook tools + push updated prompt to EL.
+          await resyncReceptionistById(verified.agent_id).catch((e) => {
+            console.error("resync after calendar connect failed:", e);
+          });
 
           return htmlResponse(
             "Connected",

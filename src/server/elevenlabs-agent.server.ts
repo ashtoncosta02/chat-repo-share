@@ -469,6 +469,25 @@ export async function syncBookingToolsForAgent(agentDbId: string): Promise<ToolS
   };
 }
 
+/**
+ * Delete the booking webhook tools for an agent (used when removing the
+ * receptionist entirely so we don't leak workspace tools in EL).
+ */
+export async function deleteBookingToolsForAgent(agentDbId: string): Promise<void> {
+  const { data: row } = await supabaseAdmin
+    .from("agents")
+    .select("elevenlabs_find_slots_tool_id, elevenlabs_book_tool_id")
+    .eq("id", agentDbId)
+    .maybeSingle();
+  if (!row) return;
+  if (row.elevenlabs_find_slots_tool_id) {
+    await deleteWorkspaceTool(row.elevenlabs_find_slots_tool_id).catch(() => {});
+  }
+  if (row.elevenlabs_book_tool_id) {
+    await deleteWorkspaceTool(row.elevenlabs_book_tool_id).catch(() => {});
+  }
+}
+
 export async function deleteElevenLabsAgent(agentId: string): Promise<void> {
   const apiKey = requireKey();
   const res = await fetch(`${EL_BASE}/convai/agents/${agentId}`, {
