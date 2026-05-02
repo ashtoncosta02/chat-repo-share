@@ -81,6 +81,11 @@ export const Route = createFileRoute("/api/public/google-calendar/callback")({
             return htmlResponse("Error", `<h1>Database error</h1><p>${error.message}</p>`, 500);
           }
 
+          // Provision booking webhook tools + push updated prompt to EL.
+          await resyncReceptionistById(verified.agent_id).catch((e) => {
+            console.error("resync after calendar connect failed:", e);
+          });
+
           return htmlResponse(
             "Connected",
             `<h1>✓ Calendar connected</h1><p>Signed in as <strong>${userInfo.email}</strong></p><p>You can close this window.</p>`,
