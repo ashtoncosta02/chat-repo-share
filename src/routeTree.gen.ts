@@ -29,6 +29,7 @@ import { Route as DashboardAdminUsersRouteImport } from './routes/dashboard.admi
 import { Route as ApiPublicOwnerChatRouteImport } from './routes/api.public.owner-chat'
 import { Route as ApiPublicWidgetEmbedDotjsRouteImport } from './routes/api.public.widget.embed[.]js'
 import { Route as ApiPublicWidgetChatRouteImport } from './routes/api.public.widget.chat'
+import { Route as ApiPublicVoicemailAudioRouteImport } from './routes/api.public.voicemail.audio'
 import { Route as ApiPublicTwilioVoiceRouteImport } from './routes/api.public.twilio.voice'
 import { Route as ApiPublicTwilioSmsRouteImport } from './routes/api.public.twilio.sms'
 import { Route as ApiPublicTwilioCallbackRouteImport } from './routes/api.public.twilio.callback'
@@ -139,6 +140,11 @@ const ApiPublicWidgetChatRoute = ApiPublicWidgetChatRouteImport.update({
   path: '/api/public/widget/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicVoicemailAudioRoute = ApiPublicVoicemailAudioRouteImport.update({
+  id: '/api/public/voicemail/audio',
+  path: '/api/public/voicemail/audio',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicTwilioVoiceRoute = ApiPublicTwilioVoiceRouteImport.update({
   id: '/api/public/twilio/voice',
   path: '/api/public/twilio/voice',
@@ -197,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/api/public/twilio/callback': typeof ApiPublicTwilioCallbackRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
   '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRoute
+  '/api/public/voicemail/audio': typeof ApiPublicVoicemailAudioRoute
   '/api/public/widget/chat': typeof ApiPublicWidgetChatRoute
   '/api/public/widget/embed.js': typeof ApiPublicWidgetEmbedDotjsRoute
   '/api/public/widget/config/$agentId': typeof ApiPublicWidgetConfigAgentIdRoute
@@ -223,6 +230,7 @@ export interface FileRoutesByTo {
   '/api/public/twilio/callback': typeof ApiPublicTwilioCallbackRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
   '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRoute
+  '/api/public/voicemail/audio': typeof ApiPublicVoicemailAudioRoute
   '/api/public/widget/chat': typeof ApiPublicWidgetChatRoute
   '/api/public/widget/embed.js': typeof ApiPublicWidgetEmbedDotjsRoute
   '/api/public/widget/config/$agentId': typeof ApiPublicWidgetConfigAgentIdRoute
@@ -252,6 +260,7 @@ export interface FileRoutesById {
   '/api/public/twilio/callback': typeof ApiPublicTwilioCallbackRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
   '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRoute
+  '/api/public/voicemail/audio': typeof ApiPublicVoicemailAudioRoute
   '/api/public/widget/chat': typeof ApiPublicWidgetChatRoute
   '/api/public/widget/embed.js': typeof ApiPublicWidgetEmbedDotjsRoute
   '/api/public/widget/config/$agentId': typeof ApiPublicWidgetConfigAgentIdRoute
@@ -282,6 +291,7 @@ export interface FileRouteTypes {
     | '/api/public/twilio/callback'
     | '/api/public/twilio/sms'
     | '/api/public/twilio/voice'
+    | '/api/public/voicemail/audio'
     | '/api/public/widget/chat'
     | '/api/public/widget/embed.js'
     | '/api/public/widget/config/$agentId'
@@ -308,6 +318,7 @@ export interface FileRouteTypes {
     | '/api/public/twilio/callback'
     | '/api/public/twilio/sms'
     | '/api/public/twilio/voice'
+    | '/api/public/voicemail/audio'
     | '/api/public/widget/chat'
     | '/api/public/widget/embed.js'
     | '/api/public/widget/config/$agentId'
@@ -336,6 +347,7 @@ export interface FileRouteTypes {
     | '/api/public/twilio/callback'
     | '/api/public/twilio/sms'
     | '/api/public/twilio/voice'
+    | '/api/public/voicemail/audio'
     | '/api/public/widget/chat'
     | '/api/public/widget/embed.js'
     | '/api/public/widget/config/$agentId'
@@ -352,6 +364,7 @@ export interface RootRouteChildren {
   ApiPublicTwilioCallbackRoute: typeof ApiPublicTwilioCallbackRoute
   ApiPublicTwilioSmsRoute: typeof ApiPublicTwilioSmsRoute
   ApiPublicTwilioVoiceRoute: typeof ApiPublicTwilioVoiceRoute
+  ApiPublicVoicemailAudioRoute: typeof ApiPublicVoicemailAudioRoute
   ApiPublicWidgetChatRoute: typeof ApiPublicWidgetChatRoute
   ApiPublicWidgetEmbedDotjsRoute: typeof ApiPublicWidgetEmbedDotjsRoute
   ApiPublicWidgetConfigAgentIdRoute: typeof ApiPublicWidgetConfigAgentIdRoute
@@ -499,6 +512,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWidgetChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/voicemail/audio': {
+      id: '/api/public/voicemail/audio'
+      path: '/api/public/voicemail/audio'
+      fullPath: '/api/public/voicemail/audio'
+      preLoaderRoute: typeof ApiPublicVoicemailAudioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/twilio/voice': {
       id: '/api/public/twilio/voice'
       path: '/api/public/twilio/voice'
@@ -614,6 +634,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicTwilioCallbackRoute: ApiPublicTwilioCallbackRoute,
   ApiPublicTwilioSmsRoute: ApiPublicTwilioSmsRoute,
   ApiPublicTwilioVoiceRoute: ApiPublicTwilioVoiceRoute,
+  ApiPublicVoicemailAudioRoute: ApiPublicVoicemailAudioRoute,
   ApiPublicWidgetChatRoute: ApiPublicWidgetChatRoute,
   ApiPublicWidgetEmbedDotjsRoute: ApiPublicWidgetEmbedDotjsRoute,
   ApiPublicWidgetConfigAgentIdRoute: ApiPublicWidgetConfigAgentIdRoute,
