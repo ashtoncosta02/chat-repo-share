@@ -3,7 +3,20 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/dashboard/PageHeader";
-import { MessageSquare, ChevronRight, Mic } from "lucide-react";
+import { MessageSquare, ChevronRight, Mic, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard/conversations/")({
   head: () => ({ meta: [{ title: "Conversations — Agent Factory" }] }),
@@ -23,6 +36,7 @@ function ConversationsPage() {
   const { user } = useAuth();
   const [convs, setConvs] = useState<ConvRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -35,6 +49,21 @@ function ConversationsPage() {
         setLoading(false);
       });
   }, [user]);
+
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+    // Messages have no DELETE policy — clean them up server-side via the conversation
+    // delete cascade isn't set up, so we delete messages first manually.
+    await supabase.from("messages").delete().eq("conversation_id", id);
+    const { error } = await supabase.from("conversations").delete().eq("id", id);
+    setDeletingId(null);
+    if (error) {
+      toast.error("Could not delete conversation.");
+      return;
+    }
+    setConvs((prev) => prev.filter((c) => c.id !== id));
+    toast.success("Conversation deleted.");
+  };
 
   const totalMs = convs.reduce((s, c) => s + c.message_count, 0);
   const avgMessages = convs.length ? Math.round(totalMs / convs.length) : 0;
@@ -66,11 +95,11 @@ function ConversationsPage() {
           ) : (
             <ul className="divide-y divide-border">
               {convs.map((c) => (
-                <li key={c.id}>
+                <li key={c.id} className="flex items-center hover:bg-muted/40 transition">
                   <Link
                     to="/dashboard/conversations/$conversationId"
                     params={{ conversationId: c.id }}
-                    className="px-6 py-4 flex items-center justify-between hover:bg-muted/40 transition"
+                    className="flex-1 px-6 py-4 flex items-center justify-between"
                   >
                     <div>
                       <div className="font-medium text-foreground flex items-center gap-2">
@@ -88,6 +117,36 @@ function ConversationsPage() {
                     </div>
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </Link>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="mr-3 text-muted-foreground hover:text-destructive"
+                        disabled={deletingId === c.id}
+                        aria-label="Delete conversation"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete this conversation?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will permanently remove the transcript and any messages. This can't be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDelete(c.id)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </li>
               ))}
             </ul>
