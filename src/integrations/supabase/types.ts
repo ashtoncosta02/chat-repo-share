@@ -177,6 +177,7 @@ export type Database = {
           customer_phone: string | null
           ends_at: string
           google_event_id: string | null
+          google_event_link: string | null
           id: string
           reason: string | null
           source: string
@@ -194,6 +195,7 @@ export type Database = {
           customer_phone?: string | null
           ends_at: string
           google_event_id?: string | null
+          google_event_link?: string | null
           id?: string
           reason?: string | null
           source?: string
@@ -211,6 +213,7 @@ export type Database = {
           customer_phone?: string | null
           ends_at?: string
           google_event_id?: string | null
+          google_event_link?: string | null
           id?: string
           reason?: string | null
           source?: string

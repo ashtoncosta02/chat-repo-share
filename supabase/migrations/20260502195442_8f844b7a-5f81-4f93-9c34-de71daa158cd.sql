@@ -1,0 +1,1 @@
+ALTER TABLE public.calendar_bookings ADD COLUMN IF NOT EXISTS google_event_link TEXT;
