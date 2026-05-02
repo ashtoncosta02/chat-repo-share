@@ -86,6 +86,14 @@ function rowToProfile(row: AgentRow): AgentBusinessProfile {
 export async function resyncReceptionistById(
   agentDbId: string,
 ): Promise<{ success: true; elevenlabs_agent_id: string } | { success: false; error: string }> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const {
+    createElevenLabsAgent,
+    updateElevenLabsAgent,
+    deleteElevenLabsAgent,
+    syncBookingToolsForAgent,
+  } = await import("./elevenlabs-agent.server");
+
   const { data: row, error: rowErr } = await supabaseAdmin
     .from("agents")
     .select(
@@ -98,7 +106,7 @@ export async function resyncReceptionistById(
   const profile = rowToProfile(row as AgentRow);
 
   try {
-    const toolSync = await syncBookingToolsForAgent(row.id).catch((e) => {
+    const toolSync = await syncBookingToolsForAgent(row.id).catch((e: unknown) => {
       console.error("syncBookingToolsForAgent failed:", e);
       return { toolIds: [], bookingPromptAddendum: null };
     });
@@ -139,6 +147,7 @@ export async function resyncReceptionistById(
 export const syncReceptionistAgent = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => SyncInput.parse(input))
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const auth = await authUser(data.accessToken);
     if ("error" in auth) return { success: false as const, error: auth.error };
 
@@ -165,6 +174,10 @@ const TokenInput = z.object({
 export const getReceptionistPreviewToken = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => TokenInput.parse(input))
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { getConversationToken, getConversationSignedUrl } = await import(
+      "./elevenlabs-agent.server"
+    );
     const auth = await authUser(data.accessToken);
     if ("error" in auth) return { success: false as const, error: auth.error };
 
@@ -216,11 +229,15 @@ const DeleteInput = z.object({
 export const deleteReceptionistAgent = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => DeleteInput.parse(input))
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { deleteBookingToolsForAgent, deleteElevenLabsAgent } = await import(
+      "./elevenlabs-agent.server"
+    );
     const auth = await authUser(data.accessToken);
     if ("error" in auth) return { success: false as const, error: auth.error };
 
     // Always try to clean up booking tools first (independent of agent existence).
-    await deleteBookingToolsForAgent(data.agentId).catch((e) => {
+    await deleteBookingToolsForAgent(data.agentId).catch((e: unknown) => {
       console.error("deleteBookingToolsForAgent error:", e);
     });
 
