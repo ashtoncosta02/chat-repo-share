@@ -52,9 +52,7 @@ function ConversationsPage() {
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
-    // Messages have no DELETE policy — clean them up server-side via the conversation
-    // delete cascade isn't set up, so we delete messages first manually.
-    await supabase.from("messages").delete().eq("conversation_id", id);
+    // Messages cascade-delete via FK.
     const { error } = await supabase.from("conversations").delete().eq("id", id);
     setDeletingId(null);
     if (error) {
