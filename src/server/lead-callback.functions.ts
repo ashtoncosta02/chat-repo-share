@@ -64,13 +64,15 @@ export const aiCallbackLead = createServerFn({ method: "POST" })
     const businessName = (agent.business_name || "your business").trim();
 
     try {
+      // Use a short opener ("Hello?") so the agent LISTENS first.
+      // This is critical for voicemail detection — if we say a long greeting
+      // immediately, we talk over the voicemail prompt and miss it.
+      // The system prompt handles personalized greeting once a human responds.
       const result = await placeOutboundCall({
         agentId: agent.elevenlabs_agent_id,
         agentPhoneNumberId: phone.elevenlabs_phone_number_id,
         toNumber: lead.phone,
-        firstMessage: firstName
-          ? `Hi ${firstName}, this is ${receptionistName} from ${businessName}, calling back about your earlier inquiry. Is now a good time?`
-          : `Hi, this is ${receptionistName} from ${businessName}, calling back about your earlier inquiry. Is now a good time?`,
+        firstMessage: "Hello?",
         dynamicVariables: {
           lead_name: firstName,
           lead_notes: (lead.notes ?? "").slice(0, 500),
