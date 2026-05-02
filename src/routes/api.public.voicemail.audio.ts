@@ -60,7 +60,7 @@ export const Route = createFileRoute("/api/public/voicemail/audio")({
           const ulaw = new Uint8Array(await ttsRes.arrayBuffer());
           const wav = wrapUlawAsWav(ulaw, 8000);
 
-          return new Response(wav, {
+          return new Response(wav.buffer as ArrayBuffer, {
             headers: {
               "Content-Type": "audio/wav",
               "Cache-Control": "no-store",
