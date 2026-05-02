@@ -89,7 +89,7 @@ export const aiCallbackLead = createServerFn({ method: "POST" })
           From: phone.phone_number,
           Url: callUrl,
           Method: "POST",
-          MachineDetection: "Enable",
+          MachineDetection: "DetectMessageEnd",
           MachineDetectionTimeout: "30",
           MachineDetectionSpeechThreshold: "2400",
           MachineDetectionSpeechEndThreshold: "1200",
