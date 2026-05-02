@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/dashboard/PageHeader";
-import { User, Phone, Mail, MessageSquare, Search, PhoneCall, Bot, Loader2 } from "lucide-react";
+import { User, Phone, Mail, MessageSquare, Search, PhoneCall, Bot, Loader2, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -18,6 +18,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -116,6 +127,19 @@ function LeadsPage() {
     } finally {
       setCallingId(null);
     }
+  };
+
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+    const { error } = await supabase.from("leads").delete().eq("id", id);
+    setDeletingId(null);
+    if (error) {
+      toast.error("Could not delete lead.");
+      return;
+    }
+    setLeads((prev) => prev.filter((l) => l.id !== id));
+    toast.success("Lead deleted.");
   };
 
   const filtered = useMemo(() => {
@@ -312,6 +336,36 @@ function LeadsPage() {
                             ))}
                           </SelectContent>
                         </Select>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                              disabled={deletingId === l.id}
+                              aria-label="Delete lead"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete this lead?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This permanently removes {l.name ?? "this lead"} from your list. This can't be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDelete(l.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </div>
                   </div>
