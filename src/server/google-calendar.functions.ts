@@ -4,7 +4,6 @@ import { getRequest } from "@tanstack/react-start/server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { buildAuthUrl, getRedirectUri, signState } from "./google-calendar.server";
 import { bookAppointment } from "./widget-booking-tools";
-import { resyncReceptionistById } from "./elevenlabs-agent.functions";
 
 async function getAuthenticatedUserId(accessToken: string) {
   const { data, error } = await supabaseAdmin.auth.getUser(accessToken);
@@ -58,7 +57,8 @@ export const disconnectGoogleCalendar = createServerFn({ method: "POST" })
     if (error) return { success: false as const, error: error.message };
 
     // Tear down voice booking tools + refresh prompt now that calendar is gone.
-    await resyncReceptionistById(data.agent_id).catch((e) => {
+    const { resyncReceptionistById } = await import("./elevenlabs-agent-resync.server");
+    await resyncReceptionistById(data.agent_id).catch((e: unknown) => {
       console.error("resync after disconnect failed:", e);
     });
 
