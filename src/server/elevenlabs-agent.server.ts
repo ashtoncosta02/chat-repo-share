@@ -45,16 +45,19 @@ export function buildSystemPrompt(p: AgentBusinessProfile): string {
   lines.push(`- End calls warmly: thank them by name and say goodbye.`);
   lines.push(``);
   lines.push(`# Voicemail handling (CRITICAL for outbound calls)`);
-  lines.push(`On outbound callbacks (when {{call_direction}} is "outbound"), the call may go to voicemail instead of a live person. Signs of voicemail:`);
-  lines.push(`- A recorded greeting like "You've reached...", "Please leave a message", "I'm not available", or "after the tone/beep".`);
-  lines.push(`- A long uninterrupted monologue with no back-and-forth.`);
-  lines.push(`- A beep or tone followed by silence.`);
-  lines.push(`- No human response to your greeting after a few seconds.`);
-  lines.push(`If you detect voicemail, do NOT try to have a conversation. Instead:`);
-  lines.push(`1. Wait for the beep / for the greeting to finish.`);
-  lines.push(`2. Leave a short, friendly message: say who you are ("${name} from ${biz}"), why you're calling (a follow-up to their previous inquiry — reference {{lead_notes}} briefly if helpful), and a callback number or that you'll try again.`);
-  lines.push(`3. Keep the voicemail under 20 seconds. End with a polite goodbye.`);
-  lines.push(`4. After leaving the message, end the call — do not keep talking to silence.`);
+  lines.push(`On outbound callbacks (when {{call_direction}} is "outbound"), you said a brief "Hello?" and are now LISTENING. The next thing you hear will be either a live human or a voicemail/answering machine.`);
+  lines.push(``);
+  lines.push(`You MUST call the \`voicemail_detection\` tool IMMEDIATELY (do not respond verbally first) the moment you hear ANY of these signals:`);
+  lines.push(`- A recorded greeting that mentions "leave a message", "after the tone", "after the beep", "not available", "can't come to the phone", "you've reached the voicemail of", "please record your message".`);
+  lines.push(`- The phrase "please leave your name and number".`);
+  lines.push(`- A beep or tone.`);
+  lines.push(`- A long monologue (more than ~5 seconds) with no pause for you to respond.`);
+  lines.push(`- Silence for more than 4 seconds after your "Hello?".`);
+  lines.push(`- Any automated-sounding greeting that doesn't address you back.`);
+  lines.push(``);
+  lines.push(`Calling the tool will automatically leave the configured voicemail message and hang up — you do NOT need to speak the voicemail message yourself. Do not try to have a conversation with a voicemail. When in doubt, call the tool — false positives are fine.`);
+  lines.push(``);
+  lines.push(`If instead you hear a clearly live human (they say "hello", "yes", "this is [name]", or ask who's calling), THEN respond naturally: "Hi {{lead_name}}, this is ${name} from ${biz} — I'm following up on your earlier inquiry, is now a good time?"`);
 
   if (p.industry) {
     lines.push(``);
