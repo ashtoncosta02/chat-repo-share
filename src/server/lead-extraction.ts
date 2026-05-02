@@ -124,6 +124,9 @@ export async function captureLead(args: CaptureLeadArgs): Promise<void> {
     if (!finalLead.name && !finalLead.phone && !finalLead.email && !finalLead.notes) return;
 
     // Dedupe priority: existing lead for this conversation > email > phone.
+    // Voice calls should create one lead per call/conversation. The same caller
+    // may call multiple times from the same phone number, and updating the old
+    // phone-matched lead makes the new call look like it never created a lead.
     let existingId: string | null = null;
     let existingStatus: string | null = null;
     if (args.conversationId) {
@@ -138,7 +141,8 @@ export async function captureLead(args: CaptureLeadArgs): Promise<void> {
         existingStatus = data.status;
       }
     }
-    if (!existingId && finalLead.email) {
+    const shouldDedupeByContact = args.source !== "voice";
+    if (shouldDedupeByContact && !existingId && finalLead.email) {
       const { data } = await supabaseAdmin
         .from("leads")
         .select("id, status")
@@ -150,7 +154,7 @@ export async function captureLead(args: CaptureLeadArgs): Promise<void> {
         existingStatus = data.status;
       }
     }
-    if (!existingId && finalLead.phone) {
+    if (shouldDedupeByContact && !existingId && finalLead.phone) {
       const { data } = await supabaseAdmin
         .from("leads")
         .select("id, status")
