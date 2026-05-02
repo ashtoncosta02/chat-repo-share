@@ -48,7 +48,7 @@ function BookingsPage() {
     const { data: bks } = await supabase
       .from("calendar_bookings")
       .select(
-        "id, starts_at, ends_at, status, source, customer_name, customer_email, customer_phone, reason, google_event_id, created_at, agent_id",
+        "id, starts_at, ends_at, status, source, customer_name, customer_email, customer_phone, reason, google_event_id, google_event_link, created_at, agent_id",
       )
       .order("starts_at", { ascending: true });
     setBookings((bks ?? []) as BookingRow[]);
@@ -63,7 +63,7 @@ function BookingsPage() {
         supabase
           .from("calendar_bookings")
           .select(
-            "id, starts_at, ends_at, status, source, customer_name, customer_email, customer_phone, reason, google_event_id, created_at, agent_id",
+            "id, starts_at, ends_at, status, source, customer_name, customer_email, customer_phone, reason, google_event_id, google_event_link, created_at, agent_id",
           )
           .order("starts_at", { ascending: true }),
         supabase.from("agents").select("id, business_name"),
@@ -263,9 +263,12 @@ function BookingItem({
             <div className="mt-2 text-xs text-muted-foreground">via {agentName}</div>
           )}
         </div>
-        {booking.google_event_id && (
+        {(booking.google_event_link || booking.google_event_id) && (
           <a
-            href={`https://calendar.google.com/calendar/u/0/r/eventedit/${booking.google_event_id}`}
+            href={
+              booking.google_event_link ||
+              `https://www.google.com/calendar/event?eid=${booking.google_event_id}`
+            }
             target="_blank"
             rel="noreferrer"
             className="text-xs text-[var(--gold)] hover:underline flex-shrink-0"
