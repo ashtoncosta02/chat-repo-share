@@ -23,6 +23,7 @@ interface BookingRow {
   customer_phone: string | null;
   reason: string | null;
   google_event_id: string | null;
+  google_event_link: string | null;
   created_at: string;
   agent_id: string;
 }

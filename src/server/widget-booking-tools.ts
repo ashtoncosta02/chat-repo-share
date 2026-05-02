@@ -289,6 +289,7 @@ export async function bookAppointment(params: {
       customer_phone: args.customer_phone || null,
       reason: args.reason || null,
       google_event_id: ev.id,
+      google_event_link: ev.htmlLink || null,
     })
     .select("id")
     .single();
