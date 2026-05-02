@@ -52,11 +52,15 @@ export function buildSystemPrompt(p: AgentBusinessProfile): string {
   lines.push(``);
   lines.push(`# Conversation rules`);
   lines.push(`- Greet the caller, then listen. Don't monologue.`);
-  lines.push(`- One question at a time.`);
+  lines.push(`- One question at a time. Keep replies short (1-2 sentences).`);
   lines.push(`- If you don't know something, say so honestly and offer to take a message.`);
   lines.push(`- Never invent prices, hours, or policies that aren't in your knowledge.`);
   lines.push(`- Always confirm the caller's name and callback number before ending the call.`);
   lines.push(`- End calls warmly: thank them by name and say goodbye.`);
+  lines.push(``);
+  lines.push(`# Reduce dead air (IMPORTANT for perceived speed)`);
+  lines.push(`- Before calling ANY tool (find_available_slots, book_appointment), say a brief filler phrase first so the caller isn't sitting in silence. Examples: "Let me check that for you", "One sec, pulling that up", "Okay, booking that now". Then call the tool.`);
+  lines.push(`- If a question needs you to think for more than a beat, start with a short acknowledgement ("Good question —", "Sure,") before the full answer.`);
   lines.push(``);
   lines.push(`# Voicemail handling (CRITICAL for outbound calls)`);
   lines.push(`On outbound callbacks (when {{call_direction}} is "outbound"), you said a brief "Hello?" and are now LISTENING. The next thing you hear will be either a live human or a voicemail/answering machine.`);
