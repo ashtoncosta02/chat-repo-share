@@ -334,7 +334,7 @@ function buildFindSlotsToolConfig(agentDbId: string) {
         required: ["agent_id", "date"],
         description: "Find available appointment slots for a date",
         properties: {
-          agent_id: { type: "string", description: "Internal agent id (auto-filled).", constant_value: agentDbId },
+          agent_id: { type: "string", constant_value: agentDbId },
           date: { type: "string", description: "Date in YYYY-MM-DD format (e.g. 2026-03-05)." },
           duration_minutes: { type: "number", description: "Optional appointment length in minutes." },
         },
@@ -358,7 +358,7 @@ function buildBookToolConfig(agentDbId: string) {
         required: ["agent_id", "start_iso", "customer_name", "customer_phone"],
         description: "Book a confirmed appointment",
         properties: {
-          agent_id: { type: "string", description: "Internal agent id (auto-filled).", constant_value: agentDbId },
+          agent_id: { type: "string", constant_value: agentDbId },
           start_iso: { type: "string", description: "ISO 8601 start timestamp from find_available_slots (must match exactly)." },
           duration_minutes: { type: "number", description: "Optional appointment length in minutes." },
           customer_name: { type: "string", description: "Caller's full name." },
