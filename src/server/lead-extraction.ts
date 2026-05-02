@@ -166,7 +166,14 @@ export async function captureLead(args: CaptureLeadArgs): Promise<void> {
     const now = new Date().toISOString();
 
     if (existingId) {
-      const patch: Record<string, unknown> = { last_message_at: now };
+      const patch: {
+        last_message_at: string;
+        name?: string;
+        phone?: string;
+        email?: string;
+        notes?: string;
+        status?: string;
+      } = { last_message_at: now };
       if (finalLead.name) patch.name = finalLead.name;
       if (finalLead.phone) patch.phone = finalLead.phone;
       if (finalLead.email) patch.email = finalLead.email;
