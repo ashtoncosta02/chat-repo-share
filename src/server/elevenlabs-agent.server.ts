@@ -383,6 +383,7 @@ export async function registerTwilioCall(opts: {
   toNumber: string;
   direction: "inbound" | "outbound";
   dynamicVariables?: Record<string, string>;
+  firstMessage?: string;
 }): Promise<string> {
   const apiKey = requireKey();
   const body: Record<string, unknown> = {
@@ -391,9 +392,14 @@ export async function registerTwilioCall(opts: {
     to_number: opts.toNumber,
     direction: opts.direction,
   };
-  if (opts.dynamicVariables && Object.keys(opts.dynamicVariables).length > 0) {
+  if ((opts.dynamicVariables && Object.keys(opts.dynamicVariables).length > 0) || opts.firstMessage) {
     body.conversation_initiation_client_data = {
-      dynamic_variables: opts.dynamicVariables,
+      ...(opts.firstMessage
+        ? { conversation_config_override: { agent: { first_message: opts.firstMessage } } }
+        : {}),
+      ...(opts.dynamicVariables && Object.keys(opts.dynamicVariables).length > 0
+        ? { dynamic_variables: opts.dynamicVariables }
+        : {}),
     };
   }
 
