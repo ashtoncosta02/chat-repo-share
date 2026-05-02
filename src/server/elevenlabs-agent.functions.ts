@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { resyncReceptionistById } from "./elevenlabs-agent-resync.server";
 
 const SyncInput = z.object({
   accessToken: z.string().min(1),
@@ -34,6 +33,7 @@ export const syncReceptionistAgent = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!owned) return { success: false as const, error: "Receptionist not found." };
 
+    const { resyncReceptionistById } = await import("./elevenlabs-agent-resync.server");
     const result = await resyncReceptionistById(data.agentId);
     if (!result.success) return { success: false as const, error: result.error };
     return { success: true as const, elevenlabs_agent_id: result.elevenlabs_agent_id };
