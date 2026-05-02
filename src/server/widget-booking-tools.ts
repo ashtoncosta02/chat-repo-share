@@ -249,12 +249,18 @@ export async function bookAppointment(params: {
     .maybeSingle();
   const businessName = agent?.business_name || "Appointment";
 
+  const customerEmail = args.customer_email?.trim() || null;
+  const sourceLabel =
+    source === "manual" ? "Booked manually"
+    : source === "voice" ? "Booked via phone call"
+    : "Booked via website chat";
+
   const summary = `${businessName} — ${args.customer_name}`;
   const descriptionLines = [
-    source === "manual" ? `Booked manually` : `Booked via website chat`,
+    sourceLabel,
     `Name: ${args.customer_name}`,
-    `Email: ${args.customer_email}`,
   ];
+  if (customerEmail) descriptionLines.push(`Email: ${customerEmail}`);
   if (args.customer_phone) descriptionLines.push(`Phone: ${args.customer_phone}`);
   if (args.reason) descriptionLines.push(`Reason: ${args.reason}`);
 
@@ -263,7 +269,7 @@ export async function bookAppointment(params: {
     description: descriptionLines.join("\n"),
     start: start.toISOString(),
     end: end.toISOString(),
-    attendeeEmail: args.customer_email,
+    attendeeEmail: customerEmail || undefined,
     attendeeName: args.customer_name,
   });
   if ("error" in ev) return { error: ev.error };
@@ -279,7 +285,7 @@ export async function bookAppointment(params: {
       starts_at: start.toISOString(),
       ends_at: end.toISOString(),
       customer_name: args.customer_name,
-      customer_email: args.customer_email,
+      customer_email: customerEmail,
       customer_phone: args.customer_phone || null,
       reason: args.reason || null,
       google_event_id: ev.id,
@@ -294,19 +300,19 @@ export async function bookAppointment(params: {
 
   // Upsert a lead so booked customers always show in the leads dashboard.
   try {
-    const { data: existingLead } = await supabaseAdmin
-      .from("leads")
-      .select("id")
-      .eq("agent_id", agentId)
-      .eq("email", args.customer_email)
-      .maybeSingle();
+    const leadMatch = customerEmail
+      ? supabaseAdmin.from("leads").select("id").eq("agent_id", agentId).eq("email", customerEmail).maybeSingle()
+      : args.customer_phone
+      ? supabaseAdmin.from("leads").select("id").eq("agent_id", agentId).eq("phone", args.customer_phone).maybeSingle()
+      : null;
+    const { data: existingLead } = leadMatch ? await leadMatch : { data: null };
     const now = new Date().toISOString();
     if (existingLead) {
       await supabaseAdmin
         .from("leads")
         .update({
           name: args.customer_name,
-          email: args.customer_email,
+          email: customerEmail,
           phone: args.customer_phone || null,
           notes: `Booked appointment${args.reason ? `: ${args.reason}` : ""}`,
           status: "won",
@@ -319,7 +325,7 @@ export async function bookAppointment(params: {
         agent_id: agentId,
         conversation_id: conversationId,
         name: args.customer_name,
-        email: args.customer_email,
+        email: customerEmail,
         phone: args.customer_phone || null,
         notes: `Booked appointment${args.reason ? `: ${args.reason}` : ""}`,
         source,
