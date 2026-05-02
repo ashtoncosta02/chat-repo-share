@@ -1,16 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import {
-  createElevenLabsAgent,
-  updateElevenLabsAgent,
-  deleteElevenLabsAgent,
-  getConversationToken,
-  getConversationSignedUrl,
-  syncBookingToolsForAgent,
-  deleteBookingToolsForAgent,
-  type AgentBusinessProfile,
-} from "./elevenlabs-agent.server";
 
 const SyncInput = z.object({
   accessToken: z.string().min(1),
@@ -18,6 +7,7 @@ const SyncInput = z.object({
 });
 
 async function authUser(token: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin.auth.getUser(token);
   if (error || !data.user) return { error: "Unauthorized." as const };
   return { userId: data.user.id };
@@ -39,6 +29,24 @@ interface AgentRow {
   voice_id: string | null;
   faqs_structured: unknown;
   elevenlabs_agent_id: string | null;
+}
+
+interface AgentBusinessProfile {
+  business_name: string;
+  assistant_name: string | null;
+  industry: string | null;
+  tone: string | null;
+  primary_goal: string | null;
+  services: string | null;
+  booking_link: string | null;
+  emergency_number: string | null;
+  pricing_notes: string | null;
+  escalation_triggers: string | null;
+  voice_id: string | null;
+  faqs_structured: Array<{ question: string; answer: string }> | null;
+  booking_enabled?: boolean;
+  booking_prompt_addendum?: string | null;
+  tool_ids?: string[];
 }
 
 function rowToProfile(row: AgentRow): AgentBusinessProfile {
