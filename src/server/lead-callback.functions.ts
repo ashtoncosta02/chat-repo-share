@@ -1,7 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { placeOutboundCall } from "./elevenlabs-agent.server";
+
+const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
+const PROJECT_ID = "d1e796ad-671c-47e1-843b-cdecc02fe11f";
 
 const Input = z.object({
   accessToken: z.string().min(1),
@@ -12,6 +14,17 @@ async function authUser(token: string) {
   const { data, error } = await supabaseAdmin.auth.getUser(token);
   if (error || !data.user) return { error: "Unauthorized." as const };
   return { userId: data.user.id };
+}
+
+function gatewayHeaders() {
+  const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
+  if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+  const TWILIO_API_KEY = process.env.TWILIO_API_KEY;
+  if (!TWILIO_API_KEY) throw new Error("TWILIO_API_KEY is not configured");
+  return {
+    Authorization: `Bearer ${LOVABLE_API_KEY}`,
+    "X-Connection-Api-Key": TWILIO_API_KEY,
+  };
 }
 
 /** Trigger an outbound AI callback to a saved lead via ElevenLabs + Twilio. */
@@ -47,12 +60,11 @@ export const aiCallbackLead = createServerFn({ method: "POST" })
 
     const { data: phone } = await supabaseAdmin
       .from("phone_numbers")
-      .select("elevenlabs_phone_number_id")
+      .select("phone_number")
       .eq("user_id", auth.userId)
-      .not("elevenlabs_phone_number_id", "is", null)
       .limit(1)
       .maybeSingle();
-    if (!phone?.elevenlabs_phone_number_id) {
+    if (!phone?.phone_number) {
       return {
         success: false as const,
         error: "No connected phone number. Connect one in Phone Numbers first.",
@@ -62,29 +74,38 @@ export const aiCallbackLead = createServerFn({ method: "POST" })
     const firstName = (lead.name ?? "").trim().split(/\s+/)[0] ?? "";
     const receptionistName = (agent.assistant_name || "the receptionist").trim();
     const businessName = (agent.business_name || "your business").trim();
+    const callbackBase = `https://project--${PROJECT_ID}-dev.lovable.app/api/public/twilio/callback`;
+    const callUrl = `${callbackBase}?lead=${encodeURIComponent(lead.id)}&agent=${encodeURIComponent(agent.elevenlabs_agent_id)}`;
 
     try {
-      // Use a short opener ("Hello?") so the agent LISTENS first.
-      // This is critical for voicemail detection — if we say a long greeting
-      // immediately, we talk over the voicemail prompt and miss it.
-      // The system prompt handles personalized greeting once a human responds.
-      const result = await placeOutboundCall({
-        agentId: agent.elevenlabs_agent_id,
-        agentPhoneNumberId: phone.elevenlabs_phone_number_id,
-        toNumber: lead.phone,
-        firstMessage: "Hello?",
-        dynamicVariables: {
-          lead_name: firstName,
-          lead_notes: (lead.notes ?? "").slice(0, 500),
-          call_direction: "outbound",
+      const res = await fetch(`${GATEWAY_URL}/Calls.json`, {
+        method: "POST",
+        headers: {
+          ...gatewayHeaders(),
+          "Content-Type": "application/x-www-form-urlencoded",
         },
+        body: new URLSearchParams({
+          To: lead.phone,
+          From: phone.phone_number,
+          Url: callUrl,
+          Method: "POST",
+          MachineDetection: "Enable",
+          MachineDetectionTimeout: "30",
+          MachineDetectionSpeechThreshold: "2400",
+          MachineDetectionSpeechEndThreshold: "1200",
+          AsyncAmd: "false",
+        }),
       });
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(result?.message || `Twilio callback failed (${res.status}).`);
+      }
       // Mark lead as contacted so it shows progress.
       await supabaseAdmin
         .from("leads")
         .update({ status: "contacted", last_message_at: new Date().toISOString() })
         .eq("id", lead.id);
-      return { success: true as const, callSid: result.call_sid };
+      return { success: true as const, callSid: result.sid ?? null };
     } catch (e) {
       console.error("aiCallbackLead error:", e);
       return {
