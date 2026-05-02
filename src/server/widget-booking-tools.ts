@@ -192,7 +192,7 @@ export async function bookAppointment(params: {
   agentId: string;
   userId: string;
   conversationId: string | null;
-  source?: "widget" | "manual";
+  source?: "widget" | "manual" | "voice";
   args: BookArgs;
 }): Promise<
   | { ok: true; booking_id: string; start: string; end: string; event_link: string | null }
@@ -215,8 +215,20 @@ export async function bookAppointment(params: {
   const end = new Date(start.getTime() + duration * 60_000);
 
   if (!args.customer_name?.trim()) return { error: "customer_name required" };
-  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(args.customer_email || "");
-  if (!emailOk) return { error: "Valid customer_email required" };
+  // Voice callers usually can't dictate an email easily — phone is enough.
+  // Widget/manual bookings still require a valid email so we can send invites.
+  const hasEmail = args.customer_email && args.customer_email.trim().length > 0;
+  if (source === "voice") {
+    if (hasEmail) {
+      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(args.customer_email!);
+      if (!emailOk) return { error: "Valid customer_email required" };
+    } else if (!args.customer_phone?.trim()) {
+      return { error: "customer_phone required for voice bookings" };
+    }
+  } else {
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(args.customer_email || "");
+    if (!emailOk) return { error: "Valid customer_email required" };
+  }
 
   // Re-check availability right before booking to avoid double-booking.
   const fb = await checkFreeBusy(agentId, start.toISOString(), end.toISOString());
