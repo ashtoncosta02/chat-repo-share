@@ -3,6 +3,8 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { captureLead } from "@/server/lead-extraction";
 
+const EL_BASE = "https://api.elevenlabs.io/v1";
+
 /**
  * ElevenLabs post-call webhook.
  * Configured in ElevenLabs dashboard → Workspace → Webhooks.
@@ -19,32 +21,33 @@ export const Route = createFileRoute("/api/public/elevenlabs/postcall")({
         const signature = request.headers.get("elevenlabs-signature");
         const rawBody = await request.text();
 
+        let signatureTrusted = false;
         if (secret) {
           if (!signature) {
-            console.warn("postcall: missing signature");
-            return new Response("Missing signature", { status: 401 });
-          }
-          const headerParts = signature.split(",").map((p) => p.trim());
-          const ts = headerParts.find((p) => p.startsWith("t="))?.slice(2);
-          const sigPart = headerParts.find((p) => p.startsWith("v0="));
-          const sig = sigPart?.slice(3);
-          if (!ts || !sig) {
-            console.warn("postcall: bad signature parts");
-            return new Response("Bad signature", { status: 401 });
-          }
-          const ageSec = Math.abs(Date.now() / 1000 - Number(ts));
-          if (!Number.isFinite(ageSec) || ageSec > 1800) {
-            console.warn("postcall: stale signature", ageSec);
-            return new Response("Stale signature", { status: 401 });
-          }
-          const expected = createHmac("sha256", secret)
-            .update(`${ts}.${rawBody}`)
-            .digest("hex");
-          const a = Buffer.from(sig, "hex");
-          const b = Buffer.from(expected, "hex");
-          if (a.length !== b.length || !timingSafeEqual(a, b)) {
-            console.warn("postcall: invalid signature");
-            return new Response("Invalid signature", { status: 401 });
+            console.warn("postcall: missing signature; will verify via ElevenLabs API");
+          } else {
+            const headerParts = signature.split(",").map((p) => p.trim());
+            const ts = headerParts.find((p) => p.startsWith("t="))?.slice(2);
+            const sigPart = headerParts.find((p) => p.startsWith("v0="));
+            const sig = sigPart?.slice(3);
+            if (!ts || !sig) {
+              console.warn("postcall: bad signature parts; will verify via ElevenLabs API");
+            } else {
+              const ageSec = Math.abs(Date.now() / 1000 - Number(ts));
+              if (!Number.isFinite(ageSec) || ageSec > 1800) {
+                console.warn("postcall: stale signature; will verify via ElevenLabs API", ageSec);
+              } else {
+                const expected = createHmac("sha256", secret)
+                  .update(`${ts}.${rawBody}`)
+                  .digest("hex");
+                const a = Buffer.from(sig, "hex");
+                const b = Buffer.from(expected, "hex");
+                signatureTrusted = a.length === b.length && timingSafeEqual(a, b);
+                if (!signatureTrusted) {
+                  console.warn("postcall: invalid signature; will verify via ElevenLabs API");
+                }
+              }
+            }
           }
         }
 
@@ -62,12 +65,26 @@ export const Route = createFileRoute("/api/public/elevenlabs/postcall")({
           return new Response(`ok-skip-${eventType}`, { status: 200 });
         }
 
-        const data = payload.data ?? (payload as unknown as PostCallData);
-        const elAgentId = data.agent_id;
+        let data = payload.data ?? (payload as unknown as PostCallData);
+        let elAgentId = data.agent_id;
         const conversationId = data.conversation_id;
         if (!elAgentId || !conversationId) {
           console.warn("postcall: missing agent_id or conversation_id");
           return new Response("Missing fields", { status: 400 });
+        }
+
+        // If the saved HMAC secret is wrong, do not drop the call. Verify the
+        // conversation exists in ElevenLabs with our API key, then persist the
+        // canonical transcript returned by ElevenLabs. This keeps the endpoint
+        // authenticated without burning more customer call credits.
+        if (secret && !signatureTrusted) {
+          const verified = await fetchElevenLabsConversation(conversationId);
+          if (!verified || !verified.agent_id || verified.agent_id !== elAgentId) {
+            console.warn("postcall: fallback verification failed", conversationId);
+            return new Response("Invalid signature", { status: 401 });
+          }
+          data = verified;
+          elAgentId = verified.agent_id;
         }
 
         const result = await persistPostCall(elAgentId, conversationId, data);
@@ -86,6 +103,23 @@ export const Route = createFileRoute("/api/public/elevenlabs/postcall")({
     },
   },
 });
+
+async function fetchElevenLabsConversation(
+  conversationId: string,
+): Promise<(PostCallData & { agent_id: string; conversation_id: string }) | null> {
+  const apiKey = process.env.ELEVENLABS_API_KEY;
+  if (!apiKey) return null;
+  const res = await fetch(`${EL_BASE}/convai/conversations/${encodeURIComponent(conversationId)}`, {
+    headers: { "xi-api-key": apiKey },
+  });
+  if (!res.ok) {
+    console.error("postcall: ElevenLabs conversation verify failed", res.status);
+    return null;
+  }
+  const json = (await res.json()) as PostCallData;
+  if (!json.agent_id || !json.conversation_id) return null;
+  return json as PostCallData & { agent_id: string; conversation_id: string };
+}
 
 export interface PostCallPayload {
   type?: string;
