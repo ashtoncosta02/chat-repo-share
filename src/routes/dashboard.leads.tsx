@@ -129,7 +129,20 @@ function LeadsPage() {
     }
   };
 
-  const filtered = useMemo(() => {
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+    const { error } = await supabase.from("leads").delete().eq("id", id);
+    setDeletingId(null);
+    if (error) {
+      toast.error("Could not delete lead.");
+      return;
+    }
+    setLeads((prev) => prev.filter((l) => l.id !== id));
+    toast.success("Lead deleted.");
+  };
+
+
     const q = search.trim().toLowerCase();
     return leads.filter((l) => {
       if (agentFilter !== "all" && l.agent_id !== agentFilter) return false;
