@@ -15,7 +15,7 @@ export const Route = createFileRoute("/api/public/elevenlabs/postcall")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const secret = process.env.ELEVENLABS_WEBHOOK_SECRET;
+        const secret = process.env.ELEVENLABS_WEBHOOK_SECRET?.trim();
         const signature = request.headers.get("elevenlabs-signature");
         const rawBody = await request.text();
 
@@ -24,14 +24,10 @@ export const Route = createFileRoute("/api/public/elevenlabs/postcall")({
             console.warn("postcall: missing signature");
             return new Response("Missing signature", { status: 401 });
           }
-          const parts = Object.fromEntries(
-            signature.split(",").map((p) => {
-              const [k, v] = p.split("=");
-              return [k, v];
-            }),
-          );
-          const ts = parts.t;
-          const sig = parts.v0;
+          const headerParts = signature.split(",").map((p) => p.trim());
+          const ts = headerParts.find((p) => p.startsWith("t="))?.slice(2);
+          const sigPart = headerParts.find((p) => p.startsWith("v0="));
+          const sig = sigPart?.slice(3);
           if (!ts || !sig) {
             console.warn("postcall: bad signature parts");
             return new Response("Bad signature", { status: 401 });
@@ -44,8 +40,8 @@ export const Route = createFileRoute("/api/public/elevenlabs/postcall")({
           const expected = createHmac("sha256", secret)
             .update(`${ts}.${rawBody}`)
             .digest("hex");
-          const a = Buffer.from(sig);
-          const b = Buffer.from(expected);
+          const a = Buffer.from(sig, "hex");
+          const b = Buffer.from(expected, "hex");
           if (a.length !== b.length || !timingSafeEqual(a, b)) {
             console.warn("postcall: invalid signature");
             return new Response("Invalid signature", { status: 401 });
