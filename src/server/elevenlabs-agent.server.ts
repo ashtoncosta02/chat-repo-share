@@ -255,8 +255,10 @@ function buildAgentPayload(p: AgentBusinessProfile): ElevenLabsAgentConfig {
         user_input_audio_format: "ulaw_8000",
       },
       turn: {
-        // Stop responding when caller starts talking; resume after 700ms silence.
-        turn_timeout: 7,
+        // How long the agent waits in silence before deciding the caller is
+        // done talking. Lower = snappier replies. 2s is a good phone-call
+        // sweet spot — fast without cutting people off mid-sentence.
+        turn_timeout: 2,
         mode: "turn",
       },
     },
