@@ -168,6 +168,7 @@ interface ElevenLabsAgentConfig {
       prompt: {
         prompt: string;
         llm: string;
+        tool_ids?: string[];
         tools?: Array<{
           type: "system";
           name: string;
@@ -215,8 +216,11 @@ function buildAgentPayload(p: AgentBusinessProfile): ElevenLabsAgentConfig {
         language: "en",
         prompt: {
           prompt: buildSystemPrompt(p),
-          // Fast + cheap reasoning model for natural phone conversation.
-          llm: "gemini-2.0-flash",
+          // Bumped from gemini-2.0-flash — ElevenLabs explicitly recommends
+          // 2.5-flash (or stronger) when the agent has webhook tools because
+          // 2.0-flash is unreliable at extracting tool parameters.
+          llm: "gemini-2.5-flash",
+          tool_ids: p.tool_ids && p.tool_ids.length > 0 ? p.tool_ids : undefined,
           tools: [
             {
               type: "system",
