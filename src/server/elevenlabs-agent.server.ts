@@ -2,8 +2,17 @@
 // Build the system prompt, voice, and post-call webhook config for an
 // AI Receptionist, then create or update the agent in ElevenLabs.
 
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { buildBookingPromptAddendum, getCalendarConfig } from "./widget-booking-tools";
+
 const EL_BASE = "https://api.elevenlabs.io/v1";
 const PROJECT_ID = "d1e796ad-671c-47e1-843b-cdecc02fe11f";
+
+// Public base URL the ElevenLabs voice agent uses to call our booking webhooks.
+// Using the stable preview URL so it works before publishing too.
+function publicBaseUrl(): string {
+  return `https://project--${PROJECT_ID}-dev.lovable.app`;
+}
 
 export interface AgentBusinessProfile {
   business_name: string;
@@ -18,6 +27,11 @@ export interface AgentBusinessProfile {
   escalation_triggers: string | null;
   voice_id: string | null;
   faqs_structured: Array<{ question: string; answer: string }> | null;
+  // Set when the agent has Google Calendar connected — enables booking tools + prompt.
+  booking_enabled?: boolean;
+  booking_prompt_addendum?: string | null;
+  // Workspace tool ids to attach to the agent (find_slots + book_appointment).
+  tool_ids?: string[];
 }
 
 export function buildSystemPrompt(p: AgentBusinessProfile): string {
