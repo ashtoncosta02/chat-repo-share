@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/dashboard/PageHeader";
-import { MessageSquare, ChevronRight, Mic, Trash2 } from "lucide-react";
+import { MessageSquare, ChevronRight, Mic, Trash2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -17,6 +17,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { backfillVoiceCalls } from "@/server/voice-call-backfill.functions";
 
 export const Route = createFileRoute("/dashboard/conversations/")({
   head: () => ({ meta: [{ title: "Conversations — Agent Factory" }] }),
@@ -37,10 +38,10 @@ function ConversationsPage() {
   const [convs, setConvs] = useState<ConvRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
-  useEffect(() => {
-    if (!user) return;
-    supabase
+  const loadConvs = () => {
+    return supabase
       .from("conversations")
       .select("id, message_count, duration_seconds, started_at, agent_id, recording_url")
       .order("started_at", { ascending: false })
@@ -48,7 +49,39 @@ function ConversationsPage() {
         setConvs(data ?? []);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    if (!user) return;
+    loadConvs();
   }, [user]);
+
+  const handleSync = async () => {
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess.session?.access_token;
+    if (!token) {
+      toast.error("Please sign in again.");
+      return;
+    }
+    setSyncing(true);
+    try {
+      const res = await backfillVoiceCalls({ data: { accessToken: token } });
+      if (res.success) {
+        if (res.saved > 0) {
+          toast.success(`Imported ${res.saved} call${res.saved === 1 ? "" : "s"}.`);
+          await loadConvs();
+        } else {
+          toast.message("No new calls to import.");
+        }
+      } else {
+        toast.error(res.error);
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Sync failed.");
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
@@ -75,6 +108,18 @@ function ConversationsPage() {
         description="Every conversation your agents have had, saved automatically"
       />
       <div className="p-8 space-y-6">
+        <div className="flex justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSync}
+            disabled={syncing}
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+            {syncing ? "Importing…" : "Import recent calls"}
+          </Button>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StatRow label="Total Conversations" value={convs.length} color="text-foreground" />
           <StatRow label="Avg Messages" value={avgMessages} color="text-[var(--gold)]" />

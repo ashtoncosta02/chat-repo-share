@@ -1,51 +1,64 @@
-# Add booking tools to the voice receptionist
+I agree with you: voice calls should absolutely create leads. The current issue is not that this is a bad idea — it is that the voice webhook path is incomplete/misconfigured.
 
-Give the voice agent the ability to check availability and book appointments on your Google Calendar — same as the chat widget does today. No changes to voice quality, latency, or how calls sound.
+What I found:
+- The app already has a post-call endpoint at `/api/public/elevenlabs/postcall` that can save transcripts into `conversations` and `messages`.
+- The ElevenLabs workspace webhook currently points to the wrong production URL:
+  `https://project--d1e796ad-671c-47e1-843b-cdecc02fe11f.lovable.app/...`
+  That project is not published, so ElevenLabs is getting 404s and never reaches the app.
+- The actual preview URL that currently accepts the webhook is:
+  `https://project--d1e796ad-671c-47e1-843b-cdecc02fe11f-dev.lovable.app/api/public/elevenlabs/postcall`
+- The individual ElevenLabs agent has `post_call_webhook_id: null` in its agent override settings. The workspace setting exists, but I want to remove ambiguity by making sure the workspace/agent configuration uses the active webhook reliably.
+- The post-call endpoint currently saves transcripts only. It does not call the existing lead extraction helper, so non-booking phone calls will not become leads yet. Bookings can create leads through the booking tool, but general phone-call lead capture is missing.
 
-## What changes
+Plan:
 
-1. **Two new public webhook endpoints** the ElevenLabs voice agent will call mid-conversation:
-   - `POST /api/public/voice-tools/find-slots` — returns available time slots for a date range
-   - `POST /api/public/voice-tools/book-appointment` — creates the calendar event and saves the booking
+1. Fix the ElevenLabs webhook configuration
+   - Update the existing ElevenLabs workspace webhook URL to the working preview webhook URL.
+   - Keep retries enabled.
+   - Keep HMAC verification enabled using the saved webhook secret.
+   - Confirm the configured webhook no longer shows recent 404 failures.
 
-   Both are scoped by `agent_id` (passed in the request) and use the existing `agent_google_calendar` connection + business hours.
+2. Harden the post-call webhook handler
+   - Accept only the real `post_call_transcription` payload for transcript saving.
+   - Keep idempotency by `elevenlabs_conversation_id`, so retries do not create duplicates.
+   - Add clearer logging for these cases:
+     - missing signature
+     - bad signature
+     - missing agent/conversation id
+     - agent not found
+     - transcript inserted
+     - lead extracted/updated
+   - Keep returning `200` for non-retryable “agent not found” cases so the provider does not retry forever.
 
-2. **Reuse existing booking logic** from `src/server/widget-booking-tools.ts` — extract the core "find slots" and "create booking" helpers into `src/server/booking-core.server.ts` so both the widget and voice agent share the same code (no duplicate logic, no drift).
+3. Add voice-call lead extraction
+   - Reuse/refactor the existing widget lead extraction logic so it works for both widget chats and phone calls.
+   - After saving the voice transcript, run lead extraction on the transcript.
+   - Create/update a lead with:
+     - `source: "voice"`
+     - `conversation_id` linked to the saved conversation
+     - extracted name, phone, email, and notes
+     - `last_message_at` set to the call end/save time
+   - If the call includes booking details, preserve/booked lead status where appropriate instead of overwriting it incorrectly.
 
-3. **Update ElevenLabs agent config** in `src/server/elevenlabs-agent.server.ts`:
-   - Add two `webhook` tools to the agent definition (alongside the existing `end_call` tool)
-   - Each tool has a name, description, and JSON schema for parameters (date range, name, phone, slot time, reason)
-   - When you save your receptionist, the new tools get pushed to ElevenLabs automatically
+4. Add a fallback backfill/sync path for missed calls
+   - Add a server-side maintenance function that can fetch recent completed ElevenLabs conversations from the provider API and save any that were missed by the webhook.
+   - Use this once immediately after implementation to pull in your recent test calls, so you do not need to wait for only future calls.
+   - This also gives us a safety net if a webhook delivery is missed again.
 
-4. **Update the system prompt** so the agent knows:
-   - It can offer to book appointments
-   - It must collect caller name + phone before booking
-   - It should confirm the time back to the caller before calling `book_appointment`
-   - If no calendar is connected, it falls back to taking a message (current behavior)
+5. Fix the visible dashboard blocker from the recent logs
+   - The preview server log shows a syntax/runtime issue around `dashboard.leads.tsx` from the previous state. I will inspect and fix that if it is still present, because a broken Leads route can make it look like leads are not saving even if backend rows exist.
 
-## What does NOT change
+6. Verification
+   - Test the webhook endpoint with a correctly signed sample post-call payload and confirm it writes:
+     - one `conversations` row
+     - matching `messages` rows
+     - one `leads` row with `source = voice`
+   - Query the database to verify recent saved calls/leads.
+   - Re-check the external webhook configuration.
+   - Backfill recent completed calls from ElevenLabs, then verify they appear in Conversations/Leads.
 
-- Voice (still Liam or whatever you picked)
-- Call latency / response speed
-- Voicemail flow
-- The "Liam answering" experience
-- Chat widget booking (keeps working identically)
-
-## Edge cases handled
-
-- **No Google Calendar connected**: tools simply aren't registered for that agent — the agent won't try to book and will take a message instead
-- **Slot already taken between offer and confirm**: `book_appointment` re-checks availability; if conflict, returns error and agent re-offers
-- **Outside business hours**: `find_available_slots` already filters by your configured hours
-- **Caller doesn't give a phone**: tool requires it; agent will ask before booking
-
-## Bookings dashboard
-
-Voice-booked appointments appear in your existing `/dashboard/bookings` page automatically (same `calendar_bookings` table, just `source = 'voice'` instead of `'widget'`).
-
-## Cancellation
-
-Skipped for now — you mentioned waiting on email for the cancel link. We can add a simple "cancel from dashboard" button in the meantime if you want, or wait until email is set up. Let me know.
-
-## Memory update
-
-Update the core memory to remove the outdated "voice rework deferred" note and reflect that voice booking is live.
+Expected result:
+- New phone calls save transcripts automatically after the call ends.
+- Phone calls create/update leads automatically, even when the caller does not book.
+- Booked callers still show as leads.
+- Recent calls that were missed because the webhook pointed at the wrong URL can be imported instead of lost.

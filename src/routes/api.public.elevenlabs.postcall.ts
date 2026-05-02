@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createHmac, timingSafeEqual } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { captureLead } from "@/server/lead-extraction";
 
 /**
  * ElevenLabs post-call webhook.
@@ -8,7 +9,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
  * Signature header: `ElevenLabs-Signature: t=<unix>,v0=<hex hmac sha256>`
  *
  * Persists every completed phone call as a `conversations` row + `messages`
- * rows scoped to the agent owner so it shows up in their dashboard.
+ * rows, then runs lead extraction so the call shows up under Leads too.
  */
 export const Route = createFileRoute("/api/public/elevenlabs/postcall")({
   server: {
@@ -18,10 +19,9 @@ export const Route = createFileRoute("/api/public/elevenlabs/postcall")({
         const signature = request.headers.get("elevenlabs-signature");
         const rawBody = await request.text();
 
-        // Signature is optional (controlled by whether the secret is set).
-        // Strongly recommended in production.
         if (secret) {
           if (!signature) {
+            console.warn("postcall: missing signature");
             return new Response("Missing signature", { status: 401 });
           }
           const parts = Object.fromEntries(
@@ -32,20 +32,22 @@ export const Route = createFileRoute("/api/public/elevenlabs/postcall")({
           );
           const ts = parts.t;
           const sig = parts.v0;
-          if (!ts || !sig) return new Response("Bad signature", { status: 401 });
-
-          // Reject anything older than 5 minutes (replay protection).
+          if (!ts || !sig) {
+            console.warn("postcall: bad signature parts");
+            return new Response("Bad signature", { status: 401 });
+          }
           const ageSec = Math.abs(Date.now() / 1000 - Number(ts));
-          if (!Number.isFinite(ageSec) || ageSec > 300) {
+          if (!Number.isFinite(ageSec) || ageSec > 1800) {
+            console.warn("postcall: stale signature", ageSec);
             return new Response("Stale signature", { status: 401 });
           }
-
           const expected = createHmac("sha256", secret)
             .update(`${ts}.${rawBody}`)
             .digest("hex");
           const a = Buffer.from(sig);
           const b = Buffer.from(expected);
           if (a.length !== b.length || !timingSafeEqual(a, b)) {
+            console.warn("postcall: invalid signature");
             return new Response("Invalid signature", { status: 401 });
           }
         }
@@ -57,97 +59,164 @@ export const Route = createFileRoute("/api/public/elevenlabs/postcall")({
           return new Response("Bad JSON", { status: 400 });
         }
 
+        // Only handle transcription events. Audio + failure events ack OK so
+        // EL doesn't retry, but they don't write transcripts.
+        const eventType = payload.type ?? "post_call_transcription";
+        if (eventType !== "post_call_transcription") {
+          return new Response(`ok-skip-${eventType}`, { status: 200 });
+        }
+
         const data = payload.data ?? (payload as unknown as PostCallData);
         const elAgentId = data.agent_id;
         const conversationId = data.conversation_id;
         if (!elAgentId || !conversationId) {
+          console.warn("postcall: missing agent_id or conversation_id");
           return new Response("Missing fields", { status: 400 });
         }
 
-        // Map EL agent_id → our agents row (so we know the owning user).
-        const { data: agent, error: agentErr } = await supabaseAdmin
-          .from("agents")
-          .select("id, user_id")
-          .eq("elevenlabs_agent_id", elAgentId)
-          .maybeSingle();
-        if (agentErr || !agent) {
-          console.error("postcall: agent not found for elAgentId", elAgentId, agentErr);
-          // Still 200 so EL doesn't retry forever.
+        const result = await persistPostCall(elAgentId, conversationId, data);
+        if (result.status === "agent-not-found") {
+          console.warn("postcall: agent not found for", elAgentId);
           return new Response("ok-no-agent", { status: 200 });
         }
-
-        // Idempotency: skip if we've already stored this conversation.
-        const { data: existing } = await supabaseAdmin
-          .from("conversations")
-          .select("id")
-          .eq("elevenlabs_conversation_id", conversationId)
-          .maybeSingle();
-        if (existing) return new Response("ok-dup", { status: 200 });
-
-        const startedAt = data.metadata?.start_time_unix_secs
-          ? new Date(data.metadata.start_time_unix_secs * 1000).toISOString()
-          : new Date().toISOString();
-        const durationSec = Math.max(0, Math.round(data.metadata?.call_duration_secs ?? 0));
-        const endedAt = new Date(
-          new Date(startedAt).getTime() + durationSec * 1000,
-        ).toISOString();
-
-        const transcriptArr = Array.isArray(data.transcript) ? data.transcript : [];
-        const messageCount = transcriptArr.length;
-
-        const { data: convo, error: convoErr } = await supabaseAdmin
-          .from("conversations")
-          .insert({
-            user_id: agent.user_id,
-            agent_id: agent.id,
-            elevenlabs_conversation_id: conversationId,
-            started_at: startedAt,
-            ended_at: endedAt,
-            duration_seconds: durationSec,
-            message_count: messageCount,
-          })
-          .select("id")
-          .single();
-
-        if (convoErr || !convo) {
-          console.error("postcall: insert conversation failed", convoErr);
+        if (result.status === "duplicate") {
+          return new Response("ok-dup", { status: 200 });
+        }
+        if (result.status === "db-error") {
           return new Response("db-error", { status: 500 });
         }
-
-        if (messageCount > 0) {
-          const rows = transcriptArr
-            .filter((t) => t && (t.message || t.text))
-            .map((t) => ({
-              user_id: agent.user_id,
-              conversation_id: convo.id,
-              role: t.role === "agent" ? "assistant" : "user",
-              content: String(t.message ?? t.text ?? ""),
-            }));
-          if (rows.length > 0) {
-            const { error: msgErr } = await supabaseAdmin.from("messages").insert(rows);
-            if (msgErr) console.error("postcall: insert messages failed", msgErr);
-          }
-        }
-
         return new Response("ok", { status: 200 });
       },
     },
   },
 });
 
-interface PostCallPayload {
+export interface PostCallPayload {
   type?: string;
   event_timestamp?: number;
   data?: PostCallData;
 }
 
-interface PostCallData {
+export interface PostCallData {
   agent_id?: string;
   conversation_id?: string;
   status?: string;
-  transcript?: Array<{ role?: string; message?: string; text?: string; time_in_call_secs?: number }>;
+  transcript?: Array<{
+    role?: string;
+    message?: string;
+    text?: string;
+    time_in_call_secs?: number;
+  }>;
   metadata?: {
     start_time_unix_secs?: number;
     call_duration_secs?: number;
+    phone_call?: { external_number?: string; agent_number?: string };
   };
+  conversation_initiation_client_data?: {
+    dynamic_variables?: Record<string, string>;
+  };
+}
+
+type PersistResult =
+  | { status: "ok"; conversationDbId: string }
+  | { status: "duplicate" }
+  | { status: "agent-not-found" }
+  | { status: "db-error" };
+
+/**
+ * Persist a single post-call payload: insert conversation + messages,
+ * then trigger lead extraction. Idempotent by elevenlabs_conversation_id.
+ * Exported so the manual backfill server function can reuse it.
+ */
+export async function persistPostCall(
+  elAgentId: string,
+  conversationId: string,
+  data: PostCallData,
+): Promise<PersistResult> {
+  const { data: agent, error: agentErr } = await supabaseAdmin
+    .from("agents")
+    .select("id, user_id")
+    .eq("elevenlabs_agent_id", elAgentId)
+    .maybeSingle();
+  if (agentErr || !agent) {
+    return { status: "agent-not-found" };
+  }
+
+  const { data: existing } = await supabaseAdmin
+    .from("conversations")
+    .select("id")
+    .eq("elevenlabs_conversation_id", conversationId)
+    .maybeSingle();
+  if (existing) return { status: "duplicate" };
+
+  const startedAt = data.metadata?.start_time_unix_secs
+    ? new Date(data.metadata.start_time_unix_secs * 1000).toISOString()
+    : new Date().toISOString();
+  const durationSec = Math.max(0, Math.round(data.metadata?.call_duration_secs ?? 0));
+  const endedAt = new Date(
+    new Date(startedAt).getTime() + durationSec * 1000,
+  ).toISOString();
+
+  const transcriptArr = Array.isArray(data.transcript) ? data.transcript : [];
+  const cleanedTurns = transcriptArr
+    .map((t) => ({
+      role: t.role === "agent" ? "assistant" : "user",
+      content: String(t.message ?? t.text ?? "").trim(),
+    }))
+    .filter((t) => t.content.length > 0);
+  const messageCount = cleanedTurns.length;
+
+  const { data: convo, error: convoErr } = await supabaseAdmin
+    .from("conversations")
+    .insert({
+      user_id: agent.user_id,
+      agent_id: agent.id,
+      elevenlabs_conversation_id: conversationId,
+      started_at: startedAt,
+      ended_at: endedAt,
+      duration_seconds: durationSec,
+      message_count: messageCount,
+    })
+    .select("id")
+    .single();
+
+  if (convoErr || !convo) {
+    console.error("postcall: insert conversation failed", convoErr);
+    return { status: "db-error" };
+  }
+
+  if (cleanedTurns.length > 0) {
+    const rows = cleanedTurns.map((t) => ({
+      user_id: agent.user_id,
+      conversation_id: convo.id,
+      role: t.role,
+      content: t.content,
+    }));
+    const { error: msgErr } = await supabaseAdmin.from("messages").insert(rows);
+    if (msgErr) console.error("postcall: insert messages failed", msgErr);
+  }
+
+  // Lead extraction — uses the caller's phone (from EL metadata) as a
+  // fallback when the AI can't pull a phone from the transcript.
+  const fallbackPhone =
+    data.metadata?.phone_call?.external_number?.trim() || null;
+
+  const userTurns = cleanedTurns.filter((t) => t.role === "user");
+  // Only extract a lead if the caller actually said something — otherwise
+  // we'd create empty leads for hangups / no-answers.
+  if (userTurns.length > 0 || fallbackPhone) {
+    await captureLead({
+      agentId: agent.id,
+      userId: agent.user_id,
+      conversationId: convo.id,
+      source: "voice",
+      fallbackPhone,
+      messages: cleanedTurns as { role: "user" | "assistant"; content: string }[],
+    });
+  }
+
+  console.log(
+    `postcall: saved conversation ${convo.id} (${messageCount} messages) for agent ${agent.id}`,
+  );
+  return { status: "ok", conversationDbId: convo.id };
 }
