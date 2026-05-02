@@ -79,7 +79,7 @@ export const Route = createFileRoute("/api/public/elevenlabs/postcall")({
         // authenticated without burning more customer call credits.
         if (secret && !signatureTrusted) {
           const verified = await fetchElevenLabsConversation(conversationId);
-          if (!verified || verified.agent_id !== elAgentId) {
+          if (!verified || !verified.agent_id || verified.agent_id !== elAgentId) {
             console.warn("postcall: fallback verification failed", conversationId);
             return new Response("Invalid signature", { status: 401 });
           }
@@ -103,6 +103,23 @@ export const Route = createFileRoute("/api/public/elevenlabs/postcall")({
     },
   },
 });
+
+async function fetchElevenLabsConversation(
+  conversationId: string,
+): Promise<(PostCallData & { agent_id: string; conversation_id: string }) | null> {
+  const apiKey = process.env.ELEVENLABS_API_KEY;
+  if (!apiKey) return null;
+  const res = await fetch(`${EL_BASE}/convai/conversations/${encodeURIComponent(conversationId)}`, {
+    headers: { "xi-api-key": apiKey },
+  });
+  if (!res.ok) {
+    console.error("postcall: ElevenLabs conversation verify failed", res.status);
+    return null;
+  }
+  const json = (await res.json()) as PostCallData;
+  if (!json.agent_id || !json.conversation_id) return null;
+  return json as PostCallData & { agent_id: string; conversation_id: string };
+}
 
 export interface PostCallPayload {
   type?: string;
