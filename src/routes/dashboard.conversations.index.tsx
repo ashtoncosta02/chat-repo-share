@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/dashboard/PageHeader";
-import { MessageSquare, ChevronRight, Mic, Trash2 } from "lucide-react";
+import { MessageSquare, ChevronRight, Mic, Trash2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -17,6 +17,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { backfillVoiceCalls } from "@/server/voice-call-backfill.functions";
 
 export const Route = createFileRoute("/dashboard/conversations/")({
   head: () => ({ meta: [{ title: "Conversations — Agent Factory" }] }),
