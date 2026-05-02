@@ -3,6 +3,8 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { captureLead } from "@/server/lead-extraction";
 
+const EL_BASE = "https://api.elevenlabs.io/v1";
+
 /**
  * ElevenLabs post-call webhook.
  * Configured in ElevenLabs dashboard → Workspace → Webhooks.
@@ -24,28 +26,28 @@ export const Route = createFileRoute("/api/public/elevenlabs/postcall")({
           if (!signature) {
             console.warn("postcall: missing signature; will verify via ElevenLabs API");
           } else {
-          const headerParts = signature.split(",").map((p) => p.trim());
-          const ts = headerParts.find((p) => p.startsWith("t="))?.slice(2);
-          const sigPart = headerParts.find((p) => p.startsWith("v0="));
-          const sig = sigPart?.slice(3);
-          if (!ts || !sig) {
-            console.warn("postcall: bad signature parts; will verify via ElevenLabs API");
-          } else {
-            const ageSec = Math.abs(Date.now() / 1000 - Number(ts));
-            if (!Number.isFinite(ageSec) || ageSec > 1800) {
-              console.warn("postcall: stale signature; will verify via ElevenLabs API", ageSec);
+            const headerParts = signature.split(",").map((p) => p.trim());
+            const ts = headerParts.find((p) => p.startsWith("t="))?.slice(2);
+            const sigPart = headerParts.find((p) => p.startsWith("v0="));
+            const sig = sigPart?.slice(3);
+            if (!ts || !sig) {
+              console.warn("postcall: bad signature parts; will verify via ElevenLabs API");
             } else {
-              const expected = createHmac("sha256", secret)
-                .update(`${ts}.${rawBody}`)
-                .digest("hex");
-              const a = Buffer.from(sig, "hex");
-              const b = Buffer.from(expected, "hex");
-              signatureTrusted = a.length === b.length && timingSafeEqual(a, b);
-              if (!signatureTrusted) {
-                console.warn("postcall: invalid signature; will verify via ElevenLabs API");
+              const ageSec = Math.abs(Date.now() / 1000 - Number(ts));
+              if (!Number.isFinite(ageSec) || ageSec > 1800) {
+                console.warn("postcall: stale signature; will verify via ElevenLabs API", ageSec);
+              } else {
+                const expected = createHmac("sha256", secret)
+                  .update(`${ts}.${rawBody}`)
+                  .digest("hex");
+                const a = Buffer.from(sig, "hex");
+                const b = Buffer.from(expected, "hex");
+                signatureTrusted = a.length === b.length && timingSafeEqual(a, b);
+                if (!signatureTrusted) {
+                  console.warn("postcall: invalid signature; will verify via ElevenLabs API");
+                }
               }
             }
-          }
           }
         }
 
