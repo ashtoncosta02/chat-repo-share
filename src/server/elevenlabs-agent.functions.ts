@@ -191,6 +191,11 @@ export const deleteReceptionistAgent = createServerFn({ method: "POST" })
     const auth = await authUser(data.accessToken);
     if ("error" in auth) return { success: false as const, error: auth.error };
 
+    // Always try to clean up booking tools first (independent of agent existence).
+    await deleteBookingToolsForAgent(data.agentId).catch((e) => {
+      console.error("deleteBookingToolsForAgent error:", e);
+    });
+
     const { data: row } = await supabaseAdmin
       .from("agents")
       .select("elevenlabs_agent_id")
