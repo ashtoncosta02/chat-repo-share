@@ -142,7 +142,7 @@ function LeadsPage() {
     toast.success("Lead deleted.");
   };
 
-
+  const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return leads.filter((l) => {
       if (agentFilter !== "all" && l.agent_id !== agentFilter) return false;
