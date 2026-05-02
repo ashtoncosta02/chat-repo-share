@@ -56,6 +56,12 @@ export const disconnectGoogleCalendar = createServerFn({ method: "POST" })
       .eq("agent_id", data.agent_id)
       .eq("user_id", auth.userId);
     if (error) return { success: false as const, error: error.message };
+
+    // Tear down voice booking tools + refresh prompt now that calendar is gone.
+    await resyncReceptionistById(data.agent_id).catch((e) => {
+      console.error("resync after disconnect failed:", e);
+    });
+
     return { success: true as const };
   });
 
