@@ -6,6 +6,7 @@ import {
   verifyState,
 } from "@/server/google-calendar.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { resyncReceptionistById } from "@/server/elevenlabs-agent.functions";
 
 function htmlResponse(title: string, body: string, status = 200) {
   return new Response(
