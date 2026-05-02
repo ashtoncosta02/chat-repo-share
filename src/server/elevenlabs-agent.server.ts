@@ -169,15 +169,17 @@ interface ElevenLabsAgentConfig {
         prompt: string;
         llm: string;
         tool_ids?: string[];
-        tools?: Array<{
-          type: "system";
-          name: string;
-          description?: string;
-          params: {
-            system_tool_type: "voicemail_detection";
-            voicemail_message?: string;
-          };
-        }>;
+        built_in_tools?: {
+          voicemail_detection?: {
+            type: "system";
+            name: "voicemail_detection";
+            description?: string;
+            params: {
+              system_tool_type: "voicemail_detection";
+              voicemail_message?: string;
+            };
+          } | null;
+        };
       };
     };
     tts: {
@@ -221,8 +223,11 @@ function buildAgentPayload(p: AgentBusinessProfile): ElevenLabsAgentConfig {
           // 2.0-flash is unreliable at extracting tool parameters.
           llm: "gemini-2.5-flash",
           tool_ids: p.tool_ids && p.tool_ids.length > 0 ? p.tool_ids : undefined,
-          tools: [
-            {
+          // Voicemail detection is a built-in system tool (not a workspace tool).
+          // EL rejects mixing the legacy `tools[]` array with `tool_ids`, so we
+          // use the `built_in_tools` map exclusively.
+          built_in_tools: {
+            voicemail_detection: {
               type: "system",
               name: "voicemail_detection",
               description:
@@ -232,7 +237,7 @@ function buildAgentPayload(p: AgentBusinessProfile): ElevenLabsAgentConfig {
                 voicemail_message: `Hi {{lead_name}}, this is ${p.assistant_name || "the receptionist"} from ${p.business_name}. I'm calling to follow up on your earlier inquiry. Please call us back when you have a chance. Thank you, goodbye.`,
               },
             },
-          ],
+          },
         },
       },
       tts: {
