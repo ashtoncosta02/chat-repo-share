@@ -91,7 +91,19 @@ export function buildSystemPrompt(p: AgentBusinessProfile): string {
     lines.push(p.pricing_notes.trim());
   }
 
-  if (p.booking_link) {
+  // Booking instructions: prefer the live Google Calendar tool flow when
+  // available, otherwise fall back to the static booking link / message-taking.
+  if (p.booking_enabled && p.booking_prompt_addendum) {
+    lines.push(``);
+    lines.push(`# Booking (LIVE — you can book on the calendar)`);
+    lines.push(p.booking_prompt_addendum);
+    lines.push(``);
+    lines.push(`PHONE-CALL BOOKING NOTES`);
+    lines.push(`- You are on a phone call, so the caller cannot read text. Read times in plain English ("Tuesday at 2:30 PM"), never read out the ISO timestamp.`);
+    lines.push(`- Email is OPTIONAL on phone bookings — many callers can't easily spell it out loud. Always collect their full name AND a callback phone number before calling book_appointment. Only ask for email if they offer it.`);
+    lines.push(`- Use the caller's phone number (the one they're calling from, or one they give you) as customer_phone.`);
+    lines.push(`- After a successful booking, repeat the date and time back to confirm, then move on.`);
+  } else if (p.booking_link) {
     lines.push(``);
     lines.push(`# Booking`);
     lines.push(`To book an appointment, direct callers to: ${p.booking_link.trim()}`);
