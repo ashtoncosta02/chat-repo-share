@@ -108,6 +108,18 @@ function ConversationsPage() {
         description="Every conversation your agents have had, saved automatically"
       />
       <div className="p-8 space-y-6">
+        <div className="flex justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSync}
+            disabled={syncing}
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+            {syncing ? "Importing…" : "Import recent calls"}
+          </Button>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StatRow label="Total Conversations" value={convs.length} color="text-foreground" />
           <StatRow label="Avg Messages" value={avgMessages} color="text-[var(--gold)]" />
