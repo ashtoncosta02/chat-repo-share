@@ -1,54 +1,51 @@
-# Auto-link Twilio numbers to ElevenLabs
+# Add booking tools to the voice receptionist
 
-Right now when you (or a future client) buy a phone number in the dashboard, it's only registered with Twilio + the SMS webhook. The voice side still requires the manual ElevenLabs "Import a number from Twilio" step you just did. This plan automates that step end-to-end.
+Give the voice agent the ability to check availability and book appointments on your Google Calendar — same as the chat widget does today. No changes to voice quality, latency, or how calls sound.
 
-## What changes for the user
+## What changes
 
-1. Click **Choose** on a number in the agent dashboard → number is purchased from Twilio AND auto-linked to ElevenLabs in one step.
-2. Owned numbers show a small **"AI receptionist connected ✓"** badge instead of the obsolete "Sync webhooks" button.
-3. Releasing a number also unlinks it from ElevenLabs so you don't get charged for ghost numbers.
+1. **Two new public webhook endpoints** the ElevenLabs voice agent will call mid-conversation:
+   - `POST /api/public/voice-tools/find-slots` — returns available time slots for a date range
+   - `POST /api/public/voice-tools/book-appointment` — creates the calendar event and saves the booking
 
-## Required from you (one-time, ~2 min)
+   Both are scoped by `agent_id` (passed in the request) and use the existing `agent_google_calendar` connection + business hours.
 
-ElevenLabs' import API needs your **Twilio Account SID** and **Twilio Auth Token** (the connector gateway hides these, so we need them stored as separate secrets). I'll prompt you for both via Lovable's add-secret flow before writing the wiring.
+2. **Reuse existing booking logic** from `src/server/widget-booking-tools.ts` — extract the core "find slots" and "create booking" helpers into `src/server/booking-core.server.ts` so both the widget and voice agent share the same code (no duplicate logic, no drift).
 
-- Where to find them: [Twilio Console](https://console.twilio.com/) → Account Dashboard → "Account Info" panel.
-- Stored as runtime secrets `TWILIO_ACCOUNT_SID` and `TWILIO_AUTH_TOKEN`. Never exposed to the browser.
+3. **Update ElevenLabs agent config** in `src/server/elevenlabs-agent.server.ts`:
+   - Add two `webhook` tools to the agent definition (alongside the existing `end_call` tool)
+   - Each tool has a name, description, and JSON schema for parameters (date range, name, phone, slot time, reason)
+   - When you save your receptionist, the new tools get pushed to ElevenLabs automatically
 
-## Implementation
+4. **Update the system prompt** so the agent knows:
+   - It can offer to book appointments
+   - It must collect caller name + phone before booking
+   - It should confirm the time back to the caller before calling `book_appointment`
+   - If no calendar is connected, it falls back to taking a message (current behavior)
 
-**1. Database migration**
-Add one nullable column to `phone_numbers`:
-- `elevenlabs_phone_number_id text` — set when the number is registered with ElevenLabs; used to unlink later.
+## What does NOT change
 
-**2. Server: `src/server/twilio-numbers.ts` — `purchasePhoneNumber`**
-After a successful Twilio purchase + DB insert, look up the agent's `elevenlabs_agent_id`. If present, call the existing `importTwilioNumber()` helper from `elevenlabs-agent.server.ts` using the new `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` env vars. On success, update the row with `elevenlabs_phone_number_id`. If the EL import fails, the Twilio purchase still succeeds — we just log it and surface a soft warning toast so the user isn't blocked (they can retry from the dashboard).
+- Voice (still Liam or whatever you picked)
+- Call latency / response speed
+- Voicemail flow
+- The "Liam answering" experience
+- Chat widget booking (keeps working identically)
 
-**3. Server: `releasePhoneNumber`**
-Before deleting the Twilio number, if `elevenlabs_phone_number_id` is set, DELETE it from `https://api.elevenlabs.io/v1/convai/phone-numbers/{id}` (404 = already gone, ignore). Add a small helper `deleteElevenLabsPhoneNumber()` in `elevenlabs-agent.server.ts`.
+## Edge cases handled
 
-**4. Server: new fallback `linkExistingNumberToElevenLabs` server fn**
-For numbers already in your DB (like the one you just imported manually), expose a one-click "Connect to AI" button. This calls `importTwilioNumber()` and saves the returned ID. Lets us recover from the rare case where step 2 failed.
+- **No Google Calendar connected**: tools simply aren't registered for that agent — the agent won't try to book and will take a message instead
+- **Slot already taken between offer and confirm**: `book_appointment` re-checks availability; if conflict, returns error and agent re-offers
+- **Outside business hours**: `find_available_slots` already filters by your configured hours
+- **Caller doesn't give a phone**: tool requires it; agent will ask before booking
 
-**5. UI: `src/components/dashboard/PhoneNumberSetup.tsx`**
-On each owned number row, replace the current display with a status indicator:
-- `elevenlabs_phone_number_id` set → green dot + "AI receptionist connected"
-- not set → "Connect to AI" button that calls the new server fn
+## Bookings dashboard
 
-**6. UI: `src/routes/dashboard.phone-numbers.tsx`**
-Replace the "Sync webhooks" button with the same connection status badge. The sync-webhooks server function stays in the codebase (still used internally for SMS), just removed from the UI since it's no longer something the user needs to think about.
+Voice-booked appointments appear in your existing `/dashboard/bookings` page automatically (same `calendar_bookings` table, just `source = 'voice'` instead of `'widget'`).
 
-## Out of scope (for now)
+## Cancellation
 
-- Migrating numbers between agents (only 1-receptionist-per-account anyway).
-- Bulk re-import of legacy numbers — the per-row "Connect to AI" button covers it.
-- Showing ElevenLabs call logs in the dashboard — already handled by existing post-call webhook (`api.public.elevenlabs.postcall.ts`).
+Skipped for now — you mentioned waiting on email for the cancel link. We can add a simple "cancel from dashboard" button in the meantime if you want, or wait until email is set up. Let me know.
 
-## Order of operations when you approve
+## Memory update
 
-1. I'll prompt you for `TWILIO_ACCOUNT_SID` and `TWILIO_AUTH_TOKEN` via add-secret.
-2. Run the DB migration.
-3. Wire the server changes.
-4. Update the two UI surfaces.
-5. You click **"Connect to AI"** once on your existing number to backfill it.
-6. Done — every future number purchase is automatic.
+Update the core memory to remove the outdated "voice rework deferred" note and reflect that voice booking is live.

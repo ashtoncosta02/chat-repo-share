@@ -2,8 +2,17 @@
 // Build the system prompt, voice, and post-call webhook config for an
 // AI Receptionist, then create or update the agent in ElevenLabs.
 
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { buildBookingPromptAddendum, getCalendarConfig } from "./widget-booking-tools";
+
 const EL_BASE = "https://api.elevenlabs.io/v1";
 const PROJECT_ID = "d1e796ad-671c-47e1-843b-cdecc02fe11f";
+
+// Public base URL the ElevenLabs voice agent uses to call our booking webhooks.
+// Using the stable preview URL so it works before publishing too.
+function publicBaseUrl(): string {
+  return `https://project--${PROJECT_ID}-dev.lovable.app`;
+}
 
 export interface AgentBusinessProfile {
   business_name: string;
@@ -18,6 +27,11 @@ export interface AgentBusinessProfile {
   escalation_triggers: string | null;
   voice_id: string | null;
   faqs_structured: Array<{ question: string; answer: string }> | null;
+  // Set when the agent has Google Calendar connected — enables booking tools + prompt.
+  booking_enabled?: boolean;
+  booking_prompt_addendum?: string | null;
+  // Workspace tool ids to attach to the agent (find_slots + book_appointment).
+  tool_ids?: string[];
 }
 
 export function buildSystemPrompt(p: AgentBusinessProfile): string {
@@ -77,7 +91,19 @@ export function buildSystemPrompt(p: AgentBusinessProfile): string {
     lines.push(p.pricing_notes.trim());
   }
 
-  if (p.booking_link) {
+  // Booking instructions: prefer the live Google Calendar tool flow when
+  // available, otherwise fall back to the static booking link / message-taking.
+  if (p.booking_enabled && p.booking_prompt_addendum) {
+    lines.push(``);
+    lines.push(`# Booking (LIVE — you can book on the calendar)`);
+    lines.push(p.booking_prompt_addendum);
+    lines.push(``);
+    lines.push(`PHONE-CALL BOOKING NOTES`);
+    lines.push(`- You are on a phone call, so the caller cannot read text. Read times in plain English ("Tuesday at 2:30 PM"), never read out the ISO timestamp.`);
+    lines.push(`- Email is OPTIONAL on phone bookings — many callers can't easily spell it out loud. Always collect their full name AND a callback phone number before calling book_appointment. Only ask for email if they offer it.`);
+    lines.push(`- Use the caller's phone number (the one they're calling from, or one they give you) as customer_phone.`);
+    lines.push(`- After a successful booking, repeat the date and time back to confirm, then move on.`);
+  } else if (p.booking_link) {
     lines.push(``);
     lines.push(`# Booking`);
     lines.push(`To book an appointment, direct callers to: ${p.booking_link.trim()}`);
@@ -142,6 +168,7 @@ interface ElevenLabsAgentConfig {
       prompt: {
         prompt: string;
         llm: string;
+        tool_ids?: string[];
         tools?: Array<{
           type: "system";
           name: string;
@@ -189,8 +216,11 @@ function buildAgentPayload(p: AgentBusinessProfile): ElevenLabsAgentConfig {
         language: "en",
         prompt: {
           prompt: buildSystemPrompt(p),
-          // Fast + cheap reasoning model for natural phone conversation.
-          llm: "gemini-2.0-flash",
+          // Bumped from gemini-2.0-flash — ElevenLabs explicitly recommends
+          // 2.5-flash (or stronger) when the agent has webhook tools because
+          // 2.0-flash is unreliable at extracting tool parameters.
+          llm: "gemini-2.5-flash",
+          tool_ids: p.tool_ids && p.tool_ids.length > 0 ? p.tool_ids : undefined,
           tools: [
             {
               type: "system",
@@ -278,6 +308,165 @@ export async function updateElevenLabsAgent(
     const t = await res.text();
     throw new Error(`ElevenLabs update agent failed (${res.status}): ${t}`);
   }
+}
+
+// ----- Booking webhook tool sync (find_slots + book_appointment) -----
+
+interface ToolSyncResult {
+  toolIds: string[];
+  bookingPromptAddendum: string | null;
+  findSlotsToolId: string | null;
+  bookToolId: string | null;
+}
+
+function buildFindSlotsToolConfig(agentDbId: string) {
+  return {
+    type: "webhook" as const,
+    name: "find_available_slots",
+    description:
+      "Look up open appointment slots on a specific date. Call this BEFORE offering times to the caller. Returns voice-friendly slot strings (e.g. 'Tue, Mar 5 2:30 PM') and the matching ISO timestamp you must pass to book_appointment.",
+    response_timeout_secs: 15,
+    api_schema: {
+      url: `${publicBaseUrl()}/api/public/voice-tools/find-slots`,
+      method: "POST",
+      request_body_schema: {
+        type: "object",
+        required: ["agent_id", "date"],
+        description: "Find available appointment slots for a date",
+        properties: {
+          agent_id: { type: "string", description: "Internal agent id (auto-filled).", constant_value: agentDbId },
+          date: { type: "string", description: "Date in YYYY-MM-DD format (e.g. 2026-03-05)." },
+          duration_minutes: { type: "number", description: "Optional appointment length in minutes." },
+        },
+      },
+    },
+  };
+}
+
+function buildBookToolConfig(agentDbId: string) {
+  return {
+    type: "webhook" as const,
+    name: "book_appointment",
+    description:
+      "Book a confirmed appointment on the calendar. ONLY call after the caller has chosen a specific slot returned by find_available_slots AND you have collected their name and a callback phone number. Repeat the date/time back in plain English after success.",
+    response_timeout_secs: 20,
+    api_schema: {
+      url: `${publicBaseUrl()}/api/public/voice-tools/book-appointment`,
+      method: "POST",
+      request_body_schema: {
+        type: "object",
+        required: ["agent_id", "start_iso", "customer_name", "customer_phone"],
+        description: "Book a confirmed appointment",
+        properties: {
+          agent_id: { type: "string", description: "Internal agent id (auto-filled).", constant_value: agentDbId },
+          start_iso: { type: "string", description: "ISO 8601 start timestamp from find_available_slots (must match exactly)." },
+          duration_minutes: { type: "number", description: "Optional appointment length in minutes." },
+          customer_name: { type: "string", description: "Caller's full name." },
+          customer_phone: { type: "string", description: "Caller's phone number (the number they're calling from is fine)." },
+          customer_email: { type: "string", description: "Optional email — only ask if the caller offers it." },
+          reason: { type: "string", description: "Optional short reason for the appointment." },
+        },
+      },
+    },
+  };
+}
+
+async function createWorkspaceTool(toolConfig: unknown): Promise<string> {
+  const apiKey = requireKey();
+  const res = await fetch(`${EL_BASE}/convai/tools`, {
+    method: "POST",
+    headers: { "xi-api-key": apiKey, "Content-Type": "application/json" },
+    body: JSON.stringify({ tool_config: toolConfig }),
+  });
+  if (!res.ok) throw new Error(`EL create tool failed (${res.status}): ${await res.text()}`);
+  const json = (await res.json()) as { id?: string };
+  if (!json.id) throw new Error("EL returned no tool id");
+  return json.id;
+}
+
+async function updateWorkspaceTool(toolId: string, toolConfig: unknown): Promise<void> {
+  const apiKey = requireKey();
+  const res = await fetch(`${EL_BASE}/convai/tools/${toolId}`, {
+    method: "PATCH",
+    headers: { "xi-api-key": apiKey, "Content-Type": "application/json" },
+    body: JSON.stringify({ tool_config: toolConfig }),
+  });
+  if (!res.ok && res.status !== 404) {
+    throw new Error(`EL update tool failed (${res.status}): ${await res.text()}`);
+  }
+}
+
+async function deleteWorkspaceTool(toolId: string): Promise<void> {
+  const apiKey = requireKey();
+  const res = await fetch(`${EL_BASE}/convai/tools/${toolId}`, {
+    method: "DELETE",
+    headers: { "xi-api-key": apiKey },
+  });
+  if (!res.ok && res.status !== 404) {
+    console.error(`EL delete tool ${toolId} failed (${res.status}): ${await res.text()}`);
+  }
+}
+
+/**
+ * Sync the booking webhook tools for an agent based on whether Google Calendar
+ * is connected. Creates / updates / deletes tools as needed and persists the
+ * resulting tool ids on the agents row.
+ */
+export async function syncBookingToolsForAgent(agentDbId: string): Promise<ToolSyncResult> {
+  const { data: row } = await supabaseAdmin
+    .from("agents")
+    .select("elevenlabs_find_slots_tool_id, elevenlabs_book_tool_id")
+    .eq("id", agentDbId)
+    .maybeSingle();
+
+  const existingFindId = row?.elevenlabs_find_slots_tool_id ?? null;
+  const existingBookId = row?.elevenlabs_book_tool_id ?? null;
+
+  const cfg = await getCalendarConfig(agentDbId);
+
+  if (!cfg) {
+    // Calendar not connected — tear down any existing tools.
+    if (existingFindId) await deleteWorkspaceTool(existingFindId);
+    if (existingBookId) await deleteWorkspaceTool(existingBookId);
+    if (existingFindId || existingBookId) {
+      await supabaseAdmin
+        .from("agents")
+        .update({ elevenlabs_find_slots_tool_id: null, elevenlabs_book_tool_id: null })
+        .eq("id", agentDbId);
+    }
+    return { toolIds: [], bookingPromptAddendum: null, findSlotsToolId: null, bookToolId: null };
+  }
+
+  const findCfg = buildFindSlotsToolConfig(agentDbId);
+  const bookCfg = buildBookToolConfig(agentDbId);
+
+  let findId = existingFindId;
+  let bookId = existingBookId;
+
+  if (findId) {
+    await updateWorkspaceTool(findId, findCfg);
+  } else {
+    findId = await createWorkspaceTool(findCfg);
+  }
+  if (bookId) {
+    await updateWorkspaceTool(bookId, bookCfg);
+  } else {
+    bookId = await createWorkspaceTool(bookCfg);
+  }
+
+  if (findId !== existingFindId || bookId !== existingBookId) {
+    await supabaseAdmin
+      .from("agents")
+      .update({ elevenlabs_find_slots_tool_id: findId, elevenlabs_book_tool_id: bookId })
+      .eq("id", agentDbId);
+  }
+
+  return {
+    toolIds: [findId!, bookId!],
+    bookingPromptAddendum: buildBookingPromptAddendum(cfg),
+    findSlotsToolId: findId,
+    bookToolId: bookId,
+  };
 }
 
 export async function deleteElevenLabsAgent(agentId: string): Promise<void> {

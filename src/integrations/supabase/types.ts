@@ -82,6 +82,8 @@ export type Database = {
           business_name: string
           created_at: string
           elevenlabs_agent_id: string | null
+          elevenlabs_book_tool_id: string | null
+          elevenlabs_find_slots_tool_id: string | null
           emergency_number: string | null
           escalation_triggers: string | null
           faqs: string | null
@@ -110,6 +112,8 @@ export type Database = {
           business_name: string
           created_at?: string
           elevenlabs_agent_id?: string | null
+          elevenlabs_book_tool_id?: string | null
+          elevenlabs_find_slots_tool_id?: string | null
           emergency_number?: string | null
           escalation_triggers?: string | null
           faqs?: string | null
@@ -138,6 +142,8 @@ export type Database = {
           business_name?: string
           created_at?: string
           elevenlabs_agent_id?: string | null
+          elevenlabs_book_tool_id?: string | null
+          elevenlabs_find_slots_tool_id?: string | null
           emergency_number?: string | null
           escalation_triggers?: string | null
           faqs?: string | null

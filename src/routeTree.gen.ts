@@ -30,6 +30,8 @@ import { Route as ApiPublicOwnerChatRouteImport } from './routes/api.public.owne
 import { Route as ApiPublicWidgetEmbedDotjsRouteImport } from './routes/api.public.widget.embed[.]js'
 import { Route as ApiPublicWidgetChatRouteImport } from './routes/api.public.widget.chat'
 import { Route as ApiPublicVoicemailAudioRouteImport } from './routes/api.public.voicemail.audio'
+import { Route as ApiPublicVoiceToolsFindSlotsRouteImport } from './routes/api.public.voice-tools.find-slots'
+import { Route as ApiPublicVoiceToolsBookAppointmentRouteImport } from './routes/api.public.voice-tools.book-appointment'
 import { Route as ApiPublicTwilioVoiceRouteImport } from './routes/api.public.twilio.voice'
 import { Route as ApiPublicTwilioSmsRouteImport } from './routes/api.public.twilio.sms'
 import { Route as ApiPublicTwilioCallbackRouteImport } from './routes/api.public.twilio.callback'
@@ -145,6 +147,18 @@ const ApiPublicVoicemailAudioRoute = ApiPublicVoicemailAudioRouteImport.update({
   path: '/api/public/voicemail/audio',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicVoiceToolsFindSlotsRoute =
+  ApiPublicVoiceToolsFindSlotsRouteImport.update({
+    id: '/api/public/voice-tools/find-slots',
+    path: '/api/public/voice-tools/find-slots',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicVoiceToolsBookAppointmentRoute =
+  ApiPublicVoiceToolsBookAppointmentRouteImport.update({
+    id: '/api/public/voice-tools/book-appointment',
+    path: '/api/public/voice-tools/book-appointment',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicTwilioVoiceRoute = ApiPublicTwilioVoiceRouteImport.update({
   id: '/api/public/twilio/voice',
   path: '/api/public/twilio/voice',
@@ -203,6 +217,8 @@ export interface FileRoutesByFullPath {
   '/api/public/twilio/callback': typeof ApiPublicTwilioCallbackRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
   '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRoute
+  '/api/public/voice-tools/book-appointment': typeof ApiPublicVoiceToolsBookAppointmentRoute
+  '/api/public/voice-tools/find-slots': typeof ApiPublicVoiceToolsFindSlotsRoute
   '/api/public/voicemail/audio': typeof ApiPublicVoicemailAudioRoute
   '/api/public/widget/chat': typeof ApiPublicWidgetChatRoute
   '/api/public/widget/embed.js': typeof ApiPublicWidgetEmbedDotjsRoute
@@ -230,6 +246,8 @@ export interface FileRoutesByTo {
   '/api/public/twilio/callback': typeof ApiPublicTwilioCallbackRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
   '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRoute
+  '/api/public/voice-tools/book-appointment': typeof ApiPublicVoiceToolsBookAppointmentRoute
+  '/api/public/voice-tools/find-slots': typeof ApiPublicVoiceToolsFindSlotsRoute
   '/api/public/voicemail/audio': typeof ApiPublicVoicemailAudioRoute
   '/api/public/widget/chat': typeof ApiPublicWidgetChatRoute
   '/api/public/widget/embed.js': typeof ApiPublicWidgetEmbedDotjsRoute
@@ -260,6 +278,8 @@ export interface FileRoutesById {
   '/api/public/twilio/callback': typeof ApiPublicTwilioCallbackRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
   '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRoute
+  '/api/public/voice-tools/book-appointment': typeof ApiPublicVoiceToolsBookAppointmentRoute
+  '/api/public/voice-tools/find-slots': typeof ApiPublicVoiceToolsFindSlotsRoute
   '/api/public/voicemail/audio': typeof ApiPublicVoicemailAudioRoute
   '/api/public/widget/chat': typeof ApiPublicWidgetChatRoute
   '/api/public/widget/embed.js': typeof ApiPublicWidgetEmbedDotjsRoute
@@ -291,6 +311,8 @@ export interface FileRouteTypes {
     | '/api/public/twilio/callback'
     | '/api/public/twilio/sms'
     | '/api/public/twilio/voice'
+    | '/api/public/voice-tools/book-appointment'
+    | '/api/public/voice-tools/find-slots'
     | '/api/public/voicemail/audio'
     | '/api/public/widget/chat'
     | '/api/public/widget/embed.js'
@@ -318,6 +340,8 @@ export interface FileRouteTypes {
     | '/api/public/twilio/callback'
     | '/api/public/twilio/sms'
     | '/api/public/twilio/voice'
+    | '/api/public/voice-tools/book-appointment'
+    | '/api/public/voice-tools/find-slots'
     | '/api/public/voicemail/audio'
     | '/api/public/widget/chat'
     | '/api/public/widget/embed.js'
@@ -347,6 +371,8 @@ export interface FileRouteTypes {
     | '/api/public/twilio/callback'
     | '/api/public/twilio/sms'
     | '/api/public/twilio/voice'
+    | '/api/public/voice-tools/book-appointment'
+    | '/api/public/voice-tools/find-slots'
     | '/api/public/voicemail/audio'
     | '/api/public/widget/chat'
     | '/api/public/widget/embed.js'
@@ -364,6 +390,8 @@ export interface RootRouteChildren {
   ApiPublicTwilioCallbackRoute: typeof ApiPublicTwilioCallbackRoute
   ApiPublicTwilioSmsRoute: typeof ApiPublicTwilioSmsRoute
   ApiPublicTwilioVoiceRoute: typeof ApiPublicTwilioVoiceRoute
+  ApiPublicVoiceToolsBookAppointmentRoute: typeof ApiPublicVoiceToolsBookAppointmentRoute
+  ApiPublicVoiceToolsFindSlotsRoute: typeof ApiPublicVoiceToolsFindSlotsRoute
   ApiPublicVoicemailAudioRoute: typeof ApiPublicVoicemailAudioRoute
   ApiPublicWidgetChatRoute: typeof ApiPublicWidgetChatRoute
   ApiPublicWidgetEmbedDotjsRoute: typeof ApiPublicWidgetEmbedDotjsRoute
@@ -519,6 +547,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicVoicemailAudioRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/voice-tools/find-slots': {
+      id: '/api/public/voice-tools/find-slots'
+      path: '/api/public/voice-tools/find-slots'
+      fullPath: '/api/public/voice-tools/find-slots'
+      preLoaderRoute: typeof ApiPublicVoiceToolsFindSlotsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/voice-tools/book-appointment': {
+      id: '/api/public/voice-tools/book-appointment'
+      path: '/api/public/voice-tools/book-appointment'
+      fullPath: '/api/public/voice-tools/book-appointment'
+      preLoaderRoute: typeof ApiPublicVoiceToolsBookAppointmentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/twilio/voice': {
       id: '/api/public/twilio/voice'
       path: '/api/public/twilio/voice'
@@ -634,6 +676,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicTwilioCallbackRoute: ApiPublicTwilioCallbackRoute,
   ApiPublicTwilioSmsRoute: ApiPublicTwilioSmsRoute,
   ApiPublicTwilioVoiceRoute: ApiPublicTwilioVoiceRoute,
+  ApiPublicVoiceToolsBookAppointmentRoute:
+    ApiPublicVoiceToolsBookAppointmentRoute,
+  ApiPublicVoiceToolsFindSlotsRoute: ApiPublicVoiceToolsFindSlotsRoute,
   ApiPublicVoicemailAudioRoute: ApiPublicVoicemailAudioRoute,
   ApiPublicWidgetChatRoute: ApiPublicWidgetChatRoute,
   ApiPublicWidgetEmbedDotjsRoute: ApiPublicWidgetEmbedDotjsRoute,
