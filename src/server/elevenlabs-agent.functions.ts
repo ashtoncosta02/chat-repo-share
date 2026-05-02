@@ -7,6 +7,7 @@ import {
   deleteElevenLabsAgent,
   getConversationToken,
   getConversationSignedUrl,
+  syncBookingToolsForAgent,
   type AgentBusinessProfile,
 } from "./elevenlabs-agent.server";
 
@@ -91,6 +92,15 @@ export const syncReceptionistAgent = createServerFn({ method: "POST" })
     const profile = rowToProfile(row as AgentRow);
 
     try {
+      // Sync booking webhook tools FIRST so we can attach their ids to the agent.
+      const toolSync = await syncBookingToolsForAgent(row.id).catch((e) => {
+        console.error("syncBookingToolsForAgent failed:", e);
+        return { toolIds: [], bookingPromptAddendum: null };
+      });
+      profile.booking_enabled = toolSync.toolIds.length > 0;
+      profile.booking_prompt_addendum = toolSync.bookingPromptAddendum;
+      profile.tool_ids = toolSync.toolIds;
+
       let elAgentId = row.elevenlabs_agent_id;
       if (elAgentId) {
         await updateElevenLabsAgent(elAgentId, profile);
@@ -103,7 +113,6 @@ export const syncReceptionistAgent = createServerFn({ method: "POST" })
           .eq("id", row.id);
         if (updErr) {
           console.error("Failed to save elevenlabs_agent_id:", updErr);
-          // Try to roll the EL agent back to avoid orphans.
           await deleteElevenLabsAgent(elAgentId).catch(() => {});
           return { success: false as const, error: "Could not save voice agent ID." };
         }
