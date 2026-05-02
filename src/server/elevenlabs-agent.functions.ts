@@ -8,6 +8,7 @@ import {
   getConversationToken,
   getConversationSignedUrl,
   syncBookingToolsForAgent,
+  deleteBookingToolsForAgent,
   type AgentBusinessProfile,
 } from "./elevenlabs-agent.server";
 
