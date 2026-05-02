@@ -38,10 +38,10 @@ function ConversationsPage() {
   const [convs, setConvs] = useState<ConvRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
-  useEffect(() => {
-    if (!user) return;
-    supabase
+  const loadConvs = () => {
+    return supabase
       .from("conversations")
       .select("id, message_count, duration_seconds, started_at, agent_id, recording_url")
       .order("started_at", { ascending: false })
@@ -49,7 +49,39 @@ function ConversationsPage() {
         setConvs(data ?? []);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    if (!user) return;
+    loadConvs();
   }, [user]);
+
+  const handleSync = async () => {
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess.session?.access_token;
+    if (!token) {
+      toast.error("Please sign in again.");
+      return;
+    }
+    setSyncing(true);
+    try {
+      const res = await backfillVoiceCalls({ data: { accessToken: token } });
+      if (res.success) {
+        if (res.saved > 0) {
+          toast.success(`Imported ${res.saved} call${res.saved === 1 ? "" : "s"}.`);
+          await loadConvs();
+        } else {
+          toast.message("No new calls to import.");
+        }
+      } else {
+        toast.error(res.error);
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Sync failed.");
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
