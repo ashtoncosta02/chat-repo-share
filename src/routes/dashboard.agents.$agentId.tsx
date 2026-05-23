@@ -487,6 +487,16 @@ function AgentDetailPage() {
           <Button
             variant="outline"
             size="sm"
+            onClick={() => {
+              setVoiceDraft(agent.voice_id ?? DEFAULT_VOICE_ID);
+              setVoiceOpen(true);
+            }}
+          >
+            <Volume2 className="h-3.5 w-3.5 mr-1.5" /> Change voice
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             className="text-destructive hover:text-destructive"
             onClick={() => setDeleteOpen(true)}
           >
