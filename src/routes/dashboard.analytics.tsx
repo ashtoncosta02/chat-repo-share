@@ -59,7 +59,7 @@ const RANGE_LABEL: Record<RangeKey, string> = {
   "90": "Last 90 days",
 };
 
-function AnalyticsPage() {
+export function AnalyticsPage() {
   const { user } = useAuth();
   const [agents, setAgents] = useState<AgentOpt[]>([]);
   const [voice, setVoice] = useState<ConvRow[]>([]);
