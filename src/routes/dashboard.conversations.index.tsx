@@ -157,8 +157,11 @@ function ConversationsPage() {
                     className="flex-1 px-6 py-4 flex items-center justify-between"
                   >
                     <div>
-                      <div className="font-medium text-foreground flex items-center gap-2">
-                        {new Date(c.started_at).toLocaleString()}
+                      <div className="font-medium text-foreground flex items-center gap-2 flex-wrap">
+                        <span>{c.lead_name ?? "Unknown caller"}</span>
+                        <span className="text-sm font-normal text-muted-foreground">
+                          · {new Date(c.started_at).toLocaleString()}
+                        </span>
                         {c.recording_url && (
                           <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-[oklch(0.95_0.05_290)] text-[var(--gold)]">
                             <Mic className="h-3 w-3" />
