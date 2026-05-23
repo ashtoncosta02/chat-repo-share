@@ -96,7 +96,7 @@ function DashboardLayout() {
       <>
         {items.map((item) => {
           const Icon = item.icon;
-          const active = isActive(item.to, false);
+          const active = isActive(item.to, "exact" in item ? item.exact : false);
           return (
             <Link
               key={item.to}
