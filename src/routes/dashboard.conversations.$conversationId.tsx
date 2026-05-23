@@ -154,7 +154,7 @@ function ConversationDetailPage() {
                       className={`h-9 w-9 rounded-full flex items-center justify-center shrink-0 ${
                         isUser
                           ? "bg-muted text-muted-foreground"
-                          : "bg-[oklch(0.95_0.05_75)] text-[var(--gold)]"
+                          : "bg-[oklch(0.95_0.05_290)] text-[var(--gold)]"
                       }`}
                     >
                       {isUser ? <UserIcon className="h-5 w-5" /> : <Bot className="h-5 w-5" />}

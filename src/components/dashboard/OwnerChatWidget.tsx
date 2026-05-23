@@ -169,7 +169,7 @@ export function OwnerChatWidget() {
           role="dialog"
           aria-label="Help chat"
         >
-          <div className="flex items-center justify-between gap-3 px-4 py-3 bg-gradient-to-r from-[var(--gold)] to-[oklch(0.78_0.13_75)] text-white flex-shrink-0">
+          <div className="flex items-center justify-between gap-3 px-4 py-3 bg-gradient-to-r from-[var(--gold)] to-[oklch(0.78_0.13_290)] text-white flex-shrink-0">
             <div className="flex items-center gap-2 min-w-0">
               <Sparkles className="h-4 w-4 flex-shrink-0" />
               <div className="min-w-0">
@@ -203,7 +203,7 @@ export function OwnerChatWidget() {
 
           <div
             ref={scrollRef}
-            className="flex-1 overflow-y-auto px-3 py-3 bg-[oklch(0.97_0.012_85)] space-y-2"
+            className="flex-1 overflow-y-auto px-3 py-3 bg-[oklch(0.97_0.012_290)] space-y-2"
           >
             {messages.map((m, i) => (
               <div
@@ -292,7 +292,7 @@ export function OwnerChatWidget() {
             .af-md ul, .af-md ol { margin: 6px 0 6px 18px; padding: 0; }
             .af-md li { margin-bottom: 2px; }
             .af-md a { color: var(--gold); text-decoration: underline; }
-            .af-md code { background: oklch(0.94 0.012 85); padding: 1px 4px; border-radius: 3px; font-size: 12px; }
+            .af-md code { background: oklch(0.94 0.012 290); padding: 1px 4px; border-radius: 3px; font-size: 12px; }
             .af-md strong { font-weight: 600; }
           `}</style>
         </div>

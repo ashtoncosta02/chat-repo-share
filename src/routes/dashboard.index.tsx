@@ -101,7 +101,7 @@ function DashboardHome() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StatCard
             icon={<MessageSquare className="h-5 w-5 text-[var(--gold)]" />}
-            iconBg="bg-[oklch(0.95_0.05_75)]"
+            iconBg="bg-[oklch(0.95_0.05_290)]"
             label="Chat conversations"
             value={stats.conversations}
           />
@@ -135,7 +135,7 @@ function DashboardHome() {
             className="flex items-center justify-between px-4 md:px-6 py-5 hover:bg-muted/50 transition gap-4"
           >
             <div className="flex items-center gap-4 min-w-0">
-              <div className="h-12 w-12 rounded-full bg-[oklch(0.95_0.05_75)] flex items-center justify-center shrink-0">
+              <div className="h-12 w-12 rounded-full bg-[oklch(0.95_0.05_290)] flex items-center justify-center shrink-0">
                 <Bot className="h-6 w-6 text-[var(--gold)]" />
               </div>
               <div className="min-w-0">

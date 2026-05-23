@@ -270,7 +270,7 @@ export function ChatWidgetPage() {
                         onClick={() => setDraftPosition(pos)}
                         className={`rounded-md border px-3 py-2 text-sm transition-colors ${
                           draftPosition === pos
-                            ? "border-[var(--gold)] bg-[oklch(0.96_0.04_75)] text-foreground font-medium"
+                            ? "border-[var(--gold)] bg-[oklch(0.96_0.04_290)] text-foreground font-medium"
                             : "border-border bg-background text-muted-foreground hover:text-foreground"
                         }`}
                       >
@@ -309,7 +309,7 @@ export function ChatWidgetPage() {
                   on every page where you want the chat bubble to appear.
                 </p>
                 <div className="relative">
-                  <pre className="rounded-lg bg-[oklch(0.18_0.01_85)] text-[oklch(0.96_0.02_85)] p-4 text-xs overflow-x-auto font-mono leading-relaxed">
+                  <pre className="rounded-lg bg-[oklch(0.18_0.01_290)] text-[oklch(0.96_0.02_290)] p-4 text-xs overflow-x-auto font-mono leading-relaxed">
                     {scriptTag}
                   </pre>
                   <button
@@ -337,13 +337,13 @@ export function ChatWidgetPage() {
                 </h2>
                 <ol className="space-y-3 text-sm text-foreground/90">
                   <li className="flex gap-3">
-                    <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[oklch(0.96_0.04_75)] text-xs font-semibold text-[var(--gold-foreground)]">
+                    <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[oklch(0.96_0.04_290)] text-xs font-semibold text-[var(--gold-foreground)]">
                       1
                     </span>
                     <span>Copy the embed code above.</span>
                   </li>
                   <li className="flex gap-3">
-                    <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[oklch(0.96_0.04_75)] text-xs font-semibold text-[var(--gold-foreground)]">
+                    <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[oklch(0.96_0.04_290)] text-xs font-semibold text-[var(--gold-foreground)]">
                       2
                     </span>
                     <span>
@@ -353,7 +353,7 @@ export function ChatWidgetPage() {
                     </span>
                   </li>
                   <li className="flex gap-3">
-                    <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[oklch(0.96_0.04_75)] text-xs font-semibold text-[var(--gold-foreground)]">
+                    <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[oklch(0.96_0.04_290)] text-xs font-semibold text-[var(--gold-foreground)]">
                       3
                     </span>
                     <span>
@@ -387,7 +387,7 @@ export function ChatWidgetPage() {
                   </a>
                 )}
               </div>
-              <div className="rounded-xl border border-border bg-[oklch(0.96_0.012_85)] overflow-hidden h-[560px] flex items-end justify-end p-5">
+              <div className="rounded-xl border border-border bg-[oklch(0.96_0.012_290)] overflow-hidden h-[560px] flex items-end justify-end p-5">
                 {previewUrl && (
                   <iframe
                     key={`${previewUrl}-${previewKey}`}

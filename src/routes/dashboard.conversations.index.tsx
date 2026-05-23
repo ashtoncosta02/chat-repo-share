@@ -148,7 +148,7 @@ function ConversationsPage() {
                       <div className="font-medium text-foreground flex items-center gap-2">
                         {new Date(c.started_at).toLocaleString()}
                         {c.recording_url && (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-[oklch(0.95_0.05_75)] text-[var(--gold)]">
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-[oklch(0.95_0.05_290)] text-[var(--gold)]">
                             <Mic className="h-3 w-3" />
                             Recording
                           </span>

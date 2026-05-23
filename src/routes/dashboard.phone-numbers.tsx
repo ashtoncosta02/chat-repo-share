@@ -87,7 +87,7 @@ function PhoneNumbersPage() {
         description="Real phone numbers connected to your AI receptionist"
       />
       <div className="p-4 md:p-8 space-y-4 md:space-y-6">
-        <div className="rounded-xl border border-[oklch(0.85_0.08_75)] bg-[oklch(0.97_0.04_80)] p-4 md:p-5 flex items-start gap-3">
+        <div className="rounded-xl border border-[oklch(0.85_0.08_290)] bg-[oklch(0.97_0.04_290)] p-4 md:p-5 flex items-start gap-3">
           <Phone className="h-5 w-5 text-[var(--gold)] flex-shrink-0 mt-0.5" />
           <div>
             <div className="font-semibold text-foreground mb-1">Give your agents a real number</div>

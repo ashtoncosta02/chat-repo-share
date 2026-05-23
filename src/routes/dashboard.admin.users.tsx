@@ -115,7 +115,7 @@ function AdminUsersPage() {
                         <div className="font-medium text-foreground flex items-center gap-2">
                           {u.display_name || u.email?.split("@")[0]}
                           {u.is_admin && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-[oklch(0.96_0.04_75)] px-2 py-0.5 text-[10px] font-medium text-[var(--gold-foreground)]">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-[oklch(0.96_0.04_290)] px-2 py-0.5 text-[10px] font-medium text-[var(--gold-foreground)]">
                               <Shield className="h-3 w-3" /> Admin
                             </span>
                           )}
