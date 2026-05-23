@@ -50,7 +50,7 @@ function ConversationsPage() {
   const loadConvs = async () => {
     const { data } = await supabase
       .from("conversations")
-      .select("id, message_count, duration_seconds, started_at, agent_id, recording_url")
+      .select("id, message_count, duration_seconds, started_at, agent_id, recording_url, ai_summary")
       .order("started_at", { ascending: false });
     const rows = data ?? [];
     const ids = rows.map((r) => r.id);
