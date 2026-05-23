@@ -181,7 +181,38 @@ function ConversationsPage() {
   const totalDuration = convs.reduce((s, c) => s + c.duration_seconds, 0);
   const totalMin = Math.round(totalDuration / 60);
 
-  return (
+  const filteredConvs = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return convs.filter((c) => {
+      const matchesSearch = !q
+        ? true
+        : (c.lead_name ?? "").toLowerCase().includes(q) ||
+          (c.lead_phone ?? "").toLowerCase().includes(q) ||
+          (c.ai_summary ?? "").toLowerCase().includes(q) ||
+          (c.lead_notes ?? "").toLowerCase().includes(q);
+      const matchesIntent = intentFilter === "all" ? true : (c.lead_source ?? "") === intentFilter;
+      const matchesStatus = statusFilter === "all" ? true : (c.lead_status ?? "") === statusFilter;
+      return matchesSearch && matchesIntent && matchesStatus;
+    });
+  }, [convs, searchQuery, intentFilter, statusFilter]);
+
+  const intentOptions = [
+    { value: "all", label: "All Intents" },
+    { value: "voice", label: "Voice Call" },
+    { value: "widget", label: "Chat Widget" },
+    { value: "manual", label: "Manual" },
+    { value: "sms", label: "SMS" },
+  ];
+
+  const statusOptions = [
+    { value: "all", label: "All Statuses" },
+    { value: "new", label: "New" },
+    { value: "contacted", label: "Contacted" },
+    { value: "booked", label: "Booked" },
+    { value: "follow-up", label: "Follow-up" },
+    { value: "resolved", label: "Resolved" },
+    { value: "closed", label: "Closed" },
+  ];
     <div>
       <PageHeader
         title="Conversations"
