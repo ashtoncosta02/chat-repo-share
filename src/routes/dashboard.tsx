@@ -24,8 +24,8 @@ const navItems = [
   { to: "/dashboard/leads", label: "Leads", icon: User },
   { to: "/dashboard/conversations", label: "Conversations", icon: MessageSquare },
   { to: "/dashboard/bookings", label: "Bookings", icon: Calendar },
-  { to: "/dashboard/phone-numbers", label: "Phone Numbers", icon: Phone },
   { to: "/dashboard/chat-widget", label: "Chat Widget", icon: Code2 },
+
 ] as const;
 
 const adminNavItem = { to: "/dashboard/admin", label: "Admin", icon: Shield } as const;
