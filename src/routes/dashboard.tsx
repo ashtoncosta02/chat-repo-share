@@ -19,7 +19,7 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 const navItems = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  
   { to: "/dashboard/agent", label: "Agent", icon: Bot },
   { to: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/dashboard/leads", label: "Leads", icon: User },
@@ -97,7 +97,7 @@ function DashboardLayout() {
       <>
         {items.map((item) => {
           const Icon = item.icon;
-          const active = isActive(item.to, "exact" in item ? item.exact : false);
+          const active = isActive(item.to, false);
           return (
             <Link
               key={item.to}
