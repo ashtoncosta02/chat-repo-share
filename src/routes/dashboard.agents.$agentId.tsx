@@ -643,7 +643,8 @@ function AgentDetailPage() {
 
       {/* Change voice dialog */}
       <Dialog open={voiceOpen} onOpenChange={setVoiceOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-none w-screen h-screen sm:rounded-none overflow-y-auto p-6 sm:p-10">
+          <div className="mx-auto w-full max-w-2xl">
           <DialogHeader>
             <DialogTitle>Change voice</DialogTitle>
             <DialogDescription>
