@@ -492,7 +492,7 @@ function AgentDetailPage() {
               setVoiceOpen(true);
             }}
           >
-            <Volume2 className="h-3.5 w-3.5 mr-1.5" /> Change voice
+            <Volume2 className="h-3.5 w-3.5 mr-1.5" /> {assistantName}'s voice ({getVoiceById(agent.voice_id).name})
           </Button>
           <Button
             variant="outline"
