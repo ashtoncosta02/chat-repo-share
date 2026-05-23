@@ -226,6 +226,24 @@ export async function persistPostCall(
     if (msgErr) console.error("postcall: insert messages failed", msgErr);
   }
 
+  // Fetch + store the call recording from ElevenLabs so it can be played
+  // back in the dashboard. Best-effort: failures don't block the rest.
+  try {
+    const recordingUrl = await fetchAndStoreCallAudio({
+      conversationId,
+      userId: agent.user_id,
+      dbConversationId: convo.id,
+    });
+    if (recordingUrl) {
+      await supabaseAdmin
+        .from("conversations")
+        .update({ recording_url: recordingUrl })
+        .eq("id", convo.id);
+    }
+  } catch (e) {
+    console.error("postcall: recording fetch/upload failed", e);
+  }
+
   // Lead extraction — uses the caller's phone (from EL metadata) as a
   // fallback when the AI can't pull a phone from the transcript.
   const fallbackPhone =
