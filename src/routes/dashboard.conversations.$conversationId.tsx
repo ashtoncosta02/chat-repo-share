@@ -61,6 +61,61 @@ function ConversationDetailPage() {
   const [agent, setAgent] = useState<AgentLite | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [callInstructions, setCallInstructions] = useState("");
+  const [smsMessage, setSmsMessage] = useState("");
+  const [calling, setCalling] = useState(false);
+  const [texting, setTexting] = useState(false);
+  const callFn = useServerFn(aiCallbackFromConversation);
+  const smsFn = useServerFn(sendSmsFromConversation);
+
+  async function getAccessToken() {
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token ?? null;
+  }
+
+  async function handleCallback() {
+    const instructions = callInstructions.trim();
+    if (!instructions) {
+      toast.error("Add an instruction or pick a suggestion first.");
+      return;
+    }
+    const token = await getAccessToken();
+    if (!token) return toast.error("You need to be signed in.");
+    setCalling(true);
+    try {
+      const res = await callFn({ data: { accessToken: token, conversationId, instructions } });
+      if (res.success) {
+        toast.success("Calling the customer now.");
+        setCallInstructions("");
+      } else {
+        toast.error(res.error);
+      }
+    } finally {
+      setCalling(false);
+    }
+  }
+
+  async function handleSendSms() {
+    const message = smsMessage.trim();
+    if (!message) {
+      toast.error("Write a message or pick a template first.");
+      return;
+    }
+    const token = await getAccessToken();
+    if (!token) return toast.error("You need to be signed in.");
+    setTexting(true);
+    try {
+      const res = await smsFn({ data: { accessToken: token, conversationId, message } });
+      if (res.success) {
+        toast.success("Text sent.");
+        setSmsMessage("");
+      } else {
+        toast.error(res.error);
+      }
+    } finally {
+      setTexting(false);
+    }
+  }
 
   useEffect(() => {
     if (!user) return;
