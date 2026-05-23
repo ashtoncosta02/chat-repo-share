@@ -98,6 +98,9 @@ function AgentDetailPage() {
   const [speaking, setSpeaking] = useState(false);
   const [voiceOn, setVoiceOn] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
+  const [voiceOpen, setVoiceOpen] = useState(false);
+  const [voiceSaving, setVoiceSaving] = useState(false);
+  const [voiceDraft, setVoiceDraft] = useState<string>(DEFAULT_VOICE_ID);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -484,6 +487,16 @@ function AgentDetailPage() {
           <Button
             variant="outline"
             size="sm"
+            onClick={() => {
+              setVoiceDraft(agent.voice_id ?? DEFAULT_VOICE_ID);
+              setVoiceOpen(true);
+            }}
+          >
+            <Volume2 className="h-3.5 w-3.5 mr-1.5" /> Change voice
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             className="text-destructive hover:text-destructive"
             onClick={() => setDeleteOpen(true)}
           >
@@ -580,44 +593,10 @@ function AgentDetailPage() {
         </div>
       </div>
 
-      {/* Voice / input panel */}
+      {/* Input panel */}
       <div className="border-t border-border bg-card">
         <div className="px-8 py-6">
-          <Visualizer state={micState} />
 
-          {/* Mic */}
-          <div className="flex flex-col items-center mb-4">
-            <button
-              type="button"
-              onMouseDown={startRecording}
-              onMouseUp={stopRecording}
-              onMouseLeave={() => recording && stopRecording()}
-              onTouchStart={startRecording}
-              onTouchEnd={stopRecording}
-              disabled={micBusy && !recording}
-              className={`h-20 w-20 rounded-full flex items-center justify-center transition shadow-lg ${
-                recording
-                  ? "bg-red-500 border-2 border-red-600 scale-105"
-                  : "bg-card border-2 border-border hover:border-[var(--gold)]"
-              } disabled:opacity-50`}
-              aria-label={recording ? "Release to send" : "Hold to speak"}
-            >
-              {recording ? (
-                <MicOff className="h-8 w-8 text-white" />
-              ) : (
-                <Mic className="h-8 w-8 text-foreground" />
-              )}
-            </button>
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground mt-2">
-              {recording
-                ? "Release to Send"
-                : transcribing
-                  ? "Transcribing…"
-                  : speaking
-                    ? `${assistantName} is speaking…`
-                    : "Hold to Speak"}
-            </span>
-          </div>
 
           {/* Type input */}
           <form
@@ -661,6 +640,100 @@ function AgentDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Change voice dialog */}
+      <Dialog open={voiceOpen} onOpenChange={setVoiceOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Change voice</DialogTitle>
+            <DialogDescription>
+              Pick the voice {assistantName} uses on phone calls and chat replies.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <Select value={voiceDraft} onValueChange={setVoiceDraft}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a voice" />
+              </SelectTrigger>
+              <SelectContent>
+                {VOICE_OPTIONS.map((v) => (
+                  <SelectItem key={v.id} value={v.id}>
+                    <span className="font-medium">{v.name}</span>
+                    <span className="text-muted-foreground"> — {v.description}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={previewing}
+              onClick={async () => {
+                setPreviewing(true);
+                try {
+                  const voice = getVoiceById(voiceDraft);
+                  const sample = `Hi, thanks for calling ${agent.business_name}. How can I help you today?`;
+                  const res = await speak({ data: { text: sample, voiceId: voice.id } });
+                  if (!res.success) {
+                    toast.error(res.error);
+                    return;
+                  }
+                  audioElRef.current?.pause();
+                  const audio = new Audio(`data:audio/mpeg;base64,${res.audioBase64}`);
+                  audioElRef.current = audio;
+                  await audio.play();
+                } catch (e) {
+                  toast.error(e instanceof Error ? e.message : "Preview failed");
+                } finally {
+                  setPreviewing(false);
+                }
+              }}
+            >
+              <Play className="h-3.5 w-3.5 mr-1.5" />
+              {previewing ? "Loading…" : "Preview voice"}
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setVoiceOpen(false)} disabled={voiceSaving}>
+              Cancel
+            </Button>
+            <Button
+              disabled={voiceSaving}
+              className="bg-[var(--gold)] hover:bg-[var(--gold)]/90 text-white"
+              onClick={async () => {
+                setVoiceSaving(true);
+                const { error } = await supabase
+                  .from("agents")
+                  .update({ voice_id: voiceDraft })
+                  .eq("id", agent.id);
+                if (error) {
+                  setVoiceSaving(false);
+                  toast.error("Couldn't update voice", { description: error.message });
+                  return;
+                }
+                let elAgentId = agent.elevenlabs_agent_id;
+                try {
+                  const { data: session } = await supabase.auth.getSession();
+                  const token = session.session?.access_token;
+                  if (token) {
+                    const r = await syncEl({ data: { accessToken: token, agentId: agent.id } });
+                    if (r.success) elAgentId = r.elevenlabs_agent_id;
+                  }
+                } catch (e) {
+                  console.error("EL sync exception:", e);
+                }
+                setAgent({ ...agent, voice_id: voiceDraft, elevenlabs_agent_id: elAgentId });
+                setVoiceSaving(false);
+                setVoiceOpen(false);
+                toast.success("Voice updated");
+              }}
+            >
+              {voiceSaving ? "Saving…" : "Save voice"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
