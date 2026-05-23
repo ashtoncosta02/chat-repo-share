@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { backfillVoiceCalls } from "@/server/voice-call-backfill.functions";
+import { summarizeConversation } from "@/server/conversation-summary.functions";
 
 export const Route = createFileRoute("/dashboard/conversations/")({
   head: () => ({ meta: [{ title: "Conversations — Agent Factory" }] }),
@@ -31,6 +32,7 @@ interface ConvRow {
   started_at: string;
   agent_id: string | null;
   recording_url: string | null;
+  ai_summary: string | null;
   lead_name: string | null;
   lead_phone: string | null;
   lead_notes: string | null;
@@ -48,7 +50,7 @@ function ConversationsPage() {
   const loadConvs = async () => {
     const { data } = await supabase
       .from("conversations")
-      .select("id, message_count, duration_seconds, started_at, agent_id, recording_url")
+      .select("id, message_count, duration_seconds, started_at, agent_id, recording_url, ai_summary")
       .order("started_at", { ascending: false });
     const rows = data ?? [];
     const ids = rows.map((r) => r.id);
@@ -92,6 +94,32 @@ function ConversationsPage() {
     if (!user) return;
     loadConvs();
   }, [user]);
+
+  // Auto-generate AI summaries for conversations that don't have one yet.
+  useEffect(() => {
+    const missing = convs.filter((c) => !c.ai_summary && c.message_count > 0);
+    if (missing.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      for (const c of missing) {
+        if (cancelled) return;
+        try {
+          const res = await summarizeConversation({ data: { conversationId: c.id } });
+          if (res.success && !cancelled) {
+            setConvs((prev) =>
+              prev.map((row) => (row.id === c.id ? { ...row, ai_summary: res.summary } : row)),
+            );
+          }
+        } catch {
+          // ignore per-row failures
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [convs.length]);
 
   const handleSync = async () => {
     const { data: sess } = await supabase.auth.getSession();
@@ -249,8 +277,11 @@ function ConversationRow({
       </td>
       <td className="px-4 py-4 max-w-sm">
         <p className="text-sm text-foreground/80 line-clamp-2">
-          {c.lead_notes?.trim() ||
-            `${c.message_count} messages · ${Math.round(c.duration_seconds / 60)}m call`}
+          {c.ai_summary?.trim() ||
+            c.lead_notes?.trim() ||
+            (c.message_count > 0
+              ? "Generating summary…"
+              : `${c.message_count} messages · ${Math.round(c.duration_seconds / 60)}m call`)}
         </p>
         {c.recording_url && (
           <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[oklch(0.95_0.05_290)] text-[var(--gold)]">

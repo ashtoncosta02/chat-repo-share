@@ -227,6 +227,7 @@ export type Database = {
       conversations: {
         Row: {
           agent_id: string | null
+          ai_summary: string | null
           duration_seconds: number
           elevenlabs_conversation_id: string | null
           ended_at: string | null
@@ -238,6 +239,7 @@ export type Database = {
         }
         Insert: {
           agent_id?: string | null
+          ai_summary?: string | null
           duration_seconds?: number
           elevenlabs_conversation_id?: string | null
           ended_at?: string | null
@@ -249,6 +251,7 @@ export type Database = {
         }
         Update: {
           agent_id?: string | null
+          ai_summary?: string | null
           duration_seconds?: number
           elevenlabs_conversation_id?: string | null
           ended_at?: string | null
