@@ -226,6 +226,22 @@ export async function persistPostCall(
     if (msgErr) console.error("postcall: insert messages failed", msgErr);
   }
 
+  // Generate AI summary from the transcript so it shows up in the dashboard
+  // immediately, without waiting for someone to open Conversations.
+  if (cleanedTurns.length > 0) {
+    try {
+      const summary = await generateCallSummary(cleanedTurns);
+      if (summary) {
+        await supabaseAdmin
+          .from("conversations")
+          .update({ ai_summary: summary })
+          .eq("id", convo.id);
+      }
+    } catch (e) {
+      console.error("postcall: summary generation failed", e);
+    }
+  }
+
   // Fetch + store the call recording from ElevenLabs so it can be played
   // back in the dashboard. Best-effort: failures don't block the rest.
   try {
@@ -318,4 +334,49 @@ export async function fetchAndStoreCallAudio(opts: {
 
   const { data: pub } = supabaseAdmin.storage.from("call-audio").getPublicUrl(path);
   return pub?.publicUrl ?? null;
+}
+
+/**
+ * Generate a short ~140-char summary of the call transcript using Lovable AI.
+ * Returns null on any failure — caller treats summary as best-effort.
+ */
+async function generateCallSummary(
+  turns: { role: string; content: string }[],
+): Promise<string | null> {
+  const apiKey = process.env.LOVABLE_API_KEY;
+  if (!apiKey) return null;
+
+  const transcript = turns
+    .slice(0, 100)
+    .map((t) => `${t.role === "assistant" ? "Agent" : "Caller"}: ${t.content}`)
+    .join("\n");
+
+  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-flash-lite",
+      messages: [
+        {
+          role: "system",
+          content:
+            "Summarize this phone call transcript in a single concise sentence (max 140 characters). Focus on caller intent and outcome. No quotes, no prefix.",
+        },
+        { role: "user", content: transcript },
+      ],
+    }),
+  });
+
+  if (!res.ok) {
+    console.warn("postcall: summary AI call failed", res.status);
+    return null;
+  }
+  const json = (await res.json()) as {
+    choices?: Array<{ message?: { content?: string } }>;
+  };
+  const summary = json.choices?.[0]?.message?.content?.trim();
+  return summary && summary.length > 0 ? summary.slice(0, 280) : null;
 }
