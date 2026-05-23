@@ -213,6 +213,7 @@ function ConversationsPage() {
     { value: "resolved", label: "Resolved" },
     { value: "closed", label: "Closed" },
   ];
+  return (
     <div>
       <PageHeader
         title="Conversations"
