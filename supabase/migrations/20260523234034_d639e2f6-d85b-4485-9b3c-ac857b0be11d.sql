@@ -1,0 +1,1 @@
+ALTER TABLE public.conversations ADD COLUMN ai_summary text;
