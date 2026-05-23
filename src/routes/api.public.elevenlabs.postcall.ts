@@ -226,6 +226,22 @@ export async function persistPostCall(
     if (msgErr) console.error("postcall: insert messages failed", msgErr);
   }
 
+  // Generate AI summary from the transcript so it shows up in the dashboard
+  // immediately, without waiting for someone to open Conversations.
+  if (cleanedTurns.length > 0) {
+    try {
+      const summary = await generateCallSummary(cleanedTurns);
+      if (summary) {
+        await supabaseAdmin
+          .from("conversations")
+          .update({ ai_summary: summary })
+          .eq("id", convo.id);
+      }
+    } catch (e) {
+      console.error("postcall: summary generation failed", e);
+    }
+  }
+
   // Fetch + store the call recording from ElevenLabs so it can be played
   // back in the dashboard. Best-effort: failures don't block the rest.
   try {
