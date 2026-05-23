@@ -218,7 +218,7 @@ function OnboardingWizard() {
   const progressValue = step === 1 ? 33 : step === 2 ? 66 : 100;
 
   return (
-    <div className="min-h-screen bg-[oklch(0.97_0.012_85)]">
+    <div className="min-h-screen bg-[oklch(0.97_0.012_290)]">
       {/* Header */}
       <header className="border-b border-border bg-card">
         <div className="max-w-3xl mx-auto px-6 py-5 flex items-center justify-between">
@@ -338,7 +338,7 @@ function StepWebsite({
         </p>
       </div>
 
-      <div className="rounded-xl border border-[oklch(0.85_0.08_75)] bg-[oklch(0.97_0.04_80)] p-5">
+      <div className="rounded-xl border border-[oklch(0.85_0.08_290)] bg-[oklch(0.97_0.04_290)] p-5">
         <div className="flex items-center gap-2 mb-1">
           <Sparkles className="h-4 w-4 text-[var(--gold)]" />
           <h3 className="font-semibold text-foreground">Auto-fill from your website</h3>
@@ -501,7 +501,7 @@ function StepFaqs({
       <div className="rounded-xl border border-border bg-card p-5">
         <div className="flex items-start justify-between gap-4">
           <div className="flex gap-3">
-            <div className="h-10 w-10 rounded-full bg-[oklch(0.95_0.05_75)] flex items-center justify-center shrink-0">
+            <div className="h-10 w-10 rounded-full bg-[oklch(0.95_0.05_290)] flex items-center justify-center shrink-0">
               <MessageSquare className="h-5 w-5 text-[var(--gold)]" />
             </div>
             <div>
@@ -637,7 +637,7 @@ function StepVoice({
               onClick={() => setVoiceId(v.id)}
               className={`text-left rounded-xl border-2 p-4 transition ${
                 selected
-                  ? "border-[var(--gold)] bg-[oklch(0.97_0.04_80)]"
+                  ? "border-[var(--gold)] bg-[oklch(0.97_0.04_290)]"
                   : "border-border bg-card hover:border-[var(--gold)]/40"
               }`}
             >

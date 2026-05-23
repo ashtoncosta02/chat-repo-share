@@ -67,49 +67,49 @@ function AdminOverviewPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard
                 icon={<Users className="h-5 w-5 text-[var(--gold)]" />}
-                iconBg="bg-[oklch(0.96_0.04_75)]"
+                iconBg="bg-[oklch(0.96_0.04_290)]"
                 label="Users"
                 value={stats.users.total}
               />
               <StatCard
                 icon={<Bot className="h-5 w-5 text-[var(--gold)]" />}
-                iconBg="bg-[oklch(0.96_0.04_75)]"
+                iconBg="bg-[oklch(0.96_0.04_290)]"
                 label="Receptionists live"
                 value={`${stats.agents.live} / ${stats.agents.total}`}
               />
               <StatCard
                 icon={<MessageSquare className="h-5 w-5 text-[var(--gold)]" />}
-                iconBg="bg-[oklch(0.96_0.04_75)]"
+                iconBg="bg-[oklch(0.96_0.04_290)]"
                 label="Chat conversations"
                 value={stats.widgetConversations.total}
               />
               <StatCard
                 icon={<Phone className="h-5 w-5 text-[var(--gold)]" />}
-                iconBg="bg-[oklch(0.96_0.04_75)]"
+                iconBg="bg-[oklch(0.96_0.04_290)]"
                 label="Voice calls"
                 value={stats.voiceConversations.total}
               />
               <StatCard
                 icon={<Calendar className="h-5 w-5 text-[var(--gold)]" />}
-                iconBg="bg-[oklch(0.96_0.04_75)]"
+                iconBg="bg-[oklch(0.96_0.04_290)]"
                 label="Bookings"
                 value={stats.bookings.total}
               />
               <StatCard
                 icon={<UserIcon className="h-5 w-5 text-[var(--gold)]" />}
-                iconBg="bg-[oklch(0.96_0.04_75)]"
+                iconBg="bg-[oklch(0.96_0.04_290)]"
                 label="Leads"
                 value={stats.leads.total}
               />
               <StatCard
                 icon={<Phone className="h-5 w-5 text-[var(--gold)]" />}
-                iconBg="bg-[oklch(0.96_0.04_75)]"
+                iconBg="bg-[oklch(0.96_0.04_290)]"
                 label="Phone numbers"
                 value={stats.phoneNumbers}
               />
               <StatCard
                 icon={<Calendar className="h-5 w-5 text-[var(--gold)]" />}
-                iconBg="bg-[oklch(0.96_0.04_75)]"
+                iconBg="bg-[oklch(0.96_0.04_290)]"
                 label="Calendars connected"
                 value={stats.calendarsConnected}
               />

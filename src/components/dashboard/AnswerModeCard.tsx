@@ -90,7 +90,7 @@ function ModeButton({
       disabled={loading}
       className={`text-left rounded-xl border p-4 transition ${
         active
-          ? "border-[var(--gold)] bg-[oklch(0.97_0.04_80)] ring-2 ring-[var(--gold)]/30"
+          ? "border-[var(--gold)] bg-[oklch(0.97_0.04_290)] ring-2 ring-[var(--gold)]/30"
           : "border-border bg-background hover:border-[var(--gold)]/50"
       }`}
     >
