@@ -98,6 +98,9 @@ function AgentDetailPage() {
   const [speaking, setSpeaking] = useState(false);
   const [voiceOn, setVoiceOn] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
+  const [voiceOpen, setVoiceOpen] = useState(false);
+  const [voiceSaving, setVoiceSaving] = useState(false);
+  const [voiceDraft, setVoiceDraft] = useState<string>(DEFAULT_VOICE_ID);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
