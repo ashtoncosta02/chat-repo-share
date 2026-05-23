@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/dashboard/PageHeader";
-import { MessageSquare, ChevronRight, Mic, Trash2, RefreshCw } from "lucide-react";
+import { MessageSquare, ChevronRight, Mic, Trash2, RefreshCw, Phone as PhoneIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -32,6 +32,10 @@ interface ConvRow {
   agent_id: string | null;
   recording_url: string | null;
   lead_name: string | null;
+  lead_phone: string | null;
+  lead_notes: string | null;
+  lead_source: string | null;
+  lead_status: string | null;
 }
 
 function ConversationsPage() {
@@ -48,18 +52,39 @@ function ConversationsPage() {
       .order("started_at", { ascending: false });
     const rows = data ?? [];
     const ids = rows.map((r) => r.id);
-    const leadMap = new Map<string, string>();
+    const leadMap = new Map<
+      string,
+      { name: string | null; phone: string | null; notes: string | null; source: string | null; status: string | null }
+    >();
     if (ids.length > 0) {
       const { data: leads } = await supabase
         .from("leads")
-        .select("conversation_id, name")
-        .in("conversation_id", ids)
-        .not("name", "is", null);
+        .select("conversation_id, name, phone, notes, source, status")
+        .in("conversation_id", ids);
       for (const l of leads ?? []) {
-        if (l.conversation_id && l.name) leadMap.set(l.conversation_id, l.name);
+        if (l.conversation_id)
+          leadMap.set(l.conversation_id, {
+            name: l.name,
+            phone: l.phone,
+            notes: l.notes,
+            source: l.source,
+            status: l.status,
+          });
       }
     }
-    setConvs(rows.map((r) => ({ ...r, lead_name: leadMap.get(r.id) ?? null })));
+    setConvs(
+      rows.map((r) => {
+        const l = leadMap.get(r.id);
+        return {
+          ...r,
+          lead_name: l?.name ?? null,
+          lead_phone: l?.phone ?? null,
+          lead_notes: l?.notes ?? null,
+          lead_source: l?.source ?? null,
+          lead_status: l?.status ?? null,
+        };
+      })
+    );
     setLoading(false);
   };
 
@@ -97,7 +122,6 @@ function ConversationsPage() {
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
-    // Messages cascade-delete via FK.
     const { error } = await supabase.from("conversations").delete().eq("id", id);
     setDeletingId(null);
     if (error) {
@@ -138,7 +162,7 @@ function ConversationsPage() {
           <StatRow label="Total Duration" value={`${totalMin}m`} color="text-emerald-600" />
         </div>
 
-        <div className="rounded-xl border border-border bg-card">
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
           {loading ? (
             <div className="p-8 text-center text-muted-foreground">Loading…</div>
           ) : convs.length === 0 ? (
@@ -148,71 +172,211 @@ function ConversationsPage() {
               description="Conversations are saved here automatically every time someone talks to your AI receptionist."
             />
           ) : (
-            <ul className="divide-y divide-border">
-              {convs.map((c) => (
-                <li key={c.id} className="flex items-center hover:bg-muted/40 transition">
-                  <Link
-                    to="/dashboard/conversations/$conversationId"
-                    params={{ conversationId: c.id }}
-                    className="flex-1 px-6 py-4 flex items-center justify-between"
-                  >
-                    <div>
-                      <div className="font-medium text-foreground flex items-center gap-2 flex-wrap">
-                        <span>{c.lead_name ?? "Unknown caller"}</span>
-                        <span className="text-sm font-normal text-muted-foreground">
-                          · {new Date(c.started_at).toLocaleString()}
-                        </span>
-                        {c.recording_url && (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-[oklch(0.95_0.05_290)] text-[var(--gold)]">
-                            <Mic className="h-3 w-3" />
-                            Recording
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-sm text-muted-foreground mt-1">
-                        {c.message_count} messages · {Math.round(c.duration_seconds / 60)}m
-                      </div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  </Link>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="mr-3 text-muted-foreground hover:text-destructive"
-                        disabled={deletingId === c.id}
-                        aria-label="Delete conversation"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete this conversation?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will permanently remove the transcript and any messages. This can't be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => handleDelete(c.id)}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </li>
-              ))}
-            </ul>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
+                    <th className="px-6 py-3 font-medium">Caller</th>
+                    <th className="px-4 py-3 font-medium">Intent</th>
+                    <th className="px-4 py-3 font-medium">AI Summary</th>
+                    <th className="px-4 py-3 font-medium">Time</th>
+                    <th className="px-4 py-3 font-medium">Status</th>
+                    <th className="px-2 py-3" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {convs.map((c) => (
+                    <ConversationRow
+                      key={c.id}
+                      c={c}
+                      deletingId={deletingId}
+                      onDelete={handleDelete}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>
     </div>
   );
+}
+
+function ConversationRow({
+  c,
+  deletingId,
+  onDelete,
+}: {
+  c: ConvRow;
+  deletingId: string | null;
+  onDelete: (id: string) => void;
+}) {
+  const displayName = c.lead_name ?? "Unknown Caller";
+  const initials = c.lead_name
+    ? c.lead_name
+        .split(" ")
+        .map((p) => p[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase()
+    : null;
+  const avatarColor = avatarBgFor(c.id);
+
+  return (
+    <tr className="hover:bg-muted/40 transition">
+      <td className="px-6 py-4">
+        <Link
+          to="/dashboard/conversations/$conversationId"
+          params={{ conversationId: c.id }}
+          className="flex items-center gap-3"
+        >
+          <div
+            className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold ${avatarColor}`}
+          >
+            {initials ?? <PhoneIcon className="h-4 w-4" />}
+          </div>
+          <div className="min-w-0">
+            <div className="font-medium text-foreground truncate">{displayName}</div>
+            <div className="text-xs text-muted-foreground truncate">
+              {c.lead_phone ?? "No phone"}
+            </div>
+          </div>
+        </Link>
+      </td>
+      <td className="px-4 py-4">
+        <IntentTag source={c.lead_source} />
+      </td>
+      <td className="px-4 py-4 max-w-sm">
+        <p className="text-sm text-foreground/80 line-clamp-2">
+          {c.lead_notes?.trim() ||
+            `${c.message_count} messages · ${Math.round(c.duration_seconds / 60)}m call`}
+        </p>
+        {c.recording_url && (
+          <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[oklch(0.95_0.05_290)] text-[var(--gold)]">
+            <Mic className="h-3 w-3" />
+            Recording
+          </span>
+        )}
+      </td>
+      <td className="px-4 py-4 text-sm text-muted-foreground whitespace-nowrap">
+        {formatTime(c.started_at)}
+      </td>
+      <td className="px-4 py-4">
+        <StatusTag status={c.lead_status} />
+      </td>
+      <td className="px-2 py-4 text-right">
+        <div className="flex items-center justify-end gap-1">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-destructive"
+                disabled={deletingId === c.id}
+                aria-label="Delete conversation"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete this conversation?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently remove the transcript and any messages. This can't be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => onDelete(c.id)}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          <Link
+            to="/dashboard/conversations/$conversationId"
+            params={{ conversationId: c.id }}
+            className="p-2 text-muted-foreground hover:text-foreground"
+            aria-label="Open conversation"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+function IntentTag({ source }: { source: string | null }) {
+  const map: Record<string, { label: string; cls: string }> = {
+    voice: { label: "Voice Call", cls: "bg-blue-100 text-blue-700" },
+    widget: { label: "Chat Widget", cls: "bg-violet-100 text-violet-700" },
+    manual: { label: "Manual", cls: "bg-amber-100 text-amber-700" },
+    sms: { label: "SMS", cls: "bg-emerald-100 text-emerald-700" },
+  };
+  const key = (source ?? "").toLowerCase();
+  const info = map[key] ?? { label: source ?? "General", cls: "bg-slate-100 text-slate-700" };
+  return (
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ${info.cls}`}>
+      {info.label}
+    </span>
+  );
+}
+
+function StatusTag({ status }: { status: string | null }) {
+  const map: Record<string, { label: string; cls: string }> = {
+    new: { label: "New", cls: "bg-sky-50 text-sky-700 border border-sky-200" },
+    contacted: { label: "Contacted", cls: "bg-violet-50 text-violet-700 border border-violet-200" },
+    booked: { label: "Booked", cls: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
+    "follow-up": { label: "Follow-up", cls: "bg-amber-50 text-amber-700 border border-amber-200" },
+    follow_up: { label: "Follow-up", cls: "bg-amber-50 text-amber-700 border border-amber-200" },
+    resolved: { label: "Resolved", cls: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
+    closed: { label: "Closed", cls: "bg-slate-50 text-slate-600 border border-slate-200" },
+  };
+  const key = (status ?? "").toLowerCase();
+  const info = map[key] ?? { label: status ?? "Open", cls: "bg-slate-50 text-slate-600 border border-slate-200" };
+  return (
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${info.cls}`}>
+      {info.label}
+    </span>
+  );
+}
+
+function formatTime(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const sameDay =
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate();
+  const yest = new Date(now);
+  yest.setDate(now.getDate() - 1);
+  const isYesterday =
+    d.getFullYear() === yest.getFullYear() &&
+    d.getMonth() === yest.getMonth() &&
+    d.getDate() === yest.getDate();
+  const time = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  if (sameDay) return `Today, ${time}`;
+  if (isYesterday) return `Yesterday, ${time}`;
+  return d.toLocaleDateString([], { month: "short", day: "numeric" }) + `, ${time}`;
+}
+
+function avatarBgFor(seed: string): string {
+  const palette = [
+    "bg-violet-100 text-violet-700",
+    "bg-emerald-100 text-emerald-700",
+    "bg-sky-100 text-sky-700",
+    "bg-pink-100 text-pink-700",
+    "bg-amber-100 text-amber-700",
+    "bg-indigo-100 text-indigo-700",
+  ];
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  return palette[h % palette.length];
 }
 
 function StatRow({
