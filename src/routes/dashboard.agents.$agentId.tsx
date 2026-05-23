@@ -492,7 +492,7 @@ function AgentDetailPage() {
               setVoiceOpen(true);
             }}
           >
-            <Volume2 className="h-3.5 w-3.5 mr-1.5" /> Change voice
+            <Volume2 className="h-3.5 w-3.5 mr-1.5" /> {assistantName}'s voice ({getVoiceById(agent.voice_id).name})
           </Button>
           <Button
             variant="outline"
@@ -643,7 +643,8 @@ function AgentDetailPage() {
 
       {/* Change voice dialog */}
       <Dialog open={voiceOpen} onOpenChange={setVoiceOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-none w-screen h-screen sm:rounded-none overflow-y-auto p-6 sm:p-10">
+          <div className="mx-auto w-full max-w-2xl">
           <DialogHeader>
             <DialogTitle>Change voice</DialogTitle>
             <DialogDescription>
@@ -732,12 +733,14 @@ function AgentDetailPage() {
               {voiceSaving ? "Saving…" : "Save voice"}
             </Button>
           </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* Edit dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-none w-screen h-screen sm:rounded-none overflow-y-auto p-6 sm:p-10">
+          <div className="mx-auto w-full max-w-3xl">
           <DialogHeader>
             <DialogTitle>Edit receptionist</DialogTitle>
             <DialogDescription>
@@ -1071,6 +1074,7 @@ function AgentDetailPage() {
               {saving ? "Saving…" : "Save changes"}
             </Button>
           </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
