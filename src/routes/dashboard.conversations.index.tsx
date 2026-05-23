@@ -101,10 +101,15 @@ function ConversationsPage() {
     if (missing.length === 0) return;
     let cancelled = false;
     (async () => {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess.session?.access_token;
+      if (!token) return;
       for (const c of missing) {
         if (cancelled) return;
         try {
-          const res = await summarizeConversation({ data: { conversationId: c.id } });
+          const res = await summarizeConversation({
+            data: { conversationId: c.id, accessToken: token },
+          });
           if (res.success && !cancelled) {
             setConvs((prev) =>
               prev.map((row) => (row.id === c.id ? { ...row, ai_summary: res.summary } : row)),
