@@ -1,14 +1,35 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Bot, User as UserIcon, Clock, MessageSquare, Mic } from "lucide-react";
+import { ArrowLeft, Bot, User as UserIcon, Clock, MessageSquare, Mic, Phone, MessageCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import {
+  aiCallbackFromConversation,
+  sendSmsFromConversation,
+} from "@/server/conversation-actions.functions";
 
 export const Route = createFileRoute("/dashboard/conversations/$conversationId")({
   head: () => ({ meta: [{ title: "Transcript — Agent Factory" }] }),
   component: ConversationDetailPage,
 });
+
+const CALL_PRESETS = [
+  "Call and ask if they'd like to book an appointment.",
+  "Follow up to answer any remaining questions they have.",
+  "Confirm their preferred time and lock in a booking.",
+  "Check in on pricing and see if they're ready to move forward.",
+];
+
+const SMS_PRESETS = [
+  "Hi! Following up from our chat — would you like to book an appointment? Reply YES and I'll send times.",
+  "Hey, just checking in — happy to answer any other questions you had. When's a good time to chat?",
+  "Thanks for reaching out earlier! Let me know if you'd like to schedule a quick call.",
+];
+
 
 interface Conversation {
   id: string;
