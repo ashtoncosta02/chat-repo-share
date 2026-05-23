@@ -31,6 +31,7 @@ interface ConvRow {
   started_at: string;
   agent_id: string | null;
   recording_url: string | null;
+  lead_name: string | null;
 }
 
 function ConversationsPage() {
@@ -40,15 +41,26 @@ function ConversationsPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
 
-  const loadConvs = () => {
-    return supabase
+  const loadConvs = async () => {
+    const { data } = await supabase
       .from("conversations")
       .select("id, message_count, duration_seconds, started_at, agent_id, recording_url")
-      .order("started_at", { ascending: false })
-      .then(({ data }) => {
-        setConvs(data ?? []);
-        setLoading(false);
-      });
+      .order("started_at", { ascending: false });
+    const rows = data ?? [];
+    const ids = rows.map((r) => r.id);
+    const leadMap = new Map<string, string>();
+    if (ids.length > 0) {
+      const { data: leads } = await supabase
+        .from("leads")
+        .select("conversation_id, name")
+        .in("conversation_id", ids)
+        .not("name", "is", null);
+      for (const l of leads ?? []) {
+        if (l.conversation_id && l.name) leadMap.set(l.conversation_id, l.name);
+      }
+    }
+    setConvs(rows.map((r) => ({ ...r, lead_name: leadMap.get(r.id) ?? null })));
+    setLoading(false);
   };
 
   useEffect(() => {
