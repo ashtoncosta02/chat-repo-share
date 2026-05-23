@@ -220,17 +220,59 @@ function ConversationsPage() {
         description="Every conversation your agents have had, saved automatically"
       />
       <div className="p-8 space-y-6">
-        <div className="flex justify-end">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSync}
-            disabled={syncing}
-            className="gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
-            {syncing ? "Importing…" : "Import recent calls"}
-          </Button>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col md:flex-row md:items-center gap-3">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search callers or transcript words…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <Select value={intentFilter} onValueChange={setIntentFilter}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="Filter by intent" />
+                </SelectTrigger>
+                <SelectContent>
+                  {intentOptions.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {statusOptions.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSync}
+                disabled={syncing}
+                className="gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+                {syncing ? "Importing…" : "Import recent calls"}
+              </Button>
+            </div>
+          </div>
+          {(searchQuery || intentFilter !== "all" || statusFilter !== "all") && (
+            <p className="text-xs text-muted-foreground">
+              Showing {filteredConvs.length} of {convs.length} conversations
+            </p>
+          )}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StatRow label="Total Conversations" value={convs.length} color="text-foreground" />
@@ -247,6 +289,12 @@ function ConversationsPage() {
               title="No conversations yet"
               description="Conversations are saved here automatically every time someone talks to your AI receptionist."
             />
+          ) : filteredConvs.length === 0 ? (
+            <div className="p-8 text-center text-muted-foreground">
+              <MessageSquare className="h-12 w-12 mx-auto mb-3 text-muted-foreground/30" />
+              <p className="font-medium">No results match your filters</p>
+              <p className="text-sm mt-1">Try adjusting your search or filter criteria.</p>
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -261,7 +309,7 @@ function ConversationsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {convs.map((c) => (
+                  {filteredConvs.map((c) => (
                     <ConversationRow
                       key={c.id}
                       c={c}
