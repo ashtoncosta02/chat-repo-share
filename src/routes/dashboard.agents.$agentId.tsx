@@ -739,7 +739,8 @@ function AgentDetailPage() {
 
       {/* Edit dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-none w-screen h-screen sm:rounded-none overflow-y-auto p-6 sm:p-10">
+          <div className="mx-auto w-full max-w-3xl">
           <DialogHeader>
             <DialogTitle>Edit receptionist</DialogTitle>
             <DialogDescription>
