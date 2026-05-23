@@ -1074,6 +1074,7 @@ function AgentDetailPage() {
               {saving ? "Saving…" : "Save changes"}
             </Button>
           </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
