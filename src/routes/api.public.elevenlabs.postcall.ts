@@ -268,3 +268,54 @@ export async function persistPostCall(
   );
   return { status: "ok", conversationDbId: convo.id };
 }
+
+/**
+ * Fetch the recorded call audio from ElevenLabs and upload it to the
+ * `call-audio` public storage bucket. Returns the public URL or null
+ * when audio isn't available (e.g. EL still processing, recording disabled,
+ * or the API call fails). Best-effort — never throws.
+ */
+export async function fetchAndStoreCallAudio(opts: {
+  conversationId: string;
+  userId: string;
+  dbConversationId: string;
+}): Promise<string | null> {
+  const apiKey = process.env.ELEVENLABS_API_KEY;
+  if (!apiKey) return null;
+
+  const res = await fetch(
+    `${EL_BASE}/convai/conversations/${encodeURIComponent(opts.conversationId)}/audio`,
+    { headers: { "xi-api-key": apiKey } },
+  );
+  if (!res.ok) {
+    console.warn(
+      `postcall: EL audio fetch failed (${res.status}) for ${opts.conversationId}`,
+    );
+    return null;
+  }
+
+  const contentType = res.headers.get("content-type") ?? "audio/mpeg";
+  const ext = contentType.includes("wav")
+    ? "wav"
+    : contentType.includes("mp4") || contentType.includes("m4a")
+      ? "m4a"
+      : "mp3";
+
+  const buf = new Uint8Array(await res.arrayBuffer());
+  if (buf.byteLength === 0) return null;
+
+  const path = `${opts.userId}/${opts.dbConversationId}.${ext}`;
+  const { error: upErr } = await supabaseAdmin.storage
+    .from("call-audio")
+    .upload(path, buf, {
+      contentType,
+      upsert: true,
+    });
+  if (upErr) {
+    console.error("postcall: storage upload failed", upErr);
+    return null;
+  }
+
+  const { data: pub } = supabaseAdmin.storage.from("call-audio").getPublicUrl(path);
+  return pub?.publicUrl ?? null;
+}
