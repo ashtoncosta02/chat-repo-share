@@ -277,8 +277,11 @@ function ConversationRow({
       </td>
       <td className="px-4 py-4 max-w-sm">
         <p className="text-sm text-foreground/80 line-clamp-2">
-          {c.lead_notes?.trim() ||
-            `${c.message_count} messages · ${Math.round(c.duration_seconds / 60)}m call`}
+          {c.ai_summary?.trim() ||
+            c.lead_notes?.trim() ||
+            (c.message_count > 0
+              ? "Generating summary…"
+              : `${c.message_count} messages · ${Math.round(c.duration_seconds / 60)}m call`)}
         </p>
         {c.recording_url && (
           <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[oklch(0.95_0.05_290)] text-[var(--gold)]">
