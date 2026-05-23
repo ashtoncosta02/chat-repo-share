@@ -95,6 +95,32 @@ function ConversationsPage() {
     loadConvs();
   }, [user]);
 
+  // Auto-generate AI summaries for conversations that don't have one yet.
+  useEffect(() => {
+    const missing = convs.filter((c) => !c.ai_summary && c.message_count > 0);
+    if (missing.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      for (const c of missing) {
+        if (cancelled) return;
+        try {
+          const res = await summarizeConversation({ data: { conversationId: c.id } });
+          if (res.success && !cancelled) {
+            setConvs((prev) =>
+              prev.map((row) => (row.id === c.id ? { ...row, ai_summary: res.summary } : row)),
+            );
+          }
+        } catch {
+          // ignore per-row failures
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [convs.length]);
+
   const handleSync = async () => {
     const { data: sess } = await supabase.auth.getSession();
     const token = sess.session?.access_token;
