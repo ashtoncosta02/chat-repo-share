@@ -260,6 +260,86 @@ function ConversationDetailPage() {
             </ol>
           )}
         </div>
+
+        {/* Follow-up actions */}
+        <div className="grid md:grid-cols-2 gap-5">
+          {/* AI Callback */}
+          <div className="rounded-xl border border-border bg-card p-5">
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground mb-1">
+              <Phone className="h-4 w-4 text-[var(--gold)]" />
+              Have {assistantName} call back
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              Pick a suggestion or write what you want the call to accomplish.
+            </p>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {CALL_PRESETS.map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setCallInstructions(p)}
+                  className="text-xs px-2.5 py-1.5 rounded-full border border-border bg-background hover:bg-muted text-foreground text-left"
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+            <Textarea
+              value={callInstructions}
+              onChange={(e) => setCallInstructions(e.target.value)}
+              placeholder="e.g. Confirm if they want a Tuesday or Thursday booking and lock it in."
+              rows={3}
+              className="mb-3"
+            />
+            <Button onClick={handleCallback} disabled={calling} className="w-full">
+              {calling ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Placing call…</>
+              ) : (
+                <><Phone className="h-4 w-4 mr-2" /> Call customer back</>
+              )}
+            </Button>
+          </div>
+
+          {/* SMS */}
+          <div className="rounded-xl border border-border bg-card p-5">
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground mb-1">
+              <MessageCircle className="h-4 w-4 text-[var(--gold)]" />
+              Send a text message
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              Sends from your connected business number.
+            </p>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {SMS_PRESETS.map((p, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setSmsMessage(p)}
+                  className="text-xs px-2.5 py-1.5 rounded-full border border-border bg-background hover:bg-muted text-foreground text-left"
+                >
+                  {p.length > 60 ? p.slice(0, 60) + "…" : p}
+                </button>
+              ))}
+            </div>
+            <Textarea
+              value={smsMessage}
+              onChange={(e) => setSmsMessage(e.target.value.slice(0, 1500))}
+              placeholder="Write the text you'd like to send…"
+              rows={3}
+              className="mb-2"
+            />
+            <div className="text-xs text-muted-foreground text-right mb-2">
+              {smsMessage.length}/1500
+            </div>
+            <Button onClick={handleSendSms} disabled={texting} className="w-full">
+              {texting ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Sending…</>
+              ) : (
+                <><MessageCircle className="h-4 w-4 mr-2" /> Send text</>
+              )}
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
