@@ -733,6 +733,7 @@ function AgentDetailPage() {
               {voiceSaving ? "Saving…" : "Save voice"}
             </Button>
           </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
