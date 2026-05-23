@@ -21,6 +21,7 @@ import { Route as DashboardConversationsRouteImport } from './routes/dashboard.c
 import { Route as DashboardChatWidgetRouteImport } from './routes/dashboard.chat-widget'
 import { Route as DashboardBookingsRouteImport } from './routes/dashboard.bookings'
 import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard.analytics'
+import { Route as DashboardAgentRouteImport } from './routes/dashboard.agent'
 import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
 import { Route as DashboardConversationsIndexRouteImport } from './routes/dashboard.conversations.index'
 import { Route as DashboardConversationsConversationIdRouteImport } from './routes/dashboard.conversations.$conversationId'
@@ -97,6 +98,11 @@ const DashboardBookingsRoute = DashboardBookingsRouteImport.update({
 const DashboardAnalyticsRoute = DashboardAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardAgentRoute = DashboardAgentRouteImport.update({
+  id: '/agent',
+  path: '/agent',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardAdminRoute = DashboardAdminRouteImport.update({
@@ -198,6 +204,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/dashboard/admin': typeof DashboardAdminRouteWithChildren
+  '/dashboard/agent': typeof DashboardAgentRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/bookings': typeof DashboardBookingsRoute
   '/dashboard/chat-widget': typeof DashboardChatWidgetRoute
@@ -228,6 +235,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard/admin': typeof DashboardAdminRouteWithChildren
+  '/dashboard/agent': typeof DashboardAgentRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/bookings': typeof DashboardBookingsRoute
   '/dashboard/chat-widget': typeof DashboardChatWidgetRoute
@@ -259,6 +267,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/dashboard/admin': typeof DashboardAdminRouteWithChildren
+  '/dashboard/agent': typeof DashboardAgentRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/bookings': typeof DashboardBookingsRoute
   '/dashboard/chat-widget': typeof DashboardChatWidgetRoute
@@ -292,6 +301,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/dashboard/admin'
+    | '/dashboard/agent'
     | '/dashboard/analytics'
     | '/dashboard/bookings'
     | '/dashboard/chat-widget'
@@ -322,6 +332,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard/admin'
+    | '/dashboard/agent'
     | '/dashboard/analytics'
     | '/dashboard/bookings'
     | '/dashboard/chat-widget'
@@ -352,6 +363,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/dashboard/admin'
+    | '/dashboard/agent'
     | '/dashboard/analytics'
     | '/dashboard/bookings'
     | '/dashboard/chat-widget'
@@ -482,6 +494,13 @@ declare module '@tanstack/react-router' {
       path: '/analytics'
       fullPath: '/dashboard/analytics'
       preLoaderRoute: typeof DashboardAnalyticsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/agent': {
+      id: '/dashboard/agent'
+      path: '/agent'
+      fullPath: '/dashboard/agent'
+      preLoaderRoute: typeof DashboardAgentRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/admin': {
@@ -637,6 +656,7 @@ const DashboardConversationsRouteWithChildren =
 
 interface DashboardRouteChildren {
   DashboardAdminRoute: typeof DashboardAdminRouteWithChildren
+  DashboardAgentRoute: typeof DashboardAgentRoute
   DashboardAnalyticsRoute: typeof DashboardAnalyticsRoute
   DashboardBookingsRoute: typeof DashboardBookingsRoute
   DashboardChatWidgetRoute: typeof DashboardChatWidgetRoute
@@ -650,6 +670,7 @@ interface DashboardRouteChildren {
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardAdminRoute: DashboardAdminRouteWithChildren,
+  DashboardAgentRoute: DashboardAgentRoute,
   DashboardAnalyticsRoute: DashboardAnalyticsRoute,
   DashboardBookingsRoute: DashboardBookingsRoute,
   DashboardChatWidgetRoute: DashboardChatWidgetRoute,
@@ -687,12 +708,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
