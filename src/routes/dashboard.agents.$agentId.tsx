@@ -593,44 +593,10 @@ function AgentDetailPage() {
         </div>
       </div>
 
-      {/* Voice / input panel */}
+      {/* Input panel */}
       <div className="border-t border-border bg-card">
         <div className="px-8 py-6">
-          <Visualizer state={micState} />
 
-          {/* Mic */}
-          <div className="flex flex-col items-center mb-4">
-            <button
-              type="button"
-              onMouseDown={startRecording}
-              onMouseUp={stopRecording}
-              onMouseLeave={() => recording && stopRecording()}
-              onTouchStart={startRecording}
-              onTouchEnd={stopRecording}
-              disabled={micBusy && !recording}
-              className={`h-20 w-20 rounded-full flex items-center justify-center transition shadow-lg ${
-                recording
-                  ? "bg-red-500 border-2 border-red-600 scale-105"
-                  : "bg-card border-2 border-border hover:border-[var(--gold)]"
-              } disabled:opacity-50`}
-              aria-label={recording ? "Release to send" : "Hold to speak"}
-            >
-              {recording ? (
-                <MicOff className="h-8 w-8 text-white" />
-              ) : (
-                <Mic className="h-8 w-8 text-foreground" />
-              )}
-            </button>
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground mt-2">
-              {recording
-                ? "Release to Send"
-                : transcribing
-                  ? "Transcribing…"
-                  : speaking
-                    ? `${assistantName} is speaking…`
-                    : "Hold to Speak"}
-            </span>
-          </div>
 
           {/* Type input */}
           <form
