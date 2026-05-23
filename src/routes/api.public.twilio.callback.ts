@@ -10,6 +10,15 @@ export const Route = createFileRoute("/api/public/twilio/callback")({
           const url = new URL(request.url);
           const leadId = url.searchParams.get("lead") || "";
           const agentId = url.searchParams.get("agent") || "";
+          const instParam = url.searchParams.get("inst") || "";
+          let instructions = "";
+          if (instParam) {
+            try {
+              instructions = Buffer.from(instParam, "base64").toString("utf-8").slice(0, 1000);
+            } catch {
+              instructions = "";
+            }
+          }
           const form = await request.formData();
           const answeredBy = String(form.get("AnsweredBy") || "").toLowerCase();
           const from = String(form.get("From") || "").trim();
@@ -43,20 +52,29 @@ export const Route = createFileRoute("/api/public/twilio/callback")({
             );
           }
 
+          const combinedNotes = [lead.notes ?? "", instructions ? `Call goal: ${instructions}` : ""]
+            .filter(Boolean)
+            .join("\n")
+            .slice(0, 1000);
+          const firstMessage = instructions
+            ? `Hi ${firstName}, this is ${receptionistName} from ${businessName} — I'm following up on your earlier inquiry. ${instructions.length > 200 ? "Do you have a moment to chat?" : instructions}`
+            : `Hi ${firstName}, this is ${receptionistName} from ${businessName} — I'm following up on your earlier inquiry, is now a good time?`;
+
           const twiml = await registerTwilioCall({
             agentId,
             fromNumber: from,
             toNumber: to,
             direction: "outbound",
-            firstMessage: `Hi ${firstName}, this is ${receptionistName} from ${businessName} — I'm following up on your earlier inquiry, is now a good time?`,
+            firstMessage,
             dynamicVariables: {
               call_direction: "outbound",
               lead_name: firstName === "there" ? "" : firstName,
-              lead_notes: (lead.notes ?? "").slice(0, 500),
+              lead_notes: combinedNotes,
             },
           });
 
           return new Response(twiml, { headers: { "Content-Type": "application/xml" } });
+
         } catch (e) {
           console.error("Twilio callback webhook error:", e);
           return voiceMessage("Sorry, an application error occurred. Goodbye.");
