@@ -19,7 +19,7 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 const navItems = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  
   { to: "/dashboard/agent", label: "Agent", icon: Bot },
   { to: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/dashboard/leads", label: "Leads", icon: User },
