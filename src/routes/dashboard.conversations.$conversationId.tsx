@@ -140,7 +140,7 @@ function ConversationDetailPage() {
     (async () => {
       const { data: c } = await supabase
         .from("conversations")
-        .select("id, agent_id, message_count, duration_seconds, started_at, ended_at, recording_url")
+        .select("id, agent_id, message_count, duration_seconds, started_at, ended_at, recording_url, lead_id")
         .eq("id", conversationId)
         .maybeSingle();
       if (cancelled) return;
@@ -163,6 +163,57 @@ function ConversationDetailPage() {
       if (!cancelled) {
         setMessages(m ?? []);
         setLoading(false);
+      }
+
+      // Find the lead linked to this conversation, then list every other
+      // conversation tied to the same caller.
+      let linkedLead: LeadLite | null = null;
+      if (c?.lead_id) {
+        const { data: l } = await supabase
+          .from("leads")
+          .select("id, name, phone")
+          .eq("id", c.lead_id)
+          .maybeSingle();
+        linkedLead = l ?? null;
+      }
+      if (!linkedLead) {
+        const { data: l } = await supabase
+          .from("leads")
+          .select("id, name, phone")
+          .eq("conversation_id", conversationId)
+          .maybeSingle();
+        linkedLead = l ?? null;
+      }
+      if (cancelled) return;
+      setLead(linkedLead);
+
+      if (linkedLead) {
+        // Conversations directly linked via lead_id, plus the original one
+        // that legacy leads pointed to via leads.conversation_id.
+        const { data: legacy } = await supabase
+          .from("leads")
+          .select("conversation_id")
+          .eq("id", linkedLead.id)
+          .maybeSingle();
+        const legacyConvId = legacy?.conversation_id ?? null;
+
+        const { data: linked } = await supabase
+          .from("conversations")
+          .select("id, started_at, duration_seconds, message_count, ai_summary")
+          .eq("lead_id", linkedLead.id)
+          .order("started_at", { ascending: false });
+
+        const all = [...(linked ?? [])];
+        if (legacyConvId && !all.some((x) => x.id === legacyConvId)) {
+          const { data: legacyConv } = await supabase
+            .from("conversations")
+            .select("id, started_at, duration_seconds, message_count, ai_summary")
+            .eq("id", legacyConvId)
+            .maybeSingle();
+          if (legacyConv) all.push(legacyConv);
+        }
+        all.sort((a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime());
+        if (!cancelled) setRelatedCalls(all.filter((x) => x.id !== conversationId));
       }
     })();
     return () => {
