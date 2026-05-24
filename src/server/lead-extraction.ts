@@ -155,15 +155,23 @@ export async function captureLead(args: CaptureLeadArgs): Promise<void> {
       }
     }
     if (!existingId && finalLead.phone) {
-      const { data } = await supabaseAdmin
-        .from("leads")
-        .select("id, status")
-        .eq("agent_id", args.agentId)
-        .eq("phone", finalLead.phone)
-        .maybeSingle();
-      if (data?.id) {
-        existingId = data.id;
-        existingStatus = data.status;
+      // Compare on digits-only so "+16475551234", "6475551234", and
+      // "(647) 555-1234" all match the same lead on callbacks.
+      const digits = finalLead.phone.replace(/\D/g, "");
+      const last10 = digits.slice(-10);
+      if (last10.length >= 7) {
+        const { data: candidates } = await supabaseAdmin
+          .from("leads")
+          .select("id, status, phone")
+          .eq("agent_id", args.agentId)
+          .not("phone", "is", null);
+        const match = (candidates ?? []).find(
+          (c) => (c.phone ?? "").replace(/\D/g, "").slice(-10) === last10,
+        );
+        if (match) {
+          existingId = match.id;
+          existingStatus = match.status;
+        }
       }
     }
 
