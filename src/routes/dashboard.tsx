@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LayoutDashboard, BarChart3, User, MessageSquare, Menu, X, Code2, Calendar, Shield, Bot } from "lucide-react";
 import { AgentFactoryLogo } from "@/components/AgentFactoryLogo";
 import { OwnerChatWidget } from "@/components/dashboard/OwnerChatWidget";
+import { DialerPanel } from "@/components/dashboard/DialerPanel";
 import { ChatWidgetPage } from "./dashboard.chat-widget";
 
 export const Route = createFileRoute("/dashboard")({
@@ -123,9 +124,10 @@ function DashboardLayout() {
         <div className="border-b border-border px-6 py-6">
           <AgentFactoryLogo />
         </div>
-        <nav className="flex-1 px-3 py-6 space-y-1">
+        <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
           <NavLinks />
         </nav>
+        <DialerPanel />
         <div className="border-t border-border px-6 py-4">
           <button
             onClick={async () => {
@@ -174,6 +176,7 @@ function DashboardLayout() {
             <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
               <NavLinks />
             </nav>
+            <DialerPanel />
             <div className="border-t border-border px-6 py-4">
               <button
                 onClick={async () => {

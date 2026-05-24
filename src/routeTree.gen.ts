@@ -35,6 +35,7 @@ import { Route as ApiPublicVoiceToolsFindSlotsRouteImport } from './routes/api.p
 import { Route as ApiPublicVoiceToolsBookAppointmentRouteImport } from './routes/api.public.voice-tools.book-appointment'
 import { Route as ApiPublicTwilioVoiceRouteImport } from './routes/api.public.twilio.voice'
 import { Route as ApiPublicTwilioSmsRouteImport } from './routes/api.public.twilio.sms'
+import { Route as ApiPublicTwilioDialerBridgeRouteImport } from './routes/api.public.twilio.dialer-bridge'
 import { Route as ApiPublicTwilioCallbackRouteImport } from './routes/api.public.twilio.callback'
 import { Route as ApiPublicGoogleCalendarCallbackRouteImport } from './routes/api.public.google-calendar.callback'
 import { Route as ApiPublicElevenlabsPostcallRouteImport } from './routes/api.public.elevenlabs.postcall'
@@ -175,6 +176,12 @@ const ApiPublicTwilioSmsRoute = ApiPublicTwilioSmsRouteImport.update({
   path: '/api/public/twilio/sms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTwilioDialerBridgeRoute =
+  ApiPublicTwilioDialerBridgeRouteImport.update({
+    id: '/api/public/twilio/dialer-bridge',
+    path: '/api/public/twilio/dialer-bridge',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicTwilioCallbackRoute = ApiPublicTwilioCallbackRouteImport.update({
   id: '/api/public/twilio/callback',
   path: '/api/public/twilio/callback',
@@ -222,6 +229,7 @@ export interface FileRoutesByFullPath {
   '/api/public/elevenlabs/postcall': typeof ApiPublicElevenlabsPostcallRoute
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
   '/api/public/twilio/callback': typeof ApiPublicTwilioCallbackRoute
+  '/api/public/twilio/dialer-bridge': typeof ApiPublicTwilioDialerBridgeRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
   '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRoute
   '/api/public/voice-tools/book-appointment': typeof ApiPublicVoiceToolsBookAppointmentRoute
@@ -252,6 +260,7 @@ export interface FileRoutesByTo {
   '/api/public/elevenlabs/postcall': typeof ApiPublicElevenlabsPostcallRoute
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
   '/api/public/twilio/callback': typeof ApiPublicTwilioCallbackRoute
+  '/api/public/twilio/dialer-bridge': typeof ApiPublicTwilioDialerBridgeRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
   '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRoute
   '/api/public/voice-tools/book-appointment': typeof ApiPublicVoiceToolsBookAppointmentRoute
@@ -285,6 +294,7 @@ export interface FileRoutesById {
   '/api/public/elevenlabs/postcall': typeof ApiPublicElevenlabsPostcallRoute
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
   '/api/public/twilio/callback': typeof ApiPublicTwilioCallbackRoute
+  '/api/public/twilio/dialer-bridge': typeof ApiPublicTwilioDialerBridgeRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
   '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRoute
   '/api/public/voice-tools/book-appointment': typeof ApiPublicVoiceToolsBookAppointmentRoute
@@ -319,6 +329,7 @@ export interface FileRouteTypes {
     | '/api/public/elevenlabs/postcall'
     | '/api/public/google-calendar/callback'
     | '/api/public/twilio/callback'
+    | '/api/public/twilio/dialer-bridge'
     | '/api/public/twilio/sms'
     | '/api/public/twilio/voice'
     | '/api/public/voice-tools/book-appointment'
@@ -349,6 +360,7 @@ export interface FileRouteTypes {
     | '/api/public/elevenlabs/postcall'
     | '/api/public/google-calendar/callback'
     | '/api/public/twilio/callback'
+    | '/api/public/twilio/dialer-bridge'
     | '/api/public/twilio/sms'
     | '/api/public/twilio/voice'
     | '/api/public/voice-tools/book-appointment'
@@ -381,6 +393,7 @@ export interface FileRouteTypes {
     | '/api/public/elevenlabs/postcall'
     | '/api/public/google-calendar/callback'
     | '/api/public/twilio/callback'
+    | '/api/public/twilio/dialer-bridge'
     | '/api/public/twilio/sms'
     | '/api/public/twilio/voice'
     | '/api/public/voice-tools/book-appointment'
@@ -400,6 +413,7 @@ export interface RootRouteChildren {
   ApiPublicElevenlabsPostcallRoute: typeof ApiPublicElevenlabsPostcallRoute
   ApiPublicGoogleCalendarCallbackRoute: typeof ApiPublicGoogleCalendarCallbackRoute
   ApiPublicTwilioCallbackRoute: typeof ApiPublicTwilioCallbackRoute
+  ApiPublicTwilioDialerBridgeRoute: typeof ApiPublicTwilioDialerBridgeRoute
   ApiPublicTwilioSmsRoute: typeof ApiPublicTwilioSmsRoute
   ApiPublicTwilioVoiceRoute: typeof ApiPublicTwilioVoiceRoute
   ApiPublicVoiceToolsBookAppointmentRoute: typeof ApiPublicVoiceToolsBookAppointmentRoute
@@ -594,6 +608,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTwilioSmsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/twilio/dialer-bridge': {
+      id: '/api/public/twilio/dialer-bridge'
+      path: '/api/public/twilio/dialer-bridge'
+      fullPath: '/api/public/twilio/dialer-bridge'
+      preLoaderRoute: typeof ApiPublicTwilioDialerBridgeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/twilio/callback': {
       id: '/api/public/twilio/callback'
       path: '/api/public/twilio/callback'
@@ -695,6 +716,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicElevenlabsPostcallRoute: ApiPublicElevenlabsPostcallRoute,
   ApiPublicGoogleCalendarCallbackRoute: ApiPublicGoogleCalendarCallbackRoute,
   ApiPublicTwilioCallbackRoute: ApiPublicTwilioCallbackRoute,
+  ApiPublicTwilioDialerBridgeRoute: ApiPublicTwilioDialerBridgeRoute,
   ApiPublicTwilioSmsRoute: ApiPublicTwilioSmsRoute,
   ApiPublicTwilioVoiceRoute: ApiPublicTwilioVoiceRoute,
   ApiPublicVoiceToolsBookAppointmentRoute:
@@ -708,12 +730,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
