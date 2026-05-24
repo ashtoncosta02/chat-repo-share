@@ -17,7 +17,7 @@ function buildScript(origin: string): string {
     var src = currentScript && currentScript.src ? currentScript.src : '';
     var url = new URL(src, window.location.href);
     var agentId = url.searchParams.get('agent') || currentScript.getAttribute('data-agent');
-    if (!agentId) { console.warn('[AgentFactory widget] missing ?agent= parameter'); return; }
+    if (!agentId) { console.warn('[AskKira widget] missing ?agent= parameter'); return; }
     if (window.__AF_WIDGET_LOADED__) return;
     window.__AF_WIDGET_LOADED__ = true;
 
@@ -84,7 +84,7 @@ function buildScript(origin: string): string {
       .catch(function(){ return null; })
       .then(function(cfg){ init(cfg || {}); });
   } catch (e) {
-    console.error('[AgentFactory widget] init error', e);
+    console.error('[AskKira widget] init error', e);
   }
 })();`;
 }

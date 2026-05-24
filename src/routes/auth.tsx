@@ -20,8 +20,8 @@ export const Route = createFileRoute("/auth")({
   validateSearch: authSearchSchema,
   head: () => ({
     meta: [
-      { title: "Sign in — Agent Factory" },
-      { name: "description", content: "Sign in or create an Agent Factory account." },
+      { title: "Sign in — Ask Kira" },
+      { name: "description", content: "Sign in or create an Ask Kira account." },
     ],
   }),
   component: AuthPage,

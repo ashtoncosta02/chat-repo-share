@@ -29,7 +29,7 @@ import { backfillVoiceCalls } from "@/server/voice-call-backfill.functions";
 import { summarizeConversation } from "@/server/conversation-summary.functions";
 
 export const Route = createFileRoute("/dashboard/conversations/")({
-  head: () => ({ meta: [{ title: "Conversations — Agent Factory" }] }),
+  head: () => ({ meta: [{ title: "Conversations — Ask Kira" }] }),
   component: ConversationsPage,
 });
 

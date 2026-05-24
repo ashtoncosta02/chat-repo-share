@@ -31,14 +31,14 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Agent Factory — AI Voice Agents for Your Business" },
+      { title: "Ask Kira — AI Voice Agents for Your Business" },
       {
         name: "description",
         content:
           "A custom AI voice agent trained on your business. Answers calls, captures leads, books appointments, and follows up automatically. 24/7.",
       },
-      { name: "author", content: "Agent Factory" },
-      { property: "og:title", content: "Agent Factory — AI Voice Agents for Your Business" },
+      { name: "author", content: "Ask Kira" },
+      { property: "og:title", content: "Ask Kira — AI Voice Agents for Your Business" },
       {
         property: "og:description",
         content:

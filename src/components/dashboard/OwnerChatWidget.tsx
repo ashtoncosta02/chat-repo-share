@@ -18,7 +18,7 @@ const STORAGE_KEY = "af-help-chat-messages";
 const WELCOME: ChatMessage = {
   role: "assistant",
   content:
-    "Hi! I'm your Agent Factory help assistant. Ask me anything about using the app — creating agents, phone numbers, the chat widget, or troubleshooting.",
+    "Hi! I'm your Ask Kira help assistant. Ask me anything about using the app — creating agents, phone numbers, the chat widget, or troubleshooting.",
 };
 
 export function OwnerChatWidget() {
@@ -175,7 +175,7 @@ export function OwnerChatWidget() {
               <div className="min-w-0">
                 <div className="text-sm font-semibold truncate">Help Assistant</div>
                 <div className="text-[11px] opacity-90 truncate">
-                  Ask anything about Agent Factory
+                  Ask anything about Ask Kira
                 </div>
               </div>
             </div>
