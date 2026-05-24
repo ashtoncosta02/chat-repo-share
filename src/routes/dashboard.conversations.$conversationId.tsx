@@ -172,7 +172,7 @@ function ConversationDetailPage() {
       if (c?.lead_id) {
         const { data: l } = await supabase
           .from("leads")
-          .select("id, name, phone")
+          .select("id, name, phone, email")
           .eq("id", c.lead_id)
           .maybeSingle();
         linkedLead = l ?? null;
@@ -180,7 +180,7 @@ function ConversationDetailPage() {
       if (!linkedLead) {
         const { data: l } = await supabase
           .from("leads")
-          .select("id, name, phone")
+          .select("id, name, phone, email")
           .eq("conversation_id", conversationId)
           .maybeSingle();
         linkedLead = l ?? null;
