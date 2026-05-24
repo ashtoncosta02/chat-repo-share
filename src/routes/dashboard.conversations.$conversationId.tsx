@@ -39,6 +39,21 @@ interface Conversation {
   started_at: string;
   ended_at: string | null;
   recording_url: string | null;
+  lead_id?: string | null;
+}
+
+interface RelatedCall {
+  id: string;
+  started_at: string;
+  duration_seconds: number;
+  message_count: number;
+  ai_summary: string | null;
+}
+
+interface LeadLite {
+  id: string;
+  name: string | null;
+  phone: string | null;
 }
 
 interface Message {
