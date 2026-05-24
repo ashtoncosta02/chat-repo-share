@@ -332,11 +332,11 @@ function LeadsPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem asChild>
-                                <a href={`tel:${l.phone}`}>
-                                  <Phone className="h-3.5 w-3.5 mr-2" />
-                                  Call from my phone
-                                </a>
+                              <DropdownMenuItem
+                                onClick={() => triggerHumanCallback(l.id, l.phone!)}
+                              >
+                                <Phone className="h-3.5 w-3.5 mr-2" />
+                                Call from my phone
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => triggerAiCallback(l.id)}>
                                 <Bot className="h-3.5 w-3.5 mr-2" />
