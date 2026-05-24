@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Bot, User as UserIcon, Clock, MessageSquare, Mic, Phone, MessageCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, Bot, User as UserIcon, Clock, MessageSquare, Mic, Phone, MessageCircle, Loader2, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -39,6 +39,21 @@ interface Conversation {
   started_at: string;
   ended_at: string | null;
   recording_url: string | null;
+  lead_id?: string | null;
+}
+
+interface RelatedCall {
+  id: string;
+  started_at: string;
+  duration_seconds: number;
+  message_count: number;
+  ai_summary: string | null;
+}
+
+interface LeadLite {
+  id: string;
+  name: string | null;
+  phone: string | null;
 }
 
 interface Message {
@@ -65,6 +80,8 @@ function ConversationDetailPage() {
   const [smsMessage, setSmsMessage] = useState("");
   const [calling, setCalling] = useState(false);
   const [texting, setTexting] = useState(false);
+  const [lead, setLead] = useState<LeadLite | null>(null);
+  const [relatedCalls, setRelatedCalls] = useState<RelatedCall[]>([]);
   const callFn = useServerFn(aiCallbackFromConversation);
   const smsFn = useServerFn(sendSmsFromConversation);
 
@@ -123,7 +140,7 @@ function ConversationDetailPage() {
     (async () => {
       const { data: c } = await supabase
         .from("conversations")
-        .select("id, agent_id, message_count, duration_seconds, started_at, ended_at, recording_url")
+        .select("id, agent_id, message_count, duration_seconds, started_at, ended_at, recording_url, lead_id")
         .eq("id", conversationId)
         .maybeSingle();
       if (cancelled) return;
@@ -146,6 +163,57 @@ function ConversationDetailPage() {
       if (!cancelled) {
         setMessages(m ?? []);
         setLoading(false);
+      }
+
+      // Find the lead linked to this conversation, then list every other
+      // conversation tied to the same caller.
+      let linkedLead: LeadLite | null = null;
+      if (c?.lead_id) {
+        const { data: l } = await supabase
+          .from("leads")
+          .select("id, name, phone")
+          .eq("id", c.lead_id)
+          .maybeSingle();
+        linkedLead = l ?? null;
+      }
+      if (!linkedLead) {
+        const { data: l } = await supabase
+          .from("leads")
+          .select("id, name, phone")
+          .eq("conversation_id", conversationId)
+          .maybeSingle();
+        linkedLead = l ?? null;
+      }
+      if (cancelled) return;
+      setLead(linkedLead);
+
+      if (linkedLead) {
+        // Conversations directly linked via lead_id, plus the original one
+        // that legacy leads pointed to via leads.conversation_id.
+        const { data: legacy } = await supabase
+          .from("leads")
+          .select("conversation_id")
+          .eq("id", linkedLead.id)
+          .maybeSingle();
+        const legacyConvId = legacy?.conversation_id ?? null;
+
+        const { data: linked } = await supabase
+          .from("conversations")
+          .select("id, started_at, duration_seconds, message_count, ai_summary")
+          .eq("lead_id", linkedLead.id)
+          .order("started_at", { ascending: false });
+
+        const all = [...(linked ?? [])];
+        if (legacyConvId && !all.some((x) => x.id === legacyConvId)) {
+          const { data: legacyConv } = await supabase
+            .from("conversations")
+            .select("id, started_at, duration_seconds, message_count, ai_summary")
+            .eq("id", legacyConvId)
+            .maybeSingle();
+          if (legacyConv) all.push(legacyConv);
+        }
+        all.sort((a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime());
+        if (!cancelled) setRelatedCalls(all.filter((x) => x.id !== conversationId));
       }
     })();
     return () => {
@@ -260,6 +328,45 @@ function ConversationDetailPage() {
             </ol>
           )}
         </div>
+
+        {relatedCalls.length > 0 && (
+          <div className="rounded-xl border border-border bg-card p-5">
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground mb-1">
+              <History className="h-4 w-4 text-[var(--gold)]" />
+              Related calls with {lead?.name || lead?.phone || "this caller"}
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              Other conversations tied to the same contact.
+            </p>
+            <ul className="divide-y divide-border">
+              {relatedCalls.map((rc) => {
+                const mins = Math.max(1, Math.round(rc.duration_seconds / 60));
+                return (
+                  <li key={rc.id}>
+                    <Link
+                      to="/dashboard/conversations/$conversationId"
+                      params={{ conversationId: rc.id }}
+                      className="flex items-start justify-between gap-4 py-3 hover:bg-muted/40 -mx-2 px-2 rounded-md transition-colors"
+                    >
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-foreground">
+                          {new Date(rc.started_at).toLocaleString()}
+                        </div>
+                        <div className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                          {rc.ai_summary || "No summary available."}
+                        </div>
+                      </div>
+                      <div className="text-xs text-muted-foreground shrink-0 text-right">
+                        <div>{rc.message_count} msgs</div>
+                        <div>{mins} min</div>
+                      </div>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
 
         {/* Follow-up actions */}
         <div className="grid md:grid-cols-2 gap-5">
