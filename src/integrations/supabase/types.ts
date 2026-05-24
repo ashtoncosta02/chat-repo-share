@@ -232,6 +232,7 @@ export type Database = {
           elevenlabs_conversation_id: string | null
           ended_at: string | null
           id: string
+          lead_id: string | null
           message_count: number
           recording_url: string | null
           started_at: string
@@ -244,6 +245,7 @@ export type Database = {
           elevenlabs_conversation_id?: string | null
           ended_at?: string | null
           id?: string
+          lead_id?: string | null
           message_count?: number
           recording_url?: string | null
           started_at?: string
@@ -256,6 +258,7 @@ export type Database = {
           elevenlabs_conversation_id?: string | null
           ended_at?: string | null
           id?: string
+          lead_id?: string | null
           message_count?: number
           recording_url?: string | null
           started_at?: string
