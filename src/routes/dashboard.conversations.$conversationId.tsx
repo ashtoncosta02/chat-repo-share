@@ -54,6 +54,7 @@ interface LeadLite {
   id: string;
   name: string | null;
   phone: string | null;
+  email: string | null;
 }
 
 interface Message {
