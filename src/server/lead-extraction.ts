@@ -124,9 +124,10 @@ export async function captureLead(args: CaptureLeadArgs): Promise<void> {
     if (!finalLead.name && !finalLead.phone && !finalLead.email && !finalLead.notes) return;
 
     // Dedupe priority: existing lead for this conversation > email > phone.
-    // Voice calls should create one lead per call/conversation. The same caller
-    // may call multiple times from the same phone number, and updating the old
-    // phone-matched lead makes the new call look like it never created a lead.
+    // For ALL sources (including voice), match on phone/email so callbacks
+    // and repeat callers update the same lead. The new call still gets its
+    // own `conversations` row (linked via `conversations.lead_id` below),
+    // so call history is preserved per call while the contact stays unified.
     let existingId: string | null = null;
     let existingStatus: string | null = null;
     if (args.conversationId) {
@@ -141,8 +142,7 @@ export async function captureLead(args: CaptureLeadArgs): Promise<void> {
         existingStatus = data.status;
       }
     }
-    const shouldDedupeByContact = args.source !== "voice";
-    if (shouldDedupeByContact && !existingId && finalLead.email) {
+    if (!existingId && finalLead.email) {
       const { data } = await supabaseAdmin
         .from("leads")
         .select("id, status")
@@ -154,7 +154,7 @@ export async function captureLead(args: CaptureLeadArgs): Promise<void> {
         existingStatus = data.status;
       }
     }
-    if (shouldDedupeByContact && !existingId && finalLead.phone) {
+    if (!existingId && finalLead.phone) {
       const { data } = await supabaseAdmin
         .from("leads")
         .select("id, status")
@@ -168,8 +168,10 @@ export async function captureLead(args: CaptureLeadArgs): Promise<void> {
     }
 
     const now = new Date().toISOString();
+    let leadId: string | null = null;
 
     if (existingId) {
+      leadId = existingId;
       const patch: {
         last_message_at: string;
         name?: string;
@@ -188,18 +190,32 @@ export async function captureLead(args: CaptureLeadArgs): Promise<void> {
       }
       await supabaseAdmin.from("leads").update(patch).eq("id", existingId);
     } else {
-      await supabaseAdmin.from("leads").insert({
-        user_id: args.userId,
-        agent_id: args.agentId,
-        conversation_id: args.conversationId,
-        name: finalLead.name,
-        phone: finalLead.phone,
-        email: finalLead.email,
-        notes: finalLead.notes,
-        source: args.source,
-        status: "new",
-        last_message_at: now,
-      });
+      const { data: inserted } = await supabaseAdmin
+        .from("leads")
+        .insert({
+          user_id: args.userId,
+          agent_id: args.agentId,
+          conversation_id: args.conversationId,
+          name: finalLead.name,
+          phone: finalLead.phone,
+          email: finalLead.email,
+          notes: finalLead.notes,
+          source: args.source,
+          status: "new",
+          last_message_at: now,
+        })
+        .select("id")
+        .single();
+      leadId = inserted?.id ?? null;
+    }
+
+    // Link this conversation to the lead so multiple calls/chats with the
+    // same contact can be grouped together as "related calls".
+    if (leadId && args.conversationId) {
+      await supabaseAdmin
+        .from("conversations")
+        .update({ lead_id: leadId })
+        .eq("id", args.conversationId);
     }
   } catch (e) {
     console.error("captureLead error:", e);
