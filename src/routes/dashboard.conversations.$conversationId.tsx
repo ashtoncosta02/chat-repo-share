@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Bot, User as UserIcon, Clock, MessageSquare, Mic, Phone, MessageCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, Bot, User as UserIcon, Clock, MessageSquare, Mic, Phone, MessageCircle, Loader2, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
