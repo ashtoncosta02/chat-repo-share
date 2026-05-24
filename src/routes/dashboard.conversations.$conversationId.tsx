@@ -329,6 +329,45 @@ function ConversationDetailPage() {
           )}
         </div>
 
+        {relatedCalls.length > 0 && (
+          <div className="rounded-xl border border-border bg-card p-5">
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground mb-1">
+              <History className="h-4 w-4 text-[var(--gold)]" />
+              Related calls with {lead?.name || lead?.phone || "this caller"}
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              Other conversations tied to the same contact.
+            </p>
+            <ul className="divide-y divide-border">
+              {relatedCalls.map((rc) => {
+                const mins = Math.max(1, Math.round(rc.duration_seconds / 60));
+                return (
+                  <li key={rc.id}>
+                    <Link
+                      to="/dashboard/conversations/$conversationId"
+                      params={{ conversationId: rc.id }}
+                      className="flex items-start justify-between gap-4 py-3 hover:bg-muted/40 -mx-2 px-2 rounded-md transition-colors"
+                    >
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-foreground">
+                          {new Date(rc.started_at).toLocaleString()}
+                        </div>
+                        <div className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                          {rc.ai_summary || "No summary available."}
+                        </div>
+                      </div>
+                      <div className="text-xs text-muted-foreground shrink-0 text-right">
+                        <div>{rc.message_count} msgs</div>
+                        <div>{mins} min</div>
+                      </div>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+
         {/* Follow-up actions */}
         <div className="grid md:grid-cols-2 gap-5">
           {/* AI Callback */}
