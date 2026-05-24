@@ -80,6 +80,8 @@ function ConversationDetailPage() {
   const [smsMessage, setSmsMessage] = useState("");
   const [calling, setCalling] = useState(false);
   const [texting, setTexting] = useState(false);
+  const [lead, setLead] = useState<LeadLite | null>(null);
+  const [relatedCalls, setRelatedCalls] = useState<RelatedCall[]>([]);
   const callFn = useServerFn(aiCallbackFromConversation);
   const smsFn = useServerFn(sendSmsFromConversation);
 
