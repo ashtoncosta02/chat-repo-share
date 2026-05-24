@@ -194,8 +194,7 @@ function ConversationDetailPage() {
         // legacy leads.conversation_id pointer).
         const orParts: string[] = [];
         if (linkedLead.phone) orParts.push(`phone.eq.${linkedLead.phone}`);
-        const leadEmail = (linkedLead as { email?: string | null }).email;
-        if (leadEmail) orParts.push(`email.eq.${leadEmail}`);
+        if (linkedLead.email) orParts.push(`email.eq.${linkedLead.email}`);
 
         let matchingLeads: { id: string; conversation_id: string | null }[] = [
           { id: linkedLead.id, conversation_id: null },
