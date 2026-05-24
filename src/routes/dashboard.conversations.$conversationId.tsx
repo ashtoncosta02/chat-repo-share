@@ -264,17 +264,21 @@ function ConversationDetailPage() {
           <ArrowLeft className="h-3.5 w-3.5" /> Conversations
         </Link>
         <h1 className="font-display text-3xl font-bold text-foreground">
-          {agent ? agent.business_name : "Conversation"}
+          {lead?.name || "Unknown caller"}
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
+          {lead?.phone ? `${lead.phone} · ` : ""}
           {new Date(conv.started_at).toLocaleString()}
         </p>
 
         <div className="mt-4 flex flex-wrap gap-3 text-sm">
           <Stat icon={<MessageSquare className="h-4 w-4" />} label={`${conv.message_count} messages`} />
           <Stat icon={<Clock className="h-4 w-4" />} label={`${minutes} min`} />
+          {lead?.phone && <Stat icon={<Phone className="h-4 w-4" />} label={lead.phone} />}
+          {lead?.email && <Stat icon={<MessageCircle className="h-4 w-4" />} label={lead.email} />}
           {agent && <Stat icon={<Bot className="h-4 w-4" />} label={assistantName} />}
         </div>
+
       </div>
 
       <div className="px-8 pb-12 space-y-6">
