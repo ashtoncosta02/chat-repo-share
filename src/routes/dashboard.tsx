@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { supabase } from "@/integrations/supabase/client";
-import { LayoutDashboard, BarChart3, User, MessageSquare, Menu, X, Code2, Calendar, Shield, Bot } from "lucide-react";
+import { LayoutDashboard, BarChart3, User, MessageSquare, Menu, X, Code2, Calendar, Shield, Bot, Phone } from "lucide-react";
 import { AgentFactoryLogo } from "@/components/AgentFactoryLogo";
 import { OwnerChatWidget } from "@/components/dashboard/OwnerChatWidget";
 import { DialerPanel } from "@/components/dashboard/DialerPanel";
@@ -26,7 +26,6 @@ const navItems = [
   { to: "/dashboard/conversations", label: "Conversations", icon: MessageSquare },
   { to: "/dashboard/bookings", label: "Bookings", icon: Calendar },
   { to: "/dashboard/chat-widget", label: "Chat Widget", icon: Code2 },
-
 ] as const;
 
 const adminNavItem = { to: "/dashboard/admin", label: "Admin", icon: Shield } as const;
@@ -38,6 +37,7 @@ function DashboardLayout() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
+  const [dialerOpen, setDialerOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
@@ -126,8 +126,18 @@ function DashboardLayout() {
         </div>
         <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
           <NavLinks />
+          <button
+            onClick={() => setDialerOpen(true)}
+            className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+              dialerOpen
+                ? "bg-[oklch(0.96_0.04_290)] text-[var(--gold-foreground)] font-medium"
+                : "text-foreground/80 hover:bg-muted"
+            }`}
+          >
+            <Phone className="h-4 w-4" />
+            Dialer
+          </button>
         </nav>
-        <DialerPanel />
         <div className="border-t border-border px-6 py-4">
           <button
             onClick={async () => {
@@ -175,8 +185,21 @@ function DashboardLayout() {
             </div>
             <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
               <NavLinks />
+              <button
+                onClick={() => {
+                  setDialerOpen(true);
+                  setMobileOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                  dialerOpen
+                    ? "bg-[oklch(0.96_0.04_290)] text-[var(--gold-foreground)] font-medium"
+                    : "text-foreground/80 hover:bg-muted"
+                }`}
+              >
+                <Phone className="h-4 w-4" />
+                Dialer
+              </button>
             </nav>
-            <DialerPanel />
             <div className="border-t border-border px-6 py-4">
               <button
                 onClick={async () => {
@@ -190,6 +213,31 @@ function DashboardLayout() {
               <p className="mt-1 text-xs text-muted-foreground truncate">{user.email}</p>
             </div>
           </aside>
+        </>
+      )}
+
+      {/* Dialer overlay */}
+      {dialerOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/30"
+            onClick={() => setDialerOpen(false)}
+          />
+          <div className="fixed z-50 left-0 md:left-64 top-0 bottom-0 w-full md:w-[380px] bg-card border-r border-border shadow-2xl animate-in slide-in-from-left duration-200 flex flex-col">
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+              <span className="text-sm font-semibold text-foreground">Dialer</span>
+              <button
+                onClick={() => setDialerOpen(false)}
+                className="p-1.5 rounded-md hover:bg-muted"
+                aria-label="Close dialer"
+              >
+                <X className="h-4 w-4 text-foreground" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              <DialerPanel onClose={() => setDialerOpen(false)} />
+            </div>
+          </div>
         </>
       )}
 
