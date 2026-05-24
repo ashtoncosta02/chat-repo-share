@@ -7,7 +7,7 @@ import { Bot, Calendar, CheckCircle2, MessageSquare, Phone, ChevronRight } from 
 import { AnalyticsPage } from "./dashboard.analytics";
 
 export const Route = createFileRoute("/dashboard/")({
-  head: () => ({ meta: [{ title: "Dashboard — Agent Factory" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — Ask Kira" }] }),
   component: DashboardHome,
 });
 

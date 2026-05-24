@@ -7,7 +7,7 @@ import { PageHeader, StatCard } from "@/components/dashboard/PageHeader";
 import { Users, Bot, MessageSquare, Phone, Calendar, User as UserIcon, Shield } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/admin")({
-  head: () => ({ meta: [{ title: "Admin — Agent Factory" }] }),
+  head: () => ({ meta: [{ title: "Admin — Ask Kira" }] }),
   component: AdminOverviewPage,
 });
 

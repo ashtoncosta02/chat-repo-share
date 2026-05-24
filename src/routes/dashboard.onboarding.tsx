@@ -26,7 +26,7 @@ import { newFaq, parseLegacyFaqs, type StructuredFaq } from "@/lib/faqs";
 import { AgentFactoryLogo } from "@/components/AgentFactoryLogo";
 
 export const Route = createFileRoute("/dashboard/onboarding")({
-  head: () => ({ meta: [{ title: "Set up your AI Receptionist — Agent Factory" }] }),
+  head: () => ({ meta: [{ title: "Set up your AI Receptionist — Ask Kira" }] }),
   component: OnboardingWizard,
 });
 

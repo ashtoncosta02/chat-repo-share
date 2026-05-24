@@ -32,7 +32,7 @@ export const scrapeBusinessFromUrl = createServerFn({ method: "POST" })
       try {
         const pageRes = await fetch(data.url, {
           headers: {
-            "User-Agent": "Mozilla/5.0 (compatible; AgentFactoryBot/1.0)",
+            "User-Agent": "Mozilla/5.0 (compatible; AskKiraBot/1.0)",
           },
           signal: AbortSignal.timeout(15000),
         });

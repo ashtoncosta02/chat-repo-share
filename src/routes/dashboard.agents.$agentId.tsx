@@ -47,7 +47,7 @@ import { VOICE_OPTIONS, DEFAULT_VOICE_ID, getVoiceById } from "@/lib/voices";
 import { coerceFaqs, newFaq, parseLegacyFaqs, type StructuredFaq } from "@/lib/faqs";
 
 export const Route = createFileRoute("/dashboard/agents/$agentId")({
-  head: () => ({ meta: [{ title: "AI Receptionist — Agent Factory" }] }),
+  head: () => ({ meta: [{ title: "AI Receptionist — Ask Kira" }] }),
   component: AgentDetailPage,
 });
 

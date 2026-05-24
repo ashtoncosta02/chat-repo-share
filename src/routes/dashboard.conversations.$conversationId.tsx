@@ -13,7 +13,7 @@ import {
 } from "@/server/conversation-actions.functions";
 
 export const Route = createFileRoute("/dashboard/conversations/$conversationId")({
-  head: () => ({ meta: [{ title: "Transcript — Agent Factory" }] }),
+  head: () => ({ meta: [{ title: "Transcript — Ask Kira" }] }),
   component: ConversationDetailPage,
 });
 

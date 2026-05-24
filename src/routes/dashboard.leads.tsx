@@ -35,7 +35,7 @@ import { toast } from "sonner";
 import { aiCallbackLead } from "@/server/lead-callback.functions";
 
 export const Route = createFileRoute("/dashboard/leads")({
-  head: () => ({ meta: [{ title: "Leads — Agent Factory" }] }),
+  head: () => ({ meta: [{ title: "Leads — Ask Kira" }] }),
   component: LeadsPage,
 });
 

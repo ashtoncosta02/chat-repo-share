@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Shield, Search } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/admin/users")({
-  head: () => ({ meta: [{ title: "Admin · Users — Agent Factory" }] }),
+  head: () => ({ meta: [{ title: "Admin · Users — Ask Kira" }] }),
   component: AdminUsersPage,
 });
 

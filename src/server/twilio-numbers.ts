@@ -196,7 +196,7 @@ export const purchasePhoneNumber = createServerFn({ method: "POST" })
       // then register the call with ElevenLabs and return their TwiML.
       const body = new URLSearchParams({
         PhoneNumber: data.phoneNumber,
-        FriendlyName: `${agent.business_name} — Agent Factory`,
+        FriendlyName: `${agent.business_name} — Ask Kira`,
         SmsUrl: smsWebhook,
         SmsMethod: "POST",
         VoiceUrl: voiceWebhook,
