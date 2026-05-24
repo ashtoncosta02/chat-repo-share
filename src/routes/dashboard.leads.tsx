@@ -132,6 +132,38 @@ function LeadsPage() {
     }
   };
 
+  const triggerHumanCallback = async (leadId: string, phone: string) => {
+    const callback = (localStorage.getItem(CALLBACK_KEY) || "").trim();
+    if (!callback) {
+      toast.error("Set your callback number in the Dialer first (left sidebar).");
+      return;
+    }
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess.session?.access_token;
+    if (!token) {
+      toast.error("Please sign in again.");
+      return;
+    }
+    setCallingId(leadId);
+    try {
+      const res = await startOutboundCall({
+        data: { accessToken: token, to: phone, myPhone: callback },
+      });
+      if (res.success) {
+        toast.success(`Ringing your phone (${callback})…`);
+        setLeads((prev) =>
+          prev.map((l) => (l.id === leadId ? { ...l, status: "contacted" } : l)),
+        );
+      } else {
+        toast.error(res.error);
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to start call.");
+    } finally {
+      setCallingId(null);
+    }
+  };
+
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const handleDelete = async (id: string) => {
     setDeletingId(id);
