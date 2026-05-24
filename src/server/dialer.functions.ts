@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { createHmac } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
@@ -43,7 +42,8 @@ function normalizeE164(raw: string): string | null {
   return null;
 }
 
-export function signDialerToken(to: string, from: string, expiresAt: number): string {
+export async function signDialerToken(to: string, from: string, expiresAt: number): Promise<string> {
+  const { createHmac } = await import("crypto");
   const secret = process.env.LOVABLE_API_KEY || "fallback-secret-do-not-use";
   const payload = `${to}|${from}|${expiresAt}`;
   return createHmac("sha256", secret).update(payload).digest("hex");
@@ -77,7 +77,7 @@ export const startOutboundCall = createServerFn({ method: "POST" })
     const fromNumber = phone.phone_number;
 
     const expiresAt = Date.now() + 5 * 60 * 1000;
-    const sig = signDialerToken(toE164, fromNumber, expiresAt);
+    const sig = await signDialerToken(toE164, fromNumber, expiresAt);
     const bridgeUrl = `https://project--${PROJECT_ID}-dev.lovable.app/api/public/twilio/dialer-bridge?to=${encodeURIComponent(
       toE164,
     )}&from=${encodeURIComponent(fromNumber)}&exp=${expiresAt}&sig=${sig}`;
