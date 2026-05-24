@@ -54,6 +54,7 @@ interface LeadLite {
   id: string;
   name: string | null;
   phone: string | null;
+  email: string | null;
 }
 
 interface Message {
@@ -171,7 +172,7 @@ function ConversationDetailPage() {
       if (c?.lead_id) {
         const { data: l } = await supabase
           .from("leads")
-          .select("id, name, phone")
+          .select("id, name, phone, email")
           .eq("id", c.lead_id)
           .maybeSingle();
         linkedLead = l ?? null;
@@ -179,7 +180,7 @@ function ConversationDetailPage() {
       if (!linkedLead) {
         const { data: l } = await supabase
           .from("leads")
-          .select("id, name, phone")
+          .select("id, name, phone, email")
           .eq("conversation_id", conversationId)
           .maybeSingle();
         linkedLead = l ?? null;
@@ -188,31 +189,48 @@ function ConversationDetailPage() {
       setLead(linkedLead);
 
       if (linkedLead) {
-        // Conversations directly linked via lead_id, plus the original one
-        // that legacy leads pointed to via leads.conversation_id.
-        const { data: legacy } = await supabase
-          .from("leads")
-          .select("conversation_id")
-          .eq("id", linkedLead.id)
-          .maybeSingle();
-        const legacyConvId = legacy?.conversation_id ?? null;
+        // Match every lead that shares the same phone or email, then collect
+        // every conversation tied to any of those leads (via lead_id OR the
+        // legacy leads.conversation_id pointer).
+        const orParts: string[] = [];
+        if (linkedLead.phone) orParts.push(`phone.eq.${linkedLead.phone}`);
+        if (linkedLead.email) orParts.push(`email.eq.${linkedLead.email}`);
 
-        const { data: linked } = await supabase
+        let matchingLeads: { id: string; conversation_id: string | null }[] = [
+          { id: linkedLead.id, conversation_id: null },
+        ];
+        if (orParts.length > 0) {
+          const { data: ml } = await supabase
+            .from("leads")
+            .select("id, conversation_id")
+            .or(orParts.join(","));
+          if (ml && ml.length > 0) matchingLeads = ml;
+        }
+
+        const leadIds = Array.from(new Set(matchingLeads.map((l) => l.id)));
+        const legacyConvIds = Array.from(
+          new Set(matchingLeads.map((l) => l.conversation_id).filter(Boolean) as string[])
+        );
+
+        const { data: byLead } = await supabase
           .from("conversations")
           .select("id, started_at, duration_seconds, message_count, ai_summary")
-          .eq("lead_id", linkedLead.id)
-          .order("started_at", { ascending: false });
+          .in("lead_id", leadIds);
 
-        const all = [...(linked ?? [])];
-        if (legacyConvId && !all.some((x) => x.id === legacyConvId)) {
-          const { data: legacyConv } = await supabase
+        let byLegacy: RelatedCall[] = [];
+        if (legacyConvIds.length > 0) {
+          const { data } = await supabase
             .from("conversations")
             .select("id, started_at, duration_seconds, message_count, ai_summary")
-            .eq("id", legacyConvId)
-            .maybeSingle();
-          if (legacyConv) all.push(legacyConv);
+            .in("id", legacyConvIds);
+          byLegacy = data ?? [];
         }
-        all.sort((a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime());
+
+        const merged = new Map<string, RelatedCall>();
+        [...(byLead ?? []), ...byLegacy].forEach((c) => merged.set(c.id, c));
+        const all = Array.from(merged.values()).sort(
+          (a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime()
+        );
         if (!cancelled) setRelatedCalls(all.filter((x) => x.id !== conversationId));
       }
     })();
@@ -246,17 +264,21 @@ function ConversationDetailPage() {
           <ArrowLeft className="h-3.5 w-3.5" /> Conversations
         </Link>
         <h1 className="font-display text-3xl font-bold text-foreground">
-          {agent ? agent.business_name : "Conversation"}
+          {lead?.name || "Unknown caller"}
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
+          {lead?.phone ? `${lead.phone} · ` : ""}
           {new Date(conv.started_at).toLocaleString()}
         </p>
 
         <div className="mt-4 flex flex-wrap gap-3 text-sm">
           <Stat icon={<MessageSquare className="h-4 w-4" />} label={`${conv.message_count} messages`} />
           <Stat icon={<Clock className="h-4 w-4" />} label={`${minutes} min`} />
+          {lead?.phone && <Stat icon={<Phone className="h-4 w-4" />} label={lead.phone} />}
+          {lead?.email && <Stat icon={<MessageCircle className="h-4 w-4" />} label={lead.email} />}
           {agent && <Stat icon={<Bot className="h-4 w-4" />} label={assistantName} />}
         </div>
+
       </div>
 
       <div className="px-8 pb-12 space-y-6">
