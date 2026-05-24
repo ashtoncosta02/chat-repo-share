@@ -33,6 +33,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { aiCallbackLead } from "@/server/lead-callback.functions";
+import { startOutboundCall } from "@/server/dialer.functions";
+
+const CALLBACK_KEY = "askkira.dialer.callback";
 
 export const Route = createFileRoute("/dashboard/leads")({
   head: () => ({ meta: [{ title: "Leads — Ask Kira" }] }),
