@@ -113,25 +113,20 @@ export const aiCallbackFromConversation = createServerFn({ method: "POST" })
     const { lead, agent, elPhoneNumberId } = ctx;
 
     const firstName = (lead.name ?? "").trim().split(/\s+/)[0] || "there";
-    const receptionistName = (agent.assistant_name || "the receptionist").trim();
-    const businessName = (agent.business_name || "the business").trim();
     const instructions = data.instructions?.trim() ?? "";
-    const firstMessage = instructions
-      ? `Hi ${firstName}, this is ${receptionistName} from ${businessName} — I'm following up on your earlier inquiry. Do you have a moment?`
-      : `Hi ${firstName}, this is ${receptionistName} from ${businessName} — I'm following up on your earlier inquiry, is now a good time?`;
 
     try {
       const result = await placeOutboundCall({
         agentId: agent.elevenlabs_agent_id!,
         agentPhoneNumberId: elPhoneNumberId,
         toNumber: lead.phone!,
-        firstMessage,
         dynamicVariables: {
           call_direction: "outbound",
           lead_name: firstName === "there" ? "" : firstName,
           lead_notes: instructions ? `Call goal: ${instructions}` : "",
         },
       });
+
 
       await supabaseAdmin
         .from("leads")
