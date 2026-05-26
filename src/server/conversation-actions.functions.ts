@@ -124,11 +124,9 @@ export const aiCallbackFromConversation = createServerFn({ method: "POST" })
           From: fromNumber,
           Url: callUrl,
           Method: "POST",
-          MachineDetection: "DetectMessageEnd",
-          MachineDetectionTimeout: "30",
-          MachineDetectionSpeechThreshold: "2400",
-          MachineDetectionSpeechEndThreshold: "1200",
-          AsyncAmd: "false",
+          MachineDetection: "Enable",
+          MachineDetectionTimeout: "5",
+          AsyncAmd: "true",
         }),
       });
       const result = await res.json().catch(() => ({}));

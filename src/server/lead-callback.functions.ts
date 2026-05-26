@@ -89,11 +89,9 @@ export const aiCallbackLead = createServerFn({ method: "POST" })
           From: phone.phone_number,
           Url: callUrl,
           Method: "POST",
-          MachineDetection: "DetectMessageEnd",
-          MachineDetectionTimeout: "30",
-          MachineDetectionSpeechThreshold: "2400",
-          MachineDetectionSpeechEndThreshold: "1200",
-          AsyncAmd: "false",
+          MachineDetection: "Enable",
+          MachineDetectionTimeout: "5",
+          AsyncAmd: "true",
         }),
       });
       const result = await res.json().catch(() => ({}));
