@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { placeOutboundCall } from "@/server/elevenlabs-agent.server";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
 const PROJECT_ID = "d1e796ad-671c-47e1-843b-cdecc02fe11f";
