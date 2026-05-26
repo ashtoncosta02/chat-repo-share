@@ -80,15 +80,25 @@ async function loadContext(userId: string, conversationId: string) {
 
   const { data: phone } = await supabaseAdmin
     .from("phone_numbers")
-    .select("phone_number")
+    .select("phone_number, elevenlabs_phone_number_id")
     .eq("user_id", userId)
     .limit(1)
     .maybeSingle();
   if (!phone?.phone_number) {
     return { error: "No connected phone number. Connect one in Phone Numbers first." as const };
   }
+  if (!phone.elevenlabs_phone_number_id) {
+    return {
+      error: "Your number isn't linked to the AI yet. Open Phone Numbers and click 'Connect to AI'." as const,
+    };
+  }
 
-  return { lead, agent, fromNumber: phone.phone_number };
+  return {
+    lead,
+    agent,
+    fromNumber: phone.phone_number,
+    elPhoneNumberId: phone.elevenlabs_phone_number_id,
+  };
 }
 
 /** Place an outbound AI call about a specific conversation, with optional custom instructions. */
