@@ -110,45 +110,35 @@ export const aiCallbackFromConversation = createServerFn({ method: "POST" })
 
     const ctx = await loadContext(auth.userId, data.conversationId);
     if ("error" in ctx) return { success: false as const, error: ctx.error };
-    const { lead, agent, fromNumber } = ctx;
+    const { lead, agent, elPhoneNumberId } = ctx;
 
-    const callbackBase = `https://project--${PROJECT_ID}-dev.lovable.app/api/public/twilio/callback`;
-    const params = new URLSearchParams({
-      lead: lead.id,
-      agent: agent.elevenlabs_agent_id!,
-    });
-    if (data.instructions) {
-      // base64-encode to safely pass through query string
-      params.set("inst", Buffer.from(data.instructions, "utf-8").toString("base64"));
-    }
-    const callUrl = `${callbackBase}?${params.toString()}`;
+    const firstName = (lead.name ?? "").trim().split(/\s+/)[0] || "there";
+    const receptionistName = (agent.assistant_name || "the receptionist").trim();
+    const businessName = (agent.business_name || "the business").trim();
+    const instructions = data.instructions?.trim() ?? "";
+    const firstMessage = instructions
+      ? `Hi ${firstName}, this is ${receptionistName} from ${businessName} — I'm following up on your earlier inquiry. Do you have a moment?`
+      : `Hi ${firstName}, this is ${receptionistName} from ${businessName} — I'm following up on your earlier inquiry, is now a good time?`;
 
     try {
-      const res = await fetch(`${GATEWAY_URL}/Calls.json`, {
-        method: "POST",
-        headers: {
-          ...gatewayHeaders(),
-          "Content-Type": "application/x-www-form-urlencoded",
+      const result = await placeOutboundCall({
+        agentId: agent.elevenlabs_agent_id!,
+        agentPhoneNumberId: elPhoneNumberId,
+        toNumber: lead.phone!,
+        firstMessage,
+        dynamicVariables: {
+          call_direction: "outbound",
+          lead_name: firstName === "there" ? "" : firstName,
+          lead_notes: instructions ? `Call goal: ${instructions}` : "",
         },
-        body: new URLSearchParams({
-          To: lead.phone!,
-          From: fromNumber,
-          Url: callUrl,
-          Method: "POST",
-          MachineDetection: "Enable",
-          MachineDetectionTimeout: "5",
-          AsyncAmd: "true",
-        }),
       });
-      const result = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(result?.message || `Twilio call failed (${res.status}).`);
 
       await supabaseAdmin
         .from("leads")
         .update({ status: "contacted", last_message_at: new Date().toISOString() })
         .eq("id", lead.id);
 
-      return { success: true as const, callSid: result.sid ?? null };
+      return { success: true as const, callSid: result.call_sid ?? null };
     } catch (e) {
       console.error("aiCallbackFromConversation error:", e);
       return {
