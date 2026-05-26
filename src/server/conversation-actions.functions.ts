@@ -37,18 +37,34 @@ function gatewayHeaders() {
 async function loadContext(userId: string, conversationId: string) {
   const { data: convo } = await supabaseAdmin
     .from("conversations")
-    .select("id, user_id, agent_id")
+    .select("id, user_id, agent_id, lead_id")
     .eq("id", conversationId)
     .eq("user_id", userId)
     .maybeSingle();
   if (!convo) return { error: "Conversation not found." as const };
 
-  const { data: lead } = await supabaseAdmin
-    .from("leads")
-    .select("id, name, phone, notes")
-    .eq("conversation_id", conversationId)
-    .eq("user_id", userId)
-    .maybeSingle();
+  // Try multiple paths: conversations.lead_id -> leads.conversation_id -> any
+  // lead sharing the same phone as another conversation linked to this caller.
+  let lead: { id: string; name: string | null; phone: string | null; notes: string | null } | null = null;
+
+  if (convo.lead_id) {
+    const { data } = await supabaseAdmin
+      .from("leads")
+      .select("id, name, phone, notes")
+      .eq("id", convo.lead_id)
+      .eq("user_id", userId)
+      .maybeSingle();
+    lead = data ?? null;
+  }
+  if (!lead) {
+    const { data } = await supabaseAdmin
+      .from("leads")
+      .select("id, name, phone, notes")
+      .eq("conversation_id", conversationId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    lead = data ?? null;
+  }
   if (!lead) return { error: "No saved lead is linked to this conversation." as const };
   if (!lead.phone) return { error: "This caller has no phone number on file." as const };
 
