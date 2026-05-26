@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { placeOutboundCall } from "@/server/elevenlabs-agent.server";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
 const PROJECT_ID = "d1e796ad-671c-47e1-843b-cdecc02fe11f";
@@ -60,7 +61,7 @@ export const aiCallbackLead = createServerFn({ method: "POST" })
 
     const { data: phone } = await supabaseAdmin
       .from("phone_numbers")
-      .select("phone_number")
+      .select("phone_number, elevenlabs_phone_number_id")
       .eq("user_id", auth.userId)
       .limit(1)
       .maybeSingle();
@@ -70,40 +71,35 @@ export const aiCallbackLead = createServerFn({ method: "POST" })
         error: "No connected phone number. Connect one in Phone Numbers first.",
       };
     }
+    if (!phone.elevenlabs_phone_number_id) {
+      return {
+        success: false as const,
+        error: "Your number isn't linked to the AI yet. Open Phone Numbers and click 'Connect to AI'.",
+      };
+    }
 
-    const firstName = (lead.name ?? "").trim().split(/\s+/)[0] ?? "";
+    const firstName = (lead.name ?? "").trim().split(/\s+/)[0] || "there";
     const receptionistName = (agent.assistant_name || "the receptionist").trim();
     const businessName = (agent.business_name || "your business").trim();
-    const callbackBase = `https://project--${PROJECT_ID}-dev.lovable.app/api/public/twilio/callback`;
-    const callUrl = `${callbackBase}?lead=${encodeURIComponent(lead.id)}&agent=${encodeURIComponent(agent.elevenlabs_agent_id)}`;
+    const firstMessage = `Hi ${firstName}, this is ${receptionistName} from ${businessName} — I'm following up on your earlier inquiry, is now a good time?`;
 
     try {
-      const res = await fetch(`${GATEWAY_URL}/Calls.json`, {
-        method: "POST",
-        headers: {
-          ...gatewayHeaders(),
-          "Content-Type": "application/x-www-form-urlencoded",
+      const result = await placeOutboundCall({
+        agentId: agent.elevenlabs_agent_id,
+        agentPhoneNumberId: phone.elevenlabs_phone_number_id,
+        toNumber: lead.phone,
+        firstMessage,
+        dynamicVariables: {
+          call_direction: "outbound",
+          lead_name: firstName === "there" ? "" : firstName,
+          lead_notes: (lead.notes ?? "").slice(0, 1000),
         },
-        body: new URLSearchParams({
-          To: lead.phone,
-          From: phone.phone_number,
-          Url: callUrl,
-          Method: "POST",
-          MachineDetection: "Enable",
-          MachineDetectionTimeout: "5",
-          AsyncAmd: "true",
-        }),
       });
-      const result = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(result?.message || `Twilio callback failed (${res.status}).`);
-      }
-      // Mark lead as contacted so it shows progress.
       await supabaseAdmin
         .from("leads")
         .update({ status: "contacted", last_message_at: new Date().toISOString() })
         .eq("id", lead.id);
-      return { success: true as const, callSid: result.sid ?? null };
+      return { success: true as const, callSid: result.call_sid ?? null };
     } catch (e) {
       console.error("aiCallbackLead error:", e);
       return {
