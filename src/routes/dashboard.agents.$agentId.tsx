@@ -560,16 +560,6 @@ function AgentDetailPage() {
           onChange={(next) => setAgent((prev) => (prev ? { ...prev, answer_mode: next } : prev))}
         />
         <GoogleCalendarCard agentId={agent.id} />
-        <NotificationsCard
-          agentId={agent.id}
-          emailEnabled={agent.notify_email_transcript}
-          smsEnabled={agent.notify_sms_transcript}
-          email={agent.notify_email}
-          phone={agent.notify_phone}
-          onChange={(next) =>
-            setAgent((prev) => (prev ? { ...prev, ...next } : prev))
-          }
-        />
       </div>
 
       {/* Chat surface */}
