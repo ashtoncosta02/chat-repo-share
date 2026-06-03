@@ -26,6 +26,7 @@ const navItems = [
   { to: "/dashboard/conversations", label: "Conversations", icon: MessageSquare },
   { to: "/dashboard/bookings", label: "Bookings", icon: Calendar },
   { to: "/dashboard/chat-widget", label: "Chat Widget", icon: Code2 },
+  { to: "/dashboard/notifications", label: "Notifications", icon: Bell },
 ] as const;
 
 const adminNavItem = { to: "/dashboard/admin", label: "Admin", icon: Shield } as const;
