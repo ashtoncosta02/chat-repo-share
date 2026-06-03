@@ -91,6 +91,10 @@ export type Database = {
           id: string
           industry: string | null
           is_live: boolean
+          notify_email: string | null
+          notify_email_transcript: boolean
+          notify_phone: string | null
+          notify_sms_transcript: boolean
           onboarding_completed: boolean
           pricing_notes: string | null
           primary_goal: string | null
@@ -121,6 +125,10 @@ export type Database = {
           id?: string
           industry?: string | null
           is_live?: boolean
+          notify_email?: string | null
+          notify_email_transcript?: boolean
+          notify_phone?: string | null
+          notify_sms_transcript?: boolean
           onboarding_completed?: boolean
           pricing_notes?: string | null
           primary_goal?: string | null
@@ -151,6 +159,10 @@ export type Database = {
           id?: string
           industry?: string | null
           is_live?: boolean
+          notify_email?: string | null
+          notify_email_transcript?: boolean
+          notify_phone?: string | null
+          notify_sms_transcript?: boolean
           onboarding_completed?: boolean
           pricing_notes?: string | null
           primary_goal?: string | null
