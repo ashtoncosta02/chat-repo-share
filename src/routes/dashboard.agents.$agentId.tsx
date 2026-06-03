@@ -101,6 +101,7 @@ function AgentDetailPage() {
   const [voiceOpen, setVoiceOpen] = useState(false);
   const [voiceSaving, setVoiceSaving] = useState(false);
   const [voiceDraft, setVoiceDraft] = useState<string>(DEFAULT_VOICE_ID);
+  const [nameDraft, setNameDraft] = useState<string>("");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
