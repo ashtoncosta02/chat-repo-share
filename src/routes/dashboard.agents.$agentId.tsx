@@ -490,10 +490,11 @@ function AgentDetailPage() {
             size="sm"
             onClick={() => {
               setVoiceDraft(agent.voice_id ?? DEFAULT_VOICE_ID);
+              setNameDraft(agent.assistant_name ?? "");
               setVoiceOpen(true);
             }}
           >
-            <Volume2 className="h-3.5 w-3.5 mr-1.5" /> {assistantName}'s voice ({getVoiceById(agent.voice_id).name})
+            <Volume2 className="h-3.5 w-3.5 mr-1.5" /> {assistantName}'s name & voice ({getVoiceById(agent.voice_id).name})
           </Button>
           <Button
             variant="outline"
