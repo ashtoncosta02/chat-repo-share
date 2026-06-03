@@ -718,13 +718,14 @@ function AgentDetailPage() {
               className="bg-[var(--gold)] hover:bg-[var(--gold)]/90 text-white"
               onClick={async () => {
                 setVoiceSaving(true);
+                const trimmedName = nameDraft.trim() || null;
                 const { error } = await supabase
                   .from("agents")
-                  .update({ voice_id: voiceDraft })
+                  .update({ voice_id: voiceDraft, assistant_name: trimmedName })
                   .eq("id", agent.id);
                 if (error) {
                   setVoiceSaving(false);
-                  toast.error("Couldn't update voice", { description: error.message });
+                  toast.error("Couldn't save changes", { description: error.message });
                   return;
                 }
                 let elAgentId = agent.elevenlabs_agent_id;
@@ -738,13 +739,13 @@ function AgentDetailPage() {
                 } catch (e) {
                   console.error("EL sync exception:", e);
                 }
-                setAgent({ ...agent, voice_id: voiceDraft, elevenlabs_agent_id: elAgentId });
+                setAgent({ ...agent, voice_id: voiceDraft, assistant_name: trimmedName, elevenlabs_agent_id: elAgentId });
                 setVoiceSaving(false);
                 setVoiceOpen(false);
-                toast.success("Voice updated");
+                toast.success("Saved");
               }}
             >
-              {voiceSaving ? "Saving…" : "Save voice"}
+              {voiceSaving ? "Saving…" : "Save"}
             </Button>
           </DialogFooter>
           </div>
