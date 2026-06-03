@@ -763,24 +763,13 @@ function AgentDetailPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-2">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="ed-bn">Business name</Label>
-                <Input
-                  id="ed-bn"
-                  value={edit.business_name}
-                  onChange={(e) => setEdit({ ...edit, business_name: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="ed-an">Assistant name</Label>
-                <Input
-                  id="ed-an"
-                  value={edit.assistant_name}
-                  onChange={(e) => setEdit({ ...edit, assistant_name: e.target.value })}
-                  placeholder="Ava"
-                />
-              </div>
+            <div>
+              <Label htmlFor="ed-bn">Business name</Label>
+              <Input
+                id="ed-bn"
+                value={edit.business_name}
+                onChange={(e) => setEdit({ ...edit, business_name: e.target.value })}
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
