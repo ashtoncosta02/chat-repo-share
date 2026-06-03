@@ -41,7 +41,7 @@ import { toast } from "sonner";
 import { PhoneNumberSetup } from "@/components/dashboard/PhoneNumberSetup";
 import { AnswerModeCard } from "@/components/dashboard/AnswerModeCard";
 import { GoogleCalendarCard } from "@/components/dashboard/GoogleCalendarCard";
-import { NotificationsCard } from "@/components/dashboard/NotificationsCard";
+
 import { LiveVoicePreview } from "@/components/dashboard/LiveVoicePreview";
 import { syncReceptionistAgent, deleteReceptionistAgent } from "@/server/elevenlabs-agent.functions";
 import { VOICE_OPTIONS, DEFAULT_VOICE_ID, getVoiceById } from "@/lib/voices";
@@ -560,16 +560,6 @@ function AgentDetailPage() {
           onChange={(next) => setAgent((prev) => (prev ? { ...prev, answer_mode: next } : prev))}
         />
         <GoogleCalendarCard agentId={agent.id} />
-        <NotificationsCard
-          agentId={agent.id}
-          emailEnabled={agent.notify_email_transcript}
-          smsEnabled={agent.notify_sms_transcript}
-          email={agent.notify_email}
-          phone={agent.notify_phone}
-          onChange={(next) =>
-            setAgent((prev) => (prev ? { ...prev, ...next } : prev))
-          }
-        />
       </div>
 
       {/* Chat surface */}
