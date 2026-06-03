@@ -101,6 +101,7 @@ function AgentDetailPage() {
   const [voiceOpen, setVoiceOpen] = useState(false);
   const [voiceSaving, setVoiceSaving] = useState(false);
   const [voiceDraft, setVoiceDraft] = useState<string>(DEFAULT_VOICE_ID);
+  const [nameDraft, setNameDraft] = useState<string>("");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -489,10 +490,11 @@ function AgentDetailPage() {
             size="sm"
             onClick={() => {
               setVoiceDraft(agent.voice_id ?? DEFAULT_VOICE_ID);
+              setNameDraft(agent.assistant_name ?? "");
               setVoiceOpen(true);
             }}
           >
-            <Volume2 className="h-3.5 w-3.5 mr-1.5" /> {assistantName}'s voice ({getVoiceById(agent.voice_id).name})
+            <Volume2 className="h-3.5 w-3.5 mr-1.5" /> {assistantName}'s name & voice ({getVoiceById(agent.voice_id).name})
           </Button>
           <Button
             variant="outline"
@@ -646,54 +648,66 @@ function AgentDetailPage() {
         <DialogContent className="max-w-none w-screen h-screen sm:rounded-none overflow-y-auto p-6 sm:p-10">
           <div className="mx-auto w-full max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Change voice</DialogTitle>
+            <DialogTitle>Receptionist name & voice</DialogTitle>
             <DialogDescription>
-              Pick the voice {assistantName} uses on phone calls and chat replies.
+              Choose what your receptionist is called and which voice they use on calls and chat.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3 py-2">
-            <Select value={voiceDraft} onValueChange={setVoiceDraft}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a voice" />
-              </SelectTrigger>
-              <SelectContent>
-                {VOICE_OPTIONS.map((v) => (
-                  <SelectItem key={v.id} value={v.id}>
-                    <span className="font-medium">{v.name}</span>
-                    <span className="text-muted-foreground"> — {v.description}</span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={previewing}
-              onClick={async () => {
-                setPreviewing(true);
-                try {
-                  const voice = getVoiceById(voiceDraft);
-                  const sample = `Hi, thanks for calling ${agent.business_name}. How can I help you today?`;
-                  const res = await speak({ data: { text: sample, voiceId: voice.id } });
-                  if (!res.success) {
-                    toast.error(res.error);
-                    return;
+          <div className="space-y-4 py-2">
+            <div>
+              <Label htmlFor="vd-name">Receptionist name</Label>
+              <Input
+                id="vd-name"
+                value={nameDraft}
+                onChange={(e) => setNameDraft(e.target.value)}
+                placeholder="Ava"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Voice</Label>
+              <Select value={voiceDraft} onValueChange={setVoiceDraft}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a voice" />
+                </SelectTrigger>
+                <SelectContent>
+                  {VOICE_OPTIONS.map((v) => (
+                    <SelectItem key={v.id} value={v.id}>
+                      <span className="font-medium">{v.name}</span>
+                      <span className="text-muted-foreground"> — {v.description}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={previewing}
+                onClick={async () => {
+                  setPreviewing(true);
+                  try {
+                    const voice = getVoiceById(voiceDraft);
+                    const sample = `Hi, thanks for calling ${agent.business_name}. How can I help you today?`;
+                    const res = await speak({ data: { text: sample, voiceId: voice.id } });
+                    if (!res.success) {
+                      toast.error(res.error);
+                      return;
+                    }
+                    audioElRef.current?.pause();
+                    const audio = new Audio(`data:audio/mpeg;base64,${res.audioBase64}`);
+                    audioElRef.current = audio;
+                    await audio.play();
+                  } catch (e) {
+                    toast.error(e instanceof Error ? e.message : "Preview failed");
+                  } finally {
+                    setPreviewing(false);
                   }
-                  audioElRef.current?.pause();
-                  const audio = new Audio(`data:audio/mpeg;base64,${res.audioBase64}`);
-                  audioElRef.current = audio;
-                  await audio.play();
-                } catch (e) {
-                  toast.error(e instanceof Error ? e.message : "Preview failed");
-                } finally {
-                  setPreviewing(false);
-                }
-              }}
-            >
-              <Play className="h-3.5 w-3.5 mr-1.5" />
-              {previewing ? "Loading…" : "Preview voice"}
-            </Button>
+                }}
+              >
+                <Play className="h-3.5 w-3.5 mr-1.5" />
+                {previewing ? "Loading…" : "Preview voice"}
+              </Button>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setVoiceOpen(false)} disabled={voiceSaving}>
@@ -704,13 +718,14 @@ function AgentDetailPage() {
               className="bg-[var(--gold)] hover:bg-[var(--gold)]/90 text-white"
               onClick={async () => {
                 setVoiceSaving(true);
+                const trimmedName = nameDraft.trim() || null;
                 const { error } = await supabase
                   .from("agents")
-                  .update({ voice_id: voiceDraft })
+                  .update({ voice_id: voiceDraft, assistant_name: trimmedName })
                   .eq("id", agent.id);
                 if (error) {
                   setVoiceSaving(false);
-                  toast.error("Couldn't update voice", { description: error.message });
+                  toast.error("Couldn't save changes", { description: error.message });
                   return;
                 }
                 let elAgentId = agent.elevenlabs_agent_id;
@@ -724,13 +739,13 @@ function AgentDetailPage() {
                 } catch (e) {
                   console.error("EL sync exception:", e);
                 }
-                setAgent({ ...agent, voice_id: voiceDraft, elevenlabs_agent_id: elAgentId });
+                setAgent({ ...agent, voice_id: voiceDraft, assistant_name: trimmedName, elevenlabs_agent_id: elAgentId });
                 setVoiceSaving(false);
                 setVoiceOpen(false);
-                toast.success("Voice updated");
+                toast.success("Saved");
               }}
             >
-              {voiceSaving ? "Saving…" : "Save voice"}
+              {voiceSaving ? "Saving…" : "Save"}
             </Button>
           </DialogFooter>
           </div>
@@ -748,24 +763,13 @@ function AgentDetailPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-2">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="ed-bn">Business name</Label>
-                <Input
-                  id="ed-bn"
-                  value={edit.business_name}
-                  onChange={(e) => setEdit({ ...edit, business_name: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="ed-an">Assistant name</Label>
-                <Input
-                  id="ed-an"
-                  value={edit.assistant_name}
-                  onChange={(e) => setEdit({ ...edit, assistant_name: e.target.value })}
-                  placeholder="Ava"
-                />
-              </div>
+            <div>
+              <Label htmlFor="ed-bn">Business name</Label>
+              <Input
+                id="ed-bn"
+                value={edit.business_name}
+                onChange={(e) => setEdit({ ...edit, business_name: e.target.value })}
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -1019,7 +1023,6 @@ function AgentDetailPage() {
                   .filter((f) => f.question || f.answer);
                 const payload = {
                   business_name: edit.business_name.trim(),
-                  assistant_name: edit.assistant_name.trim() || null,
                   tone: edit.tone.trim() || null,
                   primary_goal: edit.primary_goal.trim() || null,
                   services: edit.services.trim() || null,
