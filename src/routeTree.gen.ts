@@ -16,6 +16,7 @@ import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as WidgetAgentIdRouteImport } from './routes/widget.$agentId'
 import { Route as DashboardPhoneNumbersRouteImport } from './routes/dashboard.phone-numbers'
 import { Route as DashboardOnboardingRouteImport } from './routes/dashboard.onboarding'
+import { Route as DashboardNotificationsRouteImport } from './routes/dashboard.notifications'
 import { Route as DashboardLeadsRouteImport } from './routes/dashboard.leads'
 import { Route as DashboardConversationsRouteImport } from './routes/dashboard.conversations'
 import { Route as DashboardChatWidgetRouteImport } from './routes/dashboard.chat-widget'
@@ -74,6 +75,11 @@ const DashboardPhoneNumbersRoute = DashboardPhoneNumbersRouteImport.update({
 const DashboardOnboardingRoute = DashboardOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardNotificationsRoute = DashboardNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardLeadsRoute = DashboardLeadsRouteImport.update({
@@ -217,6 +223,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/chat-widget': typeof DashboardChatWidgetRoute
   '/dashboard/conversations': typeof DashboardConversationsRouteWithChildren
   '/dashboard/leads': typeof DashboardLeadsRoute
+  '/dashboard/notifications': typeof DashboardNotificationsRoute
   '/dashboard/onboarding': typeof DashboardOnboardingRoute
   '/dashboard/phone-numbers': typeof DashboardPhoneNumbersRoute
   '/widget/$agentId': typeof WidgetAgentIdRoute
@@ -248,6 +255,7 @@ export interface FileRoutesByTo {
   '/dashboard/bookings': typeof DashboardBookingsRoute
   '/dashboard/chat-widget': typeof DashboardChatWidgetRoute
   '/dashboard/leads': typeof DashboardLeadsRoute
+  '/dashboard/notifications': typeof DashboardNotificationsRoute
   '/dashboard/onboarding': typeof DashboardOnboardingRoute
   '/dashboard/phone-numbers': typeof DashboardPhoneNumbersRoute
   '/widget/$agentId': typeof WidgetAgentIdRoute
@@ -282,6 +290,7 @@ export interface FileRoutesById {
   '/dashboard/chat-widget': typeof DashboardChatWidgetRoute
   '/dashboard/conversations': typeof DashboardConversationsRouteWithChildren
   '/dashboard/leads': typeof DashboardLeadsRoute
+  '/dashboard/notifications': typeof DashboardNotificationsRoute
   '/dashboard/onboarding': typeof DashboardOnboardingRoute
   '/dashboard/phone-numbers': typeof DashboardPhoneNumbersRoute
   '/widget/$agentId': typeof WidgetAgentIdRoute
@@ -317,6 +326,7 @@ export interface FileRouteTypes {
     | '/dashboard/chat-widget'
     | '/dashboard/conversations'
     | '/dashboard/leads'
+    | '/dashboard/notifications'
     | '/dashboard/onboarding'
     | '/dashboard/phone-numbers'
     | '/widget/$agentId'
@@ -348,6 +358,7 @@ export interface FileRouteTypes {
     | '/dashboard/bookings'
     | '/dashboard/chat-widget'
     | '/dashboard/leads'
+    | '/dashboard/notifications'
     | '/dashboard/onboarding'
     | '/dashboard/phone-numbers'
     | '/widget/$agentId'
@@ -381,6 +392,7 @@ export interface FileRouteTypes {
     | '/dashboard/chat-widget'
     | '/dashboard/conversations'
     | '/dashboard/leads'
+    | '/dashboard/notifications'
     | '/dashboard/onboarding'
     | '/dashboard/phone-numbers'
     | '/widget/$agentId'
@@ -473,6 +485,13 @@ declare module '@tanstack/react-router' {
       path: '/onboarding'
       fullPath: '/dashboard/onboarding'
       preLoaderRoute: typeof DashboardOnboardingRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/notifications': {
+      id: '/dashboard/notifications'
+      path: '/notifications'
+      fullPath: '/dashboard/notifications'
+      preLoaderRoute: typeof DashboardNotificationsRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/leads': {
@@ -683,6 +702,7 @@ interface DashboardRouteChildren {
   DashboardChatWidgetRoute: typeof DashboardChatWidgetRoute
   DashboardConversationsRoute: typeof DashboardConversationsRouteWithChildren
   DashboardLeadsRoute: typeof DashboardLeadsRoute
+  DashboardNotificationsRoute: typeof DashboardNotificationsRoute
   DashboardOnboardingRoute: typeof DashboardOnboardingRoute
   DashboardPhoneNumbersRoute: typeof DashboardPhoneNumbersRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
@@ -697,6 +717,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardChatWidgetRoute: DashboardChatWidgetRoute,
   DashboardConversationsRoute: DashboardConversationsRouteWithChildren,
   DashboardLeadsRoute: DashboardLeadsRoute,
+  DashboardNotificationsRoute: DashboardNotificationsRoute,
   DashboardOnboardingRoute: DashboardOnboardingRoute,
   DashboardPhoneNumbersRoute: DashboardPhoneNumbersRoute,
   DashboardIndexRoute: DashboardIndexRoute,

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { supabase } from "@/integrations/supabase/client";
-import { LayoutDashboard, BarChart3, User, MessageSquare, Menu, X, Code2, Calendar, Shield, Bot, Phone } from "lucide-react";
+import { LayoutDashboard, BarChart3, User, MessageSquare, Menu, X, Code2, Calendar, Shield, Bot, Phone, Bell } from "lucide-react";
 import { AgentFactoryLogo } from "@/components/AgentFactoryLogo";
 import { OwnerChatWidget } from "@/components/dashboard/OwnerChatWidget";
 import { DialerPanel } from "@/components/dashboard/DialerPanel";
