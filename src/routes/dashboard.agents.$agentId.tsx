@@ -70,6 +70,10 @@ interface Agent {
   answer_mode: "immediate" | "after_4_rings";
   voice_id: string | null;
   elevenlabs_agent_id: string | null;
+  notify_email_transcript: boolean;
+  notify_sms_transcript: boolean;
+  notify_email: string | null;
+  notify_phone: string | null;
 }
 
 interface Msg {
