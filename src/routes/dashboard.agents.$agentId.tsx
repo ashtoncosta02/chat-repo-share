@@ -1023,7 +1023,6 @@ function AgentDetailPage() {
                   .filter((f) => f.question || f.answer);
                 const payload = {
                   business_name: edit.business_name.trim(),
-                  assistant_name: edit.assistant_name.trim() || null,
                   tone: edit.tone.trim() || null,
                   primary_goal: edit.primary_goal.trim() || null,
                   services: edit.services.trim() || null,
