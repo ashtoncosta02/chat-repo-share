@@ -122,13 +122,21 @@ export const getAdminUsers = createServerFn({ method: "POST" })
       bookingsRes,
       leadsRes,
       rolesRes,
+      phonesRes,
+      gcalListRes,
+      lastVoiceRes,
+      lastWidgetRes,
     ] = await Promise.all([
-      supabaseAdmin.from("agents").select("user_id, business_name, is_live, onboarding_completed").in("user_id", userIds),
+      supabaseAdmin.from("agents").select("user_id, business_name, is_live, onboarding_completed, elevenlabs_agent_id").in("user_id", userIds),
       supabaseAdmin.from("widget_conversations").select("user_id").in("user_id", userIds),
       supabaseAdmin.from("conversations").select("user_id").in("user_id", userIds),
       supabaseAdmin.from("calendar_bookings").select("user_id").in("user_id", userIds),
       supabaseAdmin.from("leads").select("user_id").in("user_id", userIds),
       supabaseAdmin.from("user_roles").select("user_id, role").in("user_id", userIds),
+      supabaseAdmin.from("phone_numbers").select("user_id, elevenlabs_phone_number_id").in("user_id", userIds),
+      supabaseAdmin.from("agent_google_calendar").select("user_id, token_expires_at").in("user_id", userIds),
+      supabaseAdmin.from("conversations").select("user_id, started_at").in("user_id", userIds).order("started_at", { ascending: false }),
+      supabaseAdmin.from("widget_conversations").select("user_id, created_at").in("user_id", userIds).order("created_at", { ascending: false }),
     ]);
 
     const tally = (rows: { user_id: string }[] | null) => {
@@ -141,8 +149,30 @@ export const getAdminUsers = createServerFn({ method: "POST" })
     const voiceCounts = tally(voiceRes.data);
     const bookingCounts = tally(bookingsRes.data);
     const leadCounts = tally(leadsRes.data);
+    const phoneCounts = tally(phonesRes.data);
 
-    const agentByUser = new Map<string, { business_name: string; is_live: boolean; onboarding_completed: boolean }>();
+    const phoneUnlinked = new Map<string, number>();
+    (phonesRes.data ?? []).forEach((p) => {
+      if (!p.elevenlabs_phone_number_id) phoneUnlinked.set(p.user_id, (phoneUnlinked.get(p.user_id) ?? 0) + 1);
+    });
+
+    const gcalByUser = new Map<string, { expired: boolean }>();
+    const now = Date.now();
+    (gcalListRes.data ?? []).forEach((g) => {
+      gcalByUser.set(g.user_id, { expired: new Date(g.token_expires_at).getTime() < now });
+    });
+
+    const lastActivity = new Map<string, string>();
+    (lastVoiceRes.data ?? []).forEach((r) => {
+      const prev = lastActivity.get(r.user_id);
+      if (!prev || r.started_at > prev) lastActivity.set(r.user_id, r.started_at);
+    });
+    (lastWidgetRes.data ?? []).forEach((r) => {
+      const prev = lastActivity.get(r.user_id);
+      if (!prev || r.created_at > prev) lastActivity.set(r.user_id, r.created_at);
+    });
+
+    const agentByUser = new Map<string, { business_name: string; is_live: boolean; onboarding_completed: boolean; elevenlabs_agent_id: string | null }>();
     (agentsRes.data ?? []).forEach((a) => agentByUser.set(a.user_id, a));
 
     const adminSet = new Set<string>();
@@ -150,21 +180,50 @@ export const getAdminUsers = createServerFn({ method: "POST" })
       if (r.role === "admin") adminSet.add(r.user_id);
     });
 
-    const users = profiles.map((p) => ({
-      user_id: p.user_id,
-      email: p.email,
-      display_name: p.display_name,
-      created_at: p.created_at,
-      is_admin: adminSet.has(p.user_id),
-      agent: agentByUser.get(p.user_id) ?? null,
-      widget_conversations: widgetCounts.get(p.user_id) ?? 0,
-      voice_conversations: voiceCounts.get(p.user_id) ?? 0,
-      bookings: bookingCounts.get(p.user_id) ?? 0,
-      leads: leadCounts.get(p.user_id) ?? 0,
-    }));
+    const users = profiles.map((p) => {
+      const agent = agentByUser.get(p.user_id) ?? null;
+      const phones = phoneCounts.get(p.user_id) ?? 0;
+      const unlinked = phoneUnlinked.get(p.user_id) ?? 0;
+      const gcal = gcalByUser.get(p.user_id) ?? null;
+      const issues: string[] = [];
+      if (!agent) issues.push("No receptionist");
+      else {
+        if (!agent.onboarding_completed) issues.push("Onboarding incomplete");
+        if (!agent.elevenlabs_agent_id) issues.push("Voice not linked");
+      }
+      if (phones === 0) issues.push("No phone number");
+      else if (unlinked > 0) issues.push(`${unlinked} number(s) not connected to AI`);
+      if (gcal?.expired) issues.push("Calendar token expired");
+
+      const status: "healthy" | "warning" | "inactive" = (() => {
+        if (issues.length > 0) return "warning";
+        const last = lastActivity.get(p.user_id);
+        if (last && Date.now() - new Date(last).getTime() > 30 * 86400000) return "inactive";
+        if (!last && Date.now() - new Date(p.created_at).getTime() > 7 * 86400000) return "inactive";
+        return "healthy";
+      })();
+
+      return {
+        user_id: p.user_id,
+        email: p.email,
+        display_name: p.display_name,
+        created_at: p.created_at,
+        is_admin: adminSet.has(p.user_id),
+        agent,
+        widget_conversations: widgetCounts.get(p.user_id) ?? 0,
+        voice_conversations: voiceCounts.get(p.user_id) ?? 0,
+        bookings: bookingCounts.get(p.user_id) ?? 0,
+        leads: leadCounts.get(p.user_id) ?? 0,
+        phones,
+        last_activity_at: lastActivity.get(p.user_id) ?? null,
+        issues,
+        status,
+      };
+    });
 
     return { success: true as const, users };
   });
+
 
 export const checkIsAdmin = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => tokenSchema.parse(input))
