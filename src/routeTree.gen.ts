@@ -25,6 +25,7 @@ import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard.analy
 import { Route as DashboardAgentRouteImport } from './routes/dashboard.agent'
 import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
 import { Route as DashboardConversationsIndexRouteImport } from './routes/dashboard.conversations.index'
+import { Route as DashboardAdminIndexRouteImport } from './routes/dashboard.admin.index'
 import { Route as DashboardConversationsConversationIdRouteImport } from './routes/dashboard.conversations.$conversationId'
 import { Route as DashboardAgentsAgentIdRouteImport } from './routes/dashboard.agents.$agentId'
 import { Route as DashboardAdminUsersRouteImport } from './routes/dashboard.admin.users'
@@ -125,6 +126,11 @@ const DashboardConversationsIndexRoute =
     path: '/',
     getParentRoute: () => DashboardConversationsRoute,
   } as any)
+const DashboardAdminIndexRoute = DashboardAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardAdminRoute,
+} as any)
 const DashboardConversationsConversationIdRoute =
   DashboardConversationsConversationIdRouteImport.update({
     id: '/$conversationId',
@@ -246,6 +252,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/admin/users': typeof DashboardAdminUsersRouteWithChildren
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
+  '/dashboard/admin/': typeof DashboardAdminIndexRoute
   '/dashboard/conversations/': typeof DashboardConversationsIndexRoute
   '/api/public/elevenlabs/postcall': typeof ApiPublicElevenlabsPostcallRoute
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
@@ -264,7 +271,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/agent': typeof DashboardAgentRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/bookings': typeof DashboardBookingsRoute
@@ -280,6 +286,7 @@ export interface FileRoutesByTo {
   '/dashboard/admin/users': typeof DashboardAdminUsersRouteWithChildren
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
+  '/dashboard/admin': typeof DashboardAdminIndexRoute
   '/dashboard/conversations': typeof DashboardConversationsIndexRoute
   '/api/public/elevenlabs/postcall': typeof ApiPublicElevenlabsPostcallRoute
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
@@ -317,6 +324,7 @@ export interface FileRoutesById {
   '/dashboard/admin/users': typeof DashboardAdminUsersRouteWithChildren
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
+  '/dashboard/admin/': typeof DashboardAdminIndexRoute
   '/dashboard/conversations/': typeof DashboardConversationsIndexRoute
   '/api/public/elevenlabs/postcall': typeof ApiPublicElevenlabsPostcallRoute
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
@@ -355,6 +363,7 @@ export interface FileRouteTypes {
     | '/dashboard/admin/users'
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
+    | '/dashboard/admin/'
     | '/dashboard/conversations/'
     | '/api/public/elevenlabs/postcall'
     | '/api/public/google-calendar/callback'
@@ -373,7 +382,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
-    | '/dashboard/admin'
     | '/dashboard/agent'
     | '/dashboard/analytics'
     | '/dashboard/bookings'
@@ -389,6 +397,7 @@ export interface FileRouteTypes {
     | '/dashboard/admin/users'
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
+    | '/dashboard/admin'
     | '/dashboard/conversations'
     | '/api/public/elevenlabs/postcall'
     | '/api/public/google-calendar/callback'
@@ -425,6 +434,7 @@ export interface FileRouteTypes {
     | '/dashboard/admin/users'
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
+    | '/dashboard/admin/'
     | '/dashboard/conversations/'
     | '/api/public/elevenlabs/postcall'
     | '/api/public/google-calendar/callback'
@@ -575,6 +585,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardConversationsIndexRouteImport
       parentRoute: typeof DashboardConversationsRoute
     }
+    '/dashboard/admin/': {
+      id: '/dashboard/admin/'
+      path: '/'
+      fullPath: '/dashboard/admin/'
+      preLoaderRoute: typeof DashboardAdminIndexRouteImport
+      parentRoute: typeof DashboardAdminRoute
+    }
     '/dashboard/conversations/$conversationId': {
       id: '/dashboard/conversations/$conversationId'
       path: '/$conversationId'
@@ -718,11 +735,13 @@ const DashboardAdminUsersRouteWithChildren =
 interface DashboardAdminRouteChildren {
   DashboardAdminHealthRoute: typeof DashboardAdminHealthRoute
   DashboardAdminUsersRoute: typeof DashboardAdminUsersRouteWithChildren
+  DashboardAdminIndexRoute: typeof DashboardAdminIndexRoute
 }
 
 const DashboardAdminRouteChildren: DashboardAdminRouteChildren = {
   DashboardAdminHealthRoute: DashboardAdminHealthRoute,
   DashboardAdminUsersRoute: DashboardAdminUsersRouteWithChildren,
+  DashboardAdminIndexRoute: DashboardAdminIndexRoute,
 }
 
 const DashboardAdminRouteWithChildren = DashboardAdminRoute._addFileChildren(
