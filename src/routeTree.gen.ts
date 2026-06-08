@@ -31,6 +31,7 @@ import { Route as DashboardAgentsAgentIdRouteImport } from './routes/dashboard.a
 import { Route as DashboardAdminUsersRouteImport } from './routes/dashboard.admin.users'
 import { Route as DashboardAdminHealthRouteImport } from './routes/dashboard.admin.health'
 import { Route as ApiPublicOwnerChatRouteImport } from './routes/api.public.owner-chat'
+import { Route as DashboardAdminUsersIndexRouteImport } from './routes/dashboard.admin.users.index'
 import { Route as DashboardAdminUsersUserIdRouteImport } from './routes/dashboard.admin.users.$userId'
 import { Route as ApiPublicWidgetEmbedDotjsRouteImport } from './routes/api.public.widget.embed[.]js'
 import { Route as ApiPublicWidgetChatRouteImport } from './routes/api.public.widget.chat'
@@ -157,6 +158,12 @@ const ApiPublicOwnerChatRoute = ApiPublicOwnerChatRouteImport.update({
   path: '/api/public/owner-chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardAdminUsersIndexRoute =
+  DashboardAdminUsersIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => DashboardAdminUsersRoute,
+  } as any)
 const DashboardAdminUsersUserIdRoute =
   DashboardAdminUsersUserIdRouteImport.update({
     id: '/$userId',
@@ -266,6 +273,7 @@ export interface FileRoutesByFullPath {
   '/api/public/widget/chat': typeof ApiPublicWidgetChatRoute
   '/api/public/widget/embed.js': typeof ApiPublicWidgetEmbedDotjsRoute
   '/dashboard/admin/users/$userId': typeof DashboardAdminUsersUserIdRoute
+  '/dashboard/admin/users/': typeof DashboardAdminUsersIndexRoute
   '/api/public/widget/config/$agentId': typeof ApiPublicWidgetConfigAgentIdRoute
 }
 export interface FileRoutesByTo {
@@ -283,7 +291,6 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardIndexRoute
   '/api/public/owner-chat': typeof ApiPublicOwnerChatRoute
   '/dashboard/admin/health': typeof DashboardAdminHealthRoute
-  '/dashboard/admin/users': typeof DashboardAdminUsersRouteWithChildren
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
   '/dashboard/admin': typeof DashboardAdminIndexRoute
@@ -300,6 +307,7 @@ export interface FileRoutesByTo {
   '/api/public/widget/chat': typeof ApiPublicWidgetChatRoute
   '/api/public/widget/embed.js': typeof ApiPublicWidgetEmbedDotjsRoute
   '/dashboard/admin/users/$userId': typeof DashboardAdminUsersUserIdRoute
+  '/dashboard/admin/users': typeof DashboardAdminUsersIndexRoute
   '/api/public/widget/config/$agentId': typeof ApiPublicWidgetConfigAgentIdRoute
 }
 export interface FileRoutesById {
@@ -338,6 +346,7 @@ export interface FileRoutesById {
   '/api/public/widget/chat': typeof ApiPublicWidgetChatRoute
   '/api/public/widget/embed.js': typeof ApiPublicWidgetEmbedDotjsRoute
   '/dashboard/admin/users/$userId': typeof DashboardAdminUsersUserIdRoute
+  '/dashboard/admin/users/': typeof DashboardAdminUsersIndexRoute
   '/api/public/widget/config/$agentId': typeof ApiPublicWidgetConfigAgentIdRoute
 }
 export interface FileRouteTypes {
@@ -377,6 +386,7 @@ export interface FileRouteTypes {
     | '/api/public/widget/chat'
     | '/api/public/widget/embed.js'
     | '/dashboard/admin/users/$userId'
+    | '/dashboard/admin/users/'
     | '/api/public/widget/config/$agentId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -394,7 +404,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/api/public/owner-chat'
     | '/dashboard/admin/health'
-    | '/dashboard/admin/users'
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
     | '/dashboard/admin'
@@ -411,6 +420,7 @@ export interface FileRouteTypes {
     | '/api/public/widget/chat'
     | '/api/public/widget/embed.js'
     | '/dashboard/admin/users/$userId'
+    | '/dashboard/admin/users'
     | '/api/public/widget/config/$agentId'
   id:
     | '__root__'
@@ -448,6 +458,7 @@ export interface FileRouteTypes {
     | '/api/public/widget/chat'
     | '/api/public/widget/embed.js'
     | '/dashboard/admin/users/$userId'
+    | '/dashboard/admin/users/'
     | '/api/public/widget/config/$agentId'
   fileRoutesById: FileRoutesById
 }
@@ -627,6 +638,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicOwnerChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/admin/users/': {
+      id: '/dashboard/admin/users/'
+      path: '/'
+      fullPath: '/dashboard/admin/users/'
+      preLoaderRoute: typeof DashboardAdminUsersIndexRouteImport
+      parentRoute: typeof DashboardAdminUsersRoute
+    }
     '/dashboard/admin/users/$userId': {
       id: '/dashboard/admin/users/$userId'
       path: '/$userId'
@@ -723,10 +741,12 @@ declare module '@tanstack/react-router' {
 
 interface DashboardAdminUsersRouteChildren {
   DashboardAdminUsersUserIdRoute: typeof DashboardAdminUsersUserIdRoute
+  DashboardAdminUsersIndexRoute: typeof DashboardAdminUsersIndexRoute
 }
 
 const DashboardAdminUsersRouteChildren: DashboardAdminUsersRouteChildren = {
   DashboardAdminUsersUserIdRoute: DashboardAdminUsersUserIdRoute,
+  DashboardAdminUsersIndexRoute: DashboardAdminUsersIndexRoute,
 }
 
 const DashboardAdminUsersRouteWithChildren =
