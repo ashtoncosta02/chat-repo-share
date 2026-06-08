@@ -2,9 +2,9 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
-import { getSystemHealth } from "@/lib/admin.functions";
+import { getSystemHealth, getGlobalErrorFeed } from "@/lib/admin.functions";
 import { PageHeader } from "@/components/dashboard/PageHeader";
-import { ArrowLeft, Shield, Activity, Phone, MessageSquare, Calendar, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Shield, Activity, Phone, MessageSquare, Calendar, AlertTriangle, CheckCircle2, ExternalLink } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/admin/health")({
   head: () => ({ meta: [{ title: "Admin · System health" }] }),
@@ -12,12 +12,14 @@ export const Route = createFileRoute("/dashboard/admin/health")({
 });
 
 type Health = Awaited<ReturnType<typeof getSystemHealth>>;
+type Errors = Awaited<ReturnType<typeof getGlobalErrorFeed>>;
 
 export function AdminHealthPage() {
   const { session } = useAuth();
   const { isAdmin, checked } = useIsAdmin();
   const navigate = useNavigate();
   const [data, setData] = useState<Health | null>(null);
+  const [errorFeed, setErrorFeed] = useState<Errors | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,9 +29,10 @@ export function AdminHealthPage() {
   const load = () => {
     if (!session?.access_token) return;
     setLoading(true);
-    getSystemHealth({ data: { accessToken: session.access_token } })
-      .then(setData)
-      .finally(() => setLoading(false));
+    Promise.all([
+      getSystemHealth({ data: { accessToken: session.access_token } }).then(setData),
+      getGlobalErrorFeed({ data: { accessToken: session.access_token } }).then(setErrorFeed),
+    ]).finally(() => setLoading(false));
   };
 
   useEffect(() => {
@@ -94,6 +97,39 @@ export function AdminHealthPage() {
           ))}
         </div>
 
+        {/* Error feed — aggregated issues across all users */}
+        {errorFeed && "errors" in errorFeed && errorFeed.errors && (
+          <Section title={`Error feed (${errorFeed.errors.length})`} icon={<AlertTriangle className="h-4 w-4" />}>
+            {errorFeed.errors.length === 0 ? (
+              <div className="text-sm text-green-700 flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4" /> No errors detected across any user accounts.
+              </div>
+            ) : (
+              <div className="space-y-1.5 max-h-[400px] overflow-y-auto">
+                {errorFeed.errors.map((e, i) => (
+                  <Link
+                    key={i}
+                    to="/dashboard/admin/users/$userId"
+                    params={{ userId: e.user_id }}
+                    className="flex items-start gap-3 rounded-lg border border-border p-3 text-sm hover:bg-muted/40 transition"
+                  >
+                    <span className="mt-0.5 text-base">{kindIcon(e.kind)}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-foreground">{e.message}</div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {e.user_label}{e.detail ? ` · ${e.detail}` : ""}
+                      </div>
+                    </div>
+                    <div className="text-xs text-muted-foreground whitespace-nowrap">{new Date(e.at).toLocaleString()}</div>
+                    <ExternalLink className="h-3.5 w-3.5 text-muted-foreground mt-1" />
+                  </Link>
+                ))}
+              </div>
+            )}
+          </Section>
+        )}
+
+
         {/* Voice */}
         <Section title="Voice pipeline (last 24h)" icon={<Phone className="h-4 w-4" />}>
           <Stats>
@@ -141,6 +177,16 @@ export function AdminHealthPage() {
       </div>
     </div>
   );
+}
+
+function kindIcon(kind: string): string {
+  switch (kind) {
+    case "missing_transcript": return "📞";
+    case "phone_unlinked": return "🔌";
+    case "gcal_expired": return "📅";
+    case "onboarding_stuck": return "⏳";
+    default: return "⚠";
+  }
 }
 
 function Section({ title, icon, children }: { title: string; icon?: React.ReactNode; children: React.ReactNode }) {
