@@ -101,7 +101,7 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-md">
         <Link to="/" className="mb-8 flex justify-center">
-          <AgentFactoryLogo className="text-center" />
+          <AgentFactoryLogo imgClassName="h-28 w-auto object-contain" />
         </Link>
         <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
           <Tabs defaultValue={defaultTab}>
