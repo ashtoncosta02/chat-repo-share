@@ -97,6 +97,39 @@ export function AdminHealthPage() {
           ))}
         </div>
 
+        {/* Error feed — aggregated issues across all users */}
+        {errorFeed && "errors" in errorFeed && (
+          <Section title={`Error feed (${errorFeed.errors.length})`} icon={<AlertTriangle className="h-4 w-4" />}>
+            {errorFeed.errors.length === 0 ? (
+              <div className="text-sm text-green-700 flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4" /> No errors detected across any user accounts.
+              </div>
+            ) : (
+              <div className="space-y-1.5 max-h-[400px] overflow-y-auto">
+                {errorFeed.errors.map((e, i) => (
+                  <Link
+                    key={i}
+                    to="/dashboard/admin/users/$userId"
+                    params={{ userId: e.user_id }}
+                    className="flex items-start gap-3 rounded-lg border border-border p-3 text-sm hover:bg-muted/40 transition"
+                  >
+                    <span className="mt-0.5">{kindIcon(e.kind)}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-foreground">{e.message}</div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {e.user_label}{e.detail ? ` · ${e.detail}` : ""}
+                      </div>
+                    </div>
+                    <div className="text-xs text-muted-foreground whitespace-nowrap">{new Date(e.at).toLocaleString()}</div>
+                    <ExternalLink className="h-3.5 w-3.5 text-muted-foreground mt-1" />
+                  </Link>
+                ))}
+              </div>
+            )}
+          </Section>
+        )}
+
+
         {/* Voice */}
         <Section title="Voice pipeline (last 24h)" icon={<Phone className="h-4 w-4" />}>
           <Stats>
