@@ -1,10 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import {
-  importTwilioNumber,
-  deleteElevenLabsPhoneNumber,
-} from "./elevenlabs-agent.server";
+
+async function getAdmin() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin;
+}
+async function getEl() {
+  return await import("@/server/elevenlabs-agent.server");
+}
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
 
