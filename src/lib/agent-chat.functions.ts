@@ -1,7 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { checkFreeBusy, createEvent } from "./google-calendar.server";
 import { coerceFaqs, faqsToPromptText, faqAllowsSms } from "@/lib/faqs";
 
 const ChatInput = z.object({
