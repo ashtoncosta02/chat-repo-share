@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { startOutboundCall } from "@/server/dialer.functions";
+import { startOutboundCall } from "@/lib/dialer.functions";
 import { Phone, Delete, Loader2, Settings2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
