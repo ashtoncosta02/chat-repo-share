@@ -55,6 +55,7 @@ function gatewayHeaders() {
 }
 
 async function getAuthenticatedUserId(accessToken: string) {
+  const supabaseAdmin = await getAdmin();
   const { data, error } = await supabaseAdmin.auth.getUser(accessToken);
   if (error || !data.user) {
     return { error: "Unauthorized. Please sign in again." as const };
