@@ -2,7 +2,7 @@ import logoUrl from "@/assets/ask-janice-logo.png";
 
 export function AgentFactoryLogo({
   className = "",
-  imgClassName = "h-10 w-auto object-contain",
+  imgClassName = "h-20 w-auto object-contain",
 }: {
   className?: string;
   imgClassName?: string;
