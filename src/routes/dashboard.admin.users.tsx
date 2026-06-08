@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { getAdminUsers } from "@/lib/admin.functions";
 import { PageHeader } from "@/components/dashboard/PageHeader";
-import { Shield, Search } from "lucide-react";
+import { ArrowLeft, Shield, Search } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/admin/users")({
   head: () => ({ meta: [{ title: "Admin · Users — Ask Kira" }] }),
@@ -87,6 +87,14 @@ function AdminUsersPage() {
         breadcrumb={
           <Link to="/dashboard/admin" className="inline-flex items-center gap-1.5 hover:text-foreground">
             <Shield className="h-3.5 w-3.5" /> Admin
+          </Link>
+        }
+        action={
+          <Link
+            to="/dashboard/admin"
+            className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-muted"
+          >
+            <ArrowLeft className="h-4 w-4" /> Back to admin
           </Link>
         }
       />
