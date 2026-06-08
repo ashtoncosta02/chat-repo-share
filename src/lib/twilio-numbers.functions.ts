@@ -300,6 +300,8 @@ const ReleaseInput = z.object({
 export const releasePhoneNumber = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => ReleaseInput.parse(input))
   .handler(async ({ data }) => {
+    const supabaseAdmin = await getAdmin();
+    const { deleteElevenLabsPhoneNumber } = await getEl();
     const auth = await getAuthenticatedUserId(data.accessToken);
     if ("error" in auth) {
       return { success: false as const, error: auth.error };
