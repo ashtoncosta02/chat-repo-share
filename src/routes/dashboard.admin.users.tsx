@@ -109,26 +109,31 @@ function AdminUsersPage() {
               <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
                 <tr>
                   <th className="text-left px-4 py-3 font-medium">User</th>
+                  <th className="text-left px-4 py-3 font-medium">Status</th>
                   <th className="text-left px-4 py-3 font-medium">Receptionist</th>
                   <th className="text-right px-4 py-3 font-medium">Chats</th>
                   <th className="text-right px-4 py-3 font-medium">Calls</th>
                   <th className="text-right px-4 py-3 font-medium">Bookings</th>
                   <th className="text-right px-4 py-3 font-medium">Leads</th>
-                  <th className="text-right px-4 py-3 font-medium">Joined</th>
+                  <th className="text-right px-4 py-3 font-medium">Last activity</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Loading…</td>
+                    <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">Loading…</td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">No users found.</td>
+                    <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">No users found.</td>
                   </tr>
                 ) : (
                   filtered.map((u) => (
-                    <tr key={u.user_id} className="hover:bg-muted/30">
+                    <tr
+                      key={u.user_id}
+                      className="hover:bg-muted/30 cursor-pointer"
+                      onClick={() => navigate({ to: "/dashboard/admin/users/$userId", params: { userId: u.user_id } })}
+                    >
                       <td className="px-4 py-3">
                         <div className="font-medium text-foreground flex items-center gap-2">
                           {u.display_name || u.email?.split("@")[0]}
@@ -139,6 +144,14 @@ function AdminUsersPage() {
                           )}
                         </div>
                         <div className="text-xs text-muted-foreground">{u.email}</div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <StatusBadge status={u.status} issueCount={u.issues.length} />
+                        {u.issues.length > 0 && (
+                          <div className="text-[11px] text-muted-foreground mt-1 max-w-[200px] truncate" title={u.issues.join(" · ")}>
+                            {u.issues[0]}
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         {u.agent ? (
@@ -162,7 +175,7 @@ function AdminUsersPage() {
                       <td className="px-4 py-3 text-right tabular-nums">{u.bookings}</td>
                       <td className="px-4 py-3 text-right tabular-nums">{u.leads}</td>
                       <td className="px-4 py-3 text-right text-xs text-muted-foreground whitespace-nowrap">
-                        {new Date(u.created_at).toLocaleDateString()}
+                        {relativeTime(u.last_activity_at)}
                       </td>
                     </tr>
                   ))
@@ -175,3 +188,26 @@ function AdminUsersPage() {
     </div>
   );
 }
+
+function StatusBadge({ status, issueCount }: { status: "healthy" | "warning" | "inactive"; issueCount: number }) {
+  if (status === "warning") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-medium text-red-700">
+        ⚠ {issueCount} issue{issueCount === 1 ? "" : "s"}
+      </span>
+    );
+  }
+  if (status === "inactive") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+        ● Inactive
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-medium text-green-700">
+      ✓ Healthy
+    </span>
+  );
+}
+
