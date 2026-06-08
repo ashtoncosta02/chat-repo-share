@@ -129,7 +129,7 @@ Rules:
           messages,
         };
         if (calendarConnected && a.id) {
-          body.tools = TOOLS;
+          body.tools = CHAT_TOOLS;
         }
 
         const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -171,7 +171,7 @@ Rules:
             } catch {
               // ignore
             }
-            const result = await runTool(a.id, tc.function.name, args);
+            const result = await runChatTool(a.id, tc.function.name, args);
             messages.push({
               role: "tool",
               tool_call_id: tc.id,
