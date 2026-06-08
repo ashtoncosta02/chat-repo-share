@@ -23,8 +23,8 @@ import { Route as DashboardChatWidgetRouteImport } from './routes/dashboard.chat
 import { Route as DashboardBookingsRouteImport } from './routes/dashboard.bookings'
 import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard.analytics'
 import { Route as DashboardAgentRouteImport } from './routes/dashboard.agent'
-import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
 import { Route as DashboardConversationsIndexRouteImport } from './routes/dashboard.conversations.index'
+import { Route as DashboardAdminIndexRouteImport } from './routes/dashboard.admin.index'
 import { Route as DashboardConversationsConversationIdRouteImport } from './routes/dashboard.conversations.$conversationId'
 import { Route as DashboardAgentsAgentIdRouteImport } from './routes/dashboard.agents.$agentId'
 import { Route as DashboardAdminUsersRouteImport } from './routes/dashboard.admin.users'
@@ -114,17 +114,17 @@ const DashboardAgentRoute = DashboardAgentRouteImport.update({
   path: '/agent',
   getParentRoute: () => DashboardRoute,
 } as any)
-const DashboardAdminRoute = DashboardAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => DashboardRoute,
-} as any)
 const DashboardConversationsIndexRoute =
   DashboardConversationsIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => DashboardConversationsRoute,
   } as any)
+const DashboardAdminIndexRoute = DashboardAdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardConversationsConversationIdRoute =
   DashboardConversationsConversationIdRouteImport.update({
     id: '/$conversationId',
@@ -137,14 +137,14 @@ const DashboardAgentsAgentIdRoute = DashboardAgentsAgentIdRouteImport.update({
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardAdminUsersRoute = DashboardAdminUsersRouteImport.update({
-  id: '/users',
-  path: '/users',
-  getParentRoute: () => DashboardAdminRoute,
+  id: '/admin/users',
+  path: '/admin/users',
+  getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardAdminHealthRoute = DashboardAdminHealthRouteImport.update({
-  id: '/health',
-  path: '/health',
-  getParentRoute: () => DashboardAdminRoute,
+  id: '/admin/health',
+  path: '/admin/health',
+  getParentRoute: () => DashboardRoute,
 } as any)
 const ApiPublicOwnerChatRoute = ApiPublicOwnerChatRouteImport.update({
   id: '/api/public/owner-chat',
@@ -229,7 +229,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRouteWithChildren
-  '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/agent': typeof DashboardAgentRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/bookings': typeof DashboardBookingsRoute
@@ -246,6 +245,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/admin/users': typeof DashboardAdminUsersRouteWithChildren
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
+  '/dashboard/admin/': typeof DashboardAdminIndexRoute
   '/dashboard/conversations/': typeof DashboardConversationsIndexRoute
   '/api/public/elevenlabs/postcall': typeof ApiPublicElevenlabsPostcallRoute
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
@@ -264,7 +264,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/agent': typeof DashboardAgentRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/bookings': typeof DashboardBookingsRoute
@@ -280,6 +279,7 @@ export interface FileRoutesByTo {
   '/dashboard/admin/users': typeof DashboardAdminUsersRouteWithChildren
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
+  '/dashboard/admin': typeof DashboardAdminIndexRoute
   '/dashboard/conversations': typeof DashboardConversationsIndexRoute
   '/api/public/elevenlabs/postcall': typeof ApiPublicElevenlabsPostcallRoute
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
@@ -300,7 +300,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRouteWithChildren
-  '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/agent': typeof DashboardAgentRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/bookings': typeof DashboardBookingsRoute
@@ -317,6 +316,7 @@ export interface FileRoutesById {
   '/dashboard/admin/users': typeof DashboardAdminUsersRouteWithChildren
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
+  '/dashboard/admin/': typeof DashboardAdminIndexRoute
   '/dashboard/conversations/': typeof DashboardConversationsIndexRoute
   '/api/public/elevenlabs/postcall': typeof ApiPublicElevenlabsPostcallRoute
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
@@ -338,7 +338,6 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
-    | '/dashboard/admin'
     | '/dashboard/agent'
     | '/dashboard/analytics'
     | '/dashboard/bookings'
@@ -355,6 +354,7 @@ export interface FileRouteTypes {
     | '/dashboard/admin/users'
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
+    | '/dashboard/admin/'
     | '/dashboard/conversations/'
     | '/api/public/elevenlabs/postcall'
     | '/api/public/google-calendar/callback'
@@ -373,7 +373,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
-    | '/dashboard/admin'
     | '/dashboard/agent'
     | '/dashboard/analytics'
     | '/dashboard/bookings'
@@ -389,6 +388,7 @@ export interface FileRouteTypes {
     | '/dashboard/admin/users'
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
+    | '/dashboard/admin'
     | '/dashboard/conversations'
     | '/api/public/elevenlabs/postcall'
     | '/api/public/google-calendar/callback'
@@ -408,7 +408,6 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
-    | '/dashboard/admin'
     | '/dashboard/agent'
     | '/dashboard/analytics'
     | '/dashboard/bookings'
@@ -425,6 +424,7 @@ export interface FileRouteTypes {
     | '/dashboard/admin/users'
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
+    | '/dashboard/admin/'
     | '/dashboard/conversations/'
     | '/api/public/elevenlabs/postcall'
     | '/api/public/google-calendar/callback'
@@ -561,19 +561,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAgentRouteImport
       parentRoute: typeof DashboardRoute
     }
-    '/dashboard/admin': {
-      id: '/dashboard/admin'
-      path: '/admin'
-      fullPath: '/dashboard/admin'
-      preLoaderRoute: typeof DashboardAdminRouteImport
-      parentRoute: typeof DashboardRoute
-    }
     '/dashboard/conversations/': {
       id: '/dashboard/conversations/'
       path: '/'
       fullPath: '/dashboard/conversations/'
       preLoaderRoute: typeof DashboardConversationsIndexRouteImport
       parentRoute: typeof DashboardConversationsRoute
+    }
+    '/dashboard/admin/': {
+      id: '/dashboard/admin/'
+      path: '/admin'
+      fullPath: '/dashboard/admin/'
+      preLoaderRoute: typeof DashboardAdminIndexRouteImport
+      parentRoute: typeof DashboardRoute
     }
     '/dashboard/conversations/$conversationId': {
       id: '/dashboard/conversations/$conversationId'
@@ -591,17 +591,17 @@ declare module '@tanstack/react-router' {
     }
     '/dashboard/admin/users': {
       id: '/dashboard/admin/users'
-      path: '/users'
+      path: '/admin/users'
       fullPath: '/dashboard/admin/users'
       preLoaderRoute: typeof DashboardAdminUsersRouteImport
-      parentRoute: typeof DashboardAdminRoute
+      parentRoute: typeof DashboardRoute
     }
     '/dashboard/admin/health': {
       id: '/dashboard/admin/health'
-      path: '/health'
+      path: '/admin/health'
       fullPath: '/dashboard/admin/health'
       preLoaderRoute: typeof DashboardAdminHealthRouteImport
-      parentRoute: typeof DashboardAdminRoute
+      parentRoute: typeof DashboardRoute
     }
     '/api/public/owner-chat': {
       id: '/api/public/owner-chat'
@@ -704,31 +704,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface DashboardAdminUsersRouteChildren {
-  DashboardAdminUsersUserIdRoute: typeof DashboardAdminUsersUserIdRoute
-}
-
-const DashboardAdminUsersRouteChildren: DashboardAdminUsersRouteChildren = {
-  DashboardAdminUsersUserIdRoute: DashboardAdminUsersUserIdRoute,
-}
-
-const DashboardAdminUsersRouteWithChildren =
-  DashboardAdminUsersRoute._addFileChildren(DashboardAdminUsersRouteChildren)
-
-interface DashboardAdminRouteChildren {
-  DashboardAdminHealthRoute: typeof DashboardAdminHealthRoute
-  DashboardAdminUsersRoute: typeof DashboardAdminUsersRouteWithChildren
-}
-
-const DashboardAdminRouteChildren: DashboardAdminRouteChildren = {
-  DashboardAdminHealthRoute: DashboardAdminHealthRoute,
-  DashboardAdminUsersRoute: DashboardAdminUsersRouteWithChildren,
-}
-
-const DashboardAdminRouteWithChildren = DashboardAdminRoute._addFileChildren(
-  DashboardAdminRouteChildren,
-)
-
 interface DashboardConversationsRouteChildren {
   DashboardConversationsConversationIdRoute: typeof DashboardConversationsConversationIdRoute
   DashboardConversationsIndexRoute: typeof DashboardConversationsIndexRoute
@@ -746,8 +721,18 @@ const DashboardConversationsRouteWithChildren =
     DashboardConversationsRouteChildren,
   )
 
+interface DashboardAdminUsersRouteChildren {
+  DashboardAdminUsersUserIdRoute: typeof DashboardAdminUsersUserIdRoute
+}
+
+const DashboardAdminUsersRouteChildren: DashboardAdminUsersRouteChildren = {
+  DashboardAdminUsersUserIdRoute: DashboardAdminUsersUserIdRoute,
+}
+
+const DashboardAdminUsersRouteWithChildren =
+  DashboardAdminUsersRoute._addFileChildren(DashboardAdminUsersRouteChildren)
+
 interface DashboardRouteChildren {
-  DashboardAdminRoute: typeof DashboardAdminRouteWithChildren
   DashboardAgentRoute: typeof DashboardAgentRoute
   DashboardAnalyticsRoute: typeof DashboardAnalyticsRoute
   DashboardBookingsRoute: typeof DashboardBookingsRoute
@@ -758,11 +743,13 @@ interface DashboardRouteChildren {
   DashboardOnboardingRoute: typeof DashboardOnboardingRoute
   DashboardPhoneNumbersRoute: typeof DashboardPhoneNumbersRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardAdminHealthRoute: typeof DashboardAdminHealthRoute
+  DashboardAdminUsersRoute: typeof DashboardAdminUsersRouteWithChildren
   DashboardAgentsAgentIdRoute: typeof DashboardAgentsAgentIdRoute
+  DashboardAdminIndexRoute: typeof DashboardAdminIndexRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
-  DashboardAdminRoute: DashboardAdminRouteWithChildren,
   DashboardAgentRoute: DashboardAgentRoute,
   DashboardAnalyticsRoute: DashboardAnalyticsRoute,
   DashboardBookingsRoute: DashboardBookingsRoute,
@@ -773,7 +760,10 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardOnboardingRoute: DashboardOnboardingRoute,
   DashboardPhoneNumbersRoute: DashboardPhoneNumbersRoute,
   DashboardIndexRoute: DashboardIndexRoute,
+  DashboardAdminHealthRoute: DashboardAdminHealthRoute,
+  DashboardAdminUsersRoute: DashboardAdminUsersRouteWithChildren,
   DashboardAgentsAgentIdRoute: DashboardAgentsAgentIdRoute,
+  DashboardAdminIndexRoute: DashboardAdminIndexRoute,
 }
 
 const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
@@ -803,3 +793,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
