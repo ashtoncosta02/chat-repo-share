@@ -6,7 +6,7 @@ import { PageHeader, EmptyState } from "@/components/dashboard/PageHeader";
 import { Phone, Bot, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
-import { linkExistingNumberToElevenLabs } from "@/server/twilio-numbers";
+import { linkExistingNumberToElevenLabs } from "@/lib/twilio-numbers.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard/phone-numbers")({

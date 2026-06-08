@@ -1,10 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import {
-  importTwilioNumber,
-  deleteElevenLabsPhoneNumber,
-} from "./elevenlabs-agent.server";
+
+async function getAdmin() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin;
+}
+async function getEl() {
+  return await import("@/server/elevenlabs-agent.server");
+}
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
 
@@ -25,6 +28,7 @@ async function tryLinkToElevenLabs(opts: {
     return null;
   }
   try {
+    const { importTwilioNumber } = await getEl();
     const { phone_number_id } = await importTwilioNumber({
       phoneNumber: opts.phoneNumber,
       label: opts.label,
@@ -51,6 +55,7 @@ function gatewayHeaders() {
 }
 
 async function getAuthenticatedUserId(accessToken: string) {
+  const supabaseAdmin = await getAdmin();
   const { data, error } = await supabaseAdmin.auth.getUser(accessToken);
   if (error || !data.user) {
     return { error: "Unauthorized. Please sign in again." as const };
@@ -168,6 +173,7 @@ const PurchaseInput = z.object({
 export const purchasePhoneNumber = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => PurchaseInput.parse(input))
   .handler(async ({ data }) => {
+    const supabaseAdmin = await getAdmin();
     const auth = await getAuthenticatedUserId(data.accessToken);
     if ("error" in auth) {
       return { success: false as const, error: auth.error };
@@ -294,6 +300,8 @@ const ReleaseInput = z.object({
 export const releasePhoneNumber = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => ReleaseInput.parse(input))
   .handler(async ({ data }) => {
+    const supabaseAdmin = await getAdmin();
+    const { deleteElevenLabsPhoneNumber } = await getEl();
     const auth = await getAuthenticatedUserId(data.accessToken);
     if ("error" in auth) {
       return { success: false as const, error: auth.error };
@@ -350,6 +358,7 @@ const SyncWebhooksInput = z.object({
 export const syncTwilioWebhooks = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => SyncWebhooksInput.parse(input))
   .handler(async ({ data }) => {
+    const supabaseAdmin = await getAdmin();
     const auth = await getAuthenticatedUserId(data.accessToken);
     if ("error" in auth) return { success: false as const, error: auth.error };
 
@@ -412,6 +421,7 @@ const LinkExistingInput = z.object({
 export const linkExistingNumberToElevenLabs = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => LinkExistingInput.parse(input))
   .handler(async ({ data }) => {
+    const supabaseAdmin = await getAdmin();
     const auth = await getAuthenticatedUserId(data.accessToken);
     if ("error" in auth) return { success: false as const, error: auth.error };
 
