@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { scrapeBusinessFromUrl } from "@/server/agent-functions";
-import { speakText } from "@/server/agent-voice";
+import { speakText } from "@/lib/agent-voice.functions";
 import { syncReceptionistAgent } from "@/lib/elevenlabs-agent.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

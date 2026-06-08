@@ -1,7 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { checkFreeBusy, createEvent } from "./google-calendar.server";
 import { coerceFaqs, faqsToPromptText, faqAllowsSms } from "@/lib/faqs";
 
 const ChatInput = z.object({
@@ -31,76 +29,8 @@ const ChatInput = z.object({
     .max(50),
 });
 
-const TOOLS = [
-  {
-    type: "function",
-    function: {
-      name: "check_availability",
-      description:
-        "Check the business calendar for busy times in a date range. Use before suggesting meeting slots. Returns busy intervals; gaps are available.",
-      parameters: {
-        type: "object",
-        properties: {
-          start_iso: {
-            type: "string",
-            description: "Start of search window in ISO 8601 with timezone, e.g. 2026-04-30T09:00:00-04:00",
-          },
-          end_iso: {
-            type: "string",
-            description: "End of search window in ISO 8601 with timezone.",
-          },
-        },
-        required: ["start_iso", "end_iso"],
-        additionalProperties: false,
-      },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "book_meeting",
-      description:
-        "Book a meeting on the business calendar. Confirm the time, attendee name and email with the user before calling this.",
-      parameters: {
-        type: "object",
-        properties: {
-          summary: { type: "string", description: "Short event title, e.g. 'Consultation with John Doe'" },
-          description: { type: "string", description: "Notes / details for the event" },
-          start_iso: { type: "string", description: "Event start ISO 8601 with timezone" },
-          end_iso: { type: "string", description: "Event end ISO 8601 with timezone" },
-          attendee_email: { type: "string", description: "Customer's email address" },
-          attendee_name: { type: "string", description: "Customer's full name" },
-        },
-        required: ["summary", "start_iso", "end_iso", "attendee_email", "attendee_name"],
-        additionalProperties: false,
-      },
-    },
-  },
-];
 
-async function runTool(agentId: string, name: string, args: Record<string, unknown>): Promise<string> {
-  try {
-    if (name === "check_availability") {
-      const r = await checkFreeBusy(agentId, String(args.start_iso), String(args.end_iso));
-      return JSON.stringify(r);
-    }
-    if (name === "book_meeting") {
-      const r = await createEvent(agentId, {
-        summary: String(args.summary),
-        description: args.description ? String(args.description) : undefined,
-        start: String(args.start_iso),
-        end: String(args.end_iso),
-        attendeeEmail: String(args.attendee_email),
-        attendeeName: String(args.attendee_name),
-      });
-      if ("error" in r) return JSON.stringify({ ok: false, error: r.error });
-      return JSON.stringify({ ok: true, event_id: r.id, link: r.htmlLink });
-    }
-    return JSON.stringify({ error: `Unknown tool ${name}` });
-  } catch (e) {
-    return JSON.stringify({ error: e instanceof Error ? e.message : "tool error" });
-  }
-}
+
 
 export const chatWithAgent = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => ChatInput.parse(input))
@@ -110,6 +40,10 @@ export const chatWithAgent = createServerFn({ method: "POST" })
       return { success: false as const, error: "AI service is not configured." };
     }
 
+    const { CHAT_TOOLS, runChatTool, getCalendarInfoForAgent } = await import(
+      "@/lib/agent-chat.server"
+    );
+
     const a = data.agent;
     const name = a.assistant_name || "Ava";
 
@@ -117,16 +51,13 @@ export const chatWithAgent = createServerFn({ method: "POST" })
     let calendarConnected = false;
     let calendarTimezone = "America/New_York";
     if (a.id) {
-      const { data: cal } = await supabaseAdmin
-        .from("agent_google_calendar")
-        .select("timezone")
-        .eq("agent_id", a.id)
-        .maybeSingle();
+      const cal = await getCalendarInfoForAgent(a.id);
       if (cal) {
         calendarConnected = true;
         calendarTimezone = cal.timezone;
       }
     }
+
 
     const nowIso = new Date().toISOString();
     const bookingInstructions = calendarConnected
@@ -198,7 +129,7 @@ Rules:
           messages,
         };
         if (calendarConnected && a.id) {
-          body.tools = TOOLS;
+          body.tools = CHAT_TOOLS;
         }
 
         const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -240,7 +171,7 @@ Rules:
             } catch {
               // ignore
             }
-            const result = await runTool(a.id, tc.function.name, args);
+            const result = await runChatTool(a.id, tc.function.name, args);
             messages.push({
               role: "tool",
               tool_call_id: tc.id,
