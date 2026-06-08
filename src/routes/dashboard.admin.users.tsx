@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { getAdminUsers } from "@/lib/admin.functions";
 import { PageHeader } from "@/components/dashboard/PageHeader";
-import { Shield, Search } from "lucide-react";
+import { ArrowLeft, Shield, Search } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/admin/users")({
   head: () => ({ meta: [{ title: "Admin · Users — Ask Kira" }] }),
