@@ -28,6 +28,7 @@ import { Route as DashboardConversationsIndexRouteImport } from './routes/dashbo
 import { Route as DashboardAdminIndexRouteImport } from './routes/dashboard.admin.index'
 import { Route as DashboardConversationsConversationIdRouteImport } from './routes/dashboard.conversations.$conversationId'
 import { Route as DashboardAgentsAgentIdRouteImport } from './routes/dashboard.agents.$agentId'
+import { Route as DashboardAdminUsersRouteImport } from './routes/dashboard.admin.users'
 import { Route as DashboardAdminHealthRouteImport } from './routes/dashboard.admin.health'
 import { Route as ApiPublicOwnerChatRouteImport } from './routes/api.public.owner-chat'
 import { Route as DashboardAdminUsersIndexRouteImport } from './routes/dashboard.admin.users.index'
@@ -142,6 +143,11 @@ const DashboardAgentsAgentIdRoute = DashboardAgentsAgentIdRouteImport.update({
   path: '/agents/$agentId',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardAdminUsersRoute = DashboardAdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => DashboardAdminRoute,
+} as any)
 const DashboardAdminHealthRoute = DashboardAdminHealthRouteImport.update({
   id: '/health',
   path: '/health',
@@ -154,15 +160,15 @@ const ApiPublicOwnerChatRoute = ApiPublicOwnerChatRouteImport.update({
 } as any)
 const DashboardAdminUsersIndexRoute =
   DashboardAdminUsersIndexRouteImport.update({
-    id: '/users/',
-    path: '/users/',
-    getParentRoute: () => DashboardAdminRoute,
+    id: '/',
+    path: '/',
+    getParentRoute: () => DashboardAdminUsersRoute,
   } as any)
 const DashboardAdminUsersUserIdRoute =
   DashboardAdminUsersUserIdRouteImport.update({
-    id: '/users/$userId',
-    path: '/users/$userId',
-    getParentRoute: () => DashboardAdminRoute,
+    id: '/$userId',
+    path: '/$userId',
+    getParentRoute: () => DashboardAdminUsersRoute,
   } as any)
 const ApiPublicWidgetEmbedDotjsRoute =
   ApiPublicWidgetEmbedDotjsRouteImport.update({
@@ -250,6 +256,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/': typeof DashboardIndexRoute
   '/api/public/owner-chat': typeof ApiPublicOwnerChatRoute
   '/dashboard/admin/health': typeof DashboardAdminHealthRoute
+  '/dashboard/admin/users': typeof DashboardAdminUsersRouteWithChildren
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
   '/dashboard/admin/': typeof DashboardAdminIndexRoute
@@ -322,6 +329,7 @@ export interface FileRoutesById {
   '/dashboard/': typeof DashboardIndexRoute
   '/api/public/owner-chat': typeof ApiPublicOwnerChatRoute
   '/dashboard/admin/health': typeof DashboardAdminHealthRoute
+  '/dashboard/admin/users': typeof DashboardAdminUsersRouteWithChildren
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
   '/dashboard/admin/': typeof DashboardAdminIndexRoute
@@ -361,6 +369,7 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/api/public/owner-chat'
     | '/dashboard/admin/health'
+    | '/dashboard/admin/users'
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
     | '/dashboard/admin/'
@@ -432,6 +441,7 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/api/public/owner-chat'
     | '/dashboard/admin/health'
+    | '/dashboard/admin/users'
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
     | '/dashboard/admin/'
@@ -607,6 +617,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAgentsAgentIdRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/admin/users': {
+      id: '/dashboard/admin/users'
+      path: '/users'
+      fullPath: '/dashboard/admin/users'
+      preLoaderRoute: typeof DashboardAdminUsersRouteImport
+      parentRoute: typeof DashboardAdminRoute
+    }
     '/dashboard/admin/health': {
       id: '/dashboard/admin/health'
       path: '/health'
@@ -623,17 +640,17 @@ declare module '@tanstack/react-router' {
     }
     '/dashboard/admin/users/': {
       id: '/dashboard/admin/users/'
-      path: '/users'
+      path: '/'
       fullPath: '/dashboard/admin/users/'
       preLoaderRoute: typeof DashboardAdminUsersIndexRouteImport
-      parentRoute: typeof DashboardAdminRoute
+      parentRoute: typeof DashboardAdminUsersRoute
     }
     '/dashboard/admin/users/$userId': {
       id: '/dashboard/admin/users/$userId'
-      path: '/users/$userId'
+      path: '/$userId'
       fullPath: '/dashboard/admin/users/$userId'
       preLoaderRoute: typeof DashboardAdminUsersUserIdRouteImport
-      parentRoute: typeof DashboardAdminRoute
+      parentRoute: typeof DashboardAdminUsersRoute
     }
     '/api/public/widget/embed.js': {
       id: '/api/public/widget/embed.js'
@@ -722,18 +739,29 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface DashboardAdminRouteChildren {
-  DashboardAdminHealthRoute: typeof DashboardAdminHealthRoute
-  DashboardAdminIndexRoute: typeof DashboardAdminIndexRoute
+interface DashboardAdminUsersRouteChildren {
   DashboardAdminUsersUserIdRoute: typeof DashboardAdminUsersUserIdRoute
   DashboardAdminUsersIndexRoute: typeof DashboardAdminUsersIndexRoute
 }
 
-const DashboardAdminRouteChildren: DashboardAdminRouteChildren = {
-  DashboardAdminHealthRoute: DashboardAdminHealthRoute,
-  DashboardAdminIndexRoute: DashboardAdminIndexRoute,
+const DashboardAdminUsersRouteChildren: DashboardAdminUsersRouteChildren = {
   DashboardAdminUsersUserIdRoute: DashboardAdminUsersUserIdRoute,
   DashboardAdminUsersIndexRoute: DashboardAdminUsersIndexRoute,
+}
+
+const DashboardAdminUsersRouteWithChildren =
+  DashboardAdminUsersRoute._addFileChildren(DashboardAdminUsersRouteChildren)
+
+interface DashboardAdminRouteChildren {
+  DashboardAdminHealthRoute: typeof DashboardAdminHealthRoute
+  DashboardAdminUsersRoute: typeof DashboardAdminUsersRouteWithChildren
+  DashboardAdminIndexRoute: typeof DashboardAdminIndexRoute
+}
+
+const DashboardAdminRouteChildren: DashboardAdminRouteChildren = {
+  DashboardAdminHealthRoute: DashboardAdminHealthRoute,
+  DashboardAdminUsersRoute: DashboardAdminUsersRouteWithChildren,
+  DashboardAdminIndexRoute: DashboardAdminIndexRoute,
 }
 
 const DashboardAdminRouteWithChildren = DashboardAdminRoute._addFileChildren(
