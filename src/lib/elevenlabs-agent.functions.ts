@@ -33,7 +33,7 @@ export const syncReceptionistAgent = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!owned) return { success: false as const, error: "Receptionist not found." };
 
-    const { resyncReceptionistById } = await import("./elevenlabs-agent-resync.server");
+    const { resyncReceptionistById } = await import("@/server/elevenlabs-agent-resync.server");
     const result = await resyncReceptionistById(data.agentId);
     if (!result.success) return { success: false as const, error: result.error };
     return { success: true as const, elevenlabs_agent_id: result.elevenlabs_agent_id };
@@ -50,7 +50,7 @@ export const getReceptionistPreviewToken = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { getConversationToken, getConversationSignedUrl } = await import(
-      "./elevenlabs-agent.server"
+      "@/server/elevenlabs-agent.server"
     );
     const auth = await authUser(data.accessToken);
     if ("error" in auth) return { success: false as const, error: auth.error };
@@ -105,7 +105,7 @@ export const deleteReceptionistAgent = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { deleteBookingToolsForAgent, deleteElevenLabsAgent } = await import(
-      "./elevenlabs-agent.server"
+      "@/server/elevenlabs-agent.server"
     );
     const auth = await authUser(data.accessToken);
     if ("error" in auth) return { success: false as const, error: auth.error };

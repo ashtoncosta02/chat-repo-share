@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { backfillRecentCalls } from "./voice-call-backfill.server";
+import { backfillRecentCalls } from "@/server/voice-call-backfill.server";
 
 async function getAuthenticatedUserId(
   accessToken: string,
