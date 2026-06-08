@@ -47,7 +47,7 @@ export function AdminHealthPage() {
     );
   }
 
-  const d = data;
+  const d = data as Extract<Health, { success: true }>;
   const missingPct = d.voice.completed > 0 ? Math.round((d.voice.missingTranscripts / d.voice.completed) * 100) : 0;
   const phonesUnlinked = d.integrations.phonesTotal - d.integrations.phonesLinked;
 
