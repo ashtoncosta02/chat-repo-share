@@ -2,9 +2,9 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
-import { getSystemHealth } from "@/lib/admin.functions";
+import { getSystemHealth, getGlobalErrorFeed } from "@/lib/admin.functions";
 import { PageHeader } from "@/components/dashboard/PageHeader";
-import { ArrowLeft, Shield, Activity, Phone, MessageSquare, Calendar, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Shield, Activity, Phone, MessageSquare, Calendar, AlertTriangle, CheckCircle2, ExternalLink } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/admin/health")({
   head: () => ({ meta: [{ title: "Admin · System health" }] }),
@@ -12,6 +12,7 @@ export const Route = createFileRoute("/dashboard/admin/health")({
 });
 
 type Health = Awaited<ReturnType<typeof getSystemHealth>>;
+type Errors = Awaited<ReturnType<typeof getGlobalErrorFeed>>;
 
 export function AdminHealthPage() {
   const { session } = useAuth();
