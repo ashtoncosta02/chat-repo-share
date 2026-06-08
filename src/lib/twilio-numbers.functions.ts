@@ -28,6 +28,7 @@ async function tryLinkToElevenLabs(opts: {
     return null;
   }
   try {
+    const { importTwilioNumber } = await getEl();
     const { phone_number_id } = await importTwilioNumber({
       phoneNumber: opts.phoneNumber,
       label: opts.label,
