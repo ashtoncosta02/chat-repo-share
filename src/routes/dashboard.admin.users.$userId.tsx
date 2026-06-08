@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
-import { getAdminUserDetail, adminBackfillUserCalls } from "@/lib/admin.functions";
+import { getAdminUserDetail, adminBackfillUserCalls, adminRelinkPhone, adminResyncReceptionist, adminClearGoogleCalendar } from "@/lib/admin.functions";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Shield, ArrowLeft, AlertTriangle, CheckCircle2, Phone, Calendar, MessageSquare, User as UserIcon, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
