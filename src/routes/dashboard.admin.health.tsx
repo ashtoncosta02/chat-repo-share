@@ -179,6 +179,16 @@ export function AdminHealthPage() {
   );
 }
 
+function kindIcon(kind: string): string {
+  switch (kind) {
+    case "missing_transcript": return "📞";
+    case "phone_unlinked": return "🔌";
+    case "gcal_expired": return "📅";
+    case "onboarding_stuck": return "⏳";
+    default: return "⚠";
+  }
+}
+
 function Section({ title, icon, children }: { title: string; icon?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-border bg-card">
