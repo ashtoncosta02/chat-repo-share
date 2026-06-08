@@ -173,6 +173,7 @@ const PurchaseInput = z.object({
 export const purchasePhoneNumber = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => PurchaseInput.parse(input))
   .handler(async ({ data }) => {
+    const supabaseAdmin = await getAdmin();
     const auth = await getAuthenticatedUserId(data.accessToken);
     if ("error" in auth) {
       return { success: false as const, error: auth.error };
