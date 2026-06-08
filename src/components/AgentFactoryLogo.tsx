@@ -1,11 +1,11 @@
-import logoUrl from "@/assets/ask-kira-logo.png";
+import logoUrl from "@/assets/ask-janice-logo.png";
 
 export function AgentFactoryLogo({ className = "" }: { className?: string }) {
   return (
     <div className={`flex items-center justify-center ${className}`}>
       <img
         src={logoUrl}
-        alt="Ask Kira — Your AI Receptionist"
+        alt="Ask Janice — Your AI Receptionist"
         className="h-28 w-auto object-contain"
       />
     </div>
