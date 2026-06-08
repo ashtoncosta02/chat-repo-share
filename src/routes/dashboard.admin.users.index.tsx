@@ -6,7 +6,7 @@ import { getAdminUsers } from "@/lib/admin.functions";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { ArrowLeft, Shield, Search } from "lucide-react";
 
-export const Route = createFileRoute("/dashboard/admin/users")({
+export const Route = createFileRoute("/dashboard/admin/users/")({
   head: () => ({ meta: [{ title: "Admin · Users — Ask Kira" }] }),
   component: AdminUsersPage,
 });
