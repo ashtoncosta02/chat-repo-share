@@ -19,6 +19,7 @@ export function AdminHealthPage() {
   const { isAdmin, checked } = useIsAdmin();
   const navigate = useNavigate();
   const [data, setData] = useState<Health | null>(null);
+  const [errorFeed, setErrorFeed] = useState<Errors | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,9 +29,10 @@ export function AdminHealthPage() {
   const load = () => {
     if (!session?.access_token) return;
     setLoading(true);
-    getSystemHealth({ data: { accessToken: session.access_token } })
-      .then(setData)
-      .finally(() => setLoading(false));
+    Promise.all([
+      getSystemHealth({ data: { accessToken: session.access_token } }).then(setData),
+      getGlobalErrorFeed({ data: { accessToken: session.access_token } }).then(setErrorFeed),
+    ]).finally(() => setLoading(false));
   };
 
   useEffect(() => {
