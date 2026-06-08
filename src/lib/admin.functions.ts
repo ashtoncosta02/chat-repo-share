@@ -417,3 +417,215 @@ export const adminBackfillUserCalls = createServerFn({ method: "POST" })
     }
     return { success: true as const, scanned, saved, skipped, errors };
   });
+
+// =========================================================================
+// Global error feed — aggregate issues across all users
+// =========================================================================
+export const getGlobalErrorFeed = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => tokenSchema.parse(input))
+  .handler(async ({ data }) => {
+    const auth = await requireAdmin(data.accessToken);
+    if ("error" in auth) return { success: false as const, error: auth.error };
+
+    const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+    const now = Date.now();
+
+    const [
+      missingTranscriptsRes,
+      unlinkedPhonesRes,
+      gcalAllRes,
+      onboardingIncompleteRes,
+      profilesRes,
+      agentsRes,
+    ] = await Promise.all([
+      supabaseAdmin
+        .from("conversations")
+        .select("id, user_id, started_at, ended_at, elevenlabs_conversation_id")
+        .gte("started_at", sevenDaysAgo)
+        .is("ai_summary", null)
+        .not("ended_at", "is", null)
+        .order("started_at", { ascending: false })
+        .limit(50),
+      supabaseAdmin
+        .from("phone_numbers")
+        .select("id, user_id, phone_number, created_at")
+        .is("elevenlabs_phone_number_id", null)
+        .order("created_at", { ascending: false }),
+      supabaseAdmin.from("agent_google_calendar").select("user_id, google_email, token_expires_at"),
+      supabaseAdmin
+        .from("agents")
+        .select("user_id, business_name, created_at")
+        .eq("onboarding_completed", false)
+        .order("created_at", { ascending: false }),
+      supabaseAdmin.from("profiles").select("user_id, email, display_name"),
+      supabaseAdmin.from("agents").select("user_id, business_name"),
+    ]);
+
+    const profileByUser = new Map<string, { email: string | null; display_name: string | null }>();
+    (profilesRes.data ?? []).forEach((p) => profileByUser.set(p.user_id, { email: p.email, display_name: p.display_name }));
+    const agentByUser = new Map<string, string>();
+    (agentsRes.data ?? []).forEach((a) => agentByUser.set(a.user_id, a.business_name));
+
+    const label = (uid: string) => {
+      const p = profileByUser.get(uid);
+      return p?.display_name || p?.email || agentByUser.get(uid) || uid.slice(0, 8);
+    };
+
+    const errors: {
+      kind: "missing_transcript" | "phone_unlinked" | "gcal_expired" | "onboarding_stuck";
+      user_id: string;
+      user_label: string;
+      message: string;
+      detail?: string;
+      at: string;
+    }[] = [];
+
+    (missingTranscriptsRes.data ?? []).forEach((c) =>
+      errors.push({
+        kind: "missing_transcript",
+        user_id: c.user_id,
+        user_label: label(c.user_id),
+        message: "Voice call missing transcript",
+        detail: c.elevenlabs_conversation_id ?? undefined,
+        at: c.ended_at ?? c.started_at,
+      }),
+    );
+
+    (unlinkedPhonesRes.data ?? []).forEach((p) =>
+      errors.push({
+        kind: "phone_unlinked",
+        user_id: p.user_id,
+        user_label: label(p.user_id),
+        message: "Phone number not connected to AI",
+        detail: p.phone_number,
+        at: p.created_at,
+      }),
+    );
+
+    (gcalAllRes.data ?? []).forEach((g) => {
+      if (new Date(g.token_expires_at).getTime() < now) {
+        errors.push({
+          kind: "gcal_expired",
+          user_id: g.user_id,
+          user_label: label(g.user_id),
+          message: "Google Calendar token expired",
+          detail: g.google_email ?? undefined,
+          at: g.token_expires_at,
+        });
+      }
+    });
+
+    const cutoff = Date.now() - 3 * 86400000;
+    (onboardingIncompleteRes.data ?? []).forEach((a) => {
+      if (new Date(a.created_at).getTime() < cutoff) {
+        errors.push({
+          kind: "onboarding_stuck",
+          user_id: a.user_id,
+          user_label: label(a.user_id),
+          message: "Onboarding incomplete >3 days after signup",
+          detail: a.business_name,
+          at: a.created_at,
+        });
+      }
+    });
+
+    errors.sort((a, b) => (a.at > b.at ? -1 : 1));
+    return { success: true as const, errors: errors.slice(0, 100) };
+  });
+
+// =========================================================================
+// Admin fix-it actions
+// =========================================================================
+const phoneFixSchema = z.object({
+  accessToken: z.string().min(1),
+  phoneNumberId: z.string().uuid(),
+});
+
+export const adminRelinkPhone = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => phoneFixSchema.parse(input))
+  .handler(async ({ data }) => {
+    const auth = await requireAdmin(data.accessToken);
+    if ("error" in auth) return { success: false as const, error: auth.error };
+
+    const { data: row } = await supabaseAdmin
+      .from("phone_numbers")
+      .select("id, phone_number, agent_id, elevenlabs_phone_number_id, user_id")
+      .eq("id", data.phoneNumberId)
+      .maybeSingle();
+    if (!row) return { success: false as const, error: "Phone not found." };
+    if (row.elevenlabs_phone_number_id) return { success: true as const, alreadyLinked: true };
+
+    let agentId = row.agent_id;
+    if (!agentId) {
+      const { data: agents } = await supabaseAdmin.from("agents").select("id").eq("user_id", row.user_id).limit(1);
+      if (!agents?.[0]) return { success: false as const, error: "User has no receptionist." };
+      agentId = agents[0].id;
+      await supabaseAdmin.from("phone_numbers").update({ agent_id: agentId }).eq("id", row.id);
+    }
+    const { data: agent } = await supabaseAdmin
+      .from("agents")
+      .select("elevenlabs_agent_id, business_name")
+      .eq("id", agentId)
+      .maybeSingle();
+    if (!agent?.elevenlabs_agent_id) return { success: false as const, error: "Receptionist not linked to ElevenLabs." };
+
+    const sid = process.env.TWILIO_ACCOUNT_SID;
+    const token = process.env.TWILIO_AUTH_TOKEN;
+    if (!sid || !token) return { success: false as const, error: "Twilio credentials missing on server." };
+
+    try {
+      const { importTwilioNumber } = await import("@/server/elevenlabs-agent.server");
+      const { phone_number_id } = await importTwilioNumber({
+        phoneNumber: row.phone_number,
+        label: `${agent.business_name} — AI Receptionist`,
+        twilioAccountSid: sid,
+        twilioAuthToken: token,
+        agentId: agent.elevenlabs_agent_id,
+      });
+      await supabaseAdmin
+        .from("phone_numbers")
+        .update({ elevenlabs_phone_number_id: phone_number_id })
+        .eq("id", row.id);
+      return { success: true as const, alreadyLinked: false };
+    } catch (e: any) {
+      console.error("[admin] relink phone failed", e);
+      return { success: false as const, error: e?.message ?? "ElevenLabs import failed." };
+    }
+  });
+
+export const adminResyncReceptionist = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => userIdSchema.parse(input))
+  .handler(async ({ data }) => {
+    const auth = await requireAdmin(data.accessToken);
+    if ("error" in auth) return { success: false as const, error: auth.error };
+
+    const { data: agent } = await supabaseAdmin
+      .from("agents")
+      .select("id")
+      .eq("user_id", data.userId)
+      .maybeSingle();
+    if (!agent) return { success: false as const, error: "User has no receptionist." };
+
+    try {
+      const { resyncReceptionistById } = await import("@/server/elevenlabs-agent-resync.server");
+      const result = await resyncReceptionistById(agent.id);
+      return { success: true as const, result };
+    } catch (e: any) {
+      console.error("[admin] resync failed", e);
+      return { success: false as const, error: e?.message ?? "Resync failed." };
+    }
+  });
+
+export const adminClearGoogleCalendar = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => userIdSchema.parse(input))
+  .handler(async ({ data }) => {
+    const auth = await requireAdmin(data.accessToken);
+    if ("error" in auth) return { success: false as const, error: auth.error };
+
+    const { error } = await supabaseAdmin
+      .from("agent_google_calendar")
+      .delete()
+      .eq("user_id", data.userId);
+    if (error) return { success: false as const, error: error.message };
+    return { success: true as const };
+  });
