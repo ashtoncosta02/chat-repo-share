@@ -50,13 +50,22 @@ function AdminOverviewPage() {
           </span>
         }
         action={
-          <Link
-            to="/dashboard/admin/users"
-            className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90"
-          >
-            View all users
-          </Link>
+          <div className="flex gap-2">
+            <Link
+              to="/dashboard/admin/health"
+              className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-muted"
+            >
+              System health
+            </Link>
+            <Link
+              to="/dashboard/admin/users"
+              className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90"
+            >
+              View all users
+            </Link>
+          </div>
         }
+
       />
 
       <div className="p-4 md:p-8 space-y-8">
