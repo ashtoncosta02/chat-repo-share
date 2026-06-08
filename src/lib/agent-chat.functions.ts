@@ -40,6 +40,10 @@ export const chatWithAgent = createServerFn({ method: "POST" })
       return { success: false as const, error: "AI service is not configured." };
     }
 
+    const { CHAT_TOOLS, runChatTool, getCalendarInfoForAgent } = await import(
+      "@/lib/agent-chat.server"
+    );
+
     const a = data.agent;
     const name = a.assistant_name || "Ava";
 
@@ -47,16 +51,13 @@ export const chatWithAgent = createServerFn({ method: "POST" })
     let calendarConnected = false;
     let calendarTimezone = "America/New_York";
     if (a.id) {
-      const { data: cal } = await supabaseAdmin
-        .from("agent_google_calendar")
-        .select("timezone")
-        .eq("agent_id", a.id)
-        .maybeSingle();
+      const cal = await getCalendarInfoForAgent(a.id);
       if (cal) {
         calendarConnected = true;
         calendarTimezone = cal.timezone;
       }
     }
+
 
     const nowIso = new Date().toISOString();
     const bookingInstructions = calendarConnected
