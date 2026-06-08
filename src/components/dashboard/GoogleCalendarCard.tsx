@@ -8,7 +8,7 @@ import {
   startGoogleCalendarConnect,
   disconnectGoogleCalendar,
   updateCalendarSettings,
-} from "@/server/google-calendar.functions";
+} from "@/lib/google-calendar.functions";
 
 interface Props {
   agentId: string;

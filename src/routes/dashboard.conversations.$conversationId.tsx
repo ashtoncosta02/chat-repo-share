@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import {
   aiCallbackFromConversation,
   sendSmsFromConversation,
-} from "@/server/conversation-actions.functions";
+} from "@/lib/conversation-actions.functions";
 
 export const Route = createFileRoute("/dashboard/conversations/$conversationId")({
   head: () => ({ meta: [{ title: "Transcript — Ask Kira" }] }),

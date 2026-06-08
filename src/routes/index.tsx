@@ -71,7 +71,7 @@ function Header() {
     <header className="border-b border-border/60">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
         <Link to="/" className="font-display text-2xl font-bold tracking-tight">
-          Agent <span className="text-gold">Factory</span>
+          Ask <span className="text-gold">Janice</span>
         </Link>
         <Link
           to="/auth"

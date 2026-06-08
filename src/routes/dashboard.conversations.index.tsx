@@ -25,8 +25,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { backfillVoiceCalls } from "@/server/voice-call-backfill.functions";
-import { summarizeConversation } from "@/server/conversation-summary.functions";
+import { backfillVoiceCalls } from "@/lib/voice-call-backfill.functions";
+import { summarizeConversation } from "@/lib/conversation-summary.functions";
 
 export const Route = createFileRoute("/dashboard/conversations/")({
   head: () => ({ meta: [{ title: "Conversations — Ask Kira" }] }),
