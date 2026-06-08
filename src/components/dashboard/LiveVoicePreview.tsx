@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import {
   syncReceptionistAgent,
   getReceptionistPreviewToken,
-} from "@/server/elevenlabs-agent.functions";
+} from "@/lib/elevenlabs-agent.functions";
 
 interface LiveVoicePreviewProps {
   agentId: string;

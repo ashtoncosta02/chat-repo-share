@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { checkIsAdmin } from "@/server/admin.functions";
+import { checkIsAdmin } from "@/lib/admin.functions";
 
 export function useIsAdmin() {
   const { session } = useAuth();

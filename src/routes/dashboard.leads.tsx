@@ -32,7 +32,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { aiCallbackLead } from "@/server/lead-callback.functions";
+import { aiCallbackLead } from "@/lib/lead-callback.functions";
 import { startOutboundCall } from "@/lib/dialer.functions";
 
 const CALLBACK_KEY = "askkira.dialer.callback";

@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/dashboard/PageHeader";
 import { Calendar, Mail, Phone, User as UserIcon, Clock, Plus, X } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
-import { createManualBooking } from "@/server/google-calendar.functions";
+import { createManualBooking } from "@/lib/google-calendar.functions";
 
 export const Route = createFileRoute("/dashboard/bookings")({
   head: () => ({ meta: [{ title: "Bookings — Ask Kira" }] }),
