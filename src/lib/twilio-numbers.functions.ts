@@ -421,6 +421,7 @@ const LinkExistingInput = z.object({
 export const linkExistingNumberToElevenLabs = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => LinkExistingInput.parse(input))
   .handler(async ({ data }) => {
+    const supabaseAdmin = await getAdmin();
     const auth = await getAuthenticatedUserId(data.accessToken);
     if ("error" in auth) return { success: false as const, error: auth.error };
 
