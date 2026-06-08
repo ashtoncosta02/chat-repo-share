@@ -57,8 +57,9 @@ function AdminUserDetailPage() {
   if (loading || !data) return <div className="p-8 text-muted-foreground">Loading account…</div>;
   if (!("profile" in data) || !data.profile) return <div className="p-8 text-muted-foreground">User not found.</div>;
 
-  const d = data;
+  const d = data as Extract<Detail, { success: true }>;
   const profile = d.profile!;
+
 
   return (
     <div className="min-h-full">
