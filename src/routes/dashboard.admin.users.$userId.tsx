@@ -53,6 +53,32 @@ function AdminUserDetailPage() {
     }
   };
 
+  const [busy, setBusy] = useState<string | null>(null);
+  const runFix = async (key: string, fn: () => Promise<{ success: boolean; error?: string; alreadyLinked?: boolean }>, okMsg: string) => {
+    if (!session?.access_token) return;
+    setBusy(key);
+    try {
+      const r = await fn();
+      if (r.success) toast.success(r.alreadyLinked ? "Already linked." : okMsg);
+      else toast.error(r.error ?? "Failed.");
+      load();
+    } finally {
+      setBusy(null);
+    }
+  };
+  const relinkPhone = (id: string) => runFix(`phone-${id}`,
+    () => adminRelinkPhone({ data: { accessToken: session!.access_token, phoneNumberId: id } }),
+    "Phone connected to AI.");
+  const resyncReceptionist = () => runFix("resync",
+    () => adminResyncReceptionist({ data: { accessToken: session!.access_token, userId } }),
+    "Receptionist resynced.");
+  const clearGcal = () => {
+    if (!confirm("Clear this user's Google Calendar connection? They will need to reconnect from their dashboard.")) return;
+    runFix("gcal",
+      () => adminClearGoogleCalendar({ data: { accessToken: session!.access_token, userId } }),
+      "Calendar connection cleared. User can now reconnect.");
+  };
+
   if (!checked || !isAdmin) return <div className="p-8 text-muted-foreground">Loading…</div>;
   if (loading || !data) return <div className="p-8 text-muted-foreground">Loading account…</div>;
   if (!("profile" in data) || !data.profile) return <div className="p-8 text-muted-foreground">User not found.</div>;
