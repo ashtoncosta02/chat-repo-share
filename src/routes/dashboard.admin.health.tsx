@@ -69,9 +69,17 @@ export function AdminHealthPage() {
           </Link>
         }
         action={
-          <button onClick={load} className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90">
-            Refresh
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/dashboard/admin"
+              className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-muted"
+            >
+              <ArrowLeft className="h-4 w-4" /> Back to admin
+            </Link>
+            <button onClick={load} className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90">
+              Refresh
+            </button>
+          </div>
         }
       />
 
