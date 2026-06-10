@@ -8,7 +8,7 @@ interface ChatMessage {
 }
 
 const STARTERS = [
-  "How do I create my first agent?",
+  "How do I edit what my receptionist says?",
   "How do I get the chat widget on my website?",
   "Why isn't my phone number ringing the AI?",
 ];
