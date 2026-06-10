@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
@@ -47,6 +49,16 @@ import { Route as ApiPublicGoogleCalendarCallbackRouteImport } from './routes/ap
 import { Route as ApiPublicElevenlabsPostcallRouteImport } from './routes/api.public.elevenlabs.postcall'
 import { Route as ApiPublicWidgetConfigAgentIdRouteImport } from './routes/api.public.widget.config.$agentId'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -249,6 +261,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRouteWithChildren
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/agent': typeof DashboardAgentRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
@@ -287,6 +301,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/dashboard/agent': typeof DashboardAgentRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/bookings': typeof DashboardBookingsRoute
@@ -324,6 +340,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRouteWithChildren
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/agent': typeof DashboardAgentRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
@@ -365,6 +383,8 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/privacy'
+    | '/terms'
     | '/dashboard/admin'
     | '/dashboard/agent'
     | '/dashboard/analytics'
@@ -403,6 +423,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/privacy'
+    | '/terms'
     | '/dashboard/agent'
     | '/dashboard/analytics'
     | '/dashboard/bookings'
@@ -439,6 +461,8 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/privacy'
+    | '/terms'
     | '/dashboard/admin'
     | '/dashboard/agent'
     | '/dashboard/analytics'
@@ -479,6 +503,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRouteWithChildren
+  PrivacyRoute: typeof PrivacyRoute
+  TermsRoute: typeof TermsRoute
   WidgetAgentIdRoute: typeof WidgetAgentIdRoute
   ApiPublicOwnerChatRoute: typeof ApiPublicOwnerChatRoute
   ApiPublicElevenlabsPostcallRoute: typeof ApiPublicElevenlabsPostcallRoute
@@ -498,6 +524,20 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
@@ -844,6 +884,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRouteWithChildren,
+  PrivacyRoute: PrivacyRoute,
+  TermsRoute: TermsRoute,
   WidgetAgentIdRoute: WidgetAgentIdRoute,
   ApiPublicOwnerChatRoute: ApiPublicOwnerChatRoute,
   ApiPublicElevenlabsPostcallRoute: ApiPublicElevenlabsPostcallRoute,

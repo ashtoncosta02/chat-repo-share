@@ -214,7 +214,9 @@ function Footer() {
   return (
     <footer className="border-t border-border/60 py-8">
       <div className="mx-auto max-w-6xl px-6 text-center text-sm text-muted-foreground">
-        © {new Date().getFullYear()} Ask Janice. All rights reserved.
+        © {new Date().getFullYear()} Ask Janice. All rights reserved. ·{" "}
+        <Link to="/privacy" className="hover:text-foreground">Privacy</Link> ·{" "}
+        <Link to="/terms" className="hover:text-foreground">Terms</Link>
       </div>
     </footer>
   );
