@@ -11,6 +11,7 @@ import {
   aiCallbackFromConversation,
   sendSmsFromConversation,
 } from "@/lib/conversation-actions.functions";
+import { getCallRecordingUrl } from "@/lib/call-recording.functions";
 
 export const Route = createFileRoute("/dashboard/conversations/$conversationId")({
   head: () => ({ meta: [{ title: "Transcript — Ask Janice" }] }),
@@ -83,6 +84,20 @@ function ConversationDetailPage() {
   const [texting, setTexting] = useState(false);
   const [lead, setLead] = useState<LeadLite | null>(null);
   const [relatedCalls, setRelatedCalls] = useState<RelatedCall[]>([]);
+  const [recordingUrl, setRecordingUrl] = useState<string | null>(null);
+  const getRecordingUrlFn = useServerFn(getCallRecordingUrl);
+
+  useEffect(() => {
+    if (!conv?.recording_url) {
+      setRecordingUrl(null);
+      return;
+    }
+    let cancelled = false;
+    getRecordingUrlFn({ data: { conversationId: conv.id } })
+      .then((r) => { if (!cancelled) setRecordingUrl(r.url); })
+      .catch(() => { if (!cancelled) setRecordingUrl(null); });
+    return () => { cancelled = true; };
+  }, [conv?.id, conv?.recording_url, getRecordingUrlFn]);
   const callFn = useServerFn(aiCallbackFromConversation);
   const smsFn = useServerFn(sendSmsFromConversation);
 
@@ -282,7 +297,7 @@ function ConversationDetailPage() {
       </div>
 
       <div className="px-8 pb-12 space-y-6">
-        {conv.recording_url && (
+        {conv.recording_url && recordingUrl && (
           <div className="rounded-xl border border-border bg-card p-5">
             <div className="flex items-center gap-2 text-sm font-semibold text-foreground mb-3">
               <Mic className="h-4 w-4 text-[var(--gold)]" />
@@ -291,7 +306,7 @@ function ConversationDetailPage() {
             <audio
               controls
               preload="metadata"
-              src={conv.recording_url}
+              src={recordingUrl}
               className="w-full"
             >
               Your browser does not support the audio element.
