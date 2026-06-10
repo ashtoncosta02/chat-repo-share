@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { registerTwilioCall } from "@/server/elevenlabs-agent.server";
+import { verifyTwilioSignature, formDataToRecord } from "@/server/twilio-signature.server";
 
 export const Route = createFileRoute("/api/public/twilio/voice")({
   server: {
@@ -8,6 +9,10 @@ export const Route = createFileRoute("/api/public/twilio/voice")({
       POST: async ({ request }) => {
         try {
           const form = await request.formData();
+          const params = formDataToRecord(form);
+          if (!(await verifyTwilioSignature(request, params))) {
+            return new Response("Invalid signature", { status: 403 });
+          }
           const from = String(form.get("From") || "").trim();
           const to = String(form.get("To") || "").trim();
           if (!from || !to) return voiceMessage("Sorry, this number is not connected yet.");
