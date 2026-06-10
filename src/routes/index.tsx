@@ -154,7 +154,7 @@ function PricingCard() {
           type="submit"
           className="w-full rounded-xl bg-primary px-5 py-5 text-lg font-semibold text-primary-foreground shadow-sm transition-all hover:opacity-95 active:scale-[0.99]"
         >
-          Get Started — $397/mo
+          Get Started — $197/mo
         </button>
       </form>
 
