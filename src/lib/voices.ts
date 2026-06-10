@@ -10,12 +10,12 @@ export interface VoiceOption {
   gender: VoiceGender;
 }
 
-export const DEFAULT_VOICE_ID = "EXAVITQu4vr4xnSDxMaL"; // Sarah
+export const DEFAULT_VOICE_ID = "EXAVITQu4vr4xnSDxMaL"; // Janice
 
 export const VOICE_OPTIONS: VoiceOption[] = [
   {
     id: "EXAVITQu4vr4xnSDxMaL",
-    name: "Sarah",
+    name: "Janice",
     description: "Warm female receptionist (default)",
     gender: "female",
   },
