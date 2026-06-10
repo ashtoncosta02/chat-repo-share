@@ -48,7 +48,7 @@ import { VOICE_OPTIONS, DEFAULT_VOICE_ID, getVoiceById } from "@/lib/voices";
 import { coerceFaqs, newFaq, parseLegacyFaqs, type StructuredFaq } from "@/lib/faqs";
 
 export const Route = createFileRoute("/dashboard/agents/$agentId")({
-  head: () => ({ meta: [{ title: "AI Receptionist — Ask Kira" }] }),
+  head: () => ({ meta: [{ title: "AI Receptionist — Ask Janice" }] }),
   component: AgentDetailPage,
 });
 
@@ -206,7 +206,7 @@ function AgentDetailPage() {
     }
   };
 
-  const assistantName = agent?.assistant_name?.trim() || "Ava";
+  const assistantName = agent?.assistant_name?.trim() || "Janice";
 
   // Load agent + greeting
   useEffect(() => {
@@ -220,7 +220,7 @@ function AgentDetailPage() {
         if (data) {
           const a = data as Agent;
           setAgent(a);
-          const name = a.assistant_name?.trim() || "Ava";
+          const name = a.assistant_name?.trim() || "Janice";
           const greeting = `Hi there! This is ${name} with ${a.business_name}. How can I help you today?`;
           setMessages([{ role: "assistant", content: greeting, ts: new Date() }]);
           // Persist greeting only once (StrictMode runs this effect twice in dev)
@@ -665,12 +665,19 @@ function AgentDetailPage() {
                 id="vd-name"
                 value={nameDraft}
                 onChange={(e) => setNameDraft(e.target.value)}
-                placeholder="Ava"
+                placeholder="Janice"
               />
             </div>
             <div className="space-y-2">
               <Label>Voice</Label>
-              <Select value={voiceDraft} onValueChange={setVoiceDraft}>
+              <Select value={voiceDraft} onValueChange={(v) => {
+                const prevVoiceName = getVoiceById(voiceDraft).name;
+                setVoiceDraft(v);
+                // Auto-update name if blank or still matches the previously selected voice's name
+                if (!nameDraft.trim() || nameDraft.trim() === prevVoiceName) {
+                  setNameDraft(getVoiceById(v).name);
+                }
+              }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a voice" />
                 </SelectTrigger>

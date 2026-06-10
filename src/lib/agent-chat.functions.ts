@@ -45,7 +45,7 @@ export const chatWithAgent = createServerFn({ method: "POST" })
     );
 
     const a = data.agent;
-    const name = a.assistant_name || "Ava";
+    const name = a.assistant_name || "Janice";
 
     // Check if this agent has a connected calendar
     let calendarConnected = false;

@@ -40,7 +40,7 @@ import { getAutoDeleteSetting, setAutoDeleteSetting } from "@/lib/thread-cleanup
 const CALLBACK_KEY = "askkira.dialer.callback";
 
 export const Route = createFileRoute("/dashboard/conversations/")({
-  head: () => ({ meta: [{ title: "Threads — Ask Kira" }] }),
+  head: () => ({ meta: [{ title: "Threads — Ask Janice" }] }),
   component: ConversationsPage,
 });
 

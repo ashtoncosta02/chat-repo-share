@@ -109,7 +109,7 @@ export const Route = createFileRoute("/api/public/twilio/sms")({
           });
 
           // Build the same system prompt used by in-app chat
-          const name = agent.assistant_name || "Ava";
+          const name = agent.assistant_name || "Janice";
           const system = `You are ${name}, a warm and professional AI receptionist for ${agent.business_name}${agent.industry ? ` (${agent.industry})` : ""}.
 
 You are replying over SMS. Keep replies under 320 characters when possible. Use clear, natural sentences — no markdown, no emojis unless the customer uses them first.

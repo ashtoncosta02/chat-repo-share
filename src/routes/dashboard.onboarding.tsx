@@ -26,7 +26,7 @@ import { newFaq, parseLegacyFaqs, type StructuredFaq } from "@/lib/faqs";
 import { AgentFactoryLogo } from "@/components/AgentFactoryLogo";
 
 export const Route = createFileRoute("/dashboard/onboarding")({
-  head: () => ({ meta: [{ title: "Set up your AI Receptionist — Ask Kira" }] }),
+  head: () => ({ meta: [{ title: "Set up your AI Receptionist — Ask Janice" }] }),
   component: OnboardingWizard,
 });
 
@@ -168,7 +168,7 @@ function OnboardingWizard() {
       .insert({
         user_id: user.id,
         business_name: profile.business_name.trim(),
-        assistant_name: profile.assistant_name.trim() || "Ava",
+        assistant_name: profile.assistant_name.trim() || "Janice",
         industry: profile.industry.trim() || null,
         tone: profile.tone.trim() || null,
         primary_goal: profile.primary_goal.trim() || null,
@@ -275,7 +275,13 @@ function OnboardingWizard() {
         {step === 3 && (
           <StepVoice
             voiceId={voiceId}
-            setVoiceId={setVoiceId}
+            setVoiceId={(v) => {
+              const prevName = getVoiceById(voiceId).name;
+              setVoiceId(v);
+              if (!profile.assistant_name.trim() || profile.assistant_name.trim() === prevName) {
+                setProfile({ ...profile, assistant_name: getVoiceById(v).name });
+              }
+            }}
             previewing={previewing}
             onPreview={async () => {
               setPreviewing(true);
@@ -379,11 +385,11 @@ function StepWebsite({
                 required
               />
             </Field>
-            <Field label="Receptionist's name" rightLabel="defaults to Ava">
+            <Field label="Receptionist's name" rightLabel="defaults to Janice">
               <Input
                 value={profile.assistant_name}
                 onChange={(e) => setProfile({ ...profile, assistant_name: e.target.value })}
-                placeholder="Ava"
+                placeholder="Janice"
               />
             </Field>
             <Field label="Industry">
