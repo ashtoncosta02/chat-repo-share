@@ -44,7 +44,8 @@ function normalizeE164(raw: string): string | null {
 
 export async function signDialerToken(to: string, from: string, expiresAt: number): Promise<string> {
   const { createHmac } = await import("crypto");
-  const secret = process.env.LOVABLE_API_KEY || "fallback-secret-do-not-use";
+  const secret = process.env.LOVABLE_API_KEY;
+  if (!secret) throw new Error("LOVABLE_API_KEY is not configured");
   const payload = `${to}|${from}|${expiresAt}`;
   return createHmac("sha256", secret).update(payload).digest("hex");
 }

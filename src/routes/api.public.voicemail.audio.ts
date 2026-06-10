@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { verifyPayload } from "@/server/hmac.server";
 
 const EL_BASE = "https://api.elevenlabs.io/v1";
 const DEFAULT_VOICE_ID = "EXAVITQu4vr4xnSDxMaL";
@@ -12,6 +13,16 @@ export const Route = createFileRoute("/api/public/voicemail/audio")({
           const url = new URL(request.url);
           const leadId = url.searchParams.get("lead") || "";
           const agentElId = url.searchParams.get("agent") || "";
+          const exp = Number(url.searchParams.get("exp") || "0");
+          const sig = url.searchParams.get("sig") || "";
+
+          if (!leadId || !agentElId || !exp || !sig) {
+            return new Response("Missing params", { status: 400 });
+          }
+          if (Date.now() > exp) return new Response("Link expired", { status: 410 });
+          if (!verifyPayload(`${leadId}|${agentElId}|${exp}`, sig)) {
+            return new Response("Invalid signature", { status: 403 });
+          }
 
           const apiKey = process.env.ELEVENLABS_API_KEY;
           if (!apiKey) return new Response("Missing API key", { status: 500 });

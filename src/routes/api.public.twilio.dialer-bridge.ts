@@ -20,7 +20,8 @@ async function handle({ request }: { request: Request }) {
   if (!to || !from || !exp || !sig) return twiml("Invalid call setup.");
   if (Date.now() > exp) return twiml("This call link has expired.");
 
-  const secret = process.env.LOVABLE_API_KEY || "fallback-secret-do-not-use";
+  const secret = process.env.LOVABLE_API_KEY;
+  if (!secret) return twiml("Server misconfiguration.");
   const expected = createHmac("sha256", secret).update(`${to}|${from}|${exp}`).digest("hex");
   const a = Buffer.from(sig);
   const b = Buffer.from(expected);
