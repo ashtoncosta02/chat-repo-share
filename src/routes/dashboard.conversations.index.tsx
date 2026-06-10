@@ -33,11 +33,32 @@ import {
 import { toast } from "sonner";
 import { backfillVoiceCalls } from "@/lib/voice-call-backfill.functions";
 import { summarizeConversation } from "@/lib/conversation-summary.functions";
+import { aiCallbackLead } from "@/lib/lead-callback.functions";
+import { startOutboundCall } from "@/lib/dialer.functions";
+
+const CALLBACK_KEY = "askkira.dialer.callback";
 
 export const Route = createFileRoute("/dashboard/conversations/")({
-  head: () => ({ meta: [{ title: "Conversations — Ask Kira" }] }),
+  head: () => ({ meta: [{ title: "Threads — Ask Kira" }] }),
   component: ConversationsPage,
 });
+
+interface ConvRow {
+  id: string;
+  message_count: number;
+  duration_seconds: number;
+  started_at: string;
+  agent_id: string | null;
+  recording_url: string | null;
+  ai_summary: string | null;
+  lead_id: string | null;
+  lead_name: string | null;
+  lead_phone: string | null;
+  lead_email: string | null;
+  lead_notes: string | null;
+  lead_source: string | null;
+  lead_status: string | null;
+}
 
 interface ConvRow {
   id: string;
