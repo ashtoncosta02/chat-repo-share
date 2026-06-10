@@ -35,6 +35,7 @@ import { backfillVoiceCalls } from "@/lib/voice-call-backfill.functions";
 import { summarizeConversation } from "@/lib/conversation-summary.functions";
 import { aiCallbackLead } from "@/lib/lead-callback.functions";
 import { startOutboundCall } from "@/lib/dialer.functions";
+import { getAutoDeleteSetting, setAutoDeleteSetting } from "@/lib/thread-cleanup.functions";
 
 const CALLBACK_KEY = "askkira.dialer.callback";
 
@@ -343,6 +344,7 @@ function ConversationsPage() {
             </p>
           )}
         </div>
+        <AutoDeleteCard />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StatRow label="Total Conversations" value={convs.length} color="text-foreground" />
           <StatRow label="Avg Messages" value={avgMessages} color="text-[var(--gold)]" />
@@ -655,6 +657,80 @@ function StatRow({
     <div className="rounded-xl border border-border bg-card p-5 flex items-center justify-between">
       <span className="text-sm font-medium text-foreground">{label}</span>
       <span className={`font-display text-3xl font-semibold ${color}`}>{value}</span>
+    </div>
+  );
+}
+
+function AutoDeleteCard() {
+  const [hours, setHours] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState<number | null | "none">(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getAutoDeleteSetting()
+      .then((res) => {
+        if (!cancelled) setHours(res.hours);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const choose = async (value: number | null) => {
+    setSaving(value === null ? "none" : value);
+    try {
+      await setAutoDeleteSetting({ data: { hours: value } });
+      setHours(value);
+      toast.success(
+        value === null
+          ? "Auto-delete turned off."
+          : value === 24
+            ? "Non-lead threads will auto-delete after 24 hours."
+            : "Non-lead threads will auto-delete after 1 week.",
+      );
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not save setting.");
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const options: Array<{ label: string; value: number | null }> = [
+    { label: "Off", value: null },
+    { label: "After 24 hours", value: 24 },
+    { label: "After 1 week", value: 168 },
+  ];
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-4 md:p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <div>
+        <div className="font-medium text-foreground">Auto-delete non-lead threads</div>
+        <p className="text-sm text-muted-foreground">
+          Automatically remove calls and chats that never captured a lead.
+        </p>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        {options.map((o) => {
+          const active = hours === o.value;
+          const isSavingThis = saving === (o.value === null ? "none" : o.value);
+          return (
+            <Button
+              key={String(o.value)}
+              variant={active ? "default" : "outline"}
+              size="sm"
+              disabled={loading || saving !== null}
+              onClick={() => choose(o.value)}
+            >
+              {isSavingThis ? "Saving…" : o.label}
+            </Button>
+          );
+        })}
+      </div>
     </div>
   );
 }

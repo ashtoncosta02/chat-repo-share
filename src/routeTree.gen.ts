@@ -42,6 +42,7 @@ import { Route as ApiPublicTwilioVoiceRouteImport } from './routes/api.public.tw
 import { Route as ApiPublicTwilioSmsRouteImport } from './routes/api.public.twilio.sms'
 import { Route as ApiPublicTwilioDialerBridgeRouteImport } from './routes/api.public.twilio.dialer-bridge'
 import { Route as ApiPublicTwilioCallbackRouteImport } from './routes/api.public.twilio.callback'
+import { Route as ApiPublicHooksAutoDeleteThreadsRouteImport } from './routes/api.public.hooks.auto-delete-threads'
 import { Route as ApiPublicGoogleCalendarCallbackRouteImport } from './routes/api.public.google-calendar.callback'
 import { Route as ApiPublicElevenlabsPostcallRouteImport } from './routes/api.public.elevenlabs.postcall'
 import { Route as ApiPublicWidgetConfigAgentIdRouteImport } from './routes/api.public.widget.config.$agentId'
@@ -219,6 +220,12 @@ const ApiPublicTwilioCallbackRoute = ApiPublicTwilioCallbackRouteImport.update({
   path: '/api/public/twilio/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksAutoDeleteThreadsRoute =
+  ApiPublicHooksAutoDeleteThreadsRouteImport.update({
+    id: '/api/public/hooks/auto-delete-threads',
+    path: '/api/public/hooks/auto-delete-threads',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicGoogleCalendarCallbackRoute =
   ApiPublicGoogleCalendarCallbackRouteImport.update({
     id: '/api/public/google-calendar/callback',
@@ -263,6 +270,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/conversations/': typeof DashboardConversationsIndexRoute
   '/api/public/elevenlabs/postcall': typeof ApiPublicElevenlabsPostcallRoute
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
+  '/api/public/hooks/auto-delete-threads': typeof ApiPublicHooksAutoDeleteThreadsRoute
   '/api/public/twilio/callback': typeof ApiPublicTwilioCallbackRoute
   '/api/public/twilio/dialer-bridge': typeof ApiPublicTwilioDialerBridgeRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
@@ -297,6 +305,7 @@ export interface FileRoutesByTo {
   '/dashboard/conversations': typeof DashboardConversationsIndexRoute
   '/api/public/elevenlabs/postcall': typeof ApiPublicElevenlabsPostcallRoute
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
+  '/api/public/hooks/auto-delete-threads': typeof ApiPublicHooksAutoDeleteThreadsRoute
   '/api/public/twilio/callback': typeof ApiPublicTwilioCallbackRoute
   '/api/public/twilio/dialer-bridge': typeof ApiPublicTwilioDialerBridgeRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
@@ -336,6 +345,7 @@ export interface FileRoutesById {
   '/dashboard/conversations/': typeof DashboardConversationsIndexRoute
   '/api/public/elevenlabs/postcall': typeof ApiPublicElevenlabsPostcallRoute
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
+  '/api/public/hooks/auto-delete-threads': typeof ApiPublicHooksAutoDeleteThreadsRoute
   '/api/public/twilio/callback': typeof ApiPublicTwilioCallbackRoute
   '/api/public/twilio/dialer-bridge': typeof ApiPublicTwilioDialerBridgeRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
@@ -376,6 +386,7 @@ export interface FileRouteTypes {
     | '/dashboard/conversations/'
     | '/api/public/elevenlabs/postcall'
     | '/api/public/google-calendar/callback'
+    | '/api/public/hooks/auto-delete-threads'
     | '/api/public/twilio/callback'
     | '/api/public/twilio/dialer-bridge'
     | '/api/public/twilio/sms'
@@ -410,6 +421,7 @@ export interface FileRouteTypes {
     | '/dashboard/conversations'
     | '/api/public/elevenlabs/postcall'
     | '/api/public/google-calendar/callback'
+    | '/api/public/hooks/auto-delete-threads'
     | '/api/public/twilio/callback'
     | '/api/public/twilio/dialer-bridge'
     | '/api/public/twilio/sms'
@@ -448,6 +460,7 @@ export interface FileRouteTypes {
     | '/dashboard/conversations/'
     | '/api/public/elevenlabs/postcall'
     | '/api/public/google-calendar/callback'
+    | '/api/public/hooks/auto-delete-threads'
     | '/api/public/twilio/callback'
     | '/api/public/twilio/dialer-bridge'
     | '/api/public/twilio/sms'
@@ -470,6 +483,7 @@ export interface RootRouteChildren {
   ApiPublicOwnerChatRoute: typeof ApiPublicOwnerChatRoute
   ApiPublicElevenlabsPostcallRoute: typeof ApiPublicElevenlabsPostcallRoute
   ApiPublicGoogleCalendarCallbackRoute: typeof ApiPublicGoogleCalendarCallbackRoute
+  ApiPublicHooksAutoDeleteThreadsRoute: typeof ApiPublicHooksAutoDeleteThreadsRoute
   ApiPublicTwilioCallbackRoute: typeof ApiPublicTwilioCallbackRoute
   ApiPublicTwilioDialerBridgeRoute: typeof ApiPublicTwilioDialerBridgeRoute
   ApiPublicTwilioSmsRoute: typeof ApiPublicTwilioSmsRoute
@@ -715,6 +729,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTwilioCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/auto-delete-threads': {
+      id: '/api/public/hooks/auto-delete-threads'
+      path: '/api/public/hooks/auto-delete-threads'
+      fullPath: '/api/public/hooks/auto-delete-threads'
+      preLoaderRoute: typeof ApiPublicHooksAutoDeleteThreadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/google-calendar/callback': {
       id: '/api/public/google-calendar/callback'
       path: '/api/public/google-calendar/callback'
@@ -827,6 +848,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicOwnerChatRoute: ApiPublicOwnerChatRoute,
   ApiPublicElevenlabsPostcallRoute: ApiPublicElevenlabsPostcallRoute,
   ApiPublicGoogleCalendarCallbackRoute: ApiPublicGoogleCalendarCallbackRoute,
+  ApiPublicHooksAutoDeleteThreadsRoute: ApiPublicHooksAutoDeleteThreadsRoute,
   ApiPublicTwilioCallbackRoute: ApiPublicTwilioCallbackRoute,
   ApiPublicTwilioDialerBridgeRoute: ApiPublicTwilioDialerBridgeRoute,
   ApiPublicTwilioSmsRoute: ApiPublicTwilioSmsRoute,
