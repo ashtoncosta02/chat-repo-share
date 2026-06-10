@@ -193,6 +193,58 @@ function ConversationsPage() {
     toast.success("Conversation deleted.");
   };
 
+  const [callingId, setCallingId] = useState<string | null>(null);
+
+  const updateLeadStatus = async (leadId: string, status: string) => {
+    setConvs((prev) => prev.map((c) => (c.lead_id === leadId ? { ...c, lead_status: status } : c)));
+    const { error } = await supabase.from("leads").update({ status }).eq("id", leadId);
+    if (error) toast.error("Could not update status.");
+  };
+
+  const triggerAiCallback = async (leadId: string) => {
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess.session?.access_token;
+    if (!token) return toast.error("Please sign in again.");
+    setCallingId(leadId);
+    try {
+      const res = await aiCallbackLead({ data: { accessToken: token, leadId } });
+      if (res.success) {
+        toast.success("Receptionist is calling now.");
+        setConvs((prev) =>
+          prev.map((c) => (c.lead_id === leadId ? { ...c, lead_status: "contacted" } : c)),
+        );
+      } else toast.error(res.error);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to start call.");
+    } finally {
+      setCallingId(null);
+    }
+  };
+
+  const triggerHumanCallback = async (leadId: string, phone: string) => {
+    const callback = (localStorage.getItem(CALLBACK_KEY) || "").trim();
+    if (!callback) return toast.error("Set your callback number in the Dialer first (left sidebar).");
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess.session?.access_token;
+    if (!token) return toast.error("Please sign in again.");
+    setCallingId(leadId);
+    try {
+      const res = await startOutboundCall({
+        data: { accessToken: token, to: phone, myPhone: callback },
+      });
+      if (res.success) {
+        toast.success(`Ringing your phone (${callback})…`);
+        setConvs((prev) =>
+          prev.map((c) => (c.lead_id === leadId ? { ...c, lead_status: "contacted" } : c)),
+        );
+      } else toast.error(res.error);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to start call.");
+    } finally {
+      setCallingId(null);
+    }
+  };
+
   const totalMs = convs.reduce((s, c) => s + c.message_count, 0);
   const avgMessages = convs.length ? Math.round(totalMs / convs.length) : 0;
   const totalDuration = convs.reduce((s, c) => s + c.duration_seconds, 0);
