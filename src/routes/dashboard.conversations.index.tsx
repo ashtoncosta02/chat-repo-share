@@ -400,14 +400,24 @@ function ConversationsPage() {
   );
 }
 
+const LEAD_STATUS_OPTIONS = ["new", "contacted", "won", "lost"] as const;
+
 function ConversationRow({
   c,
   deletingId,
   onDelete,
+  callingId,
+  onAiCallback,
+  onHumanCallback,
+  onStatusChange,
 }: {
   c: ConvRow;
   deletingId: string | null;
   onDelete: (id: string) => void;
+  callingId: string | null;
+  onAiCallback: (leadId: string) => void;
+  onHumanCallback: (leadId: string, phone: string) => void;
+  onStatusChange: (leadId: string, status: string) => void;
 }) {
   const displayName = c.lead_name ?? "Unknown Caller";
   const initials = c.lead_name
@@ -419,6 +429,7 @@ function ConversationRow({
         .toUpperCase()
     : null;
   const avatarColor = avatarBgFor(c.id);
+  const isCalling = c.lead_id != null && callingId === c.lead_id;
 
   return (
     <tr className="hover:bg-muted/40 transition">
@@ -435,9 +446,22 @@ function ConversationRow({
           </div>
           <div className="min-w-0">
             <div className="font-medium text-foreground truncate">{displayName}</div>
-            <div className="text-xs text-muted-foreground truncate">
-              {c.lead_phone ?? "No phone"}
+            <div className="text-xs text-muted-foreground truncate flex items-center gap-1">
+              {c.lead_phone ? (
+                <>
+                  <PhoneIcon className="h-3 w-3" />
+                  {c.lead_phone}
+                </>
+              ) : (
+                "No phone"
+              )}
             </div>
+            {c.lead_email && (
+              <div className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                <Mail className="h-3 w-3" />
+                {c.lead_email}
+              </div>
+            )}
           </div>
         </Link>
       </td>
@@ -463,10 +487,49 @@ function ConversationRow({
         {formatTime(c.started_at)}
       </td>
       <td className="px-4 py-4">
-        <StatusTag status={c.lead_status} />
+        {c.lead_id ? (
+          <Select value={c.lead_status ?? "new"} onValueChange={(v) => onStatusChange(c.lead_id!, v)}>
+            <SelectTrigger className="h-8 w-28 text-xs capitalize">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {LEAD_STATUS_OPTIONS.map((s) => (
+                <SelectItem key={s} value={s} className="capitalize">
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <StatusTag status={c.lead_status} />
+        )}
       </td>
       <td className="px-2 py-4 text-right">
         <div className="flex items-center justify-end gap-1">
+          {c.lead_id && c.lead_phone && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" disabled={isCalling}>
+                  {isCalling ? (
+                    <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                  ) : (
+                    <PhoneCall className="h-3.5 w-3.5 mr-1" />
+                  )}
+                  Call back
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onHumanCallback(c.lead_id!, c.lead_phone!)}>
+                  <PhoneIcon className="h-3.5 w-3.5 mr-2" />
+                  Call from my phone
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onAiCallback(c.lead_id!)}>
+                  <Bot className="h-3.5 w-3.5 mr-2" />
+                  Have receptionist call now
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
@@ -481,7 +544,7 @@ function ConversationRow({
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Delete this conversation?</AlertDialogTitle>
+                <AlertDialogTitle>Delete this thread?</AlertDialogTitle>
                 <AlertDialogDescription>
                   This will permanently remove the transcript and any messages. This can't be undone.
                 </AlertDialogDescription>
@@ -501,7 +564,7 @@ function ConversationRow({
             to="/dashboard/conversations/$conversationId"
             params={{ conversationId: c.id }}
             className="p-2 text-muted-foreground hover:text-foreground"
-            aria-label="Open conversation"
+            aria-label="Open transcript"
           >
             <ChevronRight className="h-4 w-4" />
           </Link>
