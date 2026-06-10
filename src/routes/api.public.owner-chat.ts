@@ -47,6 +47,23 @@ export const Route = createFileRoute("/api/public/owner-chat")({
       OPTIONS: async () =>
         new Response(null, { status: 204, headers: corsHeaders }),
       POST: async ({ request }) => {
+        // Require an authenticated Lovable user
+        const authHeader = request.headers.get("authorization") || "";
+        const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+        if (!token) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const { data: userData, error: userErr } = await supabaseAdmin.auth.getUser(token);
+        if (userErr || !userData.user) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
         let body: OwnerChatRequest;
         try {
           body = (await request.json()) as OwnerChatRequest;
