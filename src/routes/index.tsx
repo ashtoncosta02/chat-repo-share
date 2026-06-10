@@ -113,7 +113,7 @@ function PricingCard() {
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold">
           Elite Plan
         </p>
-        <p className="mt-4 font-display text-7xl font-bold text-gold">$397</p>
+        <p className="mt-4 font-display text-7xl font-bold text-gold">$197</p>
         <p className="mt-2 text-sm text-muted-foreground">per month</p>
         <div className="mt-6 inline-flex items-center justify-center rounded-full bg-accent px-5 py-2 text-sm text-gold-foreground">
           Unlimited calls · Setup included · No contracts
@@ -154,7 +154,7 @@ function PricingCard() {
           type="submit"
           className="w-full rounded-xl bg-primary px-5 py-5 text-lg font-semibold text-primary-foreground shadow-sm transition-all hover:opacity-95 active:scale-[0.99]"
         >
-          Get Started — $397/mo
+          Get Started — $197/mo
         </button>
       </form>
 
