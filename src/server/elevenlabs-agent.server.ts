@@ -159,9 +159,9 @@ export function buildSystemPrompt(p: AgentBusinessProfile): string {
 function buildFirstMessage(p: AgentBusinessProfile): string {
   const name = (p.assistant_name || "the receptionist").trim();
   const biz = p.business_name.trim();
-  // Keep the first sentence safe for both inbound calls and outbound callbacks.
+  // Includes a recording disclosure to satisfy two-party-consent states (CA, FL, IL, etc.).
   // Direction-specific wording is handled by the system prompt after context is available.
-  return `Hi, this is ${name} from ${biz}.`;
+  return `Hi, this is ${name} from ${biz}. Just so you know, this call may be recorded for quality. How can I help you?`;
 }
 
 interface ElevenLabsAgentConfig {
