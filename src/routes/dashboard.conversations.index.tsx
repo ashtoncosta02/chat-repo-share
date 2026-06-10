@@ -285,8 +285,8 @@ function ConversationsPage() {
   return (
     <div>
       <PageHeader
-        title="Conversations"
-        description="Every conversation your agents have had, saved automatically"
+        title="Threads"
+        description="Every lead and conversation in one place — calls, chats, and bookings"
       />
       <div className="p-8 space-y-6">
         <div className="flex flex-col gap-4">
