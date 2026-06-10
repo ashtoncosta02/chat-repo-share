@@ -78,6 +78,7 @@ export type Database = {
         Row: {
           answer_mode: string
           assistant_name: string | null
+          auto_delete_threads_hours: number | null
           booking_link: string | null
           business_name: string
           created_at: string
@@ -112,6 +113,7 @@ export type Database = {
         Insert: {
           answer_mode?: string
           assistant_name?: string | null
+          auto_delete_threads_hours?: number | null
           booking_link?: string | null
           business_name: string
           created_at?: string
@@ -146,6 +148,7 @@ export type Database = {
         Update: {
           answer_mode?: string
           assistant_name?: string | null
+          auto_delete_threads_hours?: number | null
           booking_link?: string | null
           business_name?: string
           created_at?: string
