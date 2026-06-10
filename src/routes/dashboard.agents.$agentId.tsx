@@ -670,7 +670,14 @@ function AgentDetailPage() {
             </div>
             <div className="space-y-2">
               <Label>Voice</Label>
-              <Select value={voiceDraft} onValueChange={setVoiceDraft}>
+              <Select value={voiceDraft} onValueChange={(v) => {
+                const prevVoiceName = getVoiceById(voiceDraft).name;
+                setVoiceDraft(v);
+                // Auto-update name if blank or still matches the previously selected voice's name
+                if (!nameDraft.trim() || nameDraft.trim() === prevVoiceName) {
+                  setNameDraft(getVoiceById(v).name);
+                }
+              }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a voice" />
                 </SelectTrigger>
