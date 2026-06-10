@@ -35,6 +35,7 @@ import { backfillVoiceCalls } from "@/lib/voice-call-backfill.functions";
 import { summarizeConversation } from "@/lib/conversation-summary.functions";
 import { aiCallbackLead } from "@/lib/lead-callback.functions";
 import { startOutboundCall } from "@/lib/dialer.functions";
+import { getAutoDeleteSetting, setAutoDeleteSetting } from "@/lib/thread-cleanup.functions";
 
 const CALLBACK_KEY = "askkira.dialer.callback";
 
