@@ -275,7 +275,13 @@ function OnboardingWizard() {
         {step === 3 && (
           <StepVoice
             voiceId={voiceId}
-            setVoiceId={setVoiceId}
+            setVoiceId={(v) => {
+              const prevName = getVoiceById(voiceId).name;
+              setVoiceId(v);
+              if (!profile.assistant_name.trim() || profile.assistant_name.trim() === prevName) {
+                setProfile({ ...profile, assistant_name: getVoiceById(v).name });
+              }
+            }}
             previewing={previewing}
             onPreview={async () => {
               setPreviewing(true);
