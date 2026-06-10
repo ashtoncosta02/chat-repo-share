@@ -113,7 +113,7 @@ function PricingCard() {
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold">
           Elite Plan
         </p>
-        <p className="mt-4 font-display text-7xl font-bold text-gold">$397</p>
+        <p className="mt-4 font-display text-7xl font-bold text-gold">$197</p>
         <p className="mt-2 text-sm text-muted-foreground">per month</p>
         <div className="mt-6 inline-flex items-center justify-center rounded-full bg-accent px-5 py-2 text-sm text-gold-foreground">
           Unlimited calls · Setup included · No contracts
