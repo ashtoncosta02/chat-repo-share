@@ -384,6 +384,10 @@ function ConversationsPage() {
                       c={c}
                       deletingId={deletingId}
                       onDelete={handleDelete}
+                      callingId={callingId}
+                      onAiCallback={triggerAiCallback}
+                      onHumanCallback={triggerHumanCallback}
+                      onStatusChange={updateLeadStatus}
                     />
                   ))}
                 </tbody>
