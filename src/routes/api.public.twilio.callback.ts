@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { registerTwilioCall } from "@/server/elevenlabs-agent.server";
+import { verifyTwilioSignature, formDataToRecord } from "@/server/twilio-signature.server";
+import { signPayload } from "@/server/hmac.server";
 
 export const Route = createFileRoute("/api/public/twilio/callback")({
   server: {
@@ -20,6 +22,10 @@ export const Route = createFileRoute("/api/public/twilio/callback")({
             }
           }
           const form = await request.formData();
+          const params = formDataToRecord(form);
+          if (!(await verifyTwilioSignature(request, params))) {
+            return new Response("Invalid signature", { status: 403 });
+          }
           const answeredBy = String(form.get("AnsweredBy") || "").toLowerCase();
           const from = String(form.get("From") || "").trim();
           const to = String(form.get("To") || "").trim();
@@ -45,7 +51,9 @@ export const Route = createFileRoute("/api/public/twilio/callback")({
           const voicemailMessage = `Hi ${firstName}, this is ${receptionistName} from ${businessName}. I'm calling to follow up on your earlier inquiry. Please call us back when you have a chance. Thank you, goodbye.`;
 
           if (answeredBy.startsWith("machine") || answeredBy === "fax" || answeredBy === "unknown") {
-            const audioUrl = `https://project--d1e796ad-671c-47e1-843b-cdecc02fe11f-dev.lovable.app/api/public/voicemail/audio?lead=${encodeURIComponent(leadId)}&agent=${encodeURIComponent(agentId)}`;
+            const exp = Date.now() + 10 * 60 * 1000;
+            const sig = signPayload(`${leadId}|${agentId}|${exp}`);
+            const audioUrl = `https://project--d1e796ad-671c-47e1-843b-cdecc02fe11f-dev.lovable.app/api/public/voicemail/audio?lead=${encodeURIComponent(leadId)}&agent=${encodeURIComponent(agentId)}&exp=${exp}&sig=${sig}`;
             return new Response(
               `<Response><Play>${escapeXml(audioUrl)}</Play><Hangup /></Response>`,
               { headers: { "Content-Type": "application/xml" } },

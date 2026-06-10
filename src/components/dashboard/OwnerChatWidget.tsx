@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { MessageSquare, X, Send, Sparkles } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -75,9 +76,19 @@ export function OwnerChatWidget() {
     setSending(true);
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) {
+        setError("Please sign in to use the help assistant.");
+        setSending(false);
+        return;
+      }
       const resp = await fetch("/api/public/owner-chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ messages: next }),
       });
 

@@ -332,8 +332,8 @@ export async function fetchAndStoreCallAudio(opts: {
     return null;
   }
 
-  const { data: pub } = supabaseAdmin.storage.from("call-audio").getPublicUrl(path);
-  return pub?.publicUrl ?? null;
+  // Bucket is private. Store the storage path; the UI mints signed URLs.
+  return path;
 }
 
 /**
