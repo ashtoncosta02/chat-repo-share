@@ -19,13 +19,13 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Ask Kira — AI Voice Agents for Your Business" },
+      { title: "Ask Janice — AI Voice Agents for Your Business" },
       {
         name: "description",
         content:
           "A custom AI voice agent trained on your business. Answers calls, captures leads, books appointments, and follows up automatically. 24/7.",
       },
-      { property: "og:title", content: "Ask Kira — AI Voice Agents for Your Business" },
+      { property: "og:title", content: "Ask Janice — AI Voice Agents for Your Business" },
       {
         property: "og:description",
         content:
@@ -214,7 +214,7 @@ function Footer() {
   return (
     <footer className="border-t border-border/60 py-8">
       <div className="mx-auto max-w-6xl px-6 text-center text-sm text-muted-foreground">
-        © {new Date().getFullYear()} Ask Kira. All rights reserved.
+        © {new Date().getFullYear()} Ask Janice. All rights reserved.
       </div>
     </footer>
   );

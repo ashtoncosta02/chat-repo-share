@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/dashboard/agent")({
-  head: () => ({ meta: [{ title: "Agent — Ask Kira" }] }),
+  head: () => ({ meta: [{ title: "Agent — Ask Janice" }] }),
   component: AgentRedirect,
 });
 

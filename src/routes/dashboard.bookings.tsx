@@ -8,7 +8,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { createManualBooking } from "@/lib/google-calendar.functions";
 
 export const Route = createFileRoute("/dashboard/bookings")({
-  head: () => ({ meta: [{ title: "Bookings — Ask Kira" }] }),
+  head: () => ({ meta: [{ title: "Bookings — Ask Janice" }] }),
   component: BookingsPage,
 });
 

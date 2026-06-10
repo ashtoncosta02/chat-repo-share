@@ -12,7 +12,7 @@ import { ChatWidgetPage } from "./dashboard.chat-widget";
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard — Ask Kira" },
+      { title: "Dashboard — Ask Janice" },
       { name: "description", content: "Manage your AI Receptionist." },
     ],
   }),

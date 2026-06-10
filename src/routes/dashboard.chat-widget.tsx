@@ -8,7 +8,7 @@ import { Code2, Copy, Check, ExternalLink, Plus, MessageSquare } from "lucide-re
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard/chat-widget")({
-  head: () => ({ meta: [{ title: "Chat Widget — Ask Kira" }] }),
+  head: () => ({ meta: [{ title: "Chat Widget — Ask Janice" }] }),
   component: ChatWidgetPage,
 });
 

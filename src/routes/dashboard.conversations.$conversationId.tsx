@@ -13,7 +13,7 @@ import {
 } from "@/lib/conversation-actions.functions";
 
 export const Route = createFileRoute("/dashboard/conversations/$conversationId")({
-  head: () => ({ meta: [{ title: "Transcript — Ask Kira" }] }),
+  head: () => ({ meta: [{ title: "Transcript — Ask Janice" }] }),
   component: ConversationDetailPage,
 });
 
@@ -252,7 +252,7 @@ function ConversationDetailPage() {
   }
 
   const minutes = Math.max(1, Math.round(conv.duration_seconds / 60));
-  const assistantName = agent?.assistant_name?.trim() || "Ava";
+  const assistantName = agent?.assistant_name?.trim() || "Janice";
 
   return (
     <div className="min-h-screen bg-background">

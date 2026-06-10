@@ -38,7 +38,7 @@ import { startOutboundCall } from "@/lib/dialer.functions";
 const CALLBACK_KEY = "askkira.dialer.callback";
 
 export const Route = createFileRoute("/dashboard/leads")({
-  head: () => ({ meta: [{ title: "Leads — Ask Kira" }] }),
+  head: () => ({ meta: [{ title: "Leads — Ask Janice" }] }),
   component: LeadsPage,
 });
 

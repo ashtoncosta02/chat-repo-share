@@ -10,7 +10,7 @@ import { linkExistingNumberToElevenLabs } from "@/lib/twilio-numbers.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard/phone-numbers")({
-  head: () => ({ meta: [{ title: "Phone Numbers — Ask Kira" }] }),
+  head: () => ({ meta: [{ title: "Phone Numbers — Ask Janice" }] }),
   component: PhoneNumbersPage,
 });
 

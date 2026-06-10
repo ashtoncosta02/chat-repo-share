@@ -7,7 +7,7 @@ import { Bot, Calendar, CheckCircle2, MessageSquare, Phone, ChevronRight } from 
 import { AnalyticsPage } from "./dashboard.analytics";
 
 export const Route = createFileRoute("/dashboard/")({
-  head: () => ({ meta: [{ title: "Dashboard — Ask Kira" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — Ask Janice" }] }),
   component: DashboardHome,
 });
 
@@ -87,7 +87,7 @@ function DashboardHome() {
     );
   }
 
-  const assistantName = agent.assistant_name?.trim() || "Ava";
+  const assistantName = agent.assistant_name?.trim() || "Janice";
 
   return (
     <div>

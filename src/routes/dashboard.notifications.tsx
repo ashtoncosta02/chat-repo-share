@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { NotificationsCard } from "@/components/dashboard/NotificationsCard";
 
 export const Route = createFileRoute("/dashboard/notifications")({
-  head: () => ({ meta: [{ title: "Notifications — Ask Kira" }] }),
+  head: () => ({ meta: [{ title: "Notifications — Ask Janice" }] }),
   component: NotificationsPage,
 });
 
