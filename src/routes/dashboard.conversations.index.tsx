@@ -3,9 +3,15 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/dashboard/PageHeader";
-import { MessageSquare, ChevronRight, Mic, Trash2, RefreshCw, Phone as PhoneIcon, Search } from "lucide-react";
+import { MessageSquare, ChevronRight, Mic, Trash2, RefreshCw, Phone as PhoneIcon, Search, PhoneCall, Bot, Loader2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -27,9 +33,13 @@ import {
 import { toast } from "sonner";
 import { backfillVoiceCalls } from "@/lib/voice-call-backfill.functions";
 import { summarizeConversation } from "@/lib/conversation-summary.functions";
+import { aiCallbackLead } from "@/lib/lead-callback.functions";
+import { startOutboundCall } from "@/lib/dialer.functions";
+
+const CALLBACK_KEY = "askkira.dialer.callback";
 
 export const Route = createFileRoute("/dashboard/conversations/")({
-  head: () => ({ meta: [{ title: "Conversations — Ask Kira" }] }),
+  head: () => ({ meta: [{ title: "Threads — Ask Kira" }] }),
   component: ConversationsPage,
 });
 
@@ -41,12 +51,15 @@ interface ConvRow {
   agent_id: string | null;
   recording_url: string | null;
   ai_summary: string | null;
+  lead_id: string | null;
   lead_name: string | null;
   lead_phone: string | null;
+  lead_email: string | null;
   lead_notes: string | null;
   lead_source: string | null;
   lead_status: string | null;
 }
+
 
 function ConversationsPage() {
   const { user } = useAuth();
@@ -67,18 +80,20 @@ function ConversationsPage() {
     const ids = rows.map((r) => r.id);
     const leadMap = new Map<
       string,
-      { name: string | null; phone: string | null; notes: string | null; source: string | null; status: string | null }
+      { id: string; name: string | null; phone: string | null; email: string | null; notes: string | null; source: string | null; status: string | null }
     >();
     if (ids.length > 0) {
       const { data: leads } = await supabase
         .from("leads")
-        .select("conversation_id, name, phone, notes, source, status")
+        .select("id, conversation_id, name, phone, email, notes, source, status")
         .in("conversation_id", ids);
       for (const l of leads ?? []) {
         if (l.conversation_id)
           leadMap.set(l.conversation_id, {
+            id: l.id,
             name: l.name,
             phone: l.phone,
+            email: l.email,
             notes: l.notes,
             source: l.source,
             status: l.status,
@@ -90,8 +105,10 @@ function ConversationsPage() {
         const l = leadMap.get(r.id);
         return {
           ...r,
+          lead_id: l?.id ?? null,
           lead_name: l?.name ?? null,
           lead_phone: l?.phone ?? null,
+          lead_email: l?.email ?? null,
           lead_notes: l?.notes ?? null,
           lead_source: l?.source ?? null,
           lead_status: l?.status ?? null,
@@ -176,6 +193,58 @@ function ConversationsPage() {
     toast.success("Conversation deleted.");
   };
 
+  const [callingId, setCallingId] = useState<string | null>(null);
+
+  const updateLeadStatus = async (leadId: string, status: string) => {
+    setConvs((prev) => prev.map((c) => (c.lead_id === leadId ? { ...c, lead_status: status } : c)));
+    const { error } = await supabase.from("leads").update({ status }).eq("id", leadId);
+    if (error) toast.error("Could not update status.");
+  };
+
+  const triggerAiCallback = async (leadId: string) => {
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess.session?.access_token;
+    if (!token) return toast.error("Please sign in again.");
+    setCallingId(leadId);
+    try {
+      const res = await aiCallbackLead({ data: { accessToken: token, leadId } });
+      if (res.success) {
+        toast.success("Receptionist is calling now.");
+        setConvs((prev) =>
+          prev.map((c) => (c.lead_id === leadId ? { ...c, lead_status: "contacted" } : c)),
+        );
+      } else toast.error(res.error);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to start call.");
+    } finally {
+      setCallingId(null);
+    }
+  };
+
+  const triggerHumanCallback = async (leadId: string, phone: string) => {
+    const callback = (localStorage.getItem(CALLBACK_KEY) || "").trim();
+    if (!callback) return toast.error("Set your callback number in the Dialer first (left sidebar).");
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess.session?.access_token;
+    if (!token) return toast.error("Please sign in again.");
+    setCallingId(leadId);
+    try {
+      const res = await startOutboundCall({
+        data: { accessToken: token, to: phone, myPhone: callback },
+      });
+      if (res.success) {
+        toast.success(`Ringing your phone (${callback})…`);
+        setConvs((prev) =>
+          prev.map((c) => (c.lead_id === leadId ? { ...c, lead_status: "contacted" } : c)),
+        );
+      } else toast.error(res.error);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to start call.");
+    } finally {
+      setCallingId(null);
+    }
+  };
+
   const totalMs = convs.reduce((s, c) => s + c.message_count, 0);
   const avgMessages = convs.length ? Math.round(totalMs / convs.length) : 0;
   const totalDuration = convs.reduce((s, c) => s + c.duration_seconds, 0);
@@ -216,8 +285,8 @@ function ConversationsPage() {
   return (
     <div>
       <PageHeader
-        title="Conversations"
-        description="Every conversation your agents have had, saved automatically"
+        title="Threads"
+        description="Every lead and conversation in one place — calls, chats, and bookings"
       />
       <div className="p-8 space-y-6">
         <div className="flex flex-col gap-4">
@@ -315,6 +384,10 @@ function ConversationsPage() {
                       c={c}
                       deletingId={deletingId}
                       onDelete={handleDelete}
+                      callingId={callingId}
+                      onAiCallback={triggerAiCallback}
+                      onHumanCallback={triggerHumanCallback}
+                      onStatusChange={updateLeadStatus}
                     />
                   ))}
                 </tbody>
@@ -327,14 +400,24 @@ function ConversationsPage() {
   );
 }
 
+const LEAD_STATUS_OPTIONS = ["new", "contacted", "won", "lost"] as const;
+
 function ConversationRow({
   c,
   deletingId,
   onDelete,
+  callingId,
+  onAiCallback,
+  onHumanCallback,
+  onStatusChange,
 }: {
   c: ConvRow;
   deletingId: string | null;
   onDelete: (id: string) => void;
+  callingId: string | null;
+  onAiCallback: (leadId: string) => void;
+  onHumanCallback: (leadId: string, phone: string) => void;
+  onStatusChange: (leadId: string, status: string) => void;
 }) {
   const displayName = c.lead_name ?? "Unknown Caller";
   const initials = c.lead_name
@@ -346,6 +429,7 @@ function ConversationRow({
         .toUpperCase()
     : null;
   const avatarColor = avatarBgFor(c.id);
+  const isCalling = c.lead_id != null && callingId === c.lead_id;
 
   return (
     <tr className="hover:bg-muted/40 transition">
@@ -362,9 +446,22 @@ function ConversationRow({
           </div>
           <div className="min-w-0">
             <div className="font-medium text-foreground truncate">{displayName}</div>
-            <div className="text-xs text-muted-foreground truncate">
-              {c.lead_phone ?? "No phone"}
+            <div className="text-xs text-muted-foreground truncate flex items-center gap-1">
+              {c.lead_phone ? (
+                <>
+                  <PhoneIcon className="h-3 w-3" />
+                  {c.lead_phone}
+                </>
+              ) : (
+                "No phone"
+              )}
             </div>
+            {c.lead_email && (
+              <div className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                <Mail className="h-3 w-3" />
+                {c.lead_email}
+              </div>
+            )}
           </div>
         </Link>
       </td>
@@ -390,10 +487,49 @@ function ConversationRow({
         {formatTime(c.started_at)}
       </td>
       <td className="px-4 py-4">
-        <StatusTag status={c.lead_status} />
+        {c.lead_id ? (
+          <Select value={c.lead_status ?? "new"} onValueChange={(v) => onStatusChange(c.lead_id!, v)}>
+            <SelectTrigger className="h-8 w-28 text-xs capitalize">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {LEAD_STATUS_OPTIONS.map((s) => (
+                <SelectItem key={s} value={s} className="capitalize">
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <StatusTag status={c.lead_status} />
+        )}
       </td>
       <td className="px-2 py-4 text-right">
         <div className="flex items-center justify-end gap-1">
+          {c.lead_id && c.lead_phone && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" disabled={isCalling}>
+                  {isCalling ? (
+                    <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                  ) : (
+                    <PhoneCall className="h-3.5 w-3.5 mr-1" />
+                  )}
+                  Call back
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onHumanCallback(c.lead_id!, c.lead_phone!)}>
+                  <PhoneIcon className="h-3.5 w-3.5 mr-2" />
+                  Call from my phone
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onAiCallback(c.lead_id!)}>
+                  <Bot className="h-3.5 w-3.5 mr-2" />
+                  Have receptionist call now
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
@@ -408,7 +544,7 @@ function ConversationRow({
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Delete this conversation?</AlertDialogTitle>
+                <AlertDialogTitle>Delete this thread?</AlertDialogTitle>
                 <AlertDialogDescription>
                   This will permanently remove the transcript and any messages. This can't be undone.
                 </AlertDialogDescription>
@@ -428,7 +564,7 @@ function ConversationRow({
             to="/dashboard/conversations/$conversationId"
             params={{ conversationId: c.id }}
             className="p-2 text-muted-foreground hover:text-foreground"
-            aria-label="Open conversation"
+            aria-label="Open transcript"
           >
             <ChevronRight className="h-4 w-4" />
           </Link>

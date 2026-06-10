@@ -22,8 +22,7 @@ export const Route = createFileRoute("/dashboard")({
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/dashboard/agent", label: "Agent", icon: Bot },
-  { to: "/dashboard/leads", label: "Leads", icon: User },
-  { to: "/dashboard/conversations", label: "Conversations", icon: MessageSquare },
+  { to: "/dashboard/conversations", label: "Threads", icon: MessageSquare },
   { to: "/dashboard/bookings", label: "Bookings", icon: Calendar },
   { to: "/dashboard/chat-widget", label: "Chat Widget", icon: Code2 },
   { to: "/dashboard/notifications", label: "Notifications", icon: Bell },
