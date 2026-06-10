@@ -80,18 +80,20 @@ function ConversationsPage() {
     const ids = rows.map((r) => r.id);
     const leadMap = new Map<
       string,
-      { name: string | null; phone: string | null; notes: string | null; source: string | null; status: string | null }
+      { id: string; name: string | null; phone: string | null; email: string | null; notes: string | null; source: string | null; status: string | null }
     >();
     if (ids.length > 0) {
       const { data: leads } = await supabase
         .from("leads")
-        .select("conversation_id, name, phone, notes, source, status")
+        .select("id, conversation_id, name, phone, email, notes, source, status")
         .in("conversation_id", ids);
       for (const l of leads ?? []) {
         if (l.conversation_id)
           leadMap.set(l.conversation_id, {
+            id: l.id,
             name: l.name,
             phone: l.phone,
+            email: l.email,
             notes: l.notes,
             source: l.source,
             status: l.status,
@@ -103,8 +105,10 @@ function ConversationsPage() {
         const l = leadMap.get(r.id);
         return {
           ...r,
+          lead_id: l?.id ?? null,
           lead_name: l?.name ?? null,
           lead_phone: l?.phone ?? null,
+          lead_email: l?.email ?? null,
           lead_notes: l?.notes ?? null,
           lead_source: l?.source ?? null,
           lead_status: l?.status ?? null,
