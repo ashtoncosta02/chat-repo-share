@@ -22,6 +22,10 @@ export const Route = createFileRoute("/api/public/twilio/sms")({
       POST: async ({ request }) => {
         try {
           const form = await request.formData();
+          const params = formDataToRecord(form);
+          if (!(await verifyTwilioSignature(request, params))) {
+            return new Response("Invalid signature", { status: 403 });
+          }
           const from = String(form.get("From") || "").trim();
           const to = String(form.get("To") || "").trim();
           const body = String(form.get("Body") || "").trim().slice(0, 1500);
