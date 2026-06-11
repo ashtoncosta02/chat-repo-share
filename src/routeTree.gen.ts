@@ -34,6 +34,7 @@ import { Route as DashboardAdminUsersRouteImport } from './routes/dashboard.admi
 import { Route as DashboardAdminHealthRouteImport } from './routes/dashboard.admin.health'
 import { Route as ApiPublicOwnerChatRouteImport } from './routes/api.public.owner-chat'
 import { Route as DashboardAdminUsersIndexRouteImport } from './routes/dashboard.admin.users.index'
+import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as DashboardAdminUsersUserIdRouteImport } from './routes/dashboard.admin.users.$userId'
 import { Route as ApiPublicWidgetEmbedDotjsRouteImport } from './routes/api.public.widget.embed[.]js'
 import { Route as ApiPublicWidgetChatRouteImport } from './routes/api.public.widget.chat'
@@ -177,6 +178,12 @@ const DashboardAdminUsersIndexRoute =
     path: '/',
     getParentRoute: () => DashboardAdminUsersRoute,
   } as any)
+const LovableEmailQueueProcessRoute =
+  LovableEmailQueueProcessRouteImport.update({
+    id: '/lovable/email/queue/process',
+    path: '/lovable/email/queue/process',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const DashboardAdminUsersUserIdRoute =
   DashboardAdminUsersUserIdRouteImport.update({
     id: '/$userId',
@@ -295,6 +302,7 @@ export interface FileRoutesByFullPath {
   '/api/public/widget/chat': typeof ApiPublicWidgetChatRoute
   '/api/public/widget/embed.js': typeof ApiPublicWidgetEmbedDotjsRoute
   '/dashboard/admin/users/$userId': typeof DashboardAdminUsersUserIdRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/dashboard/admin/users/': typeof DashboardAdminUsersIndexRoute
   '/api/public/widget/config/$agentId': typeof ApiPublicWidgetConfigAgentIdRoute
 }
@@ -332,6 +340,7 @@ export interface FileRoutesByTo {
   '/api/public/widget/chat': typeof ApiPublicWidgetChatRoute
   '/api/public/widget/embed.js': typeof ApiPublicWidgetEmbedDotjsRoute
   '/dashboard/admin/users/$userId': typeof DashboardAdminUsersUserIdRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/dashboard/admin/users': typeof DashboardAdminUsersIndexRoute
   '/api/public/widget/config/$agentId': typeof ApiPublicWidgetConfigAgentIdRoute
 }
@@ -374,6 +383,7 @@ export interface FileRoutesById {
   '/api/public/widget/chat': typeof ApiPublicWidgetChatRoute
   '/api/public/widget/embed.js': typeof ApiPublicWidgetEmbedDotjsRoute
   '/dashboard/admin/users/$userId': typeof DashboardAdminUsersUserIdRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/dashboard/admin/users/': typeof DashboardAdminUsersIndexRoute
   '/api/public/widget/config/$agentId': typeof ApiPublicWidgetConfigAgentIdRoute
 }
@@ -417,6 +427,7 @@ export interface FileRouteTypes {
     | '/api/public/widget/chat'
     | '/api/public/widget/embed.js'
     | '/dashboard/admin/users/$userId'
+    | '/lovable/email/queue/process'
     | '/dashboard/admin/users/'
     | '/api/public/widget/config/$agentId'
   fileRoutesByTo: FileRoutesByTo
@@ -454,6 +465,7 @@ export interface FileRouteTypes {
     | '/api/public/widget/chat'
     | '/api/public/widget/embed.js'
     | '/dashboard/admin/users/$userId'
+    | '/lovable/email/queue/process'
     | '/dashboard/admin/users'
     | '/api/public/widget/config/$agentId'
   id:
@@ -495,6 +507,7 @@ export interface FileRouteTypes {
     | '/api/public/widget/chat'
     | '/api/public/widget/embed.js'
     | '/dashboard/admin/users/$userId'
+    | '/lovable/email/queue/process'
     | '/dashboard/admin/users/'
     | '/api/public/widget/config/$agentId'
   fileRoutesById: FileRoutesById
@@ -519,6 +532,7 @@ export interface RootRouteChildren {
   ApiPublicVoicemailAudioRoute: typeof ApiPublicVoicemailAudioRoute
   ApiPublicWidgetChatRoute: typeof ApiPublicWidgetChatRoute
   ApiPublicWidgetEmbedDotjsRoute: typeof ApiPublicWidgetEmbedDotjsRoute
+  LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
   ApiPublicWidgetConfigAgentIdRoute: typeof ApiPublicWidgetConfigAgentIdRoute
 }
 
@@ -698,6 +712,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/admin/users/'
       preLoaderRoute: typeof DashboardAdminUsersIndexRouteImport
       parentRoute: typeof DashboardAdminUsersRoute
+    }
+    '/lovable/email/queue/process': {
+      id: '/lovable/email/queue/process'
+      path: '/lovable/email/queue/process'
+      fullPath: '/lovable/email/queue/process'
+      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/dashboard/admin/users/$userId': {
       id: '/dashboard/admin/users/$userId'
@@ -901,17 +922,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicVoicemailAudioRoute: ApiPublicVoicemailAudioRoute,
   ApiPublicWidgetChatRoute: ApiPublicWidgetChatRoute,
   ApiPublicWidgetEmbedDotjsRoute: ApiPublicWidgetEmbedDotjsRoute,
+  LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
   ApiPublicWidgetConfigAgentIdRoute: ApiPublicWidgetConfigAgentIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
