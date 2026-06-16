@@ -629,3 +629,118 @@ export const adminClearGoogleCalendar = createServerFn({ method: "POST" })
     if (error) return { success: false as const, error: error.message };
     return { success: true as const };
   });
+
+// =========================================================================
+// Plan management
+// =========================================================================
+const planSchema = z.object({
+  accessToken: z.string().min(1),
+  userId: z.string().uuid(),
+  plan: z.enum(["free", "discounted", "standard"]),
+});
+
+export const adminSetUserPlan = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => planSchema.parse(input))
+  .handler(async ({ data }) => {
+    const auth = await requireAdmin(data.accessToken);
+    if ("error" in auth) return { success: false as const, error: auth.error };
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update({ plan: data.plan })
+      .eq("user_id", data.userId);
+    if (error) return { success: false as const, error: error.message };
+    return { success: true as const };
+  });
+
+// =========================================================================
+// Tickets (admin views)
+// =========================================================================
+export const getAdminTickets = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => tokenSchema.parse(input))
+  .handler(async ({ data }) => {
+    const auth = await requireAdmin(data.accessToken);
+    if ("error" in auth) return { success: false as const, error: auth.error };
+
+    const { data: tickets } = await supabaseAdmin
+      .from("tickets")
+      .select("id, user_id, subject, description, status, priority, category, created_at, updated_at, resolved_at")
+      .order("created_at", { ascending: false });
+
+    if (!tickets || tickets.length === 0) return { success: true as const, tickets: [] };
+    const uids = Array.from(new Set(tickets.map((t) => t.user_id)));
+    const { data: profiles } = await supabaseAdmin
+      .from("profiles")
+      .select("user_id, email, display_name")
+      .in("user_id", uids);
+    const map = new Map((profiles ?? []).map((p) => [p.user_id, p]));
+    return {
+      success: true as const,
+      tickets: tickets.map((t) => ({
+        ...t,
+        user_email: map.get(t.user_id)?.email ?? null,
+        user_name: map.get(t.user_id)?.display_name ?? null,
+      })),
+    };
+  });
+
+const ticketUpdateSchema = z.object({
+  accessToken: z.string().min(1),
+  ticketId: z.string().uuid(),
+  status: z.enum(["open", "in_progress", "waiting", "resolved", "closed"]).optional(),
+  priority: z.enum(["low", "normal", "high", "urgent"]).optional(),
+  admin_notes: z.string().optional(),
+});
+
+export const adminUpdateTicket = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => ticketUpdateSchema.parse(input))
+  .handler(async ({ data }) => {
+    const auth = await requireAdmin(data.accessToken);
+    if ("error" in auth) return { success: false as const, error: auth.error };
+    const patch: Record<string, unknown> = {};
+    if (data.status) {
+      patch.status = data.status;
+      if (data.status === "resolved" || data.status === "closed") patch.resolved_at = new Date().toISOString();
+    }
+    if (data.priority) patch.priority = data.priority;
+    if (data.admin_notes !== undefined) patch.admin_notes = data.admin_notes;
+    const { error } = await supabaseAdmin.from("tickets").update(patch).eq("id", data.ticketId);
+    if (error) return { success: false as const, error: error.message };
+    return { success: true as const };
+  });
+
+const ticketReplySchema = z.object({
+  accessToken: z.string().min(1),
+  ticketId: z.string().uuid(),
+  body: z.string().min(1).max(10000),
+});
+
+export const adminReplyTicket = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => ticketReplySchema.parse(input))
+  .handler(async ({ data }) => {
+    const auth = await requireAdmin(data.accessToken);
+    if ("error" in auth) return { success: false as const, error: auth.error };
+    const { error } = await supabaseAdmin.from("ticket_messages").insert({
+      ticket_id: data.ticketId,
+      sender_id: auth.userId,
+      sender_role: "admin",
+      body: data.body,
+    });
+    if (error) return { success: false as const, error: error.message };
+    // bump ticket updated_at
+    await supabaseAdmin.from("tickets").update({ updated_at: new Date().toISOString() }).eq("id", data.ticketId);
+    return { success: true as const };
+  });
+
+export const getAdminTicketDetail = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => z.object({ accessToken: z.string().min(1), ticketId: z.string().uuid() }).parse(input))
+  .handler(async ({ data }) => {
+    const auth = await requireAdmin(data.accessToken);
+    if ("error" in auth) return { success: false as const, error: auth.error };
+    const { data: ticket } = await supabaseAdmin.from("tickets").select("*").eq("id", data.ticketId).maybeSingle();
+    if (!ticket) return { success: false as const, error: "Ticket not found." };
+    const [{ data: messages }, { data: profile }] = await Promise.all([
+      supabaseAdmin.from("ticket_messages").select("*").eq("ticket_id", data.ticketId).order("created_at"),
+      supabaseAdmin.from("profiles").select("email, display_name").eq("user_id", ticket.user_id).maybeSingle(),
+    ]);
+    return { success: true as const, ticket, messages: messages ?? [], customer: profile };
+  });
