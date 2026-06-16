@@ -653,6 +653,83 @@ export const adminSetUserPlan = createServerFn({ method: "POST" })
   });
 
 // =========================================================================
+// Edit-on-behalf: admin patches a customer's receptionist / profile
+// =========================================================================
+const agentPatchSchema = z.object({
+  accessToken: z.string().min(1),
+  userId: z.string().uuid(),
+  patch: z.object({
+    business_name: z.string().max(200).optional(),
+    industry: z.string().max(200).optional(),
+    system_prompt: z.string().max(20000).optional(),
+    greeting: z.string().max(2000).optional(),
+    services_text: z.string().max(20000).optional(),
+    faqs_text: z.string().max(20000).optional(),
+    notify_email: z.string().max(200).optional(),
+    notify_phone: z.string().max(50).optional(),
+    sms_followup_enabled: z.boolean().optional(),
+    is_live: z.boolean().optional(),
+    answer_mode: z.string().max(50).optional(),
+    voice_id: z.string().max(100).optional(),
+    tone: z.string().max(100).optional(),
+    primary_goal: z.string().max(500).optional(),
+    booking_link: z.string().max(500).optional(),
+    emergency_number: z.string().max(50).optional(),
+    pricing_notes: z.string().max(5000).optional(),
+    escalation_triggers: z.string().max(5000).optional(),
+  }),
+});
+
+export const adminUpdateAgent = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => agentPatchSchema.parse(input))
+  .handler(async ({ data }) => {
+    const auth = await requireAdmin(data.accessToken);
+    if ("error" in auth) return { success: false as const, error: auth.error };
+
+    const patch = Object.fromEntries(
+      Object.entries(data.patch).filter(([, v]) => v !== undefined),
+    );
+    if (Object.keys(patch).length === 0) {
+      return { success: false as const, error: "No fields to update." };
+    }
+
+    const { error } = await supabaseAdmin
+      .from("agents")
+      .update(patch)
+      .eq("user_id", data.userId);
+    if (error) return { success: false as const, error: error.message };
+
+    console.log(`[admin-edit] ${auth.userId} updated agent for ${data.userId}: ${Object.keys(patch).join(", ")}`);
+    return { success: true as const, fields: Object.keys(patch) };
+  });
+
+const profilePatchSchema = z.object({
+  accessToken: z.string().min(1),
+  userId: z.string().uuid(),
+  patch: z.object({
+    display_name: z.string().max(200).optional(),
+    email: z.string().email().optional(),
+  }),
+});
+
+export const adminUpdateProfile = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => profilePatchSchema.parse(input))
+  .handler(async ({ data }) => {
+    const auth = await requireAdmin(data.accessToken);
+    if ("error" in auth) return { success: false as const, error: auth.error };
+    const patch = Object.fromEntries(
+      Object.entries(data.patch).filter(([, v]) => v !== undefined),
+    );
+    if (Object.keys(patch).length === 0) {
+      return { success: false as const, error: "No fields to update." };
+    }
+    const { error } = await supabaseAdmin.from("profiles").update(patch).eq("user_id", data.userId);
+    if (error) return { success: false as const, error: error.message };
+    console.log(`[admin-edit] ${auth.userId} updated profile for ${data.userId}: ${Object.keys(patch).join(", ")}`);
+    return { success: true as const };
+  });
+
+// =========================================================================
 // Tickets (admin views)
 // =========================================================================
 export const getAdminTickets = createServerFn({ method: "POST" })
