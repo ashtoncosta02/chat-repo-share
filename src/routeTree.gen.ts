@@ -20,6 +20,7 @@ import { Route as DashboardPhoneNumbersRouteImport } from './routes/dashboard.ph
 import { Route as DashboardOnboardingRouteImport } from './routes/dashboard.onboarding'
 import { Route as DashboardNotificationsRouteImport } from './routes/dashboard.notifications'
 import { Route as DashboardLeadsRouteImport } from './routes/dashboard.leads'
+import { Route as DashboardHelpRouteImport } from './routes/dashboard.help'
 import { Route as DashboardConversationsRouteImport } from './routes/dashboard.conversations'
 import { Route as DashboardChatWidgetRouteImport } from './routes/dashboard.chat-widget'
 import { Route as DashboardBookingsRouteImport } from './routes/dashboard.bookings'
@@ -31,11 +32,14 @@ import { Route as DashboardAdminIndexRouteImport } from './routes/dashboard.admi
 import { Route as DashboardConversationsConversationIdRouteImport } from './routes/dashboard.conversations.$conversationId'
 import { Route as DashboardAgentsAgentIdRouteImport } from './routes/dashboard.agents.$agentId'
 import { Route as DashboardAdminUsersRouteImport } from './routes/dashboard.admin.users'
+import { Route as DashboardAdminTicketsRouteImport } from './routes/dashboard.admin.tickets'
 import { Route as DashboardAdminHealthRouteImport } from './routes/dashboard.admin.health'
 import { Route as ApiPublicOwnerChatRouteImport } from './routes/api.public.owner-chat'
 import { Route as DashboardAdminUsersIndexRouteImport } from './routes/dashboard.admin.users.index'
+import { Route as DashboardAdminTicketsIndexRouteImport } from './routes/dashboard.admin.tickets.index'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as DashboardAdminUsersUserIdRouteImport } from './routes/dashboard.admin.users.$userId'
+import { Route as DashboardAdminTicketsTicketIdRouteImport } from './routes/dashboard.admin.tickets.$ticketId'
 import { Route as ApiPublicWidgetEmbedDotjsRouteImport } from './routes/api.public.widget.embed[.]js'
 import { Route as ApiPublicWidgetChatRouteImport } from './routes/api.public.widget.chat'
 import { Route as ApiPublicVoicemailAudioRouteImport } from './routes/api.public.voicemail.audio'
@@ -105,6 +109,11 @@ const DashboardLeadsRoute = DashboardLeadsRouteImport.update({
   path: '/leads',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardHelpRoute = DashboardHelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardConversationsRoute = DashboardConversationsRouteImport.update({
   id: '/conversations',
   path: '/conversations',
@@ -162,6 +171,11 @@ const DashboardAdminUsersRoute = DashboardAdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => DashboardAdminRoute,
 } as any)
+const DashboardAdminTicketsRoute = DashboardAdminTicketsRouteImport.update({
+  id: '/tickets',
+  path: '/tickets',
+  getParentRoute: () => DashboardAdminRoute,
+} as any)
 const DashboardAdminHealthRoute = DashboardAdminHealthRouteImport.update({
   id: '/health',
   path: '/health',
@@ -178,6 +192,12 @@ const DashboardAdminUsersIndexRoute =
     path: '/',
     getParentRoute: () => DashboardAdminUsersRoute,
   } as any)
+const DashboardAdminTicketsIndexRoute =
+  DashboardAdminTicketsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => DashboardAdminTicketsRoute,
+  } as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
     id: '/lovable/email/queue/process',
@@ -189,6 +209,12 @@ const DashboardAdminUsersUserIdRoute =
     id: '/$userId',
     path: '/$userId',
     getParentRoute: () => DashboardAdminUsersRoute,
+  } as any)
+const DashboardAdminTicketsTicketIdRoute =
+  DashboardAdminTicketsTicketIdRouteImport.update({
+    id: '/$ticketId',
+    path: '/$ticketId',
+    getParentRoute: () => DashboardAdminTicketsRoute,
   } as any)
 const ApiPublicWidgetEmbedDotjsRoute =
   ApiPublicWidgetEmbedDotjsRouteImport.update({
@@ -276,6 +302,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/bookings': typeof DashboardBookingsRoute
   '/dashboard/chat-widget': typeof DashboardChatWidgetRoute
   '/dashboard/conversations': typeof DashboardConversationsRouteWithChildren
+  '/dashboard/help': typeof DashboardHelpRoute
   '/dashboard/leads': typeof DashboardLeadsRoute
   '/dashboard/notifications': typeof DashboardNotificationsRoute
   '/dashboard/onboarding': typeof DashboardOnboardingRoute
@@ -284,6 +311,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/': typeof DashboardIndexRoute
   '/api/public/owner-chat': typeof ApiPublicOwnerChatRoute
   '/dashboard/admin/health': typeof DashboardAdminHealthRoute
+  '/dashboard/admin/tickets': typeof DashboardAdminTicketsRouteWithChildren
   '/dashboard/admin/users': typeof DashboardAdminUsersRouteWithChildren
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
@@ -301,8 +329,10 @@ export interface FileRoutesByFullPath {
   '/api/public/voicemail/audio': typeof ApiPublicVoicemailAudioRoute
   '/api/public/widget/chat': typeof ApiPublicWidgetChatRoute
   '/api/public/widget/embed.js': typeof ApiPublicWidgetEmbedDotjsRoute
+  '/dashboard/admin/tickets/$ticketId': typeof DashboardAdminTicketsTicketIdRoute
   '/dashboard/admin/users/$userId': typeof DashboardAdminUsersUserIdRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/dashboard/admin/tickets/': typeof DashboardAdminTicketsIndexRoute
   '/dashboard/admin/users/': typeof DashboardAdminUsersIndexRoute
   '/api/public/widget/config/$agentId': typeof ApiPublicWidgetConfigAgentIdRoute
 }
@@ -315,6 +345,7 @@ export interface FileRoutesByTo {
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/bookings': typeof DashboardBookingsRoute
   '/dashboard/chat-widget': typeof DashboardChatWidgetRoute
+  '/dashboard/help': typeof DashboardHelpRoute
   '/dashboard/leads': typeof DashboardLeadsRoute
   '/dashboard/notifications': typeof DashboardNotificationsRoute
   '/dashboard/onboarding': typeof DashboardOnboardingRoute
@@ -339,8 +370,10 @@ export interface FileRoutesByTo {
   '/api/public/voicemail/audio': typeof ApiPublicVoicemailAudioRoute
   '/api/public/widget/chat': typeof ApiPublicWidgetChatRoute
   '/api/public/widget/embed.js': typeof ApiPublicWidgetEmbedDotjsRoute
+  '/dashboard/admin/tickets/$ticketId': typeof DashboardAdminTicketsTicketIdRoute
   '/dashboard/admin/users/$userId': typeof DashboardAdminUsersUserIdRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/dashboard/admin/tickets': typeof DashboardAdminTicketsIndexRoute
   '/dashboard/admin/users': typeof DashboardAdminUsersIndexRoute
   '/api/public/widget/config/$agentId': typeof ApiPublicWidgetConfigAgentIdRoute
 }
@@ -357,6 +390,7 @@ export interface FileRoutesById {
   '/dashboard/bookings': typeof DashboardBookingsRoute
   '/dashboard/chat-widget': typeof DashboardChatWidgetRoute
   '/dashboard/conversations': typeof DashboardConversationsRouteWithChildren
+  '/dashboard/help': typeof DashboardHelpRoute
   '/dashboard/leads': typeof DashboardLeadsRoute
   '/dashboard/notifications': typeof DashboardNotificationsRoute
   '/dashboard/onboarding': typeof DashboardOnboardingRoute
@@ -365,6 +399,7 @@ export interface FileRoutesById {
   '/dashboard/': typeof DashboardIndexRoute
   '/api/public/owner-chat': typeof ApiPublicOwnerChatRoute
   '/dashboard/admin/health': typeof DashboardAdminHealthRoute
+  '/dashboard/admin/tickets': typeof DashboardAdminTicketsRouteWithChildren
   '/dashboard/admin/users': typeof DashboardAdminUsersRouteWithChildren
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
@@ -382,8 +417,10 @@ export interface FileRoutesById {
   '/api/public/voicemail/audio': typeof ApiPublicVoicemailAudioRoute
   '/api/public/widget/chat': typeof ApiPublicWidgetChatRoute
   '/api/public/widget/embed.js': typeof ApiPublicWidgetEmbedDotjsRoute
+  '/dashboard/admin/tickets/$ticketId': typeof DashboardAdminTicketsTicketIdRoute
   '/dashboard/admin/users/$userId': typeof DashboardAdminUsersUserIdRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/dashboard/admin/tickets/': typeof DashboardAdminTicketsIndexRoute
   '/dashboard/admin/users/': typeof DashboardAdminUsersIndexRoute
   '/api/public/widget/config/$agentId': typeof ApiPublicWidgetConfigAgentIdRoute
 }
@@ -401,6 +438,7 @@ export interface FileRouteTypes {
     | '/dashboard/bookings'
     | '/dashboard/chat-widget'
     | '/dashboard/conversations'
+    | '/dashboard/help'
     | '/dashboard/leads'
     | '/dashboard/notifications'
     | '/dashboard/onboarding'
@@ -409,6 +447,7 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/api/public/owner-chat'
     | '/dashboard/admin/health'
+    | '/dashboard/admin/tickets'
     | '/dashboard/admin/users'
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
@@ -426,8 +465,10 @@ export interface FileRouteTypes {
     | '/api/public/voicemail/audio'
     | '/api/public/widget/chat'
     | '/api/public/widget/embed.js'
+    | '/dashboard/admin/tickets/$ticketId'
     | '/dashboard/admin/users/$userId'
     | '/lovable/email/queue/process'
+    | '/dashboard/admin/tickets/'
     | '/dashboard/admin/users/'
     | '/api/public/widget/config/$agentId'
   fileRoutesByTo: FileRoutesByTo
@@ -440,6 +481,7 @@ export interface FileRouteTypes {
     | '/dashboard/analytics'
     | '/dashboard/bookings'
     | '/dashboard/chat-widget'
+    | '/dashboard/help'
     | '/dashboard/leads'
     | '/dashboard/notifications'
     | '/dashboard/onboarding'
@@ -464,8 +506,10 @@ export interface FileRouteTypes {
     | '/api/public/voicemail/audio'
     | '/api/public/widget/chat'
     | '/api/public/widget/embed.js'
+    | '/dashboard/admin/tickets/$ticketId'
     | '/dashboard/admin/users/$userId'
     | '/lovable/email/queue/process'
+    | '/dashboard/admin/tickets'
     | '/dashboard/admin/users'
     | '/api/public/widget/config/$agentId'
   id:
@@ -481,6 +525,7 @@ export interface FileRouteTypes {
     | '/dashboard/bookings'
     | '/dashboard/chat-widget'
     | '/dashboard/conversations'
+    | '/dashboard/help'
     | '/dashboard/leads'
     | '/dashboard/notifications'
     | '/dashboard/onboarding'
@@ -489,6 +534,7 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/api/public/owner-chat'
     | '/dashboard/admin/health'
+    | '/dashboard/admin/tickets'
     | '/dashboard/admin/users'
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
@@ -506,8 +552,10 @@ export interface FileRouteTypes {
     | '/api/public/voicemail/audio'
     | '/api/public/widget/chat'
     | '/api/public/widget/embed.js'
+    | '/dashboard/admin/tickets/$ticketId'
     | '/dashboard/admin/users/$userId'
     | '/lovable/email/queue/process'
+    | '/dashboard/admin/tickets/'
     | '/dashboard/admin/users/'
     | '/api/public/widget/config/$agentId'
   fileRoutesById: FileRoutesById
@@ -615,6 +663,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardLeadsRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/help': {
+      id: '/dashboard/help'
+      path: '/help'
+      fullPath: '/dashboard/help'
+      preLoaderRoute: typeof DashboardHelpRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/conversations': {
       id: '/dashboard/conversations'
       path: '/conversations'
@@ -692,6 +747,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAdminUsersRouteImport
       parentRoute: typeof DashboardAdminRoute
     }
+    '/dashboard/admin/tickets': {
+      id: '/dashboard/admin/tickets'
+      path: '/tickets'
+      fullPath: '/dashboard/admin/tickets'
+      preLoaderRoute: typeof DashboardAdminTicketsRouteImport
+      parentRoute: typeof DashboardAdminRoute
+    }
     '/dashboard/admin/health': {
       id: '/dashboard/admin/health'
       path: '/health'
@@ -713,6 +775,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAdminUsersIndexRouteImport
       parentRoute: typeof DashboardAdminUsersRoute
     }
+    '/dashboard/admin/tickets/': {
+      id: '/dashboard/admin/tickets/'
+      path: '/'
+      fullPath: '/dashboard/admin/tickets/'
+      preLoaderRoute: typeof DashboardAdminTicketsIndexRouteImport
+      parentRoute: typeof DashboardAdminTicketsRoute
+    }
     '/lovable/email/queue/process': {
       id: '/lovable/email/queue/process'
       path: '/lovable/email/queue/process'
@@ -726,6 +795,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/admin/users/$userId'
       preLoaderRoute: typeof DashboardAdminUsersUserIdRouteImport
       parentRoute: typeof DashboardAdminUsersRoute
+    }
+    '/dashboard/admin/tickets/$ticketId': {
+      id: '/dashboard/admin/tickets/$ticketId'
+      path: '/$ticketId'
+      fullPath: '/dashboard/admin/tickets/$ticketId'
+      preLoaderRoute: typeof DashboardAdminTicketsTicketIdRouteImport
+      parentRoute: typeof DashboardAdminTicketsRoute
     }
     '/api/public/widget/embed.js': {
       id: '/api/public/widget/embed.js'
@@ -821,6 +897,21 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface DashboardAdminTicketsRouteChildren {
+  DashboardAdminTicketsTicketIdRoute: typeof DashboardAdminTicketsTicketIdRoute
+  DashboardAdminTicketsIndexRoute: typeof DashboardAdminTicketsIndexRoute
+}
+
+const DashboardAdminTicketsRouteChildren: DashboardAdminTicketsRouteChildren = {
+  DashboardAdminTicketsTicketIdRoute: DashboardAdminTicketsTicketIdRoute,
+  DashboardAdminTicketsIndexRoute: DashboardAdminTicketsIndexRoute,
+}
+
+const DashboardAdminTicketsRouteWithChildren =
+  DashboardAdminTicketsRoute._addFileChildren(
+    DashboardAdminTicketsRouteChildren,
+  )
+
 interface DashboardAdminUsersRouteChildren {
   DashboardAdminUsersUserIdRoute: typeof DashboardAdminUsersUserIdRoute
   DashboardAdminUsersIndexRoute: typeof DashboardAdminUsersIndexRoute
@@ -836,12 +927,14 @@ const DashboardAdminUsersRouteWithChildren =
 
 interface DashboardAdminRouteChildren {
   DashboardAdminHealthRoute: typeof DashboardAdminHealthRoute
+  DashboardAdminTicketsRoute: typeof DashboardAdminTicketsRouteWithChildren
   DashboardAdminUsersRoute: typeof DashboardAdminUsersRouteWithChildren
   DashboardAdminIndexRoute: typeof DashboardAdminIndexRoute
 }
 
 const DashboardAdminRouteChildren: DashboardAdminRouteChildren = {
   DashboardAdminHealthRoute: DashboardAdminHealthRoute,
+  DashboardAdminTicketsRoute: DashboardAdminTicketsRouteWithChildren,
   DashboardAdminUsersRoute: DashboardAdminUsersRouteWithChildren,
   DashboardAdminIndexRoute: DashboardAdminIndexRoute,
 }
@@ -874,6 +967,7 @@ interface DashboardRouteChildren {
   DashboardBookingsRoute: typeof DashboardBookingsRoute
   DashboardChatWidgetRoute: typeof DashboardChatWidgetRoute
   DashboardConversationsRoute: typeof DashboardConversationsRouteWithChildren
+  DashboardHelpRoute: typeof DashboardHelpRoute
   DashboardLeadsRoute: typeof DashboardLeadsRoute
   DashboardNotificationsRoute: typeof DashboardNotificationsRoute
   DashboardOnboardingRoute: typeof DashboardOnboardingRoute
@@ -889,6 +983,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardBookingsRoute: DashboardBookingsRoute,
   DashboardChatWidgetRoute: DashboardChatWidgetRoute,
   DashboardConversationsRoute: DashboardConversationsRouteWithChildren,
+  DashboardHelpRoute: DashboardHelpRoute,
   DashboardLeadsRoute: DashboardLeadsRoute,
   DashboardNotificationsRoute: DashboardNotificationsRoute,
   DashboardOnboardingRoute: DashboardOnboardingRoute,
