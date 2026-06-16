@@ -260,7 +260,7 @@ export const getAdminUserDetail = createServerFn({ method: "POST" })
       roleRes,
       authUserRes,
     ] = await Promise.all([
-      supabaseAdmin.from("profiles").select("user_id, email, display_name, created_at, avatar_url, plan").eq("user_id", uid).maybeSingle(),
+      supabaseAdmin.from("profiles").select("user_id, email, display_name, created_at, plan").eq("user_id", uid).maybeSingle(),
       supabaseAdmin.from("agents").select("*").eq("user_id", uid).maybeSingle(),
       supabaseAdmin.from("phone_numbers").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
       supabaseAdmin.from("agent_google_calendar").select("*").eq("user_id", uid).maybeSingle(),
