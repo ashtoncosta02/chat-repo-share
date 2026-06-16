@@ -723,7 +723,7 @@ export const adminUpdateProfile = createServerFn({ method: "POST" })
     if (Object.keys(patch).length === 0) {
       return { success: false as const, error: "No fields to update." };
     }
-    const { error } = await supabaseAdmin.from("profiles").update(patch).eq("user_id", data.userId);
+    const { error } = await supabaseAdmin.from("profiles").update(patch as any).eq("user_id", data.userId);
     if (error) return { success: false as const, error: error.message };
     console.log(`[admin-edit] ${auth.userId} updated profile for ${data.userId}: ${Object.keys(patch).join(", ")}`);
     return { success: true as const };
