@@ -392,3 +392,244 @@ function Field({ label, value, mono }: { label: string; value: any; mono?: boole
 function Empty({ children }: { children: React.ReactNode }) {
   return <div className="text-sm text-muted-foreground italic">{children}</div>;
 }
+
+// ----- Editable profile -----
+function EditableProfile({
+  profile,
+  authUser,
+  isAdminRow,
+  onSave,
+}: {
+  profile: any;
+  authUser: any;
+  isAdminRow: boolean;
+  onSave: (patch: { display_name?: string; email?: string }) => Promise<boolean>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [displayName, setDisplayName] = useState(profile.display_name ?? "");
+  const [email, setEmail] = useState(profile.email ?? "");
+  const [saving, setSaving] = useState(false);
+
+  if (!editing) {
+    return (
+      <>
+        <Grid>
+          <Field label="Email" value={profile.email} />
+          <Field label="Name" value={profile.display_name} />
+          <Field label="Signed up" value={new Date(profile.created_at).toLocaleString()} />
+          <Field label="Last sign-in" value={authUser?.last_sign_in_at ? new Date(authUser.last_sign_in_at).toLocaleString() : "Never"} />
+          <Field label="Email confirmed" value={authUser?.email_confirmed_at ? "Yes" : "No"} />
+          <Field label="Admin" value={isAdminRow ? "Yes" : "No"} />
+        </Grid>
+        <button onClick={() => setEditing(true)} className="mt-3 inline-flex items-center gap-1.5 text-xs text-[var(--gold)] hover:underline">
+          <Pencil className="h-3 w-3" /> Edit profile
+        </button>
+      </>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <TextField label="Display name" value={displayName} onChange={setDisplayName} />
+      <TextField label="Email (profile only — does not change login email)" value={email} onChange={setEmail} />
+      <div className="flex gap-2">
+        <button
+          disabled={saving}
+          onClick={async () => {
+            setSaving(true);
+            const patch: any = {};
+            if (displayName !== (profile.display_name ?? "")) patch.display_name = displayName;
+            if (email !== (profile.email ?? "")) patch.email = email;
+            const ok = await onSave(patch);
+            setSaving(false);
+            if (ok) setEditing(false);
+          }}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-xs font-medium text-background hover:opacity-90 disabled:opacity-50"
+        >
+          <Save className="h-3.5 w-3.5" /> {saving ? "Saving…" : "Save"}
+        </button>
+        <button onClick={() => setEditing(false)} className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted">
+          <X className="h-3.5 w-3.5" /> Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ----- Editable agent (receptionist) -----
+type AgentPatch = {
+  business_name?: string;
+  industry?: string;
+  system_prompt?: string;
+  greeting?: string;
+  services_text?: string;
+  faqs_text?: string;
+  notify_email?: string;
+  notify_phone?: string;
+  sms_followup_enabled?: boolean;
+  is_live?: boolean;
+  answer_mode?: string;
+  voice_id?: string;
+  tone?: string;
+  primary_goal?: string;
+  booking_link?: string;
+  emergency_number?: string;
+  pricing_notes?: string;
+  escalation_triggers?: string;
+};
+
+function EditableAgent({
+  agent,
+  onSave,
+}: {
+  agent: any;
+  onSave: (patch: AgentPatch) => Promise<boolean>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState<AgentPatch>({});
+  const [saving, setSaving] = useState(false);
+
+  const initForm = (): AgentPatch => ({
+    business_name: agent.business_name ?? "",
+    industry: agent.industry ?? "",
+    system_prompt: agent.system_prompt ?? "",
+    greeting: agent.greeting ?? "",
+    services_text: agent.services_text ?? "",
+    faqs_text: agent.faqs_text ?? "",
+    notify_email: agent.notify_email ?? "",
+    notify_phone: agent.notify_phone ?? "",
+    sms_followup_enabled: !!agent.sms_followup_enabled,
+    is_live: !!agent.is_live,
+    answer_mode: agent.answer_mode ?? "",
+    voice_id: agent.voice_id ?? "",
+    tone: agent.tone ?? "",
+    primary_goal: agent.primary_goal ?? "",
+    booking_link: agent.booking_link ?? "",
+    emergency_number: agent.emergency_number ?? "",
+    pricing_notes: agent.pricing_notes ?? "",
+    escalation_triggers: agent.escalation_triggers ?? "",
+  });
+
+  const startEdit = () => {
+    setForm(initForm());
+    setEditing(true);
+  };
+
+  if (!editing) {
+    return (
+      <>
+        <Grid>
+          <Field label="Business name" value={agent.business_name} />
+          <Field label="Industry" value={agent.industry} />
+          <Field label="Status" value={agent.is_live ? "● Live" : "○ Draft"} />
+          <Field label="Onboarding" value={agent.onboarding_completed ? "Complete" : "Incomplete"} />
+          <Field label="Voice ID" value={agent.voice_id} />
+          <Field label="Answer mode" value={agent.answer_mode} />
+          <Field label="ElevenLabs agent" value={agent.elevenlabs_agent_id ?? "— not linked"} mono />
+          <Field label="SMS follow-up" value={agent.sms_followup_enabled ? "On" : "Off"} />
+          <Field label="Notify email" value={agent.notify_email} />
+          <Field label="Notify phone" value={agent.notify_phone} />
+        </Grid>
+        <button onClick={startEdit} className="mt-3 inline-flex items-center gap-1.5 text-xs text-[var(--gold)] hover:underline">
+          <Pencil className="h-3 w-3" /> Edit receptionist on customer's behalf
+        </button>
+      </>
+    );
+  }
+
+  const set = <K extends keyof AgentPatch>(k: K, v: AgentPatch[K]) => setForm((f) => ({ ...f, [k]: v }));
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-900">
+        You're editing this customer's receptionist. Changes are saved as them and logged in server logs.
+      </div>
+      <Grid>
+        <TextField label="Business name" value={form.business_name ?? ""} onChange={(v) => set("business_name", v)} />
+        <TextField label="Industry" value={form.industry ?? ""} onChange={(v) => set("industry", v)} />
+        <TextField label="Tone" value={form.tone ?? ""} onChange={(v) => set("tone", v)} />
+        <TextField label="Primary goal" value={form.primary_goal ?? ""} onChange={(v) => set("primary_goal", v)} />
+        <TextField label="Voice ID" value={form.voice_id ?? ""} onChange={(v) => set("voice_id", v)} />
+        <TextField label="Answer mode" value={form.answer_mode ?? ""} onChange={(v) => set("answer_mode", v)} />
+        <TextField label="Notify email" value={form.notify_email ?? ""} onChange={(v) => set("notify_email", v)} />
+        <TextField label="Notify phone" value={form.notify_phone ?? ""} onChange={(v) => set("notify_phone", v)} />
+        <TextField label="Booking link" value={form.booking_link ?? ""} onChange={(v) => set("booking_link", v)} />
+        <TextField label="Emergency number" value={form.emergency_number ?? ""} onChange={(v) => set("emergency_number", v)} />
+      </Grid>
+      <div className="flex gap-6">
+        <label className="inline-flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={!!form.is_live} onChange={(e) => set("is_live", e.target.checked)} />
+          Live (vs. draft)
+        </label>
+        <label className="inline-flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={!!form.sms_followup_enabled} onChange={(e) => set("sms_followup_enabled", e.target.checked)} />
+          SMS follow-up enabled
+        </label>
+      </div>
+      <TextArea label="Greeting" rows={2} value={form.greeting ?? ""} onChange={(v) => set("greeting", v)} />
+      <TextArea label="System prompt" rows={8} value={form.system_prompt ?? ""} onChange={(v) => set("system_prompt", v)} />
+      <TextArea label="Services" rows={4} value={form.services_text ?? ""} onChange={(v) => set("services_text", v)} />
+      <TextArea label="FAQs" rows={6} value={form.faqs_text ?? ""} onChange={(v) => set("faqs_text", v)} />
+      <TextArea label="Pricing notes" rows={3} value={form.pricing_notes ?? ""} onChange={(v) => set("pricing_notes", v)} />
+      <TextArea label="Escalation triggers" rows={3} value={form.escalation_triggers ?? ""} onChange={(v) => set("escalation_triggers", v)} />
+
+      <div className="flex gap-2 pt-2 border-t border-border">
+        <button
+          disabled={saving}
+          onClick={async () => {
+            setSaving(true);
+            const original = initForm();
+            const patch: AgentPatch = {};
+            (Object.keys(form) as (keyof AgentPatch)[]).forEach((k) => {
+              if (form[k] !== original[k]) (patch as any)[k] = form[k];
+            });
+            if (Object.keys(patch).length === 0) {
+              toast.info("No changes to save.");
+              setSaving(false);
+              return;
+            }
+            const ok = await onSave(patch);
+            setSaving(false);
+            if (ok) setEditing(false);
+          }}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90 disabled:opacity-50"
+        >
+          <Save className="h-4 w-4" /> {saving ? "Saving…" : "Save changes"}
+        </button>
+        <button
+          onClick={() => setEditing(false)}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted"
+        >
+          <X className="h-4 w-4" /> Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function TextField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <label className="text-xs text-muted-foreground block mb-1">{label}</label>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-lg border border-border bg-background px-3 py-1.5 text-sm"
+      />
+    </div>
+  );
+}
+
+function TextArea({ label, value, onChange, rows = 4 }: { label: string; value: string; onChange: (v: string) => void; rows?: number }) {
+  return (
+    <div>
+      <label className="text-xs text-muted-foreground block mb-1">{label}</label>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={rows}
+        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm font-mono"
+      />
+    </div>
+  );
+}
