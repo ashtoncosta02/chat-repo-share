@@ -695,7 +695,7 @@ export const adminUpdateAgent = createServerFn({ method: "POST" })
 
     const { error } = await supabaseAdmin
       .from("agents")
-      .update(patch)
+      .update(patch as any)
       .eq("user_id", data.userId);
     if (error) return { success: false as const, error: error.message };
 
