@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
-import { getAdminUserDetail, adminBackfillUserCalls, adminRelinkPhone, adminResyncReceptionist, adminClearGoogleCalendar } from "@/lib/admin.functions";
+import { getAdminUserDetail, adminBackfillUserCalls, adminRelinkPhone, adminResyncReceptionist, adminClearGoogleCalendar, adminSetUserPlan } from "@/lib/admin.functions";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Shield, ArrowLeft, AlertTriangle, CheckCircle2, Phone, Calendar, MessageSquare, User as UserIcon, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
@@ -136,6 +136,24 @@ function AdminUserDetailPage() {
             <Field label="Email confirmed" value={d.authUser?.email_confirmed_at ? "Yes" : "No"} />
             <Field label="Admin" value={d.isAdmin ? "Yes" : "No"} />
           </Grid>
+          <div className="mt-4 pt-4 border-t border-border flex items-center gap-3">
+            <label className="text-xs text-muted-foreground">Plan:</label>
+            <select
+              defaultValue={(profile as any).plan ?? "standard"}
+              onChange={async (e) => {
+                if (!session?.access_token) return;
+                const r = await adminSetUserPlan({ data: { accessToken: session.access_token, userId, plan: e.target.value as any } });
+                if (r.success) toast.success("Plan updated"); else toast.error(r.error ?? "Failed");
+                load();
+              }}
+              className="rounded-lg border border-border bg-card px-3 py-1.5 text-sm"
+            >
+              <option value="free">Free (comped)</option>
+              <option value="discounted">Discounted</option>
+              <option value="standard">Standard</option>
+            </select>
+            <span className="text-[11px] text-muted-foreground">Used for billing once Stripe is connected.</span>
+          </div>
         </Section>
 
         {/* Receptionist */}
