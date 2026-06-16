@@ -535,6 +535,7 @@ export type Database = {
           display_name: string | null
           email: string | null
           id: string
+          plan: Database["public"]["Enums"]["user_plan"]
           updated_at: string
           user_id: string
         }
@@ -543,6 +544,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          plan?: Database["public"]["Enums"]["user_plan"]
           updated_at?: string
           user_id: string
         }
@@ -551,6 +553,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          plan?: Database["public"]["Enums"]["user_plan"]
           updated_at?: string
           user_id?: string
         }
@@ -577,6 +580,86 @@ export type Database = {
           id?: string
           metadata?: Json | null
           reason?: string
+        }
+        Relationships: []
+      }
+      ticket_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          sender_id: string
+          sender_role: string
+          ticket_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          sender_id: string
+          sender_role: string
+          ticket_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          sender_id?: string
+          sender_role?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tickets: {
+        Row: {
+          admin_notes: string | null
+          assigned_to: string | null
+          category: string | null
+          created_at: string
+          description: string
+          id: string
+          priority: Database["public"]["Enums"]["ticket_priority"]
+          resolved_at: string | null
+          status: Database["public"]["Enums"]["ticket_status"]
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          assigned_to?: string | null
+          category?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["ticket_status"]
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          assigned_to?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["ticket_status"]
+          subject?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -741,6 +824,9 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      ticket_priority: "low" | "normal" | "high" | "urgent"
+      ticket_status: "open" | "in_progress" | "waiting" | "resolved" | "closed"
+      user_plan: "free" | "discounted" | "standard"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -869,6 +955,9 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      ticket_priority: ["low", "normal", "high", "urgent"],
+      ticket_status: ["open", "in_progress", "waiting", "resolved", "closed"],
+      user_plan: ["free", "discounted", "standard"],
     },
   },
 } as const
