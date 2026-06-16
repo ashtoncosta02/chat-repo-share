@@ -128,14 +128,17 @@ function AdminUserDetailPage() {
 
         {/* Account */}
         <Section title="Account" icon={<UserIcon className="h-4 w-4" />}>
-          <Grid>
-            <Field label="Email" value={profile.email} />
-            <Field label="Name" value={profile.display_name} />
-            <Field label="Signed up" value={new Date(profile.created_at).toLocaleString()} />
-            <Field label="Last sign-in" value={d.authUser?.last_sign_in_at ? new Date(d.authUser.last_sign_in_at).toLocaleString() : "Never"} />
-            <Field label="Email confirmed" value={d.authUser?.email_confirmed_at ? "Yes" : "No"} />
-            <Field label="Admin" value={d.isAdmin ? "Yes" : "No"} />
-          </Grid>
+          <EditableProfile
+            profile={profile}
+            authUser={d.authUser}
+            isAdminRow={d.isAdmin}
+            onSave={async (patch) => {
+              if (!session?.access_token) return false;
+              const r = await adminUpdateProfile({ data: { accessToken: session.access_token, userId, patch } });
+              if (r.success) { toast.success("Profile updated"); load(); return true; }
+              toast.error(r.error ?? "Failed"); return false;
+            }}
+          />
           <div className="mt-4 pt-4 border-t border-border flex items-center gap-3">
             <label className="text-xs text-muted-foreground">Plan:</label>
             <select
@@ -159,18 +162,15 @@ function AdminUserDetailPage() {
         {/* Receptionist */}
         <Section title="Receptionist" icon={<Shield className="h-4 w-4" />}>
           {d.agent ? (
-            <Grid>
-              <Field label="Business name" value={d.agent.business_name} />
-              <Field label="Industry" value={d.agent.industry} />
-              <Field label="Status" value={d.agent.is_live ? "● Live" : "○ Draft"} />
-              <Field label="Onboarding" value={d.agent.onboarding_completed ? "Complete" : "Incomplete"} />
-              <Field label="Voice ID" value={d.agent.voice_id} />
-              <Field label="Answer mode" value={d.agent.answer_mode} />
-              <Field label="ElevenLabs agent" value={d.agent.elevenlabs_agent_id ?? "— not linked"} mono />
-              <Field label="SMS follow-up" value={d.agent.sms_followup_enabled ? "On" : "Off"} />
-              <Field label="Notify email" value={d.agent.notify_email} />
-              <Field label="Notify phone" value={d.agent.notify_phone} />
-            </Grid>
+            <EditableAgent
+              agent={d.agent}
+              onSave={async (patch) => {
+                if (!session?.access_token) return false;
+                const r = await adminUpdateAgent({ data: { accessToken: session.access_token, userId, patch } });
+                if (r.success) { toast.success(`Saved ${r.fields.length} field(s)`); load(); return true; }
+                toast.error(r.error ?? "Failed"); return false;
+              }}
+            />
           ) : (
             <Empty>No receptionist created yet.</Empty>
           )}
@@ -184,7 +184,7 @@ function AdminUserDetailPage() {
                 <RefreshCw className={`h-3.5 w-3.5 ${busy === "resync" ? "animate-spin" : ""}`} />
                 Resync receptionist to ElevenLabs
               </button>
-              <p className="text-[11px] text-muted-foreground mt-1.5">Pushes the current prompt, voice, and FAQs back to ElevenLabs.</p>
+              <p className="text-[11px] text-muted-foreground mt-1.5">After editing, click resync to push the changes to the live voice agent.</p>
             </div>
           )}
         </Section>
