@@ -696,14 +696,19 @@ export const adminUpdateTicket = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const auth = await requireAdmin(data.accessToken);
     if ("error" in auth) return { success: false as const, error: auth.error };
-    const patch: Record<string, unknown> = {};
+    const patch: {
+      status?: "open" | "in_progress" | "waiting" | "resolved" | "closed";
+      priority?: "low" | "normal" | "high" | "urgent";
+      admin_notes?: string | null;
+      resolved_at?: string | null;
+    } = {};
     if (data.status) {
       patch.status = data.status;
       if (data.status === "resolved" || data.status === "closed") patch.resolved_at = new Date().toISOString();
     }
     if (data.priority) patch.priority = data.priority;
     if (data.admin_notes !== undefined) patch.admin_notes = data.admin_notes;
-    const { error } = await (supabaseAdmin.from("tickets") as any).update(patch).eq("id", data.ticketId);
+    const { error } = await supabaseAdmin.from("tickets").update(patch).eq("id", data.ticketId);
     if (error) return { success: false as const, error: error.message };
     return { success: true as const };
   });
