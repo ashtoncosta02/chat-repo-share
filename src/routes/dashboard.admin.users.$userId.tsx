@@ -647,3 +647,63 @@ function TextArea({ label, value, onChange, rows = 4 }: { label: string; value: 
     </div>
   );
 }
+
+function BillingOverrides({ profile, onSave }: { profile: any; onSave: (priceCents: number | null, freeUntil: string | null) => Promise<boolean> }) {
+  const initialPrice = profile?.monthly_price_override_cents != null
+    ? (profile.monthly_price_override_cents / 100).toFixed(2)
+    : "";
+  const initialFree = profile?.first_month_free_until
+    ? String(profile.first_month_free_until).slice(0, 10)
+    : "";
+  const [price, setPrice] = useState(initialPrice);
+  const [freeUntil, setFreeUntil] = useState(initialFree);
+  const [saving, setSaving] = useState(false);
+  const dirty = price !== initialPrice || freeUntil !== initialFree;
+
+  return (
+    <div className="mt-4 pt-4 border-t border-border space-y-3">
+      <div className="flex items-center justify-between">
+        <h4 className="text-sm font-medium text-foreground">Billing overrides</h4>
+        <span className="text-[11px] text-muted-foreground">Applied when Stripe is connected. Leave blank for standard.</span>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label className="text-xs text-muted-foreground block mb-1">Custom monthly price (USD)</label>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="e.g. 49.00"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+          />
+        </div>
+        <div>
+          <label className="text-xs text-muted-foreground block mb-1">Free until (date)</label>
+          <input
+            type="date"
+            value={freeUntil}
+            onChange={(e) => setFreeUntil(e.target.value)}
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+          />
+        </div>
+      </div>
+      <div className="flex justify-end">
+        <button
+          disabled={!dirty || saving}
+          onClick={async () => {
+            setSaving(true);
+            const cents = price.trim() === "" ? null : Math.round(parseFloat(price) * 100);
+            const free = freeUntil.trim() === "" ? null : new Date(freeUntil + "T00:00:00Z").toISOString();
+            await onSave(Number.isFinite(cents as number) ? cents : null, free);
+            setSaving(false);
+          }}
+          className="px-3 py-1.5 rounded-lg bg-foreground text-background text-sm font-medium disabled:opacity-50"
+        >
+          {saving ? "Saving…" : "Save billing"}
+        </button>
+      </div>
+    </div>
+  );
+}
