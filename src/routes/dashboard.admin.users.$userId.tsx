@@ -155,8 +155,22 @@ function AdminUserDetailPage() {
               <option value="discounted">Discounted</option>
               <option value="standard">Standard</option>
             </select>
-            <span className="text-[11px] text-muted-foreground">Used for billing once Stripe is connected.</span>
+            <span className="text-[11px] text-muted-foreground">Label only — no charges happen yet.</span>
           </div>
+          <BillingOverrides
+            profile={profile}
+            onSave={async (priceCents, freeUntil) => {
+              if (!session?.access_token) return false;
+              const r = await adminSetUserBilling({ data: {
+                accessToken: session.access_token,
+                userId,
+                monthly_price_override_cents: priceCents,
+                first_month_free_until: freeUntil,
+              }});
+              if (r.success) { toast.success("Billing overrides saved"); load(); return true; }
+              toast.error(r.error ?? "Failed"); return false;
+            }}
+          />
         </Section>
 
         {/* Receptionist */}
