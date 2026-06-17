@@ -652,6 +652,32 @@ export const adminSetUserPlan = createServerFn({ method: "POST" })
     return { success: true as const };
   });
 
+// Per-user billing overrides (price override + free-until date).
+// No charges happen yet — these fields will be honored when Stripe is wired up.
+const billingSchema = z.object({
+  accessToken: z.string().min(1),
+  userId: z.string().uuid(),
+  monthly_price_override_cents: z.number().int().min(0).max(1_000_000).nullable(),
+  first_month_free_until: z.string().nullable(), // ISO date or null
+});
+
+export const adminSetUserBilling = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => billingSchema.parse(input))
+  .handler(async ({ data }) => {
+    const auth = await requireAdmin(data.accessToken);
+    if ("error" in auth) return { success: false as const, error: auth.error };
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update({
+        monthly_price_override_cents: data.monthly_price_override_cents,
+        first_month_free_until: data.first_month_free_until,
+      })
+      .eq("user_id", data.userId);
+    if (error) return { success: false as const, error: error.message };
+    console.log(`[admin] ${auth.userId} updated billing for ${data.userId}`);
+    return { success: true as const };
+  });
+
 // =========================================================================
 // Edit-on-behalf: admin patches a customer's receptionist / profile
 // =========================================================================

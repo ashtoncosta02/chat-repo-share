@@ -534,7 +534,9 @@ export type Database = {
           created_at: string
           display_name: string | null
           email: string | null
+          first_month_free_until: string | null
           id: string
+          monthly_price_override_cents: number | null
           plan: Database["public"]["Enums"]["user_plan"]
           updated_at: string
           user_id: string
@@ -543,7 +545,9 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           email?: string | null
+          first_month_free_until?: string | null
           id?: string
+          monthly_price_override_cents?: number | null
           plan?: Database["public"]["Enums"]["user_plan"]
           updated_at?: string
           user_id: string
@@ -552,7 +556,9 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           email?: string | null
+          first_month_free_until?: string | null
           id?: string
+          monthly_price_override_cents?: number | null
           plan?: Database["public"]["Enums"]["user_plan"]
           updated_at?: string
           user_id?: string
