@@ -340,6 +340,59 @@ export async function bookAppointment(params: {
     console.error("booking lead upsert failed:", e);
   }
 
+  // Send confirmation emails — to client (if email provided) + to owner.
+  // Best-effort: never fails the booking.
+  try {
+    let ownerEmail = agent?.notify_email?.trim() || null;
+    if (!ownerEmail) {
+      const { data: prof } = await supabaseAdmin
+        .from("profiles")
+        .select("email")
+        .eq("user_id", userId)
+        .maybeSingle();
+      ownerEmail = prof?.email?.trim() || null;
+    }
+
+    if (customerEmail) {
+      const { subject, html } = renderBookingEmail({
+        businessName,
+        customerName: args.customer_name,
+        startsAt: start,
+        endsAt: end,
+        reason: args.reason ?? null,
+        eventLink: ev.htmlLink || null,
+      });
+      await sendEmail({
+        to: customerEmail,
+        subject,
+        html,
+        replyTo: ownerEmail ?? undefined,
+      });
+    }
+
+    if (ownerEmail) {
+      const { subject, html } = renderBookingEmail({
+        businessName,
+        customerName: args.customer_name,
+        startsAt: start,
+        endsAt: end,
+        reason: args.reason ?? null,
+        eventLink: ev.htmlLink || null,
+        ownerCopy: true,
+        customerEmail,
+        customerPhone: args.customer_phone || null,
+      });
+      await sendEmail({
+        to: ownerEmail,
+        subject,
+        html,
+        replyTo: customerEmail ?? undefined,
+      });
+    }
+  } catch (e) {
+    console.error("booking email failed:", e);
+  }
+
   return {
     ok: true,
     booking_id: booking.id,
