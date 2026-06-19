@@ -243,10 +243,10 @@ export async function bookAppointment(params: {
   });
   if (conflict) return { error: "That time was just taken — please choose another slot." };
 
-  // Load business name for event title
+  // Load business name + owner notify email for confirmation emails.
   const { data: agent } = await supabaseAdmin
     .from("agents")
-    .select("business_name")
+    .select("business_name, notify_email")
     .eq("id", agentId)
     .maybeSingle();
   const businessName = agent?.business_name || "Appointment";
