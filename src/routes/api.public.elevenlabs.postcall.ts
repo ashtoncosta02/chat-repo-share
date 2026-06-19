@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createHmac, timingSafeEqual } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { captureLead } from "@/server/lead-extraction";
+import { sendEmail } from "@/server/email.server";
+import { renderTranscriptEmail } from "@/server/email-templates.server";
 
 const EL_BASE = "https://api.elevenlabs.io/v1";
 
