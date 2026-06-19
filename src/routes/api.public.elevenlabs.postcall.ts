@@ -282,6 +282,37 @@ export async function persistPostCall(
     });
   }
 
+  // Email the transcript to the business owner if they've opted in.
+  if (agent.notify_email_transcript !== false) {
+    try {
+      let ownerEmail = agent.notify_email?.trim() || null;
+      if (!ownerEmail) {
+        const { data: prof } = await supabaseAdmin
+          .from("profiles")
+          .select("email")
+          .eq("user_id", agent.user_id)
+          .maybeSingle();
+        ownerEmail = prof?.email?.trim() || null;
+      }
+      if (ownerEmail) {
+        const siteUrl =
+          process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://askjanice.net";
+        const { subject, html } = renderTranscriptEmail({
+          businessName: agent.business_name || "Your business",
+          callerNumber: data.metadata?.phone_call?.external_number ?? null,
+          startedAt: new Date(startedAt),
+          durationSeconds: durationSec,
+          summary: summaryText,
+          turns: cleanedTurns as { role: "user" | "assistant"; content: string }[],
+          conversationDashboardUrl: `${siteUrl}/dashboard/conversations/${convo.id}`,
+        });
+        await sendEmail({ to: ownerEmail, subject, html });
+      }
+    } catch (e) {
+      console.error("postcall: transcript email failed", e);
+    }
+  }
+
   console.log(
     `postcall: saved conversation ${convo.id} (${messageCount} messages) for agent ${agent.id}`,
   );
