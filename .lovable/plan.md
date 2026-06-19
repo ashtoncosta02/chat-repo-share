@@ -1,47 +1,58 @@
-## Updated recommendation: stop fighting the registrar block
+# Email Sending Plan (Resend via `send.askjanice.net`)
 
-The error in your screenshot means the registrar is refusing the nameserver change at the registry level. Since both subdomain NS records and moving the whole domain to Cloudflare depend on nameserver changes working, I recommend we stop trying that path.
+Your domain is verified in Resend and the `RESEND_API_KEY` connector secret is already stored. Now I'll wire actual email-sending into the app.
 
-## Easiest effective path now
+## Sender
 
-Use an email provider setup that verifies with normal DNS records only — TXT, CNAME, and/or MX — instead of NS delegation.
+All emails go from: **`Janice <hello@send.askjanice.net>`**
 
-This avoids the exact thing Doteasy is blocking.
+## What gets built
 
-## What this means
+### 1. Shared email helper
+A single server-side helper that all email triggers call:
+- Calls Resend through the Lovable connector gateway (no SDK, just `fetch`)
+- Uses `LOVABLE_API_KEY` + `RESEND_API_KEY` headers
+- Takes `{ to, subject, html, replyTo? }`
+- Returns `{ id }` or throws on failure
+- Logs failures server-side but never crashes the calling flow (an email failure shouldn't break a booking)
 
-- Your website stays on `askjanice.net`.
-- Your existing `hello@askjanice.net` inbox can stay as-is, as long as we do not overwrite its current MX records.
-- We should use a separate sending subdomain such as `send.askjanice.net`, `mail.askjanice.net`, or `notify.askjanice.net` for app/auth emails.
-- Doteasy should be able to add the required TXT/CNAME records for that sending subdomain without needing nameserver delegation.
+File: `src/server/email.server.ts` (server-only — never imported by client code)
 
-## Plan
+### 2. Branded HTML templates
+Small inline-styled HTML builders (no React Email needed — keeps it light). Brand: clean, Janice voice, off-white background, simple header with "Ask Janice".
 
-1. **Keep the current domain and inbox unchanged**
-   - Do not remove Namecheap/Doteasy mail records for `hello@askjanice.net`.
-   - Do not keep retrying blocked nameserver updates unless Doteasy unlocks the domain or fixes the registry issue.
+Templates:
+- **Post-call transcript** (to business owner): caller number, call duration, full transcript, AI-extracted lead info if present, link to the conversation in the dashboard
+- **Booking confirmation** (to client): appointment date/time, business name, location/notes, "reply to reschedule" line with `reply_to: <owner email>`
+- **Generic notification** (reusable for future triggers like contact forms, sign-up welcome, alerts)
 
-2. **Switch the app email sending setup away from NS delegation**
-   - Use a DNS-record-based sender setup instead of Lovable-managed email delegation.
-   - Best practical option: Resend or similar, using a dedicated subdomain like `send.askjanice.net`.
+File: `src/server/email-templates.server.ts`
 
-3. **Add only the records the provider gives you**
-   - Usually TXT for SPF/domain verification.
-   - CNAME for DKIM.
-   - Sometimes MX for bounce handling.
-   - These are regular DNS records, not nameserver records.
+### 3. Triggers wired in this pass
 
-4. **Wire the app to send through that provider**
-   - Update the app email/auth email sending path to use the selected provider.
-   - Keep existing app functionality intact.
-   - Avoid touching unrelated dashboard, voice, booking, or widget features.
+| Event | Trigger location | Recipient | Template |
+|---|---|---|---|
+| Voice call ends (ElevenLabs post-call webhook fires) | `api.public.elevenlabs.postcall.ts` | Business owner (from `profiles.email`) | Transcript |
+| Appointment booked via voice agent | `api.public.voice-tools.book-appointment.ts` | Client (email captured during call) + owner gets a copy | Booking confirmation |
+| Appointment booked via chat widget | `api.public.widget.chat.ts` (booking tool path) | Client + owner | Booking confirmation |
 
-5. **Verify after DNS propagates**
-   - Confirm `askjanice.net` still loads.
-   - Confirm `hello@askjanice.net` still receives email.
-   - Confirm the new sending subdomain verifies.
-   - Send a real test email from the app.
+Each trigger:
+- Looks up owner email from `profiles` using the agent's `user_id`
+- Sends after the main work succeeds (DB insert / calendar event created)
+- Wraps the send in `try/catch` so email failures don't break the call/booking
 
-## Important note
+### 4. Future triggers (NOT in this pass — easy to add later)
+Once the helper exists, adding more emails is one line: contact form notifications, password reset branding, new-lead alerts, daily summary, etc. Tell me which you want next.
 
-The screenshot does not mean you made a mistake. It means the registrar operation is blocked. The fastest path is to work around that limitation instead of continuing with nameserver-based setup.
+## Technical notes
+
+- Gateway URL: `https://connector-gateway.lovable.dev/resend/emails`
+- Auth: `Authorization: Bearer ${LOVABLE_API_KEY}` + `X-Connection-Api-Key: ${RESEND_API_KEY}`
+- Both secrets already exist — no new env vars needed
+- `.server.ts` suffix keeps email code off the client bundle
+- No new tables needed; transcript content comes from the `conversations` row that the post-call hook already creates
+
+## Out of scope
+
+- Auth emails (password reset / verification) — Supabase still sends those with default branding. Branding those requires the separate Lovable Emails auth-hook flow, which conflicts with Resend on the same subdomain. Leave as-is for now; revisit if you want them branded.
+- Marketing / bulk sends — not what Resend transactional should be used for.
