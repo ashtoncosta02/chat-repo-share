@@ -1,58 +1,33 @@
-# Email Sending Plan (Resend via `send.askjanice.net`)
+## Why no email arrived
 
-Your domain is verified in Resend and the `RESEND_API_KEY` connector secret is already stored. Now I'll wire actual email-sending into the app.
+Two separate problems, both real:
 
-## Sender
+### 1. Your "Email transcript" toggle isn't saving
+I checked your receptionist in the database: `notify_email_transcript` is still `false` and `notify_email` is empty — even though you flipped the switch on. That's why the post-call code skipped sending entirely (the call itself was received and transcript saved correctly).
 
-All emails go from: **`Janice <hello@send.askjanice.net>`**
+The session replay confirms it: you toggled the switch on, navigated away, came back, and the switch had reset to off. The update is silently failing — almost certainly because the Notifications page writes directly from the browser using the Supabase client, and on this app auth is handled by Clerk, so that browser write isn't authenticated as you and RLS rejects it (with no error toast, because Supabase returns "0 rows updated" rather than an error).
 
-## What gets built
+### 2. Misleading helper text
+The card still says *"Delivery turns on once we wire up the integration — your preferences are saved."* That's stale — Resend is wired up now. It needs to go.
 
-### 1. Shared email helper
-A single server-side helper that all email triggers call:
-- Calls Resend through the Lovable connector gateway (no SDK, just `fetch`)
-- Uses `LOVABLE_API_KEY` + `RESEND_API_KEY` headers
-- Takes `{ to, subject, html, replyTo? }`
-- Returns `{ id }` or throws on failure
-- Logs failures server-side but never crashes the calling flow (an email failure shouldn't break a booking)
+---
 
-File: `src/server/email.server.ts` (server-only — never imported by client code)
+## Fix plan
 
-### 2. Branded HTML templates
-Small inline-styled HTML builders (no React Email needed — keeps it light). Brand: clean, Janice voice, off-white background, simple header with "Ask Janice".
+1. **Move the notifications save to the server.**
+   Create `updateAgentNotifications` as a `createServerFn` (auth-protected, runs as the user via `requireSupabaseAuth`) that updates `notify_email_transcript`, `notify_sms_transcript`, `notify_email`, `notify_phone` for the caller's agent. Replace the direct `supabase.from('agents').update(...)` calls in `NotificationsCard.tsx` with calls to this server fn. Show a toast on success/failure so a silent failure can't happen again.
 
-Templates:
-- **Post-call transcript** (to business owner): caller number, call duration, full transcript, AI-extracted lead info if present, link to the conversation in the dashboard
-- **Booking confirmation** (to client): appointment date/time, business name, location/notes, "reply to reschedule" line with `reply_to: <owner email>`
-- **Generic notification** (reusable for future triggers like contact forms, sign-up welcome, alerts)
+2. **Fix the helper copy.**
+   Remove the "once we wire up the integration" line. Replace with: *"Saved automatically. Transcripts are sent from hello@send.askjanice.net after every call."*
 
-File: `src/server/email-templates.server.ts`
+3. **Auto-fill the email field.**
+   When `notify_email` is null, pre-fill the input with the user's account email (from `profiles.email`) so one tap on the toggle is enough.
 
-### 3. Triggers wired in this pass
+4. **Add a "Send test email" button.**
+   Small button under the email row. Calls a new server fn `sendTestTranscriptEmail` that renders the transcript template with fake data and sends it to whatever address is currently saved. Lets you confirm Resend → inbox works end-to-end without needing to place another phone call.
 
-| Event | Trigger location | Recipient | Template |
-|---|---|---|---|
-| Voice call ends (ElevenLabs post-call webhook fires) | `api.public.elevenlabs.postcall.ts` | Business owner (from `profiles.email`) | Transcript |
-| Appointment booked via voice agent | `api.public.voice-tools.book-appointment.ts` | Client (email captured during call) + owner gets a copy | Booking confirmation |
-| Appointment booked via chat widget | `api.public.widget.chat.ts` (booking tool path) | Client + owner | Booking confirmation |
+5. **Verify after deploy.** Toggle the switch on with your address, click "Send test email", confirm it arrives. Then we know the next real call will email too.
 
-Each trigger:
-- Looks up owner email from `profiles` using the agent's `user_id`
-- Sends after the main work succeeds (DB insert / calendar event created)
-- Wraps the send in `try/catch` so email failures don't break the call/booking
-
-### 4. Future triggers (NOT in this pass — easy to add later)
-Once the helper exists, adding more emails is one line: contact form notifications, password reset branding, new-lead alerts, daily summary, etc. Tell me which you want next.
-
-## Technical notes
-
-- Gateway URL: `https://connector-gateway.lovable.dev/resend/emails`
-- Auth: `Authorization: Bearer ${LOVABLE_API_KEY}` + `X-Connection-Api-Key: ${RESEND_API_KEY}`
-- Both secrets already exist — no new env vars needed
-- `.server.ts` suffix keeps email code off the client bundle
-- No new tables needed; transcript content comes from the `conversations` row that the post-call hook already creates
-
-## Out of scope
-
-- Auth emails (password reset / verification) — Supabase still sends those with default branding. Branding those requires the separate Lovable Emails auth-hook flow, which conflicts with Resend on the same subdomain. Leave as-is for now; revisit if you want them branded.
-- Marketing / bulk sends — not what Resend transactional should be used for.
+### Out of scope
+- I'm not touching the post-call email logic itself — it's correct, it just never ran because the flag was off. Once the toggle persists, your next call will email the transcript automatically.
+- SMS path (you didn't ask for it; same persistence fix will cover it as a side effect though).
