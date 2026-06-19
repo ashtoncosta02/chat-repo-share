@@ -1,6 +1,8 @@
 // Tool definitions + executors for the widget chat AI to book appointments.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { checkFreeBusy, createEvent, getValidAccessToken } from "./google-calendar.server";
+import { sendEmail } from "./email.server";
+import { renderBookingEmail } from "./email-templates.server";
 
 export interface BusinessHoursDay {
   enabled: boolean;
