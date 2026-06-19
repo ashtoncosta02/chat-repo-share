@@ -1,57 +1,23 @@
-## Goal
+## What's going on
 
-When a customer reports "something isn't working," you need to look at their account and immediately see what's wrong — failing calls, broken integrations, missing config, errors. Today the admin pages only show counts. I'll turn the admin area into a real support console.
+- Your domain registrar **Doteasy** is the actual DNS host for `askjanice.net` (nameservers `dns1.doteasy.com` / `dns2.doteasy.com`). Cloudflare isn't in the path for this domain right now, so anything added there has no effect.
+- Lovable needs **two NS records** added at Doteasy for the subdomain `hello.askjanice.net` so it can manage SPF/DKIM/MX for sending email from `hello@hello.askjanice.net`.
+- Right now there's a stray record on `hello.askjanice.net` pointing to `hello.lovable.cloud`. That needs to be removed; it's not the right record type.
+- Your Namecheap inbox at `hello@askjanice.net` (root domain) is **completely separate** and stays working — no changes there.
 
-## What I'll add
+## What you need to do (at Doteasy, not Cloudflare)
 
-### 1. New "User detail" admin page (`/dashboard/admin/users/:userId`)
-Click any user from the users table → opens a full diagnostic view of their account:
+1. Log into **Doteasy → DNS / Zone editor for askjanice.net**.
+2. **Delete** any existing record for the host `hello` (the one pointing to `hello.lovable.cloud`).
+3. **Add two NS records** for host `hello`:
+   - Type: `NS`, Host/Name: `hello`, Value: `ns3.lovable.cloud`
+   - Type: `NS`, Host/Name: `hello`, Value: `ns4.lovable.cloud`
+4. Save. DNS propagation can take a few minutes to a few hours.
 
-- **Account** — email, name, signup date, last sign-in, admin flag, ability to impersonate-view (read-only)
-- **Receptionist health** — business name, live/draft, onboarding step, ElevenLabs agent linked?, voice configured?, system prompt present?
-- **Phone numbers** — each number with: Twilio status, linked to ElevenLabs?, webhook URL set?, last inbound call timestamp. Red badge if misconfigured + one-click "Re-sync to AI" button.
-- **Google Calendar** — connected?, token expired?, business hours configured?, last successful booking, last booking error
-- **Chat widget** — embed snippet, last 10 conversations with status, link to view transcript
-- **Voice calls** — last 20 calls: timestamp, from, duration, status (completed / failed / no-answer), link to transcript + audio. Flags calls with no transcript saved (webhook misfire).
-- **Leads** — last 20 leads with source (chat / voice / manual)
-- **Bookings** — upcoming + recent, with status
-- **Recent errors** — pulled from `email_send_log` failures + any `*_error` columns on conversations/bookings
+## What I'll do on my side
 
-### 2. New "System health" admin page (`/dashboard/admin/health`)
-App-wide signals so you can spot problems before users report them:
+- Nothing to code. After you add the NS records at Doteasy, I'll re-check the domain status. Once it flips from Pending to Active, app emails (transcripts, notifications, etc.) will start sending from your domain automatically — no further action needed.
 
-- **Voice pipeline** — calls in last 24h, % completed, % missing transcripts (webhook failures), avg duration
-- **Chat widget** — conversations in last 24h, errors, AI gateway failures
-- **Bookings** — created in last 24h, failed booking attempts (from voice tool logs)
-- **Integrations** — count of users with: ElevenLabs linked, Twilio number, Google Calendar connected, expired Google tokens (needs reconnect)
-- **Email log** — last 50 emails sent (deduplicated by `message_id`), with filters for status/template. Per the email dashboard spec: time range filter, template filter, status filter, summary stats, sortable table.
-- **Backfill button** — manually trigger ElevenLabs call backfill for any user (already exists per-user, expose globally here too)
+## Verification
 
-### 3. Enhancements to existing users list
-- Add columns: **Status** (✓ healthy / ⚠ misconfigured / ● inactive 30d), **Last activity**
-- Status badge is red if: agent not live, no phone number, calendar token expired, or onboarding incomplete >7 days after signup
-- Each row links to the new user detail page
-- Sort by last activity / status / created date
-
-### 4. New server functions (in `src/lib/admin.functions.ts`)
-All gated by `requireAdmin`:
-- `getAdminUserDetail({ userId })` — aggregates everything for one user
-- `getSystemHealth()` — app-wide signals
-- `getRecentEmailLog({ filters })` — for email panel
-- `getRecentErrors({ userId? })` — pulls failed bookings, failed calls, suppressed emails
-- `adminBackfillUserCalls({ userId })` — wraps existing backfill for any user
-
-## Technical notes
-
-- All data via `supabaseAdmin` inside server functions (RLS bypass, admin-gated)
-- No new tables needed — joins existing `agents`, `phone_numbers`, `agent_google_calendar`, `conversations`, `widget_conversations`, `calendar_bookings`, `leads`, `email_send_log`
-- One new route file: `src/routes/dashboard.admin.users.$userId.tsx`
-- One new route file: `src/routes/dashboard.admin.health.tsx`
-- Update `src/routes/dashboard.admin.tsx` to add nav links to Health page
-- Update `src/routes/dashboard.admin.users.tsx` to add status column + row click
-
-## Out of scope (ask if you want these too)
-
-- Actually impersonating a user (signing in as them) — risky, skipping unless requested
-- Live tailing of server logs in the UI — complex, can add later
-- Push notifications/alerts when a user's account breaks
+Once you've added them, reply and I'll run a DNS check to confirm Doteasy is now delegating `hello.askjanice.net` to Lovable's nameservers, then confirm the domain status.
