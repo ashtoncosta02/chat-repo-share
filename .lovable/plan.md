@@ -1,48 +1,47 @@
-## Recommendation: Move DNS to Cloudflare
+## Updated recommendation: stop fighting the registrar block
 
-This is the simplest path. **Zero code changes** — it's all DNS work you do once, then everything (Lovable Emails, your Namecheap inbox, the website) keeps working. You already have a Cloudflare account, which makes it easier.
+The error in your screenshot means the registrar is refusing the nameserver change at the registry level. Since both subdomain NS records and moving the whole domain to Cloudflare depend on nameserver changes working, I recommend we stop trying that path.
 
-The other options (switching to Resend, partial subdomain delegation) involve more setup or rewriting parts of the app for no real benefit.
+## Easiest effective path now
 
-## Why this works
+Use an email provider setup that verifies with normal DNS records only — TXT, CNAME, and/or MX — instead of NS delegation.
 
-- Doteasy's "we don't do NS records" only applies to records **inside** the zone they host. But at the **registrar level** they absolutely let you change which nameservers run the zone — that's standard.
-- Once Cloudflare is the nameserver, you (or I) can add NS records for `hello` inside Cloudflare, and Lovable Emails works.
+This avoids the exact thing Doteasy is blocking.
 
-## Steps (you do these)
+## What this means
 
-### 1. Add the domain to Cloudflare
-- Log into Cloudflare → **Add a site** → enter `askjanice.net` → pick the Free plan.
-- Cloudflare will **scan your existing DNS** and import what it finds. **Verify before continuing** that it imported:
-  - Your A records pointing to Lovable (`185.158.133.1`) for `@` and `www`
-  - Your Namecheap email **MX records** (the ones that make `hello@askjanice.net` work)
-  - Any SPF / DKIM / DMARC TXT records from Namecheap
-  - The existing `_lovable` TXT record
-- If anything is missing, add it manually before step 2. This is the only risky part — missing an MX record breaks your inbox.
+- Your website stays on `askjanice.net`.
+- Your existing `hello@askjanice.net` inbox can stay as-is, as long as we do not overwrite its current MX records.
+- We should use a separate sending subdomain such as `send.askjanice.net`, `mail.askjanice.net`, or `notify.askjanice.net` for app/auth emails.
+- Doteasy should be able to add the required TXT/CNAME records for that sending subdomain without needing nameserver delegation.
 
-### 2. Add the two NS records for `hello`
-In Cloudflare DNS:
-- Type `NS`, Name `hello`, Target `ns3.lovable.cloud` — **set Proxy status to DNS only** (gray cloud, not orange)
-- Type `NS`, Name `hello`, Target `ns4.lovable.cloud` — also DNS only
+## Plan
 
-### 3. Change nameservers at Doteasy
-- Cloudflare will show you two nameservers like `xxx.ns.cloudflare.com` and `yyy.ns.cloudflare.com`.
-- Log into Doteasy → your domain → **Nameservers / Custom nameservers** → replace `dns1.doteasy.com` / `dns2.doteasy.com` with the two Cloudflare ones → save.
-- This **is** something Doteasy supports — it's a registrar setting, not a DNS record.
+1. **Keep the current domain and inbox unchanged**
+   - Do not remove Namecheap/Doteasy mail records for `hello@askjanice.net`.
+   - Do not keep retrying blocked nameserver updates unless Doteasy unlocks the domain or fixes the registry issue.
 
-### 4. Wait
-- Propagation: usually 1–4 hours, up to 24. Cloudflare will email you when it's active.
+2. **Switch the app email sending setup away from NS delegation**
+   - Use a DNS-record-based sender setup instead of Lovable-managed email delegation.
+   - Best practical option: Resend or similar, using a dedicated subdomain like `send.askjanice.net`.
 
-## What I'll do
+3. **Add only the records the provider gives you**
+   - Usually TXT for SPF/domain verification.
+   - CNAME for DKIM.
+   - Sometimes MX for bounce handling.
+   - These are regular DNS records, not nameserver records.
 
-- Once you confirm nameservers are switched, I'll run a DNS check to verify:
-  - Cloudflare is now authoritative for `askjanice.net`
-  - The `hello` subdomain is properly delegated to `ns3/ns4.lovable.cloud`
-  - Your MX records survived the migration (so the Namecheap inbox still works)
-- Then re-check the Lovable email domain status and confirm it flips to Active.
+4. **Wire the app to send through that provider**
+   - Update the app email/auth email sending path to use the selected provider.
+   - Keep existing app functionality intact.
+   - Avoid touching unrelated dashboard, voice, booking, or widget features.
 
-## What stays the same
+5. **Verify after DNS propagates**
+   - Confirm `askjanice.net` still loads.
+   - Confirm `hello@askjanice.net` still receives email.
+   - Confirm the new sending subdomain verifies.
+   - Send a real test email from the app.
 
-- `hello@askjanice.net` (Namecheap inbox) — keeps working as long as MX records are copied over in step 1
-- `askjanice.net` website — keeps working (A records point to Lovable either way)
-- Lovable Emails config — already set up, just waiting on DNS
+## Important note
+
+The screenshot does not mean you made a mistake. It means the registrar operation is blocked. The fastest path is to work around that limitation instead of continuing with nameserver-based setup.
