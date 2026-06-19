@@ -167,7 +167,7 @@ export async function persistPostCall(
 ): Promise<PersistResult> {
   const { data: agent, error: agentErr } = await supabaseAdmin
     .from("agents")
-    .select("id, user_id")
+    .select("id, user_id, business_name, notify_email, notify_email_transcript")
     .eq("elevenlabs_agent_id", elAgentId)
     .maybeSingle();
   if (agentErr || !agent) {
