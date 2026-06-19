@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createHmac, timingSafeEqual } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { captureLead } from "@/server/lead-extraction";
+import { sendEmail } from "@/server/email.server";
+import { renderTranscriptEmail } from "@/server/email-templates.server";
 
 const EL_BASE = "https://api.elevenlabs.io/v1";
 
@@ -165,7 +167,7 @@ export async function persistPostCall(
 ): Promise<PersistResult> {
   const { data: agent, error: agentErr } = await supabaseAdmin
     .from("agents")
-    .select("id, user_id")
+    .select("id, user_id, business_name, notify_email, notify_email_transcript")
     .eq("elevenlabs_agent_id", elAgentId)
     .maybeSingle();
   if (agentErr || !agent) {
@@ -228,13 +230,14 @@ export async function persistPostCall(
 
   // Generate AI summary from the transcript so it shows up in the dashboard
   // immediately, without waiting for someone to open Conversations.
+  let summaryText: string | null = null;
   if (cleanedTurns.length > 0) {
     try {
-      const summary = await generateCallSummary(cleanedTurns);
-      if (summary) {
+      summaryText = await generateCallSummary(cleanedTurns);
+      if (summaryText) {
         await supabaseAdmin
           .from("conversations")
-          .update({ ai_summary: summary })
+          .update({ ai_summary: summaryText })
           .eq("id", convo.id);
       }
     } catch (e) {
@@ -277,6 +280,37 @@ export async function persistPostCall(
       fallbackPhone,
       messages: cleanedTurns as { role: "user" | "assistant"; content: string }[],
     });
+  }
+
+  // Email the transcript to the business owner if they've opted in.
+  if (agent.notify_email_transcript !== false) {
+    try {
+      let ownerEmail = agent.notify_email?.trim() || null;
+      if (!ownerEmail) {
+        const { data: prof } = await supabaseAdmin
+          .from("profiles")
+          .select("email")
+          .eq("user_id", agent.user_id)
+          .maybeSingle();
+        ownerEmail = prof?.email?.trim() || null;
+      }
+      if (ownerEmail) {
+        const siteUrl =
+          process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://askjanice.net";
+        const { subject, html } = renderTranscriptEmail({
+          businessName: agent.business_name || "Your business",
+          callerNumber: data.metadata?.phone_call?.external_number ?? null,
+          startedAt: new Date(startedAt),
+          durationSeconds: durationSec,
+          summary: summaryText,
+          turns: cleanedTurns as { role: "user" | "assistant"; content: string }[],
+          conversationDashboardUrl: `${siteUrl}/dashboard/conversations/${convo.id}`,
+        });
+        await sendEmail({ to: ownerEmail, subject, html });
+      }
+    } catch (e) {
+      console.error("postcall: transcript email failed", e);
+    }
   }
 
   console.log(
