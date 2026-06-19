@@ -1,10 +1,15 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Bell, Mail, MessageSquare } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Bell, Mail, MessageSquare, Send } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import {
+  updateAgentNotifications,
+  sendTestTranscriptEmail,
+} from "@/lib/notifications.functions";
 
 interface Props {
   agentId: string;
@@ -12,6 +17,7 @@ interface Props {
   smsEnabled: boolean;
   email: string | null;
   phone: string | null;
+  accountEmail: string | null;
   onChange: (next: {
     notify_email_transcript: boolean;
     notify_sms_transcript: boolean;
@@ -21,19 +27,23 @@ interface Props {
 }
 
 export function NotificationsCard({
-  agentId,
   emailEnabled,
   smsEnabled,
   email,
   phone,
+  accountEmail,
   onChange,
 }: Props) {
-  const [emailDraft, setEmailDraft] = useState(email ?? "");
+  const updateFn = useServerFn(updateAgentNotifications);
+  const sendTestFn = useServerFn(sendTestTranscriptEmail);
+
+  const [emailDraft, setEmailDraft] = useState(email ?? accountEmail ?? "");
   const [phoneDraft, setPhoneDraft] = useState(phone ?? "");
+  const [sendingTest, setSendingTest] = useState(false);
 
   useEffect(() => {
-    setEmailDraft(email ?? "");
-  }, [email]);
+    setEmailDraft(email ?? accountEmail ?? "");
+  }, [email, accountEmail]);
   useEffect(() => {
     setPhoneDraft(phone ?? "");
   }, [phone]);
@@ -46,23 +56,33 @@ export function NotificationsCard({
       notify_phone: string | null;
     }>,
   ) => {
-    const { error } = await supabase.from("agents").update(patch).eq("id", agentId);
-    if (error) {
-      toast.error("Couldn't save notification settings.");
-      console.error(error);
-      return;
+    try {
+      await updateFn({ data: patch });
+      onChange({
+        notify_email_transcript: emailEnabled,
+        notify_sms_transcript: smsEnabled,
+        notify_email: email,
+        notify_phone: phone,
+        ...patch,
+      });
+      toast.success("Saved");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Couldn't save.";
+      toast.error(msg);
+      console.error(e);
     }
-    onChange({
-      notify_email_transcript: emailEnabled,
-      notify_sms_transcript: smsEnabled,
-      notify_email: email,
-      notify_phone: phone,
-      ...patch,
-    });
   };
 
   const toggleEmail = (next: boolean) => {
-    void persist({ notify_email_transcript: next });
+    // When turning email on for the first time, also persist the prefilled address
+    if (next && !email && emailDraft.trim()) {
+      void persist({
+        notify_email_transcript: true,
+        notify_email: emailDraft.trim(),
+      });
+    } else {
+      void persist({ notify_email_transcript: next });
+    }
   };
   const toggleSms = (next: boolean) => {
     void persist({ notify_sms_transcript: next });
@@ -79,6 +99,24 @@ export function NotificationsCard({
     void persist({ notify_phone: trimmed });
   };
 
+  const sendTest = async () => {
+    const target = (emailDraft.trim() || email || accountEmail || "").trim();
+    if (!target) {
+      toast.error("Enter an email address first.");
+      return;
+    }
+    setSendingTest(true);
+    try {
+      await sendTestFn({ data: { to: target } });
+      toast.success(`Test email sent to ${target}. Check your inbox (and spam).`);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Test email failed.";
+      toast.error(msg);
+    } finally {
+      setSendingTest(false);
+    }
+  };
+
   return (
     <div className="border border-border rounded-2xl bg-card p-6">
       <div className="flex items-center gap-2 mb-1">
@@ -91,15 +129,15 @@ export function NotificationsCard({
 
       <div className="space-y-4">
         <div className="flex items-start justify-between gap-4 rounded-xl border border-border bg-background p-4">
-          <div className="flex items-start gap-3 min-w-0">
+          <div className="flex items-start gap-3 min-w-0 flex-1">
             <Mail className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="font-semibold text-foreground text-sm">Email transcript</div>
               <p className="text-xs text-muted-foreground">
                 Send a full transcript to your inbox after every call.
               </p>
               {emailEnabled && (
-                <div className="mt-3">
+                <div className="mt-3 space-y-2">
                   <Label htmlFor="notify-email" className="text-xs">
                     Send to
                   </Label>
@@ -110,8 +148,19 @@ export function NotificationsCard({
                     value={emailDraft}
                     onChange={(e) => setEmailDraft(e.target.value)}
                     onBlur={saveEmail}
-                    className="mt-1 h-9"
+                    className="h-9"
                   />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={sendTest}
+                    disabled={sendingTest}
+                    className="h-8"
+                  >
+                    <Send className="h-3.5 w-3.5 mr-1.5" />
+                    {sendingTest ? "Sending…" : "Send test email"}
+                  </Button>
                 </div>
               )}
             </div>
@@ -150,7 +199,8 @@ export function NotificationsCard({
       </div>
 
       <p className="text-xs text-muted-foreground mt-4">
-        Delivery turns on once we wire up the integration — your preferences are saved.
+        Emails are sent from <span className="font-medium">hello@send.askjanice.net</span> right
+        after each call. SMS delivery is coming soon — your preference is saved.
       </p>
     </div>
   );
