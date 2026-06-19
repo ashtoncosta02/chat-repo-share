@@ -14,10 +14,18 @@ export const updateAgentNotifications = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => PatchSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const patch: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(data)) {
-      if (v !== undefined) patch[k] = v;
-    }
+    const patch: {
+      notify_email_transcript?: boolean;
+      notify_sms_transcript?: boolean;
+      notify_email?: string | null;
+      notify_phone?: string | null;
+    } = {};
+    if (data.notify_email_transcript !== undefined)
+      patch.notify_email_transcript = data.notify_email_transcript;
+    if (data.notify_sms_transcript !== undefined)
+      patch.notify_sms_transcript = data.notify_sms_transcript;
+    if (data.notify_email !== undefined) patch.notify_email = data.notify_email;
+    if (data.notify_phone !== undefined) patch.notify_phone = data.notify_phone;
     if (Object.keys(patch).length === 0) return { ok: true as const };
     const { data: rows, error } = await supabase
       .from("agents")
@@ -28,6 +36,7 @@ export const updateAgentNotifications = createServerFn({ method: "POST" })
     if (!rows || rows.length === 0) throw new Error("No receptionist found for this account.");
     return { ok: true as const, updated: rows.length };
   });
+
 
 export const getMyNotificationSettings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

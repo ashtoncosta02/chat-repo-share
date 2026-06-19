@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useAuth } from "@/lib/auth-context";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
 import { NotificationsCard } from "@/components/dashboard/NotificationsCard";
+import { getMyNotificationSettings } from "@/lib/notifications.functions";
 
 export const Route = createFileRoute("/dashboard/notifications")({
   head: () => ({ meta: [{ title: "Notifications — Ask Janice" }] }),
@@ -18,27 +18,28 @@ interface AgentRow {
 }
 
 function NotificationsPage() {
-  const { user } = useAuth();
+  const loadFn = useServerFn(getMyNotificationSettings);
   const [agent, setAgent] = useState<AgentRow | null>(null);
+  const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
     let cancelled = false;
-    supabase
-      .from("agents")
-      .select("id, notify_email_transcript, notify_sms_transcript, notify_email, notify_phone")
-      .eq("user_id", user.id)
-      .maybeSingle()
-      .then(({ data }) => {
+    loadFn()
+      .then((res) => {
         if (cancelled) return;
-        setAgent(data as AgentRow | null);
+        setAgent((res.agent as AgentRow | null) ?? null);
+        setAccountEmail(res.accountEmail ?? null);
+        setLoading(false);
+      })
+      .catch(() => {
+        if (cancelled) return;
         setLoading(false);
       });
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [loadFn]);
 
   return (
     <div className="px-4 md:px-8 py-8 max-w-3xl mx-auto">
@@ -60,6 +61,7 @@ function NotificationsPage() {
           smsEnabled={agent.notify_sms_transcript}
           email={agent.notify_email}
           phone={agent.notify_phone}
+          accountEmail={accountEmail}
           onChange={(next) => setAgent((prev) => (prev ? { ...prev, ...next } : prev))}
         />
       )}
