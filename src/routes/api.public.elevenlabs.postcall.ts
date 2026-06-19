@@ -230,13 +230,14 @@ export async function persistPostCall(
 
   // Generate AI summary from the transcript so it shows up in the dashboard
   // immediately, without waiting for someone to open Conversations.
+  let summaryText: string | null = null;
   if (cleanedTurns.length > 0) {
     try {
-      const summary = await generateCallSummary(cleanedTurns);
-      if (summary) {
+      summaryText = await generateCallSummary(cleanedTurns);
+      if (summaryText) {
         await supabaseAdmin
           .from("conversations")
-          .update({ ai_summary: summary })
+          .update({ ai_summary: summaryText })
           .eq("id", convo.id);
       }
     } catch (e) {
