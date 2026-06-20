@@ -104,10 +104,9 @@ function AgentDetailPage() {
   const [speaking, setSpeaking] = useState(false);
   const [voiceOn, setVoiceOn] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
-  const [voiceOpen, setVoiceOpen] = useState(false);
-  const [voiceSaving, setVoiceSaving] = useState(false);
-  const [voiceDraft, setVoiceDraft] = useState<string>(DEFAULT_VOICE_ID);
   const [nameDraft, setNameDraft] = useState<string>("");
+  const [nameSaving, setNameSaving] = useState(false);
+
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -208,6 +207,44 @@ function AgentDetailPage() {
   };
 
   const assistantName = agent?.assistant_name?.trim() || "Janice";
+
+  // Keep the name input in sync with the loaded agent.
+  useEffect(() => {
+    if (agent) {
+      setNameDraft(agent.assistant_name?.trim() || "");
+    }
+  }, [agent?.assistant_name]);
+
+  const saveName = async () => {
+    if (!agent || nameSaving) return;
+    const trimmed = nameDraft.trim() || "Janice";
+    if (trimmed === (agent.assistant_name?.trim() || "Janice")) return;
+    setNameSaving(true);
+    const { error } = await supabase
+      .from("agents")
+      .update({ assistant_name: trimmed })
+      .eq("id", agent.id);
+    if (error) {
+      setNameSaving(false);
+      toast.error("Couldn't save name", { description: error.message });
+      return;
+    }
+    let elAgentId = agent.elevenlabs_agent_id;
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const token = session.session?.access_token;
+      if (token) {
+        const r = await syncEl({ data: { accessToken: token, agentId: agent.id } });
+        if (r.success) elAgentId = r.elevenlabs_agent_id;
+      }
+    } catch (e) {
+      console.error("EL sync exception:", e);
+    }
+    setAgent({ ...agent, assistant_name: trimmed, elevenlabs_agent_id: elAgentId });
+    setNameSaving(false);
+    toast.success("Receptionist name updated");
+  };
+
 
   // Load agent. We intentionally do NOT auto-greet here — the receptionist
   // only speaks if the user starts the live voice test or sends a chat
@@ -452,19 +489,29 @@ function AgentDetailPage() {
           </Link>
           <h1 className="font-display text-3xl font-bold text-foreground">{agent.business_name}</h1>
           <p className="text-muted-foreground text-sm mt-1">{assistantName} · AI Receptionist</p>
+          <div className="mt-3">
+            <Label htmlFor="assistant-name" className="text-xs text-muted-foreground">Receptionist name</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                id="assistant-name"
+                value={nameDraft}
+                onChange={(e) => setNameDraft(e.target.value)}
+                placeholder="Janice"
+                className="w-48"
+              />
+              <Button
+                size="sm"
+                disabled={nameSaving || nameDraft.trim() === (agent.assistant_name?.trim() || "Janice")}
+                onClick={saveName}
+                className="bg-[var(--gold)] hover:bg-[var(--gold)]/90 text-white"
+              >
+                {nameSaving ? "Saving…" : "Save"}
+              </Button>
+            </div>
+          </div>
         </div>
         <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setVoiceDraft(agent.voice_id ?? DEFAULT_VOICE_ID);
-              setNameDraft(agent.assistant_name ?? "");
-              setVoiceOpen(true);
-            }}
-          >
-            <Volume2 className="h-3.5 w-3.5 mr-1.5" /> {assistantName}'s name & voice ({getVoiceById(agent.voice_id).name})
-          </Button>
+
           <Button
             variant="outline"
             size="sm"
@@ -620,123 +667,8 @@ function AgentDetailPage() {
         </div>
       </div>
 
-      {/* Change voice dialog */}
-      <Dialog open={voiceOpen} onOpenChange={setVoiceOpen}>
-        <DialogContent className="max-w-none w-screen h-screen sm:rounded-none overflow-y-auto p-6 sm:p-10">
-          <div className="mx-auto w-full max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Receptionist name & voice</DialogTitle>
-            <DialogDescription>
-              Choose what your receptionist is called and which voice they use on calls and chat.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div>
-              <Label htmlFor="vd-name">Receptionist name</Label>
-              <Input
-                id="vd-name"
-                value={nameDraft}
-                onChange={(e) => setNameDraft(e.target.value)}
-                placeholder="Janice"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Voice</Label>
-              <Select value={voiceDraft} onValueChange={(v) => {
-                const prevVoiceName = getVoiceById(voiceDraft).name;
-                setVoiceDraft(v);
-                // Auto-update name if blank or still matches the previously selected voice's name
-                if (!nameDraft.trim() || nameDraft.trim() === prevVoiceName) {
-                  setNameDraft(getVoiceById(v).name);
-                }
-              }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a voice" />
-                </SelectTrigger>
-                <SelectContent>
-                  {VOICE_OPTIONS.map((v) => (
-                    <SelectItem key={v.id} value={v.id}>
-                      <span className="font-medium">{v.name}</span>
-                      <span className="text-muted-foreground"> — {v.description}</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={previewing}
-                onClick={async () => {
-                  setPreviewing(true);
-                  try {
-                    const voice = getVoiceById(voiceDraft);
-                    const sample = `Hi, thanks for calling ${agent.business_name}. How can I help you today?`;
-                    const res = await speak({ data: { text: sample, voiceId: voice.id } });
-                    if (!res.success) {
-                      toast.error(res.error);
-                      return;
-                    }
-                    audioElRef.current?.pause();
-                    const audio = new Audio(`data:audio/mpeg;base64,${res.audioBase64}`);
-                    audioElRef.current = audio;
-                    await audio.play();
-                  } catch (e) {
-                    toast.error(e instanceof Error ? e.message : "Preview failed");
-                  } finally {
-                    setPreviewing(false);
-                  }
-                }}
-              >
-                <Play className="h-3.5 w-3.5 mr-1.5" />
-                {previewing ? "Loading…" : "Preview voice"}
-              </Button>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setVoiceOpen(false)} disabled={voiceSaving}>
-              Cancel
-            </Button>
-            <Button
-              disabled={voiceSaving}
-              className="bg-[var(--gold)] hover:bg-[var(--gold)]/90 text-white"
-              onClick={async () => {
-                setVoiceSaving(true);
-                const trimmedName = nameDraft.trim() || null;
-                const { error } = await supabase
-                  .from("agents")
-                  .update({ voice_id: voiceDraft, assistant_name: trimmedName })
-                  .eq("id", agent.id);
-                if (error) {
-                  setVoiceSaving(false);
-                  toast.error("Couldn't save changes", { description: error.message });
-                  return;
-                }
-                let elAgentId = agent.elevenlabs_agent_id;
-                try {
-                  const { data: session } = await supabase.auth.getSession();
-                  const token = session.session?.access_token;
-                  if (token) {
-                    const r = await syncEl({ data: { accessToken: token, agentId: agent.id } });
-                    if (r.success) elAgentId = r.elevenlabs_agent_id;
-                  }
-                } catch (e) {
-                  console.error("EL sync exception:", e);
-                }
-                setAgent({ ...agent, voice_id: voiceDraft, assistant_name: trimmedName, elevenlabs_agent_id: elAgentId });
-                setVoiceSaving(false);
-                setVoiceOpen(false);
-                toast.success("Saved");
-              }}
-            >
-              {voiceSaving ? "Saving…" : "Save"}
-            </Button>
-          </DialogFooter>
-          </div>
-        </DialogContent>
-      </Dialog>
-
       {/* Edit dialog */}
+
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="max-w-none w-screen h-screen sm:rounded-none overflow-y-auto p-6 sm:p-10">
           <div className="mx-auto w-full max-w-3xl">
