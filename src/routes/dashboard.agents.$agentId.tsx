@@ -451,19 +451,29 @@ function AgentDetailPage() {
           </Link>
           <h1 className="font-display text-3xl font-bold text-foreground">{agent.business_name}</h1>
           <p className="text-muted-foreground text-sm mt-1">{assistantName} · AI Receptionist</p>
+          <div className="mt-3">
+            <Label htmlFor="assistant-name" className="text-xs text-muted-foreground">Receptionist name</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                id="assistant-name"
+                value={nameDraft}
+                onChange={(e) => setNameDraft(e.target.value)}
+                placeholder="Janice"
+                className="w-48"
+              />
+              <Button
+                size="sm"
+                disabled={nameSaving || nameDraft.trim() === (agent.assistant_name?.trim() || "Janice")}
+                onClick={saveName}
+                className="bg-[var(--gold)] hover:bg-[var(--gold)]/90 text-white"
+              >
+                {nameSaving ? "Saving…" : "Save"}
+              </Button>
+            </div>
+          </div>
         </div>
         <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setVoiceDraft(agent.voice_id ?? DEFAULT_VOICE_ID);
-              setNameDraft(agent.assistant_name ?? "");
-              setVoiceOpen(true);
-            }}
-          >
-            <Volume2 className="h-3.5 w-3.5 mr-1.5" /> {assistantName}'s name & voice ({getVoiceById(agent.voice_id).name})
-          </Button>
+
           <Button
             variant="outline"
             size="sm"
