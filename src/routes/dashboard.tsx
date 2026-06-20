@@ -143,18 +143,6 @@ function DashboardLayout() {
             Dialer
           </button>
         </nav>
-        <div className="border-t border-border px-6 py-4">
-          <button
-            onClick={async () => {
-              await signOut();
-              navigate({ to: "/" });
-            }}
-            className="text-sm font-medium text-foreground hover:text-[var(--gold)] transition-colors"
-          >
-            My Account
-          </button>
-          <p className="mt-1 text-xs text-muted-foreground truncate">{user.email}</p>
-        </div>
       </aside>
 
       {/* Mobile top bar */}
@@ -205,18 +193,6 @@ function DashboardLayout() {
                 Dialer
               </button>
             </nav>
-            <div className="border-t border-border px-6 py-4">
-              <button
-                onClick={async () => {
-                  await signOut();
-                  navigate({ to: "/" });
-                }}
-                className="text-sm font-medium text-foreground hover:text-[var(--gold)] transition-colors"
-              >
-                My Account
-              </button>
-              <p className="mt-1 text-xs text-muted-foreground truncate">{user.email}</p>
-            </div>
           </aside>
         </>
       )}
