@@ -177,10 +177,15 @@ export async function persistPostCall(
   // Dashboard "Live voice test" sessions tag themselves with a dynamic
   // variable so we can skip persisting them — they're practice runs by the
   // owner, not real customer conversations.
-  const isDashboardTest =
+  const isDashboardTestFlag =
     data.conversation_initiation_client_data?.dynamic_variables
       ?.is_dashboard_test === "true";
-  if (isDashboardTest) {
+  const { data: testMarker } = await supabaseAdmin
+    .from("dashboard_test_conversations")
+    .select("id")
+    .eq("elevenlabs_conversation_id", conversationId)
+    .maybeSingle();
+  if (isDashboardTestFlag || testMarker) {
     return { status: "duplicate" };
   }
 

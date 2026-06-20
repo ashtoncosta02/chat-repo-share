@@ -313,6 +313,27 @@ export type Database = {
           },
         ]
       }
+      dashboard_test_conversations: {
+        Row: {
+          created_at: string
+          elevenlabs_conversation_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          elevenlabs_conversation_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          elevenlabs_conversation_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
