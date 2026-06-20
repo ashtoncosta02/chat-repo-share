@@ -47,6 +47,7 @@ interface LeadRow {
   name: string | null;
   phone: string | null;
   email: string | null;
+  address: string | null;
   notes: string | null;
   status: string;
   source: string | null;
@@ -85,7 +86,7 @@ function LeadsPage() {
       supabase
         .from("leads")
         .select(
-          "id, name, phone, email, notes, status, source, agent_id, conversation_id, created_at, last_message_at",
+          "id, name, phone, email, address, notes, status, source, agent_id, conversation_id, created_at, last_message_at",
         )
         .order("created_at", { ascending: false })
         .limit(500),
@@ -183,7 +184,7 @@ function LeadsPage() {
       if (agentFilter !== "all" && l.agent_id !== agentFilter) return false;
       if (statusFilter !== "all" && l.status !== statusFilter) return false;
       if (q) {
-        const hay = `${l.name ?? ""} ${l.email ?? ""} ${l.phone ?? ""} ${l.notes ?? ""}`.toLowerCase();
+        const hay = `${l.name ?? ""} ${l.email ?? ""} ${l.phone ?? ""} ${l.address ?? ""} ${l.notes ?? ""}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
@@ -308,6 +309,11 @@ function LeadsPage() {
                         )}
                         <span>· {agentName(l.agent_id)}</span>
                       </div>
+                      {l.address && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          📍 {l.address}
+                        </p>
+                      )}
                       {l.notes && (
                         <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                           {l.notes}

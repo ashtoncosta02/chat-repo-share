@@ -51,6 +51,12 @@ export interface TranscriptEmailInput {
   summary: string | null;
   turns: Array<{ role: "user" | "assistant"; content: string }>;
   conversationDashboardUrl?: string | null;
+  lead?: {
+    name?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    address?: string | null;
+  } | null;
 }
 
 export function renderTranscriptEmail(input: TranscriptEmailInput): {
@@ -62,9 +68,31 @@ export function renderTranscriptEmail(input: TranscriptEmailInput): {
     dateStyle: "medium",
     timeStyle: "short",
   });
-  const callerLine = input.callerNumber
-    ? `from <strong>${escape(input.callerNumber)}</strong>`
-    : `from an unknown number`;
+
+  // Caller details block — at the very top so the owner sees who called
+  // before scrolling through the transcript.
+  const leadName = input.lead?.name?.trim() || null;
+  const leadEmail = input.lead?.email?.trim() || null;
+  const leadPhone = input.lead?.phone?.trim() || input.callerNumber || null;
+  const leadAddress = input.lead?.address?.trim() || null;
+  const hasLeadInfo = !!(leadName || leadEmail || leadPhone || leadAddress);
+
+  const leadRows: string[] = [];
+  if (leadName) leadRows.push(row("Name", leadName));
+  if (leadPhone) leadRows.push(row("Phone", leadPhone));
+  if (leadEmail) leadRows.push(row("Email", leadEmail));
+  if (leadAddress) leadRows.push(row("Address", leadAddress));
+
+  const leadBlock = hasLeadInfo
+    ? `<div style="font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:#888;margin:0 0 10px 0;">Caller details</div>
+       <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;background:#f5f3ef;border-radius:8px;overflow:hidden;margin:0 0 20px 0;">
+         ${leadRows.join("")}
+       </table>`
+    : "";
+
+  const headerLine = hasLeadInfo
+    ? `${escape(when)} · ${escape(dur)}`
+    : `${input.callerNumber ? `from <strong>${escape(input.callerNumber)}</strong>` : "from an unknown number"} · ${escape(when)} · ${escape(dur)}`;
 
   const turnsHtml = input.turns
     .map((t) => {
@@ -94,14 +122,15 @@ export function renderTranscriptEmail(input: TranscriptEmailInput): {
 
   const body = `
     <h1 style="margin:0 0 8px 0;font-size:20px;font-weight:600;letter-spacing:-0.01em;">New call transcript</h1>
-    <p style="margin:0 0 20px 0;color:#666;">${callerLine} · ${escape(when)} · ${escape(dur)}</p>
+    <p style="margin:0 0 20px 0;color:#666;">${headerLine}</p>
+    ${leadBlock}
     ${summaryBlock}
     <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:#888;margin:0 0 10px 0;">Transcript</div>
     ${turnsHtml || `<p style="color:#888;">No transcript captured.</p>`}
     ${dashboardBtn}
   `;
 
-  const subject = `Call transcript · ${input.businessName} · ${when}`;
+  const subject = `Call transcript · ${leadName ? leadName + " · " : ""}${input.businessName} · ${when}`;
   return {
     subject,
     html: shell({

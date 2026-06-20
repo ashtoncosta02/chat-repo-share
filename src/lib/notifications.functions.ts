@@ -73,8 +73,9 @@ export const sendTestTranscriptEmail = createServerFn({ method: "POST" })
       .maybeSingle();
     const { sendEmail } = await import("@/server/email.server");
     const { renderTranscriptEmail } = await import("@/server/email-templates.server");
+    const envUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
     const siteUrl =
-      process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://askjanice.net";
+      envUrl && !envUrl.includes("vercel.app") ? envUrl : "https://www.askjanice.net";
     const { subject, html } = renderTranscriptEmail({
       businessName: agent?.business_name || "Your business",
       callerNumber: "+1 (555) 123-4567",
@@ -90,6 +91,12 @@ export const sendTestTranscriptEmail = createServerFn({ method: "POST" })
         { role: "assistant", content: "Booked! You'll get a confirmation shortly." },
       ],
       conversationDashboardUrl: `${siteUrl}/dashboard/conversations`,
+      lead: {
+        name: "Jane Doe",
+        email: "jane@example.com",
+        phone: "+1 (555) 123-4567",
+        address: "123 Main St, Toronto, ON",
+      },
     });
     const id = await sendEmail({
       to: data.to,

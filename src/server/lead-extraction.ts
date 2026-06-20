@@ -8,6 +8,7 @@ export interface ExtractedLead {
   name: string | null;
   phone: string | null;
   email: string | null;
+  address: string | null;
   notes: string | null;
 }
 
@@ -41,12 +42,14 @@ Return ONLY a JSON object with these keys (all optional, use null if not present
   "name": string | null,
   "phone": string | null,
   "email": string | null,
+  "address": string | null,
   "notes": string | null
 }
 
 Rules:
 - Only extract info the CALLER actually provided. Never invent.
 - If nothing identifying was shared, return all nulls.
+- "address": street address / service address the caller shared (e.g. "123 Main St, Toronto"). Null if not given.
 - "notes": one short sentence summarizing intent (booking, question, pricing, complaint, callback request…).
 - Phone numbers may be spoken (e.g. "six four seven, four seven three…") — convert to digits with dashes if obvious.
 - Output valid JSON only. No prose, no markdown fences.`;
@@ -98,6 +101,7 @@ Rules:
       name: norm(parsed.name),
       phone: norm(parsed.phone),
       email: norm(parsed.email),
+      address: norm(parsed.address),
       notes: norm(parsed.notes),
     };
   } catch (e) {
@@ -118,10 +122,11 @@ export async function captureLead(args: CaptureLeadArgs): Promise<void> {
       name: lead?.name ?? null,
       phone,
       email: lead?.email ?? null,
+      address: lead?.address ?? null,
       notes: lead?.notes ?? null,
     };
 
-    if (!finalLead.name && !finalLead.phone && !finalLead.email && !finalLead.notes) return;
+    if (!finalLead.name && !finalLead.phone && !finalLead.email && !finalLead.address && !finalLead.notes) return;
 
     // Dedupe priority: existing lead for this conversation > email > phone.
     // For ALL sources (including voice), match on phone/email so callbacks
@@ -185,12 +190,14 @@ export async function captureLead(args: CaptureLeadArgs): Promise<void> {
         name?: string;
         phone?: string;
         email?: string;
+        address?: string;
         notes?: string;
         status?: string;
       } = { last_message_at: now };
       if (finalLead.name) patch.name = finalLead.name;
       if (finalLead.phone) patch.phone = finalLead.phone;
       if (finalLead.email) patch.email = finalLead.email;
+      if (finalLead.address) patch.address = finalLead.address;
       if (finalLead.notes) patch.notes = finalLead.notes;
       // Don't downgrade a "won" lead (booked) back to "new".
       if (existingStatus !== "won" && existingStatus !== "contacted") {
@@ -207,6 +214,7 @@ export async function captureLead(args: CaptureLeadArgs): Promise<void> {
           name: finalLead.name,
           phone: finalLead.phone,
           email: finalLead.email,
+          address: finalLead.address,
           notes: finalLead.notes,
           source: args.source,
           status: "new",
