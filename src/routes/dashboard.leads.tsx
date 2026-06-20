@@ -86,7 +86,7 @@ function LeadsPage() {
       supabase
         .from("leads")
         .select(
-          "id, name, phone, email, notes, status, source, agent_id, conversation_id, created_at, last_message_at",
+          "id, name, phone, email, address, notes, status, source, agent_id, conversation_id, created_at, last_message_at",
         )
         .order("created_at", { ascending: false })
         .limit(500),
