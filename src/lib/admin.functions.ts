@@ -84,14 +84,14 @@ export const getAdminOverview = createServerFn({ method: "POST" })
       supabaseAdmin.from("phone_numbers").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("phone_numbers").select("id", { count: "exact", head: true }).gte("created_at", startOfMonth),
       supabaseAdmin.from("agent_google_calendar").select("id", { count: "exact", head: true }),
-      supabaseAdmin.from("tickets").select("id", { count: "exact", head: true }).in("status", ["open", "pending"]),
+      supabaseAdmin.from("tickets").select("id", { count: "exact", head: true }).in("status", ["open", "in_progress", "waiting"]),
       supabaseAdmin.from("tickets").select("id", { count: "exact", head: true }).eq("status", "closed").gte("updated_at", sevenDaysAgo),
       supabaseAdmin.from("conversations").select("duration_seconds").gte("started_at", sevenDaysAgo),
       supabaseAdmin.from("conversations").select("duration_seconds").gte("started_at", startOfMonth),
       supabaseAdmin.from("conversations").select("user_id").gte("started_at", sevenDaysAgo),
       supabaseAdmin.from("widget_conversations").select("user_id").gte("created_at", sevenDaysAgo),
       supabaseAdmin.from("agents").select("id", { count: "exact", head: true }).eq("onboarding_completed", true),
-      supabaseAdmin.from("tickets").select("created_at").in("status", ["open", "pending"]).order("created_at", { ascending: true }).limit(1),
+      supabaseAdmin.from("tickets").select("created_at").in("status", ["open", "in_progress", "waiting"]).order("created_at", { ascending: true }).limit(1),
     ]);
 
     const { data: recentSignups } = await supabaseAdmin
