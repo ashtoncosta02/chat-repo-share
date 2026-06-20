@@ -190,12 +190,14 @@ export async function captureLead(args: CaptureLeadArgs): Promise<void> {
         name?: string;
         phone?: string;
         email?: string;
+        address?: string;
         notes?: string;
         status?: string;
       } = { last_message_at: now };
       if (finalLead.name) patch.name = finalLead.name;
       if (finalLead.phone) patch.phone = finalLead.phone;
       if (finalLead.email) patch.email = finalLead.email;
+      if (finalLead.address) patch.address = finalLead.address;
       if (finalLead.notes) patch.notes = finalLead.notes;
       // Don't downgrade a "won" lead (booked) back to "new".
       if (existingStatus !== "won" && existingStatus !== "contacted") {
@@ -212,6 +214,7 @@ export async function captureLead(args: CaptureLeadArgs): Promise<void> {
           name: finalLead.name,
           phone: finalLead.phone,
           email: finalLead.email,
+          address: finalLead.address,
           notes: finalLead.notes,
           source: args.source,
           status: "new",
