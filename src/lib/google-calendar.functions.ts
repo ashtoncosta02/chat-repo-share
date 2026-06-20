@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getRequest } from "@tanstack/react-start/server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { buildAuthUrl, getRedirectUri, signState } from "@/server/google-calendar.server";
+import { buildAuthUrl, getRedirectUri, refreshAccessToken, signState } from "@/server/google-calendar.server";
 import { bookAppointment } from "@/server/widget-booking-tools";
 
 async function getAuthenticatedUserId(accessToken: string) {
