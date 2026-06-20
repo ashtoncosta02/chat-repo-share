@@ -92,11 +92,16 @@ function LiveVoicePreviewInner({
         await conversation.startSession({
           signedUrl: t.signedUrl,
           connectionType: "websocket",
+          // Tag this session so the ElevenLabs post-call webhook can skip
+          // saving it to Threads — dashboard voice tests are practice runs,
+          // not real customer calls.
+          dynamicVariables: { is_dashboard_test: "true" },
         });
       } else if (t.token) {
         await conversation.startSession({
           conversationToken: t.token,
           connectionType: "webrtc",
+          dynamicVariables: { is_dashboard_test: "true" },
         });
       } else {
         throw new Error("No connection credentials returned.");
