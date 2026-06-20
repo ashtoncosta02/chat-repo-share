@@ -458,32 +458,6 @@ function AgentDetailPage() {
             variant="outline"
             size="sm"
             onClick={() => {
-              setEdit({
-                business_name: agent.business_name ?? "",
-                assistant_name: agent.assistant_name ?? "",
-                tone: agent.tone ?? "",
-                primary_goal: agent.primary_goal ?? "",
-                services: agent.services ?? "",
-                booking_link: agent.booking_link ?? "",
-                emergency_number: agent.emergency_number ?? "",
-                faqs_structured: (() => {
-                  const s = coerceFaqs(agent.faqs_structured);
-                  return s.length > 0 ? s : parseLegacyFaqs(agent.faqs);
-                })(),
-                sms_followup_enabled: agent.sms_followup_enabled ?? false,
-                pricing_notes: agent.pricing_notes ?? "",
-                escalation_triggers: agent.escalation_triggers ?? "",
-                voice_id: agent.voice_id ?? DEFAULT_VOICE_ID,
-              });
-              setEditOpen(true);
-            }}
-          >
-            <Pencil className="h-3.5 w-3.5 mr-1.5" /> Edit
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
               setVoiceDraft(agent.voice_id ?? DEFAULT_VOICE_ID);
               setNameDraft(agent.assistant_name ?? "");
               setVoiceOpen(true);
