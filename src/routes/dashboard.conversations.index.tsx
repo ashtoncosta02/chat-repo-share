@@ -491,7 +491,7 @@ function ConversationRow({
         <IntentTag source={c.lead_source} />
       </td>
       <td className="px-4 py-4 max-w-sm">
-        <p className="text-sm text-foreground/80 line-clamp-2">
+        <p className="text-sm text-foreground/80 whitespace-pre-wrap break-words">
           {c.ai_summary?.trim() ||
             c.lead_notes?.trim() ||
             (c.message_count > 0
