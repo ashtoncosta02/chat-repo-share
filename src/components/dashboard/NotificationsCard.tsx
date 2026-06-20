@@ -199,7 +199,7 @@ export function NotificationsCard({
       </div>
 
       <p className="text-xs text-muted-foreground mt-4">
-        Emails are sent from <span className="font-medium">hello@send.askjanice.net</span> right
+        Emails are sent from <span className="font-medium">hello@askjanice.net</span> right
         after each call. SMS delivery is coming soon — your preference is saved.
       </p>
     </div>
