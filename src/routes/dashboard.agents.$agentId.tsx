@@ -76,6 +76,9 @@ interface Agent {
   notify_sms_transcript: boolean;
   notify_email: string | null;
   notify_phone: string | null;
+  greeting_message: string | null;
+  farewell_message: string | null;
+
 }
 
 interface Msg {
