@@ -7,6 +7,7 @@ import { LayoutDashboard, BarChart3, User, MessageSquare, Menu, X, Code2, Calend
 import { AgentFactoryLogo } from "@/components/AgentFactoryLogo";
 import { OwnerChatWidget } from "@/components/dashboard/OwnerChatWidget";
 import { DialerPanel } from "@/components/dashboard/DialerPanel";
+import { CalendarHealthBanner } from "@/components/dashboard/CalendarHealthBanner";
 import { ChatWidgetPage } from "./dashboard.chat-widget";
 
 export const Route = createFileRoute("/dashboard")({
