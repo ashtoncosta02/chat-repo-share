@@ -65,6 +65,7 @@ function DashboardLayout() {
         if (!data || !data.onboarding_completed) {
           navigate({ to: "/dashboard/onboarding" });
         } else {
+          setAgentId(data.id);
           setOnboardingChecked(true);
         }
       });
