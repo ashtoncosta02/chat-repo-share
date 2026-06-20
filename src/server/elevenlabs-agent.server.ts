@@ -27,12 +27,15 @@ export interface AgentBusinessProfile {
   escalation_triggers: string | null;
   voice_id: string | null;
   faqs_structured: Array<{ question: string; answer: string }> | null;
+  greeting_message?: string | null;
+  farewell_message?: string | null;
   // Set when the agent has Google Calendar connected — enables booking tools + prompt.
   booking_enabled?: boolean;
   booking_prompt_addendum?: string | null;
   // Workspace tool ids to attach to the agent (find_slots + book_appointment).
   tool_ids?: string[];
 }
+
 
 export function buildSystemPrompt(p: AgentBusinessProfile): string {
   const name = (p.assistant_name || "the receptionist").trim();
