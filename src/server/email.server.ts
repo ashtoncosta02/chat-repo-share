@@ -5,7 +5,7 @@
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend/emails";
 
-export const DEFAULT_FROM = "Janice <hello@send.askjanice.net>";
+export const DEFAULT_FROM = "Janice <hello@askjanice.net>";
 
 export interface SendEmailParams {
   to: string | string[];
