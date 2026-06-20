@@ -101,6 +101,7 @@ Rules:
       name: norm(parsed.name),
       phone: norm(parsed.phone),
       email: norm(parsed.email),
+      address: norm(parsed.address),
       notes: norm(parsed.notes),
     };
   } catch (e) {
