@@ -388,17 +388,17 @@ function ConversationsPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
-                    <th className="px-6 py-3 font-medium">Caller</th>
-                    <th className="px-4 py-3 font-medium">Intent</th>
-                    <th className="px-4 py-3 font-medium">AI Summary</th>
-                    <th className="px-4 py-3 font-medium">Time</th>
-                    <th className="px-4 py-3 font-medium">Status</th>
-                    <th className="px-2 py-3" />
-                  </tr>
-                </thead>
+              <ResizableTable
+                columns={[
+                  { key: "caller", label: "Caller", default: 260, min: 160 },
+                  { key: "intent", label: "Intent", default: 130, min: 90 },
+                  { key: "summary", label: "AI Summary", default: 420, min: 200 },
+                  { key: "time", label: "Time", default: 150, min: 100 },
+                  { key: "status", label: "Status", default: 140, min: 100 },
+                  { key: "actions", label: "", default: 180, min: 120 },
+                ]}
+                storageKey="askjanice.threads.colWidths.v1"
+              >
                 <tbody className="divide-y divide-border">
                   {filteredConvs.map((c) => (
                     <ConversationRow
@@ -413,7 +413,7 @@ function ConversationsPage() {
                     />
                   ))}
                 </tbody>
-              </table>
+              </ResizableTable>
             </div>
           )}
         </div>
