@@ -208,6 +208,44 @@ function AgentDetailPage() {
 
   const assistantName = agent?.assistant_name?.trim() || "Janice";
 
+  // Keep the name input in sync with the loaded agent.
+  useEffect(() => {
+    if (agent) {
+      setNameDraft(agent.assistant_name?.trim() || "");
+    }
+  }, [agent?.assistant_name]);
+
+  const saveName = async () => {
+    if (!agent || nameSaving) return;
+    const trimmed = nameDraft.trim() || "Janice";
+    if (trimmed === (agent.assistant_name?.trim() || "Janice")) return;
+    setNameSaving(true);
+    const { error } = await supabase
+      .from("agents")
+      .update({ assistant_name: trimmed })
+      .eq("id", agent.id);
+    if (error) {
+      setNameSaving(false);
+      toast.error("Couldn't save name", { description: error.message });
+      return;
+    }
+    let elAgentId = agent.elevenlabs_agent_id;
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const token = session.session?.access_token;
+      if (token) {
+        const r = await syncEl({ data: { accessToken: token, agentId: agent.id } });
+        if (r.success) elAgentId = r.elevenlabs_agent_id;
+      }
+    } catch (e) {
+      console.error("EL sync exception:", e);
+    }
+    setAgent({ ...agent, assistant_name: trimmed, elevenlabs_agent_id: elAgentId });
+    setNameSaving(false);
+    toast.success("Receptionist name updated");
+  };
+
+
   // Load agent. We intentionally do NOT auto-greet here — the receptionist
   // only speaks if the user starts the live voice test or sends a chat
   // message. Auto-greeting was creating a thread and playing audio the
