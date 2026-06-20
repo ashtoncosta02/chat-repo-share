@@ -49,6 +49,7 @@ Return ONLY a JSON object with these keys (all optional, use null if not present
   "name": string | null,        // caller's name if they shared it
   "phone": string | null,       // phone number in any format the caller gave
   "email": string | null,       // email if mentioned
+  "address": string | null,     // street/service address if shared (e.g. "123 Main St, Toronto")
   "notes": string | null        // 1 short sentence summarizing what they want (booking, question, complaint, etc.)
 }
 
