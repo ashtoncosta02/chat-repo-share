@@ -42,6 +42,18 @@ export const summarizeConversation = createServerFn({ method: "POST" })
     if (!msgs || msgs.length === 0)
       return { success: false as const, error: "No messages to summarize." };
 
+    // If the caller never spoke (only the agent's greeting is recorded),
+    // skip the model — it would hallucinate caller intent from the greeting.
+    const callerMsgs = msgs.filter((m) => m.role === "user");
+    if (callerMsgs.length === 0) {
+      const summary = "Caller hung up without speaking.";
+      await supabaseAdmin
+        .from("conversations")
+        .update({ ai_summary: summary })
+        .eq("id", data.conversationId);
+      return { success: true as const, summary };
+    }
+
     const transcript = msgs
       .map((m) => `${m.role === "user" ? "Caller" : "Agent"}: ${m.content}`)
       .join("\n");

@@ -412,6 +412,14 @@ async function generateCallSummary(
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) return null;
 
+  // If the caller never actually spoke (only the agent's greeting is in the
+  // transcript), don't ask the model to summarize — it will hallucinate intent
+  // from the greeting text. Return a deterministic summary instead.
+  const callerTurns = turns.filter((t) => t.role !== "assistant");
+  if (callerTurns.length === 0) {
+    return "Caller hung up without speaking.";
+  }
+
   const transcript = turns
     .slice(0, 100)
     .map((t) => `${t.role === "assistant" ? "Agent" : "Caller"}: ${t.content}`)
