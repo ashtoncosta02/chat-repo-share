@@ -2,10 +2,12 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
-import { getAdminUserDetail, adminBackfillUserCalls, adminRelinkPhone, adminResyncReceptionist, adminClearGoogleCalendar, adminSetUserPlan, adminSetUserBilling, adminUpdateAgent, adminUpdateProfile } from "@/lib/admin.functions";
+import { getAdminUserDetail, adminBackfillUserCalls, adminRelinkPhone, adminResyncReceptionist, adminClearGoogleCalendar, adminSetUserPlan, adminSetUserBilling, adminUpdateAgent, adminUpdateProfile, adminImpersonateUser } from "@/lib/admin.functions";
 import { PageHeader } from "@/components/dashboard/PageHeader";
-import { Shield, ArrowLeft, AlertTriangle, CheckCircle2, Phone, Calendar, MessageSquare, User as UserIcon, RefreshCw, Pencil, Save, X } from "lucide-react";
+import { Shield, ArrowLeft, AlertTriangle, CheckCircle2, Phone, Calendar, MessageSquare, User as UserIcon, RefreshCw, Pencil, Save, X, LogIn } from "lucide-react";
 import { toast } from "sonner";
+import { saveAdminReturnSession } from "@/components/dashboard/ImpersonationBanner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/dashboard/admin/users/$userId")({
   head: () => ({ meta: [{ title: "Admin · User detail" }] }),
@@ -98,13 +100,33 @@ function AdminUserDetailPage() {
           </Link>
         }
         action={
-          <button
-            onClick={runBackfill}
-            disabled={backfilling}
-            className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90 disabled:opacity-50"
-          >
-            <RefreshCw className={`h-4 w-4 ${backfilling ? "animate-spin" : ""}`} /> Backfill voice calls
-          </button>
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={async () => {
+                if (!session?.access_token || !session?.refresh_token) return;
+                if (!confirm(`Sign in as ${profile.email}? You will be signed out of your admin account and signed in as this user. A banner will let you return.`)) return;
+                const reason = prompt("Reason for accessing this account (logged for audit):", "Customer support") ?? undefined;
+                const r = await adminImpersonateUser({ data: { accessToken: session.access_token, userId, reason } });
+                if (!r.success) { toast.error(r.error); return; }
+                saveAdminReturnSession(
+                  { access_token: session.access_token, refresh_token: session.refresh_token },
+                  session.user?.email,
+                );
+                await supabase.auth.signOut();
+                window.location.href = r.actionLink;
+              }}
+              className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-muted"
+            >
+              <LogIn className="h-4 w-4" /> Open as user
+            </button>
+            <button
+              onClick={runBackfill}
+              disabled={backfilling}
+              className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90 disabled:opacity-50"
+            >
+              <RefreshCw className={`h-4 w-4 ${backfilling ? "animate-spin" : ""}`} /> Backfill voice calls
+            </button>
+          </div>
         }
       />
 
