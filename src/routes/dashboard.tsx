@@ -39,6 +39,7 @@ function DashboardLayout() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
+  const [agentId, setAgentId] = useState<string | null>(null);
   const [dialerOpen, setDialerOpen] = useState(false);
 
   useEffect(() => {
