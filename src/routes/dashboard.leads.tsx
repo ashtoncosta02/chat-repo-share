@@ -309,6 +309,11 @@ function LeadsPage() {
                         )}
                         <span>· {agentName(l.agent_id)}</span>
                       </div>
+                      {l.address && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          📍 {l.address}
+                        </p>
+                      )}
                       {l.notes && (
                         <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                           {l.notes}
