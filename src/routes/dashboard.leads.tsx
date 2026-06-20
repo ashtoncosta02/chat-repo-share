@@ -184,7 +184,7 @@ function LeadsPage() {
       if (agentFilter !== "all" && l.agent_id !== agentFilter) return false;
       if (statusFilter !== "all" && l.status !== statusFilter) return false;
       if (q) {
-        const hay = `${l.name ?? ""} ${l.email ?? ""} ${l.phone ?? ""} ${l.notes ?? ""}`.toLowerCase();
+        const hay = `${l.name ?? ""} ${l.email ?? ""} ${l.phone ?? ""} ${l.address ?? ""} ${l.notes ?? ""}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
