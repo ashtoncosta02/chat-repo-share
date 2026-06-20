@@ -8,6 +8,7 @@ import { AgentFactoryLogo } from "@/components/AgentFactoryLogo";
 import { OwnerChatWidget } from "@/components/dashboard/OwnerChatWidget";
 import { DialerPanel } from "@/components/dashboard/DialerPanel";
 import { CalendarHealthBanner } from "@/components/dashboard/CalendarHealthBanner";
+import { AccountMenu } from "@/components/dashboard/AccountMenu";
 import { ChatWidgetPage } from "./dashboard.chat-widget";
 
 export const Route = createFileRoute("/dashboard")({
@@ -166,7 +167,7 @@ function DashboardLayout() {
           <Menu className="h-5 w-5 text-foreground" />
         </button>
         <AgentFactoryLogo imgClassName="h-10 w-auto object-contain" />
-        <div className="w-9" />
+        <AccountMenu />
       </header>
 
       {/* Mobile drawer */}
@@ -247,6 +248,10 @@ function DashboardLayout() {
 
       {/* Main */}
       <main className="flex-1 overflow-auto pt-14 md:pt-0">
+        {/* Desktop top bar with account menu */}
+        <div className="hidden md:flex items-center justify-end gap-3 border-b border-border bg-card/60 backdrop-blur px-6 h-14 sticky top-0 z-20">
+          <AccountMenu />
+        </div>
         {agentId && <CalendarHealthBanner agentId={agentId} />}
         {location.pathname === "/dashboard/chat-widget" ? (
           <ChatWidgetPage />
