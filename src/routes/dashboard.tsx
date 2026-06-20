@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { supabase } from "@/integrations/supabase/client";
-import { LayoutDashboard, BarChart3, User, MessageSquare, Menu, X, Code2, Calendar, Shield, Bot, Phone, Bell, LifeBuoy } from "lucide-react";
+import { LayoutDashboard, BarChart3, User, MessageSquare, Menu, X, Code2, Calendar, Shield, Bot, Phone, Bell, LifeBuoy, BookOpen } from "lucide-react";
 import { AgentFactoryLogo } from "@/components/AgentFactoryLogo";
 import { OwnerChatWidget } from "@/components/dashboard/OwnerChatWidget";
 import { DialerPanel } from "@/components/dashboard/DialerPanel";
@@ -25,6 +25,7 @@ export const Route = createFileRoute("/dashboard")({
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/dashboard/agent", label: "Agent", icon: Bot },
+  { to: "/dashboard/knowledge", label: "Knowledge", icon: BookOpen },
   { to: "/dashboard/conversations", label: "Threads", icon: MessageSquare },
   { to: "/dashboard/bookings", label: "Bookings", icon: Calendar },
   { to: "/dashboard/chat-widget", label: "Chat Widget", icon: Code2 },
