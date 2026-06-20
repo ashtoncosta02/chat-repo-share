@@ -44,6 +44,8 @@ import { GoogleCalendarCard } from "@/components/dashboard/GoogleCalendarCard";
 
 import { LiveVoicePreview } from "@/components/dashboard/LiveVoicePreview";
 import { VoicePickerCard } from "@/components/dashboard/VoicePickerCard";
+import { GreetingFarewellCard } from "@/components/dashboard/GreetingFarewellCard";
+
 import { syncReceptionistAgent, deleteReceptionistAgent } from "@/lib/elevenlabs-agent.functions";
 import { VOICE_OPTIONS, DEFAULT_VOICE_ID, getVoiceById } from "@/lib/voices";
 import { coerceFaqs, newFaq, parseLegacyFaqs, type StructuredFaq } from "@/lib/faqs";
