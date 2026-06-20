@@ -75,38 +75,58 @@ function ConversationsPage() {
   const loadConvs = async () => {
     const { data } = await supabase
       .from("conversations")
-      .select("id, message_count, duration_seconds, started_at, agent_id, recording_url, ai_summary")
+      .select("id, message_count, duration_seconds, started_at, agent_id, recording_url, ai_summary, lead_id")
       .order("started_at", { ascending: false });
-    const rows = data ?? [];
-    const ids = rows.map((r) => r.id);
-    const leadMap = new Map<
-      string,
-      { id: string; name: string | null; phone: string | null; email: string | null; notes: string | null; source: string | null; status: string | null }
-    >();
-    if (ids.length > 0) {
+    const rows = (data ?? []) as Array<{
+      id: string;
+      message_count: number;
+      duration_seconds: number;
+      started_at: string;
+      agent_id: string | null;
+      recording_url: string | null;
+      ai_summary: string | null;
+      lead_id: string | null;
+    }>;
+    type LeadLite = { id: string; name: string | null; phone: string | null; email: string | null; notes: string | null; source: string | null; status: string | null };
+    const byConvId = new Map<string, LeadLite>();
+    const byLeadId = new Map<string, LeadLite>();
+    const convIds = rows.map((r) => r.id);
+    const leadIds = Array.from(new Set(rows.map((r) => r.lead_id).filter(Boolean) as string[]));
+    if (convIds.length > 0) {
       const { data: leads } = await supabase
         .from("leads")
         .select("id, conversation_id, name, phone, email, notes, source, status")
-        .in("conversation_id", ids);
+        .in("conversation_id", convIds);
       for (const l of leads ?? []) {
-        if (l.conversation_id)
-          leadMap.set(l.conversation_id, {
-            id: l.id,
-            name: l.name,
-            phone: l.phone,
-            email: l.email,
-            notes: l.notes,
-            source: l.source,
-            status: l.status,
-          });
+        const lite: LeadLite = { id: l.id, name: l.name, phone: l.phone, email: l.email, notes: l.notes, source: l.source, status: l.status };
+        if (l.conversation_id) byConvId.set(l.conversation_id, lite);
+        byLeadId.set(l.id, lite);
+      }
+    }
+    if (leadIds.length > 0) {
+      const missing = leadIds.filter((id) => !byLeadId.has(id));
+      if (missing.length > 0) {
+        const { data: leads2 } = await supabase
+          .from("leads")
+          .select("id, name, phone, email, notes, source, status")
+          .in("id", missing);
+        for (const l of leads2 ?? []) {
+          byLeadId.set(l.id, { id: l.id, name: l.name, phone: l.phone, email: l.email, notes: l.notes, source: l.source, status: l.status });
+        }
       }
     }
     setConvs(
       rows.map((r) => {
-        const l = leadMap.get(r.id);
+        const l = (r.lead_id ? byLeadId.get(r.lead_id) : undefined) ?? byConvId.get(r.id);
         return {
-          ...r,
-          lead_id: l?.id ?? null,
+          id: r.id,
+          message_count: r.message_count,
+          duration_seconds: r.duration_seconds,
+          started_at: r.started_at,
+          agent_id: r.agent_id,
+          recording_url: r.recording_url,
+          ai_summary: r.ai_summary,
+          lead_id: l?.id ?? r.lead_id ?? null,
           lead_name: l?.name ?? null,
           lead_phone: l?.phone ?? null,
           lead_email: l?.email ?? null,
