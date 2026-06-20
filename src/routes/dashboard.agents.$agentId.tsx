@@ -577,7 +577,20 @@ function AgentDetailPage() {
             setAgent((prev) => (prev ? { ...prev, voice_id: voiceId } : prev))
           }
         />
+        <GreetingFarewellCard
+          agentId={agent.id}
+          businessName={agent.business_name}
+          assistantName={assistantName}
+          greeting={agent.greeting_message}
+          farewell={agent.farewell_message}
+          onSaved={({ greeting, farewell }) =>
+            setAgent((prev) =>
+              prev ? { ...prev, greeting_message: greeting, farewell_message: farewell } : prev,
+            )
+          }
+        />
         <PhoneNumberSetup agentId={agent.id} />
+
         <AnswerModeCard
           agentId={agent.id}
           value={agent.answer_mode}
