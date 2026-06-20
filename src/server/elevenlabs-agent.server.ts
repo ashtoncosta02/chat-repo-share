@@ -170,11 +170,11 @@ function buildFirstMessage(p: AgentBusinessProfile): string {
   const name = (p.assistant_name || "the receptionist").trim();
   const biz = p.business_name.trim();
   const custom = (p.greeting_message || "").trim();
-  // Includes a recording disclosure to satisfy two-party-consent states (CA, FL, IL, etc.).
+  // If the user provided a custom greeting, use it verbatim so the AI says exactly what they typed.
   if (custom) {
-    return `${custom} Just so you know, this call may be recorded for quality.`;
+    return custom;
   }
-  return `Hi, this is ${name} from ${biz}. Just so you know, this call may be recorded for quality. How can I help you?`;
+  return `Hi, this is ${name} from ${biz}. How can I help you?`;
 }
 
 
