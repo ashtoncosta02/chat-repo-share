@@ -159,3 +159,51 @@ export const createManualBooking = createServerFn({ method: "POST" })
     if ("error" in result) return { success: false as const, error: result.error };
     return { success: true as const, booking_id: result.booking_id, event_link: result.event_link };
   });
+
+// Returns the health of the Google Calendar connection for an agent.
+// "ok" — connected with a valid (or successfully refreshed) token.
+// "not_connected" — no row in agent_google_calendar.
+// "needs_reconnect" — refresh token rejected by Google (revoked / expired).
+export const getGoogleCalendarHealth = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z.object({ accessToken: z.string().min(1), agent_id: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    const auth = await getAuthenticatedUserId(data.accessToken);
+    if ("error" in auth) return { status: "error" as const, error: auth.error };
+
+    const { data: row, error } = await supabaseAdmin
+      .from("agent_google_calendar")
+      .select("access_token, refresh_token, token_expires_at, google_email")
+      .eq("agent_id", data.agent_id)
+      .eq("user_id", auth.userId)
+      .maybeSingle();
+    if (error) return { status: "error" as const, error: error.message };
+    if (!row) return { status: "not_connected" as const };
+
+    const expiresAt = new Date(row.token_expires_at).getTime();
+    if (Date.now() < expiresAt - 60_000) {
+      return { status: "ok" as const, google_email: row.google_email };
+    }
+
+    try {
+      const refreshed = await refreshAccessToken(row.refresh_token);
+      const newExpiresAt = new Date(Date.now() + refreshed.expires_in * 1000).toISOString();
+      await supabaseAdmin
+        .from("agent_google_calendar")
+        .update({
+          access_token: refreshed.access_token,
+          token_expires_at: newExpiresAt,
+        })
+        .eq("agent_id", data.agent_id)
+        .eq("user_id", auth.userId);
+      return { status: "ok" as const, google_email: row.google_email };
+    } catch (e) {
+      console.error("getGoogleCalendarHealth refresh failed", e);
+      return {
+        status: "needs_reconnect" as const,
+        google_email: row.google_email,
+        reason: e instanceof Error ? e.message : "Refresh failed",
+      };
+    }
+  });
