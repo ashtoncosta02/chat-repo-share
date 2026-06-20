@@ -42,12 +42,14 @@ Return ONLY a JSON object with these keys (all optional, use null if not present
   "name": string | null,
   "phone": string | null,
   "email": string | null,
+  "address": string | null,
   "notes": string | null
 }
 
 Rules:
 - Only extract info the CALLER actually provided. Never invent.
 - If nothing identifying was shared, return all nulls.
+- "address": street address / service address the caller shared (e.g. "123 Main St, Toronto"). Null if not given.
 - "notes": one short sentence summarizing intent (booking, question, pricing, complaint, callback request…).
 - Phone numbers may be spoken (e.g. "six four seven, four seven three…") — convert to digits with dashes if obvious.
 - Output valid JSON only. No prose, no markdown fences.`;
