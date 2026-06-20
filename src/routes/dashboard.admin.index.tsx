@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { getAdminOverview } from "@/lib/admin.functions";
-import { PageHeader, StatCard } from "@/components/dashboard/PageHeader";
+import { PageHeader, MetricCard } from "@/components/dashboard/PageHeader";
 import { Users, Bot, MessageSquare, Phone, Calendar, User as UserIcon, Shield, DollarSign, AlertCircle, TrendingUp, Clock, LifeBuoy } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/admin/")({
@@ -101,10 +101,10 @@ function AdminOverviewPage() {
             <section>
               <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2"><Clock className="h-3.5 w-3.5" /> Activity</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard icon={<Phone className="h-5 w-5 text-[var(--gold)]" />} iconBg="bg-[oklch(0.96_0.04_290)]" label="Calls today" value={stats.voiceConversations.today} sublabel={`${stats.voiceConversations.last7d} in 7d`} />
-                <StatCard icon={<MessageSquare className="h-5 w-5 text-[var(--gold)]" />} iconBg="bg-[oklch(0.96_0.04_290)]" label="Chats today" value={stats.widgetConversations.today} sublabel={`${stats.widgetConversations.last7d} in 7d`} />
-                <StatCard icon={<Calendar className="h-5 w-5 text-[var(--gold)]" />} iconBg="bg-[oklch(0.96_0.04_290)]" label="Bookings (7d)" value={stats.bookings.last7d} sublabel={`${stats.bookings.upcoming} upcoming`} />
-                <StatCard icon={<AlertCircle className="h-5 w-5 text-red-600" />} iconBg="bg-red-50" label="Failed calls (24h)" value={stats.voiceConversations.failed24h} sublabel={stats.voiceConversations.failed24h > 0 ? "Investigate" : "All good"} />
+                <MetricCard icon={<Phone className="h-5 w-5 text-[var(--gold)]" />} iconBg="bg-[oklch(0.96_0.04_290)]" label="Calls today" value={stats.voiceConversations.today} sublabel={`${stats.voiceConversations.last7d} in 7d`} />
+                <MetricCard icon={<MessageSquare className="h-5 w-5 text-[var(--gold)]" />} iconBg="bg-[oklch(0.96_0.04_290)]" label="Chats today" value={stats.widgetConversations.today} sublabel={`${stats.widgetConversations.last7d} in 7d`} />
+                <MetricCard icon={<Calendar className="h-5 w-5 text-[var(--gold)]" />} iconBg="bg-[oklch(0.96_0.04_290)]" label="Bookings (7d)" value={stats.bookings.last7d} sublabel={`${stats.bookings.upcoming} upcoming`} />
+                <MetricCard icon={<AlertCircle className="h-5 w-5 text-red-600" />} iconBg="bg-red-50" label="Failed calls (24h)" value={stats.voiceConversations.failed24h} sublabel={stats.voiceConversations.failed24h > 0 ? "Investigate" : "All good"} />
               </div>
             </section>
 
@@ -112,10 +112,10 @@ function AdminOverviewPage() {
             <section>
               <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2"><Bot className="h-3.5 w-3.5" /> Product health</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard icon={<Users className="h-5 w-5 text-[var(--gold)]" />} iconBg="bg-[oklch(0.96_0.04_290)]" label="Active accounts (7d)" value={stats.agents.active7d} sublabel={`${stats.users.total} total`} />
-                <StatCard icon={<Bot className="h-5 w-5 text-[var(--gold)]" />} iconBg="bg-[oklch(0.96_0.04_290)]" label="Receptionists live" value={`${stats.agents.live} / ${stats.agents.total}`} />
-                <StatCard icon={<Phone className="h-5 w-5 text-[var(--gold)]" />} iconBg="bg-[oklch(0.96_0.04_290)]" label="Avg call length" value={fmtSecs(stats.voiceConversations.avgCallSecs)} sublabel="Last 7 days" />
-                <StatCard icon={<Calendar className="h-5 w-5 text-[var(--gold)]" />} iconBg="bg-[oklch(0.96_0.04_290)]" label="Calendars connected" value={stats.calendarsConnected} />
+                <MetricCard icon={<Users className="h-5 w-5 text-[var(--gold)]" />} iconBg="bg-[oklch(0.96_0.04_290)]" label="Active accounts (7d)" value={stats.agents.active7d} sublabel={`${stats.users.total} total`} />
+                <MetricCard icon={<Bot className="h-5 w-5 text-[var(--gold)]" />} iconBg="bg-[oklch(0.96_0.04_290)]" label="Receptionists live" value={`${stats.agents.live} / ${stats.agents.total}`} />
+                <MetricCard icon={<Phone className="h-5 w-5 text-[var(--gold)]" />} iconBg="bg-[oklch(0.96_0.04_290)]" label="Avg call length" value={fmtSecs(stats.voiceConversations.avgCallSecs)} sublabel="Last 7 days" />
+                <MetricCard icon={<Calendar className="h-5 w-5 text-[var(--gold)]" />} iconBg="bg-[oklch(0.96_0.04_290)]" label="Calendars connected" value={stats.calendarsConnected} />
               </div>
             </section>
 
@@ -124,11 +124,11 @@ function AdminOverviewPage() {
               <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2"><LifeBuoy className="h-3.5 w-3.5" /> Support & costs</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Link to="/dashboard/admin/tickets" className="block">
-                  <StatCard icon={<LifeBuoy className="h-5 w-5 text-[var(--gold)]" />} iconBg="bg-[oklch(0.96_0.04_290)]" label="Open tickets" value={stats.tickets.open} sublabel={`${stats.tickets.closed7d} closed in 7d`} />
+                  <MetricCard icon={<LifeBuoy className="h-5 w-5 text-[var(--gold)]" />} iconBg="bg-[oklch(0.96_0.04_290)]" label="Open tickets" value={stats.tickets.open} sublabel={`${stats.tickets.closed7d} closed in 7d`} />
                 </Link>
-                <StatCard icon={<Clock className="h-5 w-5 text-[var(--gold)]" />} iconBg="bg-[oklch(0.96_0.04_290)]" label="Oldest open ticket" value={stats.tickets.oldestOpenAgeHours == null ? "—" : `${stats.tickets.oldestOpenAgeHours}h`} sublabel="Age" />
-                <StatCard icon={<Phone className="h-5 w-5 text-[var(--gold)]" />} iconBg="bg-[oklch(0.96_0.04_290)]" label="Voice minutes (mo)" value={stats.voiceConversations.voiceMinutesMonth} sublabel="ElevenLabs usage" />
-                <StatCard icon={<Phone className="h-5 w-5 text-[var(--gold)]" />} iconBg="bg-[oklch(0.96_0.04_290)]" label="Numbers (mo)" value={stats.phoneNumbersThisMonth} sublabel={`${stats.phoneNumbers} total`} />
+                <MetricCard icon={<Clock className="h-5 w-5 text-[var(--gold)]" />} iconBg="bg-[oklch(0.96_0.04_290)]" label="Oldest open ticket" value={stats.tickets.oldestOpenAgeHours == null ? "—" : `${stats.tickets.oldestOpenAgeHours}h`} sublabel="Age" />
+                <MetricCard icon={<Phone className="h-5 w-5 text-[var(--gold)]" />} iconBg="bg-[oklch(0.96_0.04_290)]" label="Voice minutes (mo)" value={stats.voiceConversations.voiceMinutesMonth} sublabel="ElevenLabs usage" />
+                <MetricCard icon={<Phone className="h-5 w-5 text-[var(--gold)]" />} iconBg="bg-[oklch(0.96_0.04_290)]" label="Numbers (mo)" value={stats.phoneNumbersThisMonth} sublabel={`${stats.phoneNumbers} total`} />
               </div>
             </section>
 
@@ -167,6 +167,19 @@ function PlaceholderCard({ label, value, hint }: { label: string; value: string;
       <div className="text-sm text-muted-foreground">{label}</div>
       <div className="font-display text-3xl font-semibold mt-2 text-muted-foreground">{value}</div>
       <div className="text-xs text-muted-foreground mt-1">{hint}</div>
+    </div>
+  );
+}
+
+function MetricCard({ icon, iconBg, label, value, sublabel }: { icon: React.ReactNode; iconBg: string; label: string; value: string | number; sublabel?: string }) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className={`rounded-lg p-2 ${iconBg}`}>{icon}</div>
+      </div>
+      <div className="mt-3 text-sm text-muted-foreground">{label}</div>
+      <div className="font-display text-2xl font-semibold mt-1">{value}</div>
+      {sublabel && <div className="text-xs text-muted-foreground mt-1">{sublabel}</div>}
     </div>
   );
 }
