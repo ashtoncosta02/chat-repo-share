@@ -1,33 +1,43 @@
-## Why no email arrived
+## Part 1 — Values to paste into Google Cloud Console Branding
 
-Two separate problems, both real:
+Use the existing public pages on your verified domain:
 
-### 1. Your "Email transcript" toggle isn't saving
-I checked your receptionist in the database: `notify_email_transcript` is still `false` and `notify_email` is empty — even though you flipped the switch on. That's why the post-call code skipped sending entirely (the call itself was received and transcript saved correctly).
+- **Application home page:** `https://askjanice.net`
+- **Application privacy policy link:** `https://askjanice.net/privacy`
+- **Application terms of service link:** `https://askjanice.net/terms`
 
-The session replay confirms it: you toggled the switch on, navigated away, came back, and the switch had reset to off. The update is silently failing — almost certainly because the Notifications page writes directly from the browser using the Supabase client, and on this app auth is handled by Clerk, so that browser write isn't authenticated as you and RLS rejects it (with no error toast, because Supabase returns "0 rows updated" rather than an error).
+**Authorized domains** — keep the two Lovable ones already in the list and add:
 
-### 2. Misleading helper text
-The card still says *"Delivery turns on once we wire up the integration — your preferences are saved."* That's stale — Resend is wired up now. It needs to go.
+- `askjanice.net`
+- `www.askjanice.net`
 
----
+(Don't include `https://` or paths in the Authorized domains field — Google wants just the bare domain.)
 
-## Fix plan
+Once those four fields are filled, the **Verify branding** button will become clickable. Click it. Then go to the OAuth consent screen → **Publish app** → "Push to production". Because we only use basic scopes (`calendar.events`, `calendar.readonly`, `email`, `openid`), no Google review is required — it goes live instantly and refresh tokens stop expiring after 7 days.
 
-1. **Move the notifications save to the server.**
-   Create `updateAgentNotifications` as a `createServerFn` (auth-protected, runs as the user via `requireSupabaseAuth`) that updates `notify_email_transcript`, `notify_sms_transcript`, `notify_email`, `notify_phone` for the caller's agent. Replace the direct `supabase.from('agents').update(...)` calls in `NotificationsCard.tsx` with calls to this server fn. Show a toast on success/failure so a silent failure can't happen again.
+## Part 2 — Dashboard warning when calendar token is broken
 
-2. **Fix the helper copy.**
-   Remove the "once we wire up the integration" line. Replace with: *"Saved automatically. Transcripts are sent from hello@send.askjanice.net after every call."*
+Add a lightweight health check + banner so you find out immediately if the token ever goes bad again (instead of mid-call).
 
-3. **Auto-fill the email field.**
-   When `notify_email` is null, pre-fill the input with the user's account email (from `profiles.email`) so one tap on the toggle is enough.
+### Backend
+Add a new server function `getGoogleCalendarHealth(agent_id)` in `src/lib/google-calendar.functions.ts` that:
 
-4. **Add a "Send test email" button.**
-   Small button under the email row. Calls a new server fn `sendTestTranscriptEmail` that renders the transcript template with fake data and sends it to whatever address is currently saved. Lets you confirm Resend → inbox works end-to-end without needing to place another phone call.
+1. Looks up the row in `agent_google_calendar` for this user + agent.
+2. If no row → returns `{ status: "not_connected" }`.
+3. If `token_expires_at` is in the future → returns `{ status: "ok" }`.
+4. Otherwise tries `refreshAccessToken(refresh_token)`:
+   - Success → updates `access_token` + `token_expires_at`, returns `{ status: "ok" }`.
+   - Failure → returns `{ status: "needs_reconnect", reason }` (does NOT delete the row, so user keeps their settings).
 
-5. **Verify after deploy.** Toggle the switch on with your address, click "Send test email", confirm it arrives. Then we know the next real call will email too.
+### Frontend
+- New component `src/components/dashboard/CalendarHealthBanner.tsx` that calls the health server fn (via `useQuery`, refetch every 5 min + on window focus) and, when status is `needs_reconnect`, renders a red banner at the top of the dashboard:
+  > "Google Calendar disconnected — the AI Receptionist can't book appointments until you reconnect." with a **Reconnect** button that scrolls to / opens the Google Calendar card.
+- Render the banner inside `src/routes/dashboard.tsx` above `<Outlet />`, only when `user` and `onboardingChecked`. It needs the agent id, so we'll fetch the single agent id once at layout level (same query that's already used for the onboarding gate, just keep the `id`).
 
-### Out of scope
-- I'm not touching the post-call email logic itself — it's correct, it just never ran because the flag was off. Once the toggle persists, your next call will email the transcript automatically.
-- SMS path (you didn't ask for it; same persistence fix will cover it as a side effect though).
+### Technical notes
+- Reuse existing `refreshAccessToken` from `src/server/google-calendar.server.ts`; no new Google API surface needed.
+- No schema change — we use existing columns (`token_expires_at`, `refresh_token`).
+- Health endpoint is per-user via `getAuthenticatedUserId` + scoped to `auth.userId`, matching the pattern of the other functions in that file.
+- Banner is suppressed on `/dashboard/onboarding` and `/dashboard/admin/*` to avoid noise during setup.
+
+After you publish the OAuth app (Part 1), this banner should stay green permanently. If Google ever revokes again (e.g. user revoked access from their Google Account page), you'll see the red banner the next time you load the dashboard.
