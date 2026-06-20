@@ -247,6 +247,7 @@ function DashboardLayout() {
 
       {/* Main */}
       <main className="flex-1 overflow-auto pt-14 md:pt-0">
+        {agentId && <CalendarHealthBanner agentId={agentId} />}
         {location.pathname === "/dashboard/chat-widget" ? (
           <ChatWidgetPage />
         ) : (
