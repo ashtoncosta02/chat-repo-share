@@ -36,6 +36,8 @@ import { summarizeConversation } from "@/lib/conversation-summary.functions";
 import { aiCallbackLead } from "@/lib/lead-callback.functions";
 import { startOutboundCall } from "@/lib/dialer.functions";
 import { getAutoDeleteSetting, setAutoDeleteSetting } from "@/lib/thread-cleanup.functions";
+import { ResizableTable } from "@/components/dashboard/ResizableTable";
+
 
 const CALLBACK_KEY = "askkira.dialer.callback";
 
@@ -75,38 +77,58 @@ function ConversationsPage() {
   const loadConvs = async () => {
     const { data } = await supabase
       .from("conversations")
-      .select("id, message_count, duration_seconds, started_at, agent_id, recording_url, ai_summary")
+      .select("id, message_count, duration_seconds, started_at, agent_id, recording_url, ai_summary, lead_id")
       .order("started_at", { ascending: false });
-    const rows = data ?? [];
-    const ids = rows.map((r) => r.id);
-    const leadMap = new Map<
-      string,
-      { id: string; name: string | null; phone: string | null; email: string | null; notes: string | null; source: string | null; status: string | null }
-    >();
-    if (ids.length > 0) {
+    const rows = (data ?? []) as Array<{
+      id: string;
+      message_count: number;
+      duration_seconds: number;
+      started_at: string;
+      agent_id: string | null;
+      recording_url: string | null;
+      ai_summary: string | null;
+      lead_id: string | null;
+    }>;
+    type LeadLite = { id: string; name: string | null; phone: string | null; email: string | null; notes: string | null; source: string | null; status: string | null };
+    const byConvId = new Map<string, LeadLite>();
+    const byLeadId = new Map<string, LeadLite>();
+    const convIds = rows.map((r) => r.id);
+    const leadIds = Array.from(new Set(rows.map((r) => r.lead_id).filter(Boolean) as string[]));
+    if (convIds.length > 0) {
       const { data: leads } = await supabase
         .from("leads")
         .select("id, conversation_id, name, phone, email, notes, source, status")
-        .in("conversation_id", ids);
+        .in("conversation_id", convIds);
       for (const l of leads ?? []) {
-        if (l.conversation_id)
-          leadMap.set(l.conversation_id, {
-            id: l.id,
-            name: l.name,
-            phone: l.phone,
-            email: l.email,
-            notes: l.notes,
-            source: l.source,
-            status: l.status,
-          });
+        const lite: LeadLite = { id: l.id, name: l.name, phone: l.phone, email: l.email, notes: l.notes, source: l.source, status: l.status };
+        if (l.conversation_id) byConvId.set(l.conversation_id, lite);
+        byLeadId.set(l.id, lite);
+      }
+    }
+    if (leadIds.length > 0) {
+      const missing = leadIds.filter((id) => !byLeadId.has(id));
+      if (missing.length > 0) {
+        const { data: leads2 } = await supabase
+          .from("leads")
+          .select("id, name, phone, email, notes, source, status")
+          .in("id", missing);
+        for (const l of leads2 ?? []) {
+          byLeadId.set(l.id, { id: l.id, name: l.name, phone: l.phone, email: l.email, notes: l.notes, source: l.source, status: l.status });
+        }
       }
     }
     setConvs(
       rows.map((r) => {
-        const l = leadMap.get(r.id);
+        const l = (r.lead_id ? byLeadId.get(r.lead_id) : undefined) ?? byConvId.get(r.id);
         return {
-          ...r,
-          lead_id: l?.id ?? null,
+          id: r.id,
+          message_count: r.message_count,
+          duration_seconds: r.duration_seconds,
+          started_at: r.started_at,
+          agent_id: r.agent_id,
+          recording_url: r.recording_url,
+          ai_summary: r.ai_summary,
+          lead_id: l?.id ?? r.lead_id ?? null,
           lead_name: l?.name ?? null,
           lead_phone: l?.phone ?? null,
           lead_email: l?.email ?? null,
@@ -368,17 +390,17 @@ function ConversationsPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
-                    <th className="px-6 py-3 font-medium">Caller</th>
-                    <th className="px-4 py-3 font-medium">Intent</th>
-                    <th className="px-4 py-3 font-medium">AI Summary</th>
-                    <th className="px-4 py-3 font-medium">Time</th>
-                    <th className="px-4 py-3 font-medium">Status</th>
-                    <th className="px-2 py-3" />
-                  </tr>
-                </thead>
+              <ResizableTable
+                columns={[
+                  { key: "caller", label: "Caller", default: 260, min: 160 },
+                  { key: "intent", label: "Intent", default: 130, min: 90 },
+                  { key: "summary", label: "AI Summary", default: 420, min: 200 },
+                  { key: "time", label: "Time", default: 150, min: 100 },
+                  { key: "status", label: "Status", default: 140, min: 100 },
+                  { key: "actions", label: "", default: 180, min: 120 },
+                ]}
+                storageKey="askjanice.threads.colWidths.v1"
+              >
                 <tbody className="divide-y divide-border">
                   {filteredConvs.map((c) => (
                     <ConversationRow
@@ -393,7 +415,7 @@ function ConversationsPage() {
                     />
                   ))}
                 </tbody>
-              </table>
+              </ResizableTable>
             </div>
           )}
         </div>
@@ -471,7 +493,7 @@ function ConversationRow({
         <IntentTag source={c.lead_source} />
       </td>
       <td className="px-4 py-4 max-w-sm">
-        <p className="text-sm text-foreground/80 line-clamp-2">
+        <p className="text-sm text-foreground/80 whitespace-pre-wrap break-words">
           {c.ai_summary?.trim() ||
             c.lead_notes?.trim() ||
             (c.message_count > 0
