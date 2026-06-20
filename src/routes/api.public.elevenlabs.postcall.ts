@@ -174,6 +174,16 @@ export async function persistPostCall(
     return { status: "agent-not-found" };
   }
 
+  // Dashboard "Live voice test" sessions tag themselves with a dynamic
+  // variable so we can skip persisting them — they're practice runs by the
+  // owner, not real customer conversations.
+  const isDashboardTest =
+    data.conversation_initiation_client_data?.dynamic_variables
+      ?.is_dashboard_test === "true";
+  if (isDashboardTest) {
+    return { status: "duplicate" };
+  }
+
   const { data: existing } = await supabaseAdmin
     .from("conversations")
     .select("id")
