@@ -19,6 +19,7 @@ const ExtractedSchema = z.object({
   name: z.string().nullable().optional(),
   phone: z.string().nullable().optional(),
   email: z.string().nullable().optional(),
+  address: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
 });
 
