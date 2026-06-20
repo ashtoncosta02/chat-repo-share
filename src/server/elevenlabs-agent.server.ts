@@ -162,10 +162,14 @@ export function buildSystemPrompt(p: AgentBusinessProfile): string {
 function buildFirstMessage(p: AgentBusinessProfile): string {
   const name = (p.assistant_name || "the receptionist").trim();
   const biz = p.business_name.trim();
+  const custom = (p.greeting_message || "").trim();
   // Includes a recording disclosure to satisfy two-party-consent states (CA, FL, IL, etc.).
-  // Direction-specific wording is handled by the system prompt after context is available.
+  if (custom) {
+    return `${custom} Just so you know, this call may be recorded for quality.`;
+  }
   return `Hi, this is ${name} from ${biz}. Just so you know, this call may be recorded for quality. How can I help you?`;
 }
+
 
 interface ElevenLabsAgentConfig {
   conversation_config: {
