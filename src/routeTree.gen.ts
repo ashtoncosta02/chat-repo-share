@@ -27,6 +27,7 @@ import { Route as DashboardBookingsRouteImport } from './routes/dashboard.bookin
 import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard.analytics'
 import { Route as DashboardAgentRouteImport } from './routes/dashboard.agent'
 import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
+import { Route as DashboardAccountRouteImport } from './routes/dashboard.account'
 import { Route as DashboardConversationsIndexRouteImport } from './routes/dashboard.conversations.index'
 import { Route as DashboardAdminIndexRouteImport } from './routes/dashboard.admin.index'
 import { Route as DashboardConversationsConversationIdRouteImport } from './routes/dashboard.conversations.$conversationId'
@@ -142,6 +143,11 @@ const DashboardAgentRoute = DashboardAgentRouteImport.update({
 const DashboardAdminRoute = DashboardAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardAccountRoute = DashboardAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardConversationsIndexRoute =
@@ -296,6 +302,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
+  '/dashboard/account': typeof DashboardAccountRoute
   '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/agent': typeof DashboardAgentRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
@@ -341,6 +348,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
+  '/dashboard/account': typeof DashboardAccountRoute
   '/dashboard/agent': typeof DashboardAgentRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/bookings': typeof DashboardBookingsRoute
@@ -384,6 +392,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
+  '/dashboard/account': typeof DashboardAccountRoute
   '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/agent': typeof DashboardAgentRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
@@ -432,6 +441,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/privacy'
     | '/terms'
+    | '/dashboard/account'
     | '/dashboard/admin'
     | '/dashboard/agent'
     | '/dashboard/analytics'
@@ -477,6 +487,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/privacy'
     | '/terms'
+    | '/dashboard/account'
     | '/dashboard/agent'
     | '/dashboard/analytics'
     | '/dashboard/bookings'
@@ -519,6 +530,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/privacy'
     | '/terms'
+    | '/dashboard/account'
     | '/dashboard/admin'
     | '/dashboard/agent'
     | '/dashboard/analytics'
@@ -710,6 +722,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/dashboard/admin'
       preLoaderRoute: typeof DashboardAdminRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/account': {
+      id: '/dashboard/account'
+      path: '/account'
+      fullPath: '/dashboard/account'
+      preLoaderRoute: typeof DashboardAccountRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/conversations/': {
@@ -961,6 +980,7 @@ const DashboardConversationsRouteWithChildren =
   )
 
 interface DashboardRouteChildren {
+  DashboardAccountRoute: typeof DashboardAccountRoute
   DashboardAdminRoute: typeof DashboardAdminRouteWithChildren
   DashboardAgentRoute: typeof DashboardAgentRoute
   DashboardAnalyticsRoute: typeof DashboardAnalyticsRoute
@@ -977,6 +997,7 @@ interface DashboardRouteChildren {
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardAccountRoute: DashboardAccountRoute,
   DashboardAdminRoute: DashboardAdminRouteWithChildren,
   DashboardAgentRoute: DashboardAgentRoute,
   DashboardAnalyticsRoute: DashboardAnalyticsRoute,
