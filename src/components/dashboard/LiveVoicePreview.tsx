@@ -39,13 +39,20 @@ function LiveVoicePreviewInner({
   const [isStarting, setIsStarting] = useState(false);
   const sync = useServerFn(syncReceptionistAgent);
   const getToken = useServerFn(getReceptionistPreviewToken);
+  const markAsTest = useServerFn(markConversationAsDashboardTest);
 
   const conversation = useConversation({
-    onConnect: () => {
-      // No toast — visual state in the button is enough.
+    onConnect: ({ conversationId }: { conversationId?: string } = {}) => {
+      // Tag this conversation as a dashboard test so the post-call webhook
+      // skips persisting it to Threads.
+      if (conversationId) {
+        markAsTest({ data: { elevenlabsConversationId: conversationId } }).catch((e) =>
+          console.error("markAsTest failed:", e),
+        );
+      }
     },
     onDisconnect: () => {
-      // Same.
+      // No toast — visual state in the button is enough.
     },
     onError: (err) => {
       console.error("EL conversation error:", err);
