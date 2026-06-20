@@ -7,6 +7,7 @@ import { LayoutDashboard, BarChart3, User, MessageSquare, Menu, X, Code2, Calend
 import { AgentFactoryLogo } from "@/components/AgentFactoryLogo";
 import { OwnerChatWidget } from "@/components/dashboard/OwnerChatWidget";
 import { DialerPanel } from "@/components/dashboard/DialerPanel";
+import { CalendarHealthBanner } from "@/components/dashboard/CalendarHealthBanner";
 import { ChatWidgetPage } from "./dashboard.chat-widget";
 
 export const Route = createFileRoute("/dashboard")({
@@ -38,6 +39,7 @@ function DashboardLayout() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
+  const [agentId, setAgentId] = useState<string | null>(null);
   const [dialerOpen, setDialerOpen] = useState(false);
 
   useEffect(() => {
@@ -63,6 +65,7 @@ function DashboardLayout() {
         if (!data || !data.onboarding_completed) {
           navigate({ to: "/dashboard/onboarding" });
         } else {
+          setAgentId(data.id);
           setOnboardingChecked(true);
         }
       });
@@ -244,6 +247,7 @@ function DashboardLayout() {
 
       {/* Main */}
       <main className="flex-1 overflow-auto pt-14 md:pt-0">
+        {agentId && <CalendarHealthBanner agentId={agentId} />}
         {location.pathname === "/dashboard/chat-widget" ? (
           <ChatWidgetPage />
         ) : (
