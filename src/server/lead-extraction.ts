@@ -122,10 +122,11 @@ export async function captureLead(args: CaptureLeadArgs): Promise<void> {
       name: lead?.name ?? null,
       phone,
       email: lead?.email ?? null,
+      address: lead?.address ?? null,
       notes: lead?.notes ?? null,
     };
 
-    if (!finalLead.name && !finalLead.phone && !finalLead.email && !finalLead.notes) return;
+    if (!finalLead.name && !finalLead.phone && !finalLead.email && !finalLead.address && !finalLead.notes) return;
 
     // Dedupe priority: existing lead for this conversation > email > phone.
     // For ALL sources (including voice), match on phone/email so callbacks
