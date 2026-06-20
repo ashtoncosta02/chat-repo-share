@@ -295,8 +295,24 @@ export async function persistPostCall(
         ownerEmail = prof?.email?.trim() || null;
       }
       if (ownerEmail) {
+        // Look up the lead row we just (potentially) created/updated so we
+        // can put the caller's name/email/phone/address at the top of the
+        // email.
+        const { data: leadRow } = await supabaseAdmin
+          .from("leads")
+          .select("name, email, phone, address")
+          .eq("agent_id", agent.id)
+          .eq("conversation_id", convo.id)
+          .maybeSingle();
+
+        // Always prefer the canonical custom domain. Old NEXT_PUBLIC_SITE_URL
+        // values (e.g. retired vercel.app deploys) would otherwise 404.
+        const envUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
         const siteUrl =
-          process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://askjanice.net";
+          envUrl && !envUrl.includes("vercel.app")
+            ? envUrl
+            : "https://www.askjanice.net";
+
         const { subject, html } = renderTranscriptEmail({
           businessName: agent.business_name || "Your business",
           callerNumber: data.metadata?.phone_call?.external_number ?? null,
@@ -305,6 +321,7 @@ export async function persistPostCall(
           summary: summaryText,
           turns: cleanedTurns as { role: "user" | "assistant"; content: string }[],
           conversationDashboardUrl: `${siteUrl}/dashboard/conversations/${convo.id}`,
+          lead: leadRow ?? null,
         });
         await sendEmail({ to: ownerEmail, subject, html });
       }
