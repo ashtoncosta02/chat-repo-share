@@ -23,39 +23,75 @@ export const getAdminOverview = createServerFn({ method: "POST" })
     const auth = await requireAdmin(data.accessToken);
     if ("error" in auth) return { success: false as const, error: auth.error };
 
+    const now = new Date();
     const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+    const fourteenDaysAgo = new Date(Date.now() - 14 * 86400000).toISOString();
     const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
 
     const [
       profilesCount,
       newProfiles7d,
+      newProfiles7to14d,
       agentsTotal,
       agentsLive,
       widgetConvos,
       widgetConvos30d,
+      widgetConvosToday,
+      widgetConvos7d,
       voiceConvos,
       voiceConvos30d,
+      voiceConvosToday,
+      voiceConvos7d,
+      voiceFailed24h,
       bookingsTotal,
       bookingsUpcoming,
+      bookings7d,
       leadsTotal,
       newLeads7d,
       phoneNumbersTotal,
+      phoneNumbersThisMonth,
       gcalConnected,
+      openTickets,
+      ticketsClosed7d,
+      voiceConvosForDuration,
+      voiceConvosMonth,
+      activeAgentsVoice,
+      activeAgentsChat,
+      onboardingCompleted,
+      oldestOpenTicket,
     ] = await Promise.all([
       supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", sevenDaysAgo),
+      supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", fourteenDaysAgo).lt("created_at", sevenDaysAgo),
       supabaseAdmin.from("agents").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("agents").select("id", { count: "exact", head: true }).eq("is_live", true),
       supabaseAdmin.from("widget_conversations").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("widget_conversations").select("id", { count: "exact", head: true }).gte("created_at", thirtyDaysAgo),
+      supabaseAdmin.from("widget_conversations").select("id", { count: "exact", head: true }).gte("created_at", startOfToday),
+      supabaseAdmin.from("widget_conversations").select("id", { count: "exact", head: true }).gte("created_at", sevenDaysAgo),
       supabaseAdmin.from("conversations").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("conversations").select("id", { count: "exact", head: true }).gte("started_at", thirtyDaysAgo),
+      supabaseAdmin.from("conversations").select("id", { count: "exact", head: true }).gte("started_at", startOfToday),
+      supabaseAdmin.from("conversations").select("id", { count: "exact", head: true }).gte("started_at", sevenDaysAgo),
+      supabaseAdmin.from("conversations").select("id", { count: "exact", head: true }).gte("started_at", new Date(Date.now() - 86400000).toISOString()).in("status", ["failed", "error"]),
       supabaseAdmin.from("calendar_bookings").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("calendar_bookings").select("id", { count: "exact", head: true }).gte("starts_at", new Date().toISOString()),
+      supabaseAdmin.from("calendar_bookings").select("id", { count: "exact", head: true }).gte("created_at", sevenDaysAgo),
       supabaseAdmin.from("leads").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("leads").select("id", { count: "exact", head: true }).gte("created_at", sevenDaysAgo),
       supabaseAdmin.from("phone_numbers").select("id", { count: "exact", head: true }),
+      supabaseAdmin.from("phone_numbers").select("id", { count: "exact", head: true }).gte("created_at", startOfMonth),
       supabaseAdmin.from("agent_google_calendar").select("id", { count: "exact", head: true }),
+      supabaseAdmin.from("tickets").select("id", { count: "exact", head: true }).in("status", ["open", "pending"]),
+      supabaseAdmin.from("tickets").select("id", { count: "exact", head: true }).eq("status", "closed").gte("updated_at", sevenDaysAgo),
+      supabaseAdmin.from("conversations").select("duration_seconds").gte("started_at", sevenDaysAgo),
+      supabaseAdmin.from("conversations").select("duration_seconds").gte("started_at", startOfMonth),
+      supabaseAdmin.from("conversations").select("user_id").gte("started_at", sevenDaysAgo),
+      supabaseAdmin.from("widget_conversations").select("user_id").gte("created_at", sevenDaysAgo),
+      supabaseAdmin.from("agents").select("id", { count: "exact", head: true }).eq("onboarding_completed", true),
+      supabaseAdmin.from("tickets").select("created_at").in("status", ["open", "pending"]).order("created_at", { ascending: true }).limit(1),
     ]);
 
     const { data: recentSignups } = await supabaseAdmin
@@ -64,35 +100,77 @@ export const getAdminOverview = createServerFn({ method: "POST" })
       .order("created_at", { ascending: false })
       .limit(10);
 
+    const sumDuration = (rows: { duration_seconds: number | null }[] | null) =>
+      (rows ?? []).reduce((acc, r) => acc + (r.duration_seconds ?? 0), 0);
+    const totalSecs7d = sumDuration(voiceConvosForDuration.data as any);
+    const callCount7d = (voiceConvosForDuration.data?.length ?? 0);
+    const avgCallSecs = callCount7d > 0 ? Math.round(totalSecs7d / callCount7d) : 0;
+    const voiceMinutesMonth = Math.round(sumDuration(voiceConvosMonth.data as any) / 60);
+
+    const activeVoiceUserIds = new Set((activeAgentsVoice.data ?? []).map((r: any) => r.user_id));
+    const activeChatUserIds = new Set((activeAgentsChat.data ?? []).map((r: any) => r.user_id));
+    const activeAccounts7d = new Set([...activeVoiceUserIds, ...activeChatUserIds]).size;
+
+    const signupsThis = newProfiles7d.count ?? 0;
+    const signupsPrev = newProfiles7to14d.count ?? 0;
+    const signupsDeltaPct = signupsPrev === 0
+      ? (signupsThis > 0 ? 100 : 0)
+      : Math.round(((signupsThis - signupsPrev) / signupsPrev) * 100);
+
+    const totalUsers = profilesCount.count ?? 0;
+    const onboardedCount = onboardingCompleted.count ?? 0;
+    const activationPct = totalUsers > 0 ? Math.round((onboardedCount / totalUsers) * 100) : 0;
+
+    const oldestTicketAgeHours = oldestOpenTicket.data && oldestOpenTicket.data[0]
+      ? Math.floor((Date.now() - new Date(oldestOpenTicket.data[0].created_at).getTime()) / 3600000)
+      : null;
+
     return {
       success: true as const,
       stats: {
         users: {
-          total: profilesCount.count ?? 0,
-          new7d: newProfiles7d.count ?? 0,
+          total: totalUsers,
+          new7d: signupsThis,
+          deltaPct: signupsDeltaPct,
+          activationPct,
         },
         agents: {
           total: agentsTotal.count ?? 0,
           live: agentsLive.count ?? 0,
+          active7d: activeAccounts7d,
         },
         widgetConversations: {
           total: widgetConvos.count ?? 0,
           last30d: widgetConvos30d.count ?? 0,
+          today: widgetConvosToday.count ?? 0,
+          last7d: widgetConvos7d.count ?? 0,
         },
         voiceConversations: {
           total: voiceConvos.count ?? 0,
           last30d: voiceConvos30d.count ?? 0,
+          today: voiceConvosToday.count ?? 0,
+          last7d: voiceConvos7d.count ?? 0,
+          failed24h: voiceFailed24h.count ?? 0,
+          avgCallSecs,
+          voiceMinutesMonth,
         },
         bookings: {
           total: bookingsTotal.count ?? 0,
           upcoming: bookingsUpcoming.count ?? 0,
+          last7d: bookings7d.count ?? 0,
         },
         leads: {
           total: leadsTotal.count ?? 0,
           new7d: newLeads7d.count ?? 0,
         },
         phoneNumbers: phoneNumbersTotal.count ?? 0,
+        phoneNumbersThisMonth: phoneNumbersThisMonth.count ?? 0,
         calendarsConnected: gcalConnected.count ?? 0,
+        tickets: {
+          open: openTickets.count ?? 0,
+          closed7d: ticketsClosed7d.count ?? 0,
+          oldestOpenAgeHours: oldestTicketAgeHours,
+        },
       },
       recentSignups: recentSignups ?? [],
     };
