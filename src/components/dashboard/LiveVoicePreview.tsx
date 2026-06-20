@@ -9,6 +9,7 @@ import {
   syncReceptionistAgent,
   getReceptionistPreviewToken,
 } from "@/lib/elevenlabs-agent.functions";
+import { markConversationAsDashboardTest } from "@/lib/dashboard-test.functions";
 
 interface LiveVoicePreviewProps {
   agentId: string;
