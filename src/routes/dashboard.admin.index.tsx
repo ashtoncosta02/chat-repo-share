@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { getAdminOverview } from "@/lib/admin.functions";
-import { PageHeader, MetricCard } from "@/components/dashboard/PageHeader";
+import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Users, Bot, MessageSquare, Phone, Calendar, User as UserIcon, Shield, DollarSign, AlertCircle, TrendingUp, Clock, LifeBuoy } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/admin/")({
@@ -80,14 +80,14 @@ function AdminOverviewPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <PlaceholderCard label="MRR" value="—" hint="Connect Stripe" />
                 <PlaceholderCard label="ARR" value="—" hint="Connect Stripe" />
-                <StatCard
+                <MetricCard
                   icon={<TrendingUp className="h-5 w-5 text-[var(--gold)]" />}
                   iconBg="bg-[oklch(0.96_0.04_290)]"
                   label="Signups (7d)"
                   value={stats.users.new7d}
                   sublabel={deltaLabel(stats.users.deltaPct)}
                 />
-                <StatCard
+                <MetricCard
                   icon={<Users className="h-5 w-5 text-[var(--gold)]" />}
                   iconBg="bg-[oklch(0.96_0.04_290)]"
                   label="Activation"
