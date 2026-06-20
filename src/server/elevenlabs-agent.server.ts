@@ -27,12 +27,15 @@ export interface AgentBusinessProfile {
   escalation_triggers: string | null;
   voice_id: string | null;
   faqs_structured: Array<{ question: string; answer: string }> | null;
+  greeting_message?: string | null;
+  farewell_message?: string | null;
   // Set when the agent has Google Calendar connected — enables booking tools + prompt.
   booking_enabled?: boolean;
   booking_prompt_addendum?: string | null;
   // Workspace tool ids to attach to the agent (find_slots + book_appointment).
   tool_ids?: string[];
 }
+
 
 export function buildSystemPrompt(p: AgentBusinessProfile): string {
   const name = (p.assistant_name || "the receptionist").trim();
@@ -141,6 +144,12 @@ export function buildSystemPrompt(p: AgentBusinessProfile): string {
     }
   }
 
+  if (p.farewell_message && p.farewell_message.trim()) {
+    lines.push(``);
+    lines.push(`# Ending the call`);
+    lines.push(`When the conversation is wrapping up, say this exactly before hanging up: "${p.farewell_message.trim()}"`);
+  }
+
   // Caller context (filled in via dynamic variables when known — e.g. on
   // outbound callbacks to a saved lead, or via the Twilio personalization
   // webhook for inbound calls). When the variables are empty, treat the
@@ -156,13 +165,18 @@ export function buildSystemPrompt(p: AgentBusinessProfile): string {
   return lines.join("\n");
 }
 
+
 function buildFirstMessage(p: AgentBusinessProfile): string {
   const name = (p.assistant_name || "the receptionist").trim();
   const biz = p.business_name.trim();
+  const custom = (p.greeting_message || "").trim();
   // Includes a recording disclosure to satisfy two-party-consent states (CA, FL, IL, etc.).
-  // Direction-specific wording is handled by the system prompt after context is available.
+  if (custom) {
+    return `${custom} Just so you know, this call may be recorded for quality.`;
+  }
   return `Hi, this is ${name} from ${biz}. Just so you know, this call may be recorded for quality. How can I help you?`;
 }
+
 
 interface ElevenLabsAgentConfig {
   conversation_config: {

@@ -44,6 +44,8 @@ import { GoogleCalendarCard } from "@/components/dashboard/GoogleCalendarCard";
 
 import { LiveVoicePreview } from "@/components/dashboard/LiveVoicePreview";
 import { VoicePickerCard } from "@/components/dashboard/VoicePickerCard";
+import { GreetingFarewellCard } from "@/components/dashboard/GreetingFarewellCard";
+
 import { syncReceptionistAgent, deleteReceptionistAgent } from "@/lib/elevenlabs-agent.functions";
 import { VOICE_OPTIONS, DEFAULT_VOICE_ID, getVoiceById } from "@/lib/voices";
 import { coerceFaqs, newFaq, parseLegacyFaqs, type StructuredFaq } from "@/lib/faqs";
@@ -76,6 +78,9 @@ interface Agent {
   notify_sms_transcript: boolean;
   notify_email: string | null;
   notify_phone: string | null;
+  greeting_message: string | null;
+  farewell_message: string | null;
+
 }
 
 interface Msg {
@@ -572,7 +577,20 @@ function AgentDetailPage() {
             setAgent((prev) => (prev ? { ...prev, voice_id: voiceId } : prev))
           }
         />
+        <GreetingFarewellCard
+          agentId={agent.id}
+          businessName={agent.business_name}
+          assistantName={assistantName}
+          greeting={agent.greeting_message}
+          farewell={agent.farewell_message}
+          onSaved={({ greeting, farewell }) =>
+            setAgent((prev) =>
+              prev ? { ...prev, greeting_message: greeting, farewell_message: farewell } : prev,
+            )
+          }
+        />
         <PhoneNumberSetup agentId={agent.id} />
+
         <AnswerModeCard
           agentId={agent.id}
           value={agent.answer_mode}

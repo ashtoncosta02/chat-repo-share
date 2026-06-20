@@ -22,6 +22,8 @@ interface AgentRow {
   escalation_triggers: string | null;
   voice_id: string | null;
   faqs_structured: unknown;
+  greeting_message: string | null;
+  farewell_message: string | null;
   elevenlabs_agent_id: string | null;
 }
 
@@ -51,6 +53,8 @@ function rowToProfile(row: AgentRow): AgentBusinessProfile {
     escalation_triggers: row.escalation_triggers,
     voice_id: row.voice_id,
     faqs_structured: faqs,
+    greeting_message: row.greeting_message,
+    farewell_message: row.farewell_message,
   };
 }
 
@@ -60,11 +64,12 @@ export async function resyncReceptionistById(
   const { data: row, error: rowErr } = await supabaseAdmin
     .from("agents")
     .select(
-      "id, user_id, business_name, assistant_name, industry, tone, primary_goal, services, booking_link, emergency_number, pricing_notes, escalation_triggers, voice_id, faqs_structured, elevenlabs_agent_id",
+      "id, user_id, business_name, assistant_name, industry, tone, primary_goal, services, booking_link, emergency_number, pricing_notes, escalation_triggers, voice_id, faqs_structured, greeting_message, farewell_message, elevenlabs_agent_id",
     )
     .eq("id", agentDbId)
     .maybeSingle();
   if (rowErr || !row) return { success: false, error: "Receptionist not found." };
+
 
   const profile = rowToProfile(row as AgentRow);
 
