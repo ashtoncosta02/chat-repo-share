@@ -209,7 +209,10 @@ function AgentDetailPage() {
 
   const assistantName = agent?.assistant_name?.trim() || "Janice";
 
-  // Load agent + greeting
+  // Load agent. We intentionally do NOT auto-greet here — the receptionist
+  // only speaks if the user starts the live voice test or sends a chat
+  // message. Auto-greeting was creating a thread and playing audio the
+  // moment the page opened.
   useEffect(() => {
     if (!user) return;
     supabase
@@ -218,21 +221,7 @@ function AgentDetailPage() {
       .eq("id", agentId)
       .maybeSingle()
       .then(({ data }) => {
-        if (data) {
-          const a = data as Agent;
-          setAgent(a);
-          const name = a.assistant_name?.trim() || "Janice";
-          const greeting = `Hi there! This is ${name} with ${a.business_name}. How can I help you today?`;
-          setMessages([{ role: "assistant", content: greeting, ts: new Date() }]);
-          // Persist greeting only once (StrictMode runs this effect twice in dev)
-          if (!greetingPersistedRef.current) {
-            greetingPersistedRef.current = true;
-            persistMessage("assistant", greeting);
-            // Pass voice id explicitly — `agent` state hasn't flushed yet here,
-            // so playReply's `agent?.voice_id` lookup would fall back to default.
-            if (voiceOn) playReply(greeting, a.voice_id ?? undefined);
-          }
-        }
+        if (data) setAgent(data as Agent);
         setLoading(false);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
