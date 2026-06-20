@@ -852,3 +852,56 @@ export const getAdminTicketDetail = createServerFn({ method: "POST" })
     ]);
     return { success: true as const, ticket, messages: messages ?? [], customer: profile };
   });
+
+export const adminImpersonateUser = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z.object({
+      accessToken: z.string().min(1),
+      userId: z.string().uuid(),
+      reason: z.string().max(500).optional(),
+    }).parse(input)
+  )
+  .handler(async ({ data }) => {
+    const auth = await requireAdmin(data.accessToken);
+    if ("error" in auth) return { success: false as const, error: auth.error };
+    if (auth.userId === data.userId) {
+      return { success: false as const, error: "You are already signed in as this user." };
+    }
+
+    const { data: targetProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("email")
+      .eq("user_id", data.userId)
+      .maybeSingle();
+    if (!targetProfile?.email) {
+      return { success: false as const, error: "Target user has no email." };
+    }
+
+    // Pick a redirect URL the magic link can land on. Prefer published site, fall back to localhost.
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      process.env.SITE_URL ||
+      "https://www.askjanice.net";
+
+    const { data: linkData, error: linkError } =
+      await supabaseAdmin.auth.admin.generateLink({
+        type: "magiclink",
+        email: targetProfile.email,
+        options: { redirectTo: `${siteUrl}/dashboard` },
+      });
+    if (linkError || !linkData?.properties?.action_link) {
+      return { success: false as const, error: linkError?.message || "Could not generate sign-in link." };
+    }
+
+    await supabaseAdmin.from("admin_impersonation_log").insert({
+      admin_user_id: auth.userId,
+      target_user_id: data.userId,
+      reason: data.reason ?? null,
+    });
+
+    return {
+      success: true as const,
+      actionLink: linkData.properties.action_link,
+      targetEmail: targetProfile.email,
+    };
+  });
