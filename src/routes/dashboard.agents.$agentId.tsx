@@ -517,6 +517,14 @@ function AgentDetailPage() {
               });
           }}
         />
+        <VoicePickerCard
+          agentId={agent.id}
+          businessName={agent.business_name}
+          currentVoiceId={agent.voice_id}
+          onChange={(voiceId) =>
+            setAgent((prev) => (prev ? { ...prev, voice_id: voiceId } : prev))
+          }
+        />
         <PhoneNumberSetup agentId={agent.id} />
         <AnswerModeCard
           agentId={agent.id}
