@@ -113,6 +113,8 @@ export type Database = {
           escalation_triggers: string | null
           faqs: string | null
           faqs_structured: Json
+          farewell_message: string | null
+          greeting_message: string | null
           id: string
           industry: string | null
           is_live: boolean
@@ -148,6 +150,8 @@ export type Database = {
           escalation_triggers?: string | null
           faqs?: string | null
           faqs_structured?: Json
+          farewell_message?: string | null
+          greeting_message?: string | null
           id?: string
           industry?: string | null
           is_live?: boolean
@@ -183,6 +187,8 @@ export type Database = {
           escalation_triggers?: string | null
           faqs?: string | null
           faqs_structured?: Json
+          farewell_message?: string | null
+          greeting_message?: string | null
           id?: string
           industry?: string | null
           is_live?: boolean
