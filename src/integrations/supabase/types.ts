@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_impersonation_log: {
+        Row: {
+          admin_user_id: string
+          created_at: string
+          id: string
+          reason: string | null
+          target_user_id: string
+        }
+        Insert: {
+          admin_user_id: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          target_user_id: string
+        }
+        Update: {
+          admin_user_id?: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          target_user_id?: string
+        }
+        Relationships: []
+      }
       agent_google_calendar: {
         Row: {
           access_token: string

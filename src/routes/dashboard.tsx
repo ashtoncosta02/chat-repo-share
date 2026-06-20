@@ -9,6 +9,7 @@ import { OwnerChatWidget } from "@/components/dashboard/OwnerChatWidget";
 import { DialerPanel } from "@/components/dashboard/DialerPanel";
 import { CalendarHealthBanner } from "@/components/dashboard/CalendarHealthBanner";
 import { AccountMenu } from "@/components/dashboard/AccountMenu";
+import { ImpersonationBanner } from "@/components/dashboard/ImpersonationBanner";
 import { ChatWidgetPage } from "./dashboard.chat-widget";
 
 export const Route = createFileRoute("/dashboard")({
@@ -143,18 +144,6 @@ function DashboardLayout() {
             Dialer
           </button>
         </nav>
-        <div className="border-t border-border px-6 py-4">
-          <button
-            onClick={async () => {
-              await signOut();
-              navigate({ to: "/" });
-            }}
-            className="text-sm font-medium text-foreground hover:text-[var(--gold)] transition-colors"
-          >
-            My Account
-          </button>
-          <p className="mt-1 text-xs text-muted-foreground truncate">{user.email}</p>
-        </div>
       </aside>
 
       {/* Mobile top bar */}
@@ -205,18 +194,6 @@ function DashboardLayout() {
                 Dialer
               </button>
             </nav>
-            <div className="border-t border-border px-6 py-4">
-              <button
-                onClick={async () => {
-                  await signOut();
-                  navigate({ to: "/" });
-                }}
-                className="text-sm font-medium text-foreground hover:text-[var(--gold)] transition-colors"
-              >
-                My Account
-              </button>
-              <p className="mt-1 text-xs text-muted-foreground truncate">{user.email}</p>
-            </div>
           </aside>
         </>
       )}
@@ -252,6 +229,7 @@ function DashboardLayout() {
         <div className="hidden md:flex items-center justify-end gap-3 border-b border-border bg-card/60 backdrop-blur px-6 h-14 sticky top-0 z-20">
           <AccountMenu />
         </div>
+        <ImpersonationBanner currentEmail={user.email} />
         {agentId && <CalendarHealthBanner agentId={agentId} />}
         {location.pathname === "/dashboard/chat-widget" ? (
           <ChatWidgetPage />
