@@ -41,6 +41,7 @@ import { toast } from "sonner";
 import { PhoneNumberSetup } from "@/components/dashboard/PhoneNumberSetup";
 import { AnswerModeCard } from "@/components/dashboard/AnswerModeCard";
 import { GoogleCalendarCard } from "@/components/dashboard/GoogleCalendarCard";
+import { OutlookCalendarCard } from "@/components/dashboard/OutlookCalendarCard";
 
 import { LiveVoicePreview } from "@/components/dashboard/LiveVoicePreview";
 import { VoicePickerCard } from "@/components/dashboard/VoicePickerCard";
