@@ -1,5 +1,18 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { checkFreeBusy, createEvent } from "@/server/google-calendar.server";
+import * as Google from "@/server/google-calendar.server";
+import * as Outlook from "@/server/outlook-calendar.server";
+
+type Provider = "google" | "outlook";
+
+async function getProvider(agentId: string): Promise<Provider | null> {
+  const { data: g } = await supabaseAdmin
+    .from("agent_google_calendar").select("id").eq("agent_id", agentId).maybeSingle();
+  if (g) return "google";
+  const { data: o } = await supabaseAdmin
+    .from("agent_outlook_calendar").select("id").eq("agent_id", agentId).maybeSingle();
+  if (o) return "outlook";
+  return null;
+}
 
 export const CHAT_TOOLS = [
   {
@@ -11,14 +24,8 @@ export const CHAT_TOOLS = [
       parameters: {
         type: "object",
         properties: {
-          start_iso: {
-            type: "string",
-            description: "Start of search window in ISO 8601 with timezone, e.g. 2026-04-30T09:00:00-04:00",
-          },
-          end_iso: {
-            type: "string",
-            description: "End of search window in ISO 8601 with timezone.",
-          },
+          start_iso: { type: "string", description: "Start of search window in ISO 8601 with timezone" },
+          end_iso: { type: "string", description: "End of search window in ISO 8601 with timezone." },
         },
         required: ["start_iso", "end_iso"],
         additionalProperties: false,
@@ -34,12 +41,12 @@ export const CHAT_TOOLS = [
       parameters: {
         type: "object",
         properties: {
-          summary: { type: "string", description: "Short event title, e.g. 'Consultation with John Doe'" },
-          description: { type: "string", description: "Notes / details for the event" },
-          start_iso: { type: "string", description: "Event start ISO 8601 with timezone" },
-          end_iso: { type: "string", description: "Event end ISO 8601 with timezone" },
-          attendee_email: { type: "string", description: "Customer's email address" },
-          attendee_name: { type: "string", description: "Customer's full name" },
+          summary: { type: "string" },
+          description: { type: "string" },
+          start_iso: { type: "string" },
+          end_iso: { type: "string" },
+          attendee_email: { type: "string" },
+          attendee_name: { type: "string" },
         },
         required: ["summary", "start_iso", "end_iso", "attendee_email", "attendee_name"],
         additionalProperties: false,
@@ -54,19 +61,27 @@ export async function runChatTool(
   args: Record<string, unknown>,
 ): Promise<string> {
   try {
+    const provider = await getProvider(agentId);
+    if (!provider) return JSON.stringify({ error: "No calendar connected" });
+
     if (name === "check_availability") {
-      const r = await checkFreeBusy(agentId, String(args.start_iso), String(args.end_iso));
+      const r = provider === "outlook"
+        ? await Outlook.checkFreeBusy(agentId, String(args.start_iso), String(args.end_iso))
+        : await Google.checkFreeBusy(agentId, String(args.start_iso), String(args.end_iso));
       return JSON.stringify(r);
     }
     if (name === "book_meeting") {
-      const r = await createEvent(agentId, {
+      const opts = {
         summary: String(args.summary),
         description: args.description ? String(args.description) : undefined,
         start: String(args.start_iso),
         end: String(args.end_iso),
         attendeeEmail: String(args.attendee_email),
         attendeeName: String(args.attendee_name),
-      });
+      };
+      const r = provider === "outlook"
+        ? await Outlook.createEvent(agentId, opts)
+        : await Google.createEvent(agentId, opts);
       if ("error" in r) return JSON.stringify({ ok: false, error: r.error });
       return JSON.stringify({ ok: true, event_id: r.id, link: r.htmlLink });
     }
@@ -77,10 +92,11 @@ export async function runChatTool(
 }
 
 export async function getCalendarInfoForAgent(agentId: string) {
-  const { data: cal } = await supabaseAdmin
-    .from("agent_google_calendar")
-    .select("timezone")
-    .eq("agent_id", agentId)
-    .maybeSingle();
-  return cal;
+  const { data: g } = await supabaseAdmin
+    .from("agent_google_calendar").select("timezone").eq("agent_id", agentId).maybeSingle();
+  if (g) return g;
+  const { data: o } = await supabaseAdmin
+    .from("agent_outlook_calendar").select("timezone").eq("agent_id", agentId).maybeSingle();
+  return o;
 }
+

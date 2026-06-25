@@ -98,6 +98,77 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_outlook_calendar: {
+        Row: {
+          access_token: string
+          agent_id: string
+          booking_buffer_minutes: number
+          business_hours: Json
+          calendar_id: string
+          calendar_name: string | null
+          created_at: string
+          default_event_duration_minutes: number
+          id: string
+          last_refresh_error: string | null
+          microsoft_account_email: string | null
+          microsoft_account_name: string | null
+          refresh_token: string
+          scope: string | null
+          timezone: string
+          token_expires_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          agent_id: string
+          booking_buffer_minutes?: number
+          business_hours?: Json
+          calendar_id?: string
+          calendar_name?: string | null
+          created_at?: string
+          default_event_duration_minutes?: number
+          id?: string
+          last_refresh_error?: string | null
+          microsoft_account_email?: string | null
+          microsoft_account_name?: string | null
+          refresh_token: string
+          scope?: string | null
+          timezone?: string
+          token_expires_at: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          agent_id?: string
+          booking_buffer_minutes?: number
+          business_hours?: Json
+          calendar_id?: string
+          calendar_name?: string | null
+          created_at?: string
+          default_event_duration_minutes?: number
+          id?: string
+          last_refresh_error?: string | null
+          microsoft_account_email?: string | null
+          microsoft_account_name?: string | null
+          refresh_token?: string
+          scope?: string | null
+          timezone?: string
+          token_expires_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_outlook_calendar_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: true
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agents: {
         Row: {
           answer_mode: string
@@ -224,6 +295,9 @@ export type Database = {
           google_event_id: string | null
           google_event_link: string | null
           id: string
+          outlook_event_id: string | null
+          outlook_event_link: string | null
+          provider: string
           reason: string | null
           source: string
           starts_at: string
@@ -242,6 +316,9 @@ export type Database = {
           google_event_id?: string | null
           google_event_link?: string | null
           id?: string
+          outlook_event_id?: string | null
+          outlook_event_link?: string | null
+          provider?: string
           reason?: string | null
           source?: string
           starts_at: string
@@ -260,6 +337,9 @@ export type Database = {
           google_event_id?: string | null
           google_event_link?: string | null
           id?: string
+          outlook_event_id?: string | null
+          outlook_event_link?: string | null
+          provider?: string
           reason?: string | null
           source?: string
           starts_at?: string
