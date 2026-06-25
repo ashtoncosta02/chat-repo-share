@@ -23,66 +23,67 @@ export interface VoiceOption {
 // Curated for natural, human-sounding conversation — these are the top voices
 // from ElevenLabs' "Natural Conversations" + real receptionist categories,
 // chosen specifically to avoid the robotic stock-voice feel.
-export const DEFAULT_VOICE_ID = "hGQkZQUA5RiOXIw7P9iO"; // Kiora — most-cloned natural female
+export const DEFAULT_VOICE_ID = "g6xIsTj2HwM6VR4iXFCw"; // Janice
 
 export const VOICE_OPTIONS: VoiceOption[] = [
   {
-    id: "hGQkZQUA5RiOXIw7P9iO",
+    id: "g6xIsTj2HwM6VR4iXFCw",
     name: "Janice",
     description: "Warm, natural female — sounds like a real receptionist (default)",
     gender: "female",
     avatar: janiceAvatar,
   },
   {
-    id: "kXsOSDWolD7e9l1Z0sbH",
+    id: "BZgkqPqms7Kj9ulSkVzn",
     name: "Jessica",
     description: "Friendly young American — natural conversational tone",
     gender: "female",
     avatar: jessicaAvatar,
   },
   {
-    id: "AGYozmgYT0SJVnLKg7iN",
+    id: "7A85ufQZSEaTbZ5eQ4f4",
     name: "Matilda",
     description: "Professional American receptionist — calm and clear",
     gender: "female",
     avatar: matildaAvatar,
   },
   {
-    id: "YCMgeo2Dvws6xwm7kQNN",
+    id: "gJx1vCzNCD1EQHT212Ls",
     name: "Alice",
     description: "British customer support — polished and clear",
     gender: "female",
     avatar: aliceAvatar,
   },
   {
-    id: "wevlkhfRsG0ND2D2pQHq",
+    id: "ZoiZ8fuDWInAcwPXaVeq",
     name: "Brian",
     description: "Down-to-earth American male — extremely natural",
     gender: "male",
     avatar: brianAvatar,
   },
   {
-    id: "UgBBYS2sOqTuMpoF3BR0",
+    id: "6YQMyaUWlj0VX652cY1C",
     name: "Will",
     description: "Friendly young American — easygoing conversational",
     gender: "male",
     avatar: willAvatar,
   },
   {
-    id: "2UMI2FME0FFUFMlUoRER",
+    id: "UgBBYS2sOqTuMpoF3BR0",
     name: "George",
     description: "British male — warm, professional conversational",
     gender: "male",
     avatar: georgeAvatar,
   },
   {
-    id: "dZcZzoYtieOVoeMG4prZ",
+    id: "7EzWGsX10sAS4c9m9cPf",
     name: "Liam",
     description: "Younger American male — relaxed and natural",
     gender: "male",
     avatar: liamAvatar,
   },
 ];
+
 
 export function getVoiceById(id: string | null | undefined): VoiceOption {
   if (!id) return VOICE_OPTIONS[0];
