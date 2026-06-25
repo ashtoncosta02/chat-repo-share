@@ -6,7 +6,7 @@ import jessicaAvatar from "@/assets/voices/jessica.png";
 import matildaAvatar from "@/assets/voices/matilda.png";
 import aliceAvatar from "@/assets/voices/alice.png";
 import brianAvatar from "@/assets/voices/brian.png";
-import willAvatar from "@/assets/voices/will.png";
+import sophieAvatar from "@/assets/voices/sophie.png";
 import georgeAvatar from "@/assets/voices/george.png";
 import liamAvatar from "@/assets/voices/liam.png";
 
