@@ -597,6 +597,7 @@ function AgentDetailPage() {
           onChange={(next) => setAgent((prev) => (prev ? { ...prev, answer_mode: next } : prev))}
         />
         <GoogleCalendarCard agentId={agent.id} />
+        <OutlookCalendarCard agentId={agent.id} googleConnected={false} />
       </div>
 
       {/* Chat surface */}
