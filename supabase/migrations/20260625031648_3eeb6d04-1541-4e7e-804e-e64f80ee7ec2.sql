@@ -1,0 +1,16 @@
+
+UPDATE public.agents SET voice_id = CASE voice_id
+  WHEN 'EXAVITQu4vr4xnSDxMaL' THEN 'hGQkZQUA5RiOXIw7P9iO'
+  WHEN 'cgSgspJ2msm6clMCkdW9' THEN 'kXsOSDWolD7e9l1Z0sbH'
+  WHEN 'XrExE9yKIg1WjnnlVkGX' THEN 'AGYozmgYT0SJVnLKg7iN'
+  WHEN 'Xb7hH8MSUJpSbSDYk0k2' THEN 'YCMgeo2Dvws6xwm7kQNN'
+  WHEN 'nPczCjzI2devNBz1zQrb' THEN 'wevlkhfRsG0ND2D2pQHq'
+  WHEN 'bIHbv24MWmeRgasZH58o' THEN 'UgBBYS2sOqTuMpoF3BR0'
+  WHEN 'JBFqnCBsd6RMkjVDRZzb' THEN '2UMI2FME0FFUFMlUoRER'
+  WHEN 'TX3LPaxmHKxFdv7VOQHJ' THEN 'dZcZzoYtieOVoeMG4prZ'
+END
+WHERE voice_id IN (
+  'EXAVITQu4vr4xnSDxMaL','cgSgspJ2msm6clMCkdW9','XrExE9yKIg1WjnnlVkGX',
+  'Xb7hH8MSUJpSbSDYk0k2','nPczCjzI2devNBz1zQrb','bIHbv24MWmeRgasZH58o',
+  'JBFqnCBsd6RMkjVDRZzb','TX3LPaxmHKxFdv7VOQHJ'
+);
