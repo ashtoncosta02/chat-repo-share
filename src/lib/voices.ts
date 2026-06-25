@@ -6,7 +6,7 @@ import jessicaAvatar from "@/assets/voices/jessica.png";
 import matildaAvatar from "@/assets/voices/matilda.png";
 import aliceAvatar from "@/assets/voices/alice.png";
 import brianAvatar from "@/assets/voices/brian.png";
-import willAvatar from "@/assets/voices/will.png";
+import sophieAvatar from "@/assets/voices/sophie.png";
 import georgeAvatar from "@/assets/voices/george.png";
 import liamAvatar from "@/assets/voices/liam.png";
 
@@ -23,11 +23,11 @@ export interface VoiceOption {
 // Curated for natural, human-sounding conversation — these are the top voices
 // from ElevenLabs' "Natural Conversations" + real receptionist categories,
 // chosen specifically to avoid the robotic stock-voice feel.
-export const DEFAULT_VOICE_ID = "g6xIsTj2HwM6VR4iXFCw"; // Janice
+export const DEFAULT_VOICE_ID = "db0e7kB1Ok43TcwAEuyl"; // Janice
 
 export const VOICE_OPTIONS: VoiceOption[] = [
   {
-    id: "g6xIsTj2HwM6VR4iXFCw",
+    id: "db0e7kB1Ok43TcwAEuyl",
     name: "Janice",
     description: "Warm, natural female — sounds like a real receptionist (default)",
     gender: "female",
@@ -62,11 +62,11 @@ export const VOICE_OPTIONS: VoiceOption[] = [
     avatar: brianAvatar,
   },
   {
-    id: "6YQMyaUWlj0VX652cY1C",
-    name: "Will",
-    description: "Friendly young American — easygoing conversational",
-    gender: "male",
-    avatar: willAvatar,
+    id: "tMXujoAjiboschVOhAnk",
+    name: "Sophie",
+    description: "Friendly young female — easygoing conversational",
+    gender: "female",
+    avatar: sophieAvatar,
   },
   {
     id: "UgBBYS2sOqTuMpoF3BR0",
