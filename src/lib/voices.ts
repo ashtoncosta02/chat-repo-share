@@ -20,62 +20,65 @@ export interface VoiceOption {
   avatar: string;
 }
 
-export const DEFAULT_VOICE_ID = "EXAVITQu4vr4xnSDxMaL"; // Janice
+// Curated for natural, human-sounding conversation — these are the top voices
+// from ElevenLabs' "Natural Conversations" + real receptionist categories,
+// chosen specifically to avoid the robotic stock-voice feel.
+export const DEFAULT_VOICE_ID = "hGQkZQUA5RiOXIw7P9iO"; // Kiora — most-cloned natural female
 
 export const VOICE_OPTIONS: VoiceOption[] = [
   {
-    id: "EXAVITQu4vr4xnSDxMaL",
+    id: "hGQkZQUA5RiOXIw7P9iO",
     name: "Janice",
-    description: "Warm female receptionist (default)",
+    description: "Warm, natural female — sounds like a real receptionist (default)",
     gender: "female",
     avatar: janiceAvatar,
   },
   {
-    id: "cgSgspJ2msm6clMCkdW9",
+    id: "kXsOSDWolD7e9l1Z0sbH",
     name: "Jessica",
-    description: "Friendly female, conversational",
+    description: "Friendly young American — natural conversational tone",
     gender: "female",
     avatar: jessicaAvatar,
   },
   {
-    id: "XrExE9yKIg1WjnnlVkGX",
+    id: "AGYozmgYT0SJVnLKg7iN",
     name: "Matilda",
-    description: "Calm female, professional",
+    description: "Professional American receptionist — calm and clear",
     gender: "female",
     avatar: matildaAvatar,
   },
   {
-    id: "Xb7hH8MSUJpSbSDYk0k2",
+    id: "YCMgeo2Dvws6xwm7kQNN",
     name: "Alice",
-    description: "British female, polished",
+    description: "British customer support — polished and clear",
     gender: "female",
     avatar: aliceAvatar,
   },
   {
-    id: "nPczCjzI2devNBz1zQrb",
+    id: "wevlkhfRsG0ND2D2pQHq",
     name: "Brian",
-    description: "Deep male, authoritative",
+    description: "Down-to-earth American male — extremely natural",
     gender: "male",
     avatar: brianAvatar,
   },
   {
-    id: "bIHbv24MWmeRgasZH58o",
+    id: "UgBBYS2sOqTuMpoF3BR0",
     name: "Will",
-    description: "Friendly male, casual",
+    description: "Friendly young American — easygoing conversational",
     gender: "male",
     avatar: willAvatar,
   },
   {
-    id: "JBFqnCBsd6RMkjVDRZzb",
+    id: "2UMI2FME0FFUFMlUoRER",
     name: "George",
-    description: "British male, refined",
+    description: "British male — warm, professional conversational",
     gender: "male",
     avatar: georgeAvatar,
   },
   {
-    id: "TX3LPaxmHKxFdv7VOQHJ",
+    id: "dZcZzoYtieOVoeMG4prZ",
     name: "Liam",
-    description: "Young male, energetic",
+    description: "Younger American male — relaxed and natural",
     gender: "male",
     avatar: liamAvatar,
   },
