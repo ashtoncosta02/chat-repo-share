@@ -1,42 +1,53 @@
-# Plan: Cleaner transcript emails + fix "Open conversation" link
+## What you'll need to do first (Azure setup)
 
-## 1. Lead info at the top of the transcript email
+Before I write code, you need a Microsoft Entra (Azure) app registration. I'll walk you through it:
 
-`src/server/email-templates.server.ts` → `renderTranscriptEmail`:
-- Add a new optional `lead` field to `TranscriptEmailInput`: `{ name, email, phone, address, notes }` (all nullable).
-- Render a **"Caller details"** card at the very top (before summary + transcript) listing whichever of Name / Phone / Email / Address are present. If none are captured, fall back to today's "from <number>" line.
-- Keep the existing Summary → Transcript → Open conversation order beneath it.
+1. Go to **portal.azure.com** → search "Microsoft Entra ID" → **App registrations** → **New registration**.
+2. **Name:** "Ask Janice Outlook Calendar" (or anything).
+3. **Supported account types:** "Accounts in any organizational directory and personal Microsoft accounts" (so both work + personal Outlook accounts work).
+4. **Redirect URI:** Web → `https://www.askjanice.net/api/public/outlook-calendar/callback`
+5. Click **Register**. Copy the **Application (client) ID** from the overview.
+6. Go to **Certificates & secrets** → **New client secret** → 24 months → copy the **Value** (not the ID).
+7. Go to **API permissions** → **Add a permission** → **Microsoft Graph** → **Delegated permissions** → add:
+   - `Calendars.ReadWrite`
+   - `offline_access`
+   - `User.Read`
+8. Click **Grant admin consent** (only required for your own tenant test; end users consent themselves).
 
-`src/routes/api.public.elevenlabs.postcall.ts`:
-- After `captureLead(...)`, fetch the resulting lead row (`select name, email, phone, notes, address where conversation_id = convo.id`) and pass it into `renderTranscriptEmail` as `lead`.
+Then I'll prompt you to paste the **Client ID** and **Client Secret** as secrets (`MICROSOFT_OAUTH_CLIENT_ID`, `MICROSOFT_OAUTH_CLIENT_SECRET`).
 
-## 2. Capture address on the lead
+## What I'll build (mirrors Google Calendar exactly)
 
-Today the lead extractor pulls name / phone / email / notes only. Address is never stored, so it can never appear in the email.
+### Database
+- New table `agent_outlook_calendar` (same shape as `agent_google_calendar`: tokens, expiry, selected calendar id, business hours, timezone).
+- Reuse existing `calendar_bookings` table — add a `provider` column (`'google' | 'outlook'`) so both providers write to one place.
+- RLS + grants matching Google's setup.
 
-- Migration: `ALTER TABLE public.leads ADD COLUMN address text;` (nullable, no grants change).
-- `src/lib/agent-lead-extract.functions.ts` + `src/server/lead-extraction.ts`: add `address: z.string().nullable().optional()` to the schema, instruct the LLM to capture a service/visit address when the caller volunteers one, persist it on insert/update.
-- Show address on the existing dashboard lead detail / leads list cell (small follow-up — one line in `dashboard.leads.tsx`).
+### Server
+- `src/server/outlook-calendar.server.ts` — Microsoft Graph helpers (token exchange, refresh, list calendars, free/busy, create event, delete event).
+- `src/lib/outlook-calendar.functions.ts` — server functions: `startOutlookOAuth`, `disconnectOutlook`, `updateOutlookSettings`, `listOutlookCalendars`, mirrors of the Google ones.
+- `src/routes/api.public.outlook-calendar.callback.ts` — OAuth callback exchanges code → tokens → saves row.
+- Update `src/server/widget-booking-tools.ts` (`findSlots`, `bookAppointment`) to detect which provider the agent has connected and route to the right API. If both connected, prefer Outlook only if Google not connected (one provider per agent enforced in UI).
+- Update voice tool endpoints (`/api/public/voice-tools/*`) the same way.
 
-## 3. "Open conversation" 404
+### UI
+- `src/components/dashboard/OutlookCalendarCard.tsx` — connect/disconnect, calendar picker, business hours, timezone. Same visual style as `GoogleCalendarCard`.
+- On the agent dashboard, show a single "Calendar" section with tabs **Google** / **Outlook**. Only one can be connected at a time — connecting one disables the other with a "Disconnect [other] first" message.
+- `CalendarHealthBanner` updated to check whichever provider is active.
+- Bookings page (`dashboard.bookings.tsx`) shows a "Source" column (Google / Outlook badge).
 
-The email link is built from `NEXT_PUBLIC_SITE_URL`, which is still pointing at the old `agent-factory-omega.vercel.app` deployment (now retired) — hence the Vercel 404 in your screenshot. The custom domain `https://www.askjanice.net` is the canonical app URL.
+### Edge cases handled
+- Token refresh (Outlook refresh tokens expire after 90 days of inactivity — banner warns).
+- User disconnects Outlook → row deleted, future bookings skip the calendar step.
+- Personal Microsoft accounts work the same as work/school accounts (the `common` tenant + multi-tenant app setting).
 
-- `src/routes/api.public.elevenlabs.postcall.ts` and `src/lib/notifications.functions.ts`: change the URL resolver to **always prefer `https://www.askjanice.net`** and only fall back to `NEXT_PUBLIC_SITE_URL` if the canonical isn't set. Add a guard that ignores any `NEXT_PUBLIC_SITE_URL` value containing `vercel.app` so the stale value can't override.
-- Update the secret separately (optional cleanup): set `NEXT_PUBLIC_SITE_URL = https://www.askjanice.net` so other future code paths also pick it up. I'll do this in the same turn.
+## Order of work
 
-## Files touched
+1. You complete Azure setup above and tell me you're ready.
+2. I'll request the two secrets via the secrets prompt.
+3. I migrate DB + add `provider` column.
+4. Build server + functions + callback route.
+5. Build UI card + integrate into dashboard.
+6. Wire booking tools to route by provider.
 
-- `src/server/email-templates.server.ts` (template)
-- `src/routes/api.public.elevenlabs.postcall.ts` (lead fetch + URL)
-- `src/lib/notifications.functions.ts` (URL)
-- `src/lib/agent-lead-extract.functions.ts`, `src/server/lead-extraction.ts` (address extraction)
-- `src/routes/dashboard.leads.tsx` (show address)
-- Migration: add `address` to `public.leads`
-
-## One quick check before I build
-
-If you don't want me to wire address extraction right now (it requires the AI to ask/listen for an address — only fills in when the caller actually says one), I can ship just (1) the reordered email with name/email/phone and (3) the link fix today, and add address later. Which do you prefer:
-
-- **A**: Do everything in this plan (reorder + address column + extraction + link fix).
-- **B**: Just reorder the email with name/email/phone and fix the link; skip the address column for now.
+Ready? Reply "azure done" once you've got the Client ID and Secret in hand and I'll request them and start building.

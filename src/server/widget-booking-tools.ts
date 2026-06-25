@@ -1,8 +1,11 @@
 // Tool definitions + executors for the widget chat AI to book appointments.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { checkFreeBusy, createEvent, getValidAccessToken } from "./google-calendar.server";
+import * as Google from "./google-calendar.server";
+import * as Outlook from "./outlook-calendar.server";
 import { sendEmail } from "./email.server";
 import { renderBookingEmail } from "./email-templates.server";
+
+export type CalendarProvider = "google" | "outlook";
 
 export interface BusinessHoursDay {
   enabled: boolean;
@@ -25,25 +28,66 @@ const DAY_KEYS: (keyof BusinessHours)[] = [
 ];
 
 export interface CalendarConfig {
+  provider: CalendarProvider;
   timezone: string;
   default_event_duration_minutes: number;
   booking_buffer_minutes: number;
   business_hours: BusinessHours;
 }
 
+// Detect which calendar provider is connected for an agent. Google wins if both.
 export async function getCalendarConfig(agentId: string): Promise<CalendarConfig | null> {
-  const { data } = await supabaseAdmin
+  const { data: g } = await supabaseAdmin
     .from("agent_google_calendar")
     .select("timezone, default_event_duration_minutes, booking_buffer_minutes, business_hours")
     .eq("agent_id", agentId)
     .maybeSingle();
-  if (!data) return null;
-  return {
-    timezone: data.timezone,
-    default_event_duration_minutes: data.default_event_duration_minutes,
-    booking_buffer_minutes: data.booking_buffer_minutes,
-    business_hours: data.business_hours as unknown as BusinessHours,
-  };
+  if (g) {
+    return {
+      provider: "google",
+      timezone: g.timezone,
+      default_event_duration_minutes: g.default_event_duration_minutes,
+      booking_buffer_minutes: g.booking_buffer_minutes,
+      business_hours: g.business_hours as unknown as BusinessHours,
+    };
+  }
+  const { data: o } = await supabaseAdmin
+    .from("agent_outlook_calendar")
+    .select("timezone, default_event_duration_minutes, booking_buffer_minutes, business_hours")
+    .eq("agent_id", agentId)
+    .maybeSingle();
+  if (o) {
+    return {
+      provider: "outlook",
+      timezone: o.timezone,
+      default_event_duration_minutes: o.default_event_duration_minutes,
+      booking_buffer_minutes: o.booking_buffer_minutes,
+      business_hours: o.business_hours as unknown as BusinessHours,
+    };
+  }
+  return null;
+}
+
+function providerCheckFreeBusy(provider: CalendarProvider, agentId: string, min: string, max: string) {
+  return provider === "outlook"
+    ? Outlook.checkFreeBusy(agentId, min, max)
+    : Google.checkFreeBusy(agentId, min, max);
+}
+
+function providerCreateEvent(
+  provider: CalendarProvider,
+  agentId: string,
+  args: Parameters<typeof Google.createEvent>[1],
+) {
+  return provider === "outlook"
+    ? Outlook.createEvent(agentId, args)
+    : Google.createEvent(agentId, args);
+}
+
+function providerGetToken(provider: CalendarProvider, agentId: string) {
+  return provider === "outlook"
+    ? Outlook.getValidAccessToken(agentId)
+    : Google.getValidAccessToken(agentId);
 }
 
 // Format a Date as "YYYY-MM-DD HH:mm" in a target IANA timezone.
@@ -155,9 +199,9 @@ export async function findAvailableSlots(
   // Don't offer slots in the past.
   const earliest = new Date(Math.max(dayStart.getTime(), Date.now() + 5 * 60_000));
 
-  const fb = await checkFreeBusy(agentId, dayStart.toISOString(), dayEnd.toISOString());
+  const fb = await providerCheckFreeBusy(cfg.provider, agentId, dayStart.toISOString(), dayEnd.toISOString());
   if ("error" in fb) return { error: fb.error };
-  const busy = fb.busy.map((b) => ({ start: new Date(b.start).getTime(), end: new Date(b.end).getTime() }));
+  const busy = fb.busy.map((b: { start: string; end: string }) => ({ start: new Date(b.start).getTime(), end: new Date(b.end).getTime() }));
 
   const slotMs = duration * 60_000;
   const stepMs = 30 * 60_000; // 30-min increments
@@ -169,7 +213,7 @@ export async function findAvailableSlots(
   for (let t = startTs; t + slotMs <= dayEnd.getTime() && slots.length < 8; t += stepMs) {
     const s = t;
     const e = t + slotMs;
-    const conflicts = busy.some((b) => s < b.end + bufferMs && e + bufferMs > b.start);
+    const conflicts = busy.some((b: { start: number; end: number }) => s < b.end + bufferMs && e + bufferMs > b.start);
     if (!conflicts) slots.push(new Date(s).toISOString());
   }
 
@@ -205,7 +249,7 @@ export async function bookAppointment(params: {
   const cfg = await getCalendarConfig(agentId);
   if (!cfg) return { error: "Calendar not connected" };
 
-  const conn = await getValidAccessToken(agentId);
+  const conn = await providerGetToken(cfg.provider, agentId);
   if (!conn) return { error: "Calendar not connected" };
 
   const start = new Date(args.start_iso);
@@ -233,10 +277,10 @@ export async function bookAppointment(params: {
   }
 
   // Re-check availability right before booking to avoid double-booking.
-  const fb = await checkFreeBusy(agentId, start.toISOString(), end.toISOString());
+  const fb = await providerCheckFreeBusy(cfg.provider, agentId, start.toISOString(), end.toISOString());
   if ("error" in fb) return { error: fb.error };
   const bufferMs = cfg.booking_buffer_minutes * 60_000;
-  const conflict = fb.busy.some((b) => {
+  const conflict = fb.busy.some((b: { start: string; end: string }) => {
     const bs = new Date(b.start).getTime();
     const be = new Date(b.end).getTime();
     return start.getTime() < be + bufferMs && end.getTime() + bufferMs > bs;
@@ -266,7 +310,7 @@ export async function bookAppointment(params: {
   if (args.customer_phone) descriptionLines.push(`Phone: ${args.customer_phone}`);
   if (args.reason) descriptionLines.push(`Reason: ${args.reason}`);
 
-  const ev = await createEvent(agentId, {
+  const ev = await providerCreateEvent(cfg.provider, agentId, {
     summary,
     description: descriptionLines.join("\n"),
     start: start.toISOString(),
@@ -290,8 +334,11 @@ export async function bookAppointment(params: {
       customer_email: customerEmail,
       customer_phone: args.customer_phone || null,
       reason: args.reason || null,
-      google_event_id: ev.id,
-      google_event_link: ev.htmlLink || null,
+      provider: cfg.provider,
+      google_event_id: cfg.provider === "google" ? ev.id : null,
+      google_event_link: cfg.provider === "google" ? (ev.htmlLink || null) : null,
+      outlook_event_id: cfg.provider === "outlook" ? ev.id : null,
+      outlook_event_link: cfg.provider === "outlook" ? (ev.htmlLink || null) : null,
     })
     .select("id")
     .single();
@@ -475,7 +522,7 @@ export function buildBookingPromptAddendum(cfg: CalendarConfig): string {
 
   return [
     `BOOKING CAPABILITIES`,
-    `You can book appointments directly on the business's Google Calendar using the provided tools.`,
+    `You can book appointments directly on the business's calendar using the provided tools.`,
     `Today is ${weekdayName}, ${todayStr} (${cfg.timezone}). Default appointment length: ${cfg.default_event_duration_minutes} minutes.`,
     `Business hours (${cfg.timezone}): ${hoursSummary}.`,
     ``,
@@ -490,10 +537,9 @@ export function buildBookingPromptAddendum(cfg: CalendarConfig): string {
 }
 
 export async function isCalendarConnected(agentId: string): Promise<boolean> {
-  const { data } = await supabaseAdmin
-    .from("agent_google_calendar")
-    .select("id")
-    .eq("agent_id", agentId)
-    .maybeSingle();
-  return !!data;
+  const [{ data: g }, { data: o }] = await Promise.all([
+    supabaseAdmin.from("agent_google_calendar").select("id").eq("agent_id", agentId).maybeSingle(),
+    supabaseAdmin.from("agent_outlook_calendar").select("id").eq("agent_id", agentId).maybeSingle(),
+  ]);
+  return !!g || !!o;
 }
