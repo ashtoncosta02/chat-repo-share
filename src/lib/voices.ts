@@ -55,18 +55,18 @@ export const VOICE_OPTIONS: VoiceOption[] = [
     avatar: aliceAvatar,
   },
   {
-    id: "ZoiZ8fuDWInAcwPXaVeq",
-    name: "Brian",
-    description: "Down-to-earth American male — extremely natural",
-    gender: "male",
-    avatar: brianAvatar,
-  },
-  {
     id: "tMXujoAjiboschVOhAnk",
     name: "Sophie",
     description: "Friendly young female — easygoing conversational",
     gender: "female",
     avatar: sophieAvatar,
+  },
+  {
+    id: "ZoiZ8fuDWInAcwPXaVeq",
+    name: "Brian",
+    description: "Down-to-earth American male — extremely natural",
+    gender: "male",
+    avatar: brianAvatar,
   },
   {
     id: "UgBBYS2sOqTuMpoF3BR0",
