@@ -389,40 +389,59 @@ function ConversationsPage() {
               <p className="text-sm mt-1">Try adjusting your search or filter criteria.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <ResizableTable
-                columns={[
-                  { key: "caller", label: "Caller", default: 260, min: 160 },
-                  { key: "intent", label: "Intent", default: 130, min: 90 },
-                  { key: "summary", label: "AI Summary", default: 420, min: 200 },
-                  { key: "time", label: "Time", default: 150, min: 100 },
-                  { key: "status", label: "Status", default: 140, min: 100 },
-                  { key: "actions", label: "", default: 180, min: 120 },
-                ]}
-                storageKey="askjanice.threads.colWidths.v1"
-              >
-                <tbody className="divide-y divide-border">
-                  {filteredConvs.map((c) => (
-                    <ConversationRow
-                      key={c.id}
-                      c={c}
-                      deletingId={deletingId}
-                      onDelete={handleDelete}
-                      callingId={callingId}
-                      onAiCallback={triggerAiCallback}
-                      onHumanCallback={triggerHumanCallback}
-                      onStatusChange={updateLeadStatus}
-                    />
-                  ))}
-                </tbody>
-              </ResizableTable>
-            </div>
+            <>
+              {/* Desktop / tablet: resizable table */}
+              <div className="hidden md:block overflow-x-auto">
+                <ResizableTable
+                  columns={[
+                    { key: "caller", label: "Caller", default: 240, min: 160 },
+                    { key: "intent", label: "Intent", default: 120, min: 90 },
+                    { key: "summary", label: "AI Summary", default: 620, min: 280 },
+                    { key: "time", label: "Time", default: 140, min: 100 },
+                    { key: "status", label: "Status", default: 130, min: 100 },
+                    { key: "actions", label: "", default: 180, min: 120 },
+                  ]}
+                  storageKey="askjanice.threads.colWidths.v2"
+                >
+                  <tbody className="divide-y divide-border">
+                    {filteredConvs.map((c) => (
+                      <ConversationRow
+                        key={c.id}
+                        c={c}
+                        deletingId={deletingId}
+                        onDelete={handleDelete}
+                        callingId={callingId}
+                        onAiCallback={triggerAiCallback}
+                        onHumanCallback={triggerHumanCallback}
+                        onStatusChange={updateLeadStatus}
+                      />
+                    ))}
+                  </tbody>
+                </ResizableTable>
+              </div>
+              {/* Mobile: card list */}
+              <ul className="md:hidden divide-y divide-border">
+                {filteredConvs.map((c) => (
+                  <ConversationCard
+                    key={c.id}
+                    c={c}
+                    deletingId={deletingId}
+                    onDelete={handleDelete}
+                    callingId={callingId}
+                    onAiCallback={triggerAiCallback}
+                    onHumanCallback={triggerHumanCallback}
+                    onStatusChange={updateLeadStatus}
+                  />
+                ))}
+              </ul>
+            </>
           )}
         </div>
       </div>
     </div>
   );
 }
+
 
 const LEAD_STATUS_OPTIONS = ["new", "contacted", "won", "lost"] as const;
 
@@ -492,8 +511,8 @@ function ConversationRow({
       <td className="px-4 py-4">
         <IntentTag source={c.lead_source} />
       </td>
-      <td className="px-4 py-4 max-w-sm">
-        <p className="text-sm text-foreground/80 whitespace-pre-wrap break-words">
+      <td className="px-4 py-4 align-top">
+        <p className="text-sm text-foreground/80 whitespace-pre-wrap break-words leading-relaxed">
           {c.ai_summary?.trim() ||
             c.lead_notes?.trim() ||
             (c.message_count > 0
@@ -501,12 +520,13 @@ function ConversationRow({
               : `${c.message_count} messages · ${Math.round(c.duration_seconds / 60)}m call`)}
         </p>
         {c.recording_url && (
-          <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[oklch(0.95_0.05_290)] text-[var(--gold)]">
+          <span className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[oklch(0.95_0.05_290)] text-[var(--gold)]">
             <Mic className="h-3 w-3" />
             Recording
           </span>
         )}
       </td>
+
       <td className="px-4 py-4 text-sm text-muted-foreground whitespace-nowrap">
         {formatTime(c.started_at)}
       </td>
@@ -598,7 +618,149 @@ function ConversationRow({
   );
 }
 
+function ConversationCard({
+  c,
+  deletingId,
+  onDelete,
+  callingId,
+  onAiCallback,
+  onHumanCallback,
+  onStatusChange,
+}: {
+  c: ConvRow;
+  deletingId: string | null;
+  onDelete: (id: string) => void;
+  callingId: string | null;
+  onAiCallback: (leadId: string) => void;
+  onHumanCallback: (leadId: string, phone: string) => void;
+  onStatusChange: (leadId: string, status: string) => void;
+}) {
+  const displayName = c.lead_name ?? "Unknown Caller";
+  const initials = c.lead_name
+    ? c.lead_name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()
+    : null;
+  const avatarColor = avatarBgFor(c.id);
+  const isCalling = c.lead_id != null && callingId === c.lead_id;
+  const summary =
+    c.ai_summary?.trim() ||
+    c.lead_notes?.trim() ||
+    (c.message_count > 0
+      ? "Generating summary…"
+      : `${c.message_count} messages · ${Math.round(c.duration_seconds / 60)}m call`);
+
+  return (
+    <li className="p-4 hover:bg-muted/40 transition">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+        <Link
+          to="/dashboard/conversations/$conversationId"
+          params={{ conversationId: c.id }}
+          className="flex min-w-0 items-center gap-3"
+        >
+          <div className={`h-10 w-10 shrink-0 rounded-full flex items-center justify-center text-sm font-semibold ${avatarColor}`}>
+            {initials ?? <PhoneIcon className="h-4 w-4" />}
+          </div>
+          <div className="min-w-0">
+            <div className="font-medium text-foreground truncate">{displayName}</div>
+            <div className="text-xs text-muted-foreground truncate">
+              {c.lead_phone ?? "No phone"} · {formatTime(c.started_at)}
+            </div>
+          </div>
+        </Link>
+        <div className="shrink-0 flex items-center gap-1">
+          <IntentTag source={c.lead_source} />
+        </div>
+      </div>
+      <p className="mt-3 text-sm text-foreground/80 whitespace-pre-wrap break-words leading-relaxed">
+        {summary}
+      </p>
+      {c.recording_url && (
+        <span className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[oklch(0.95_0.05_290)] text-[var(--gold)]">
+          <Mic className="h-3 w-3" />
+          Recording
+        </span>
+      )}
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+        {c.lead_id ? (
+          <Select value={c.lead_status ?? "new"} onValueChange={(v) => onStatusChange(c.lead_id!, v)}>
+            <SelectTrigger className="h-8 w-32 text-xs capitalize">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {LEAD_STATUS_OPTIONS.map((s) => (
+                <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <StatusTag status={c.lead_status} />
+        )}
+        <div className="flex items-center gap-1">
+          {c.lead_id && c.lead_phone && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" disabled={isCalling}>
+                  {isCalling ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <PhoneCall className="h-3.5 w-3.5 mr-1" />}
+                  Call back
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onHumanCallback(c.lead_id!, c.lead_phone!)}>
+                  <PhoneIcon className="h-3.5 w-3.5 mr-2" />
+                  Call from my phone
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onAiCallback(c.lead_id!)}>
+                  <Bot className="h-3.5 w-3.5 mr-2" />
+                  Have receptionist call now
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-destructive"
+                disabled={deletingId === c.id}
+                aria-label="Delete conversation"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete this thread?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently remove the transcript and any messages. This can't be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => onDelete(c.id)}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          <Link
+            to="/dashboard/conversations/$conversationId"
+            params={{ conversationId: c.id }}
+            className="p-2 text-muted-foreground hover:text-foreground"
+            aria-label="Open transcript"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </div>
+    </li>
+  );
+}
+
 function IntentTag({ source }: { source: string | null }) {
+
   const map: Record<string, { label: string; cls: string }> = {
     voice: { label: "Voice Call", cls: "bg-blue-100 text-blue-700" },
     widget: { label: "Chat Widget", cls: "bg-violet-100 text-violet-700" },
