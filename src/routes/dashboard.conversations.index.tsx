@@ -459,58 +459,24 @@ function ConversationsPage() {
               <p className="text-sm mt-1">Try adjusting your search or filter criteria.</p>
             </div>
           ) : (
-            <>
-              {/* Desktop / tablet: resizable table */}
-              <div className="hidden md:block overflow-x-auto">
-                <ResizableTable
-                  columns={[
-                    { key: "caller", label: "Caller", default: 240, min: 160 },
-                    { key: "intent", label: "Intent", default: 120, min: 90 },
-                    { key: "summary", label: "AI Summary", default: 620, min: 280 },
-                    { key: "time", label: "Time", default: 140, min: 100 },
-                    { key: "status", label: "Status", default: 130, min: 100 },
-                    { key: "actions", label: "", default: 180, min: 120 },
-                  ]}
-                  storageKey="askjanice.threads.colWidths.v2"
-                >
-                  <tbody className="divide-y divide-border">
-                    {filteredConvs.map((c) => (
-                      <ConversationRow
-                        key={c.id}
-                        c={c}
-                        deletingId={deletingId}
-                        onDelete={handleDelete}
-                        onArchive={handleArchive}
-                        onBlock={handleBlock}
-                        callingId={callingId}
-                        onAiCallback={triggerAiCallback}
-                        onHumanCallback={triggerHumanCallback}
-                        onStatusChange={updateLeadStatus}
-                      />
-                    ))}
-                  </tbody>
-                </ResizableTable>
-              </div>
-              {/* Mobile: card list */}
-              <ul className="md:hidden divide-y divide-border">
-                {filteredConvs.map((c) => (
-                  <ConversationCard
-                    key={c.id}
-                    c={c}
-                    deletingId={deletingId}
-                    onDelete={handleDelete}
-                    onArchive={handleArchive}
-                    onBlock={handleBlock}
-                    callingId={callingId}
-                    onAiCallback={triggerAiCallback}
-                    onHumanCallback={triggerHumanCallback}
-                    onStatusChange={updateLeadStatus}
-                  />
-                ))}
-              </ul>
-
-            </>
+            <ul className="divide-y divide-border">
+              {filteredConvs.map((c) => (
+                <ConversationCard
+                  key={c.id}
+                  c={c}
+                  deletingId={deletingId}
+                  onDelete={handleDelete}
+                  onArchive={handleArchive}
+                  onBlock={handleBlock}
+                  callingId={callingId}
+                  onAiCallback={triggerAiCallback}
+                  onHumanCallback={triggerHumanCallback}
+                  onStatusChange={updateLeadStatus}
+                />
+              ))}
+            </ul>
           )}
+
         </div>
       </div>
     </div>
