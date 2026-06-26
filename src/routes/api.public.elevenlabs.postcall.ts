@@ -167,7 +167,7 @@ export async function persistPostCall(
 ): Promise<PersistResult> {
   const { data: agent, error: agentErr } = await supabaseAdmin
     .from("agents")
-    .select("id, user_id, business_name, notify_email, notify_email_transcript")
+    .select("id, user_id, business_name, notify_email, notify_email_transcript, notify_sms_transcript, notify_phone")
     .eq("elevenlabs_agent_id", elAgentId)
     .maybeSingle();
   if (agentErr || !agent) {
@@ -342,6 +342,29 @@ export async function persistPostCall(
       }
     } catch (e) {
       console.error("postcall: transcript email failed", e);
+    }
+  }
+
+  // SMS the transcript summary to the business owner if they've opted in.
+  if (agent.notify_sms_transcript && agent.notify_phone?.trim()) {
+    try {
+      const envUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+      const siteUrl =
+        envUrl && !envUrl.includes("vercel.app")
+          ? envUrl
+          : "https://www.askjanice.net";
+      const { sendTranscriptSms } = await import("@/server/sms.server");
+      await sendTranscriptSms({
+        userId: agent.user_id,
+        to: agent.notify_phone.trim(),
+        businessName: agent.business_name || "Your business",
+        callerNumber: data.metadata?.phone_call?.external_number ?? null,
+        durationSeconds: durationSec,
+        summary: summaryText ?? "",
+        dashboardUrl: `${siteUrl}/dashboard/conversations/${convo.id}`,
+      });
+    } catch (e) {
+      console.error("postcall: transcript SMS failed", e);
     }
   }
 
