@@ -317,9 +317,15 @@ function ConversationsPage() {
           (c.lead_notes ?? "").toLowerCase().includes(q);
       const matchesIntent = intentFilter === "all" ? true : (c.lead_source ?? "") === intentFilter;
       const matchesStatus = statusFilter === "all" ? true : (c.lead_status ?? "") === statusFilter;
-      return matchesView && matchesSearch && matchesIntent && matchesStatus;
+      let matchesDate = true;
+      if (dateFilter) {
+        const d = new Date(c.started_at);
+        const local = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        matchesDate = local === dateFilter;
+      }
+      return matchesView && matchesSearch && matchesIntent && matchesStatus && matchesDate;
     });
-  }, [convs, view, searchQuery, intentFilter, statusFilter]);
+  }, [convs, view, searchQuery, intentFilter, statusFilter, dateFilter]);
 
   const intentOptions = [
     { value: "all", label: "All Intents" },
