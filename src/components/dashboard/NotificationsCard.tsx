@@ -120,6 +120,24 @@ export function NotificationsCard({
     }
   };
 
+  const sendTestSms = async () => {
+    const target = (phoneDraft.trim() || phone || "").trim();
+    if (!target) {
+      toast.error("Enter a phone number first.");
+      return;
+    }
+    setSendingTestSms(true);
+    try {
+      await sendTestSmsFn({ data: { to: target } });
+      toast.success(`Test text sent to ${target}.`);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Test SMS failed.";
+      toast.error(msg);
+    } finally {
+      setSendingTestSms(false);
+    }
+  };
+
   return (
     <div className="border border-border rounded-2xl bg-card p-6">
       <div className="flex items-center gap-2 mb-1">
