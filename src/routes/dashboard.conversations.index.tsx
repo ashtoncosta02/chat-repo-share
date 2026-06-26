@@ -76,6 +76,7 @@ function ConversationsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [intentFilter, setIntentFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [dateFilter, setDateFilter] = useState<string>(""); // YYYY-MM-DD in local tz
   const [view, setView] = useState<"active" | "archived">("active");
 
   const loadConvs = async () => {
@@ -316,9 +317,15 @@ function ConversationsPage() {
           (c.lead_notes ?? "").toLowerCase().includes(q);
       const matchesIntent = intentFilter === "all" ? true : (c.lead_source ?? "") === intentFilter;
       const matchesStatus = statusFilter === "all" ? true : (c.lead_status ?? "") === statusFilter;
-      return matchesView && matchesSearch && matchesIntent && matchesStatus;
+      let matchesDate = true;
+      if (dateFilter) {
+        const d = new Date(c.started_at);
+        const local = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        matchesDate = local === dateFilter;
+      }
+      return matchesView && matchesSearch && matchesIntent && matchesStatus && matchesDate;
     });
-  }, [convs, view, searchQuery, intentFilter, statusFilter]);
+  }, [convs, view, searchQuery, intentFilter, statusFilter, dateFilter]);
 
   const intentOptions = [
     { value: "all", label: "All Intents" },
@@ -418,6 +425,18 @@ function ConversationsPage() {
                   ))}
                 </SelectContent>
               </Select>
+              <Input
+                type="date"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="w-[170px]"
+                aria-label="Filter by date"
+              />
+              {dateFilter && (
+                <Button variant="ghost" size="sm" onClick={() => setDateFilter("")}>
+                  Clear date
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -430,7 +449,7 @@ function ConversationsPage() {
               </Button>
             </div>
           </div>
-          {(searchQuery || intentFilter !== "all" || statusFilter !== "all") && (
+          {(searchQuery || intentFilter !== "all" || statusFilter !== "all" || dateFilter) && (
             <p className="text-xs text-muted-foreground">
               Showing {filteredConvs.length} of {convs.length} conversations
             </p>
