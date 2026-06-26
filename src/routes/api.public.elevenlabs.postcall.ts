@@ -360,7 +360,7 @@ export async function persistPostCall(
         businessName: agent.business_name || "Your business",
         callerNumber: data.metadata?.phone_call?.external_number ?? null,
         durationSeconds: durationSec,
-        summary: summaryText,
+        summary: summaryText ?? "",
         dashboardUrl: `${siteUrl}/dashboard/conversations/${convo.id}`,
       });
     } catch (e) {
