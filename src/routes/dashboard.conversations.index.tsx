@@ -511,8 +511,8 @@ function ConversationRow({
       <td className="px-4 py-4">
         <IntentTag source={c.lead_source} />
       </td>
-      <td className="px-4 py-4 max-w-sm">
-        <p className="text-sm text-foreground/80 whitespace-pre-wrap break-words">
+      <td className="px-4 py-4 align-top">
+        <p className="text-sm text-foreground/80 whitespace-pre-wrap break-words leading-relaxed">
           {c.ai_summary?.trim() ||
             c.lead_notes?.trim() ||
             (c.message_count > 0
@@ -520,12 +520,13 @@ function ConversationRow({
               : `${c.message_count} messages · ${Math.round(c.duration_seconds / 60)}m call`)}
         </p>
         {c.recording_url && (
-          <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[oklch(0.95_0.05_290)] text-[var(--gold)]">
+          <span className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[oklch(0.95_0.05_290)] text-[var(--gold)]">
             <Mic className="h-3 w-3" />
             Recording
           </span>
         )}
       </td>
+
       <td className="px-4 py-4 text-sm text-muted-foreground whitespace-nowrap">
         {formatTime(c.started_at)}
       </td>
