@@ -97,6 +97,14 @@ export const sendTestTranscriptEmail = createServerFn({ method: "POST" })
         phone: "+1 (555) 123-4567",
         address: "123 Main St, Toronto, ON",
       },
+    });
+    const id = await sendEmail({
+      to: data.to,
+      subject: `[TEST] ${subject}`,
+      html,
+    });
+    if (!id) throw new Error("Email failed to send. Check the Resend connector or try again.");
+    return { ok: true as const, id };
   });
 
 export const sendTestTranscriptSms = createServerFn({ method: "POST" })
@@ -129,11 +137,4 @@ export const sendTestTranscriptSms = createServerFn({ method: "POST" })
     }
     return { ok: true as const, sid };
   });
-    const id = await sendEmail({
-      to: data.to,
-      subject: `[TEST] ${subject}`,
-      html,
-    });
-    if (!id) throw new Error("Email failed to send. Check the Resend connector or try again.");
-    return { ok: true as const, id };
-  });
+
