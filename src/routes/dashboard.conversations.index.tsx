@@ -302,9 +302,12 @@ function ConversationsPage() {
   const totalDuration = convs.reduce((s, c) => s + c.duration_seconds, 0);
   const totalMin = Math.round(totalDuration / 60);
 
+  const archivedCount = useMemo(() => convs.filter((c) => !!c.archived_at).length, [convs]);
+
   const filteredConvs = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return convs.filter((c) => {
+      const matchesView = view === "archived" ? !!c.archived_at : !c.archived_at;
       const matchesSearch = !q
         ? true
         : (c.lead_name ?? "").toLowerCase().includes(q) ||
@@ -313,9 +316,9 @@ function ConversationsPage() {
           (c.lead_notes ?? "").toLowerCase().includes(q);
       const matchesIntent = intentFilter === "all" ? true : (c.lead_source ?? "") === intentFilter;
       const matchesStatus = statusFilter === "all" ? true : (c.lead_status ?? "") === statusFilter;
-      return matchesSearch && matchesIntent && matchesStatus;
+      return matchesView && matchesSearch && matchesIntent && matchesStatus;
     });
-  }, [convs, searchQuery, intentFilter, statusFilter]);
+  }, [convs, view, searchQuery, intentFilter, statusFilter]);
 
   const intentOptions = [
     { value: "all", label: "All Intents" },
