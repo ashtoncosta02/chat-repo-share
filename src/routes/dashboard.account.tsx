@@ -20,7 +20,8 @@ export const Route = createFileRoute("/dashboard/account")({
 type Msg = { type: "success" | "error"; text: string } | null;
 
 function AccountPage() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const [newEmail, setNewEmail] = useState("");
   const [emailMsg, setEmailMsg] = useState<Msg>(null);
