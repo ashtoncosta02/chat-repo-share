@@ -1,12 +1,20 @@
-Update voice descriptions in `src/lib/voices.ts`:
+## What's happening
 
-1. **Janice** → "Warm, friendly female with a naturally engaging tone (default)"
-2. **Jessica** → "Approachable female — friendly and bright"
-3. **Matilda** → "Natural-sounding professional female voice"
-4. **Alice** → "Warm, natural female — calm and clear"
-5. **Sophie** → "Calm, clear female — approachable and professional"
-6. **Brian** → unchanged
-7. **George** → "Warm, young male — casual and professional"
-8. **Liam** → "Younger American male — friendly and natural" (swap "relaxed" → "friendly")
+`askjanice.net` is connected to Lovable, but the project has never been **Published**. The URL serves Lovable's "No working published build found yet" placeholder — not your homepage. Google's verification bot fetches that placeholder, sees no app name and no purpose, and rejects you.
 
-No other file changes.
+Every code change I've made is live in the **preview** only. To put it on `askjanice.net`, it has to be published.
+
+## Steps
+
+1. I'll click **Publish** for you (with your approval) — this builds the site and pushes it live to `askjanice.net`.
+2. Wait ~1–2 minutes for the deploy to finish.
+3. Open `https://askjanice.net` in an incognito window and confirm you see the new hero ("Ask Janice" headline + purpose line) — not the Lovable placeholder.
+4. Go back to Google Cloud Console → OAuth consent screen → resubmit for verification. The two branding errors will clear because Google can now actually read the page.
+
+## After publish, every future change works the same way
+
+Code changes only appear on `askjanice.net` after you click **Publish → Update** in the top-right of Lovable. The preview URL updates instantly; the live custom domain does not.
+
+## Approve and I'll publish
+
+Once you say go, I'll publish. Nothing else needs to change in the code right now.
