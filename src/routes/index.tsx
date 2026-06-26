@@ -90,13 +90,15 @@ function Hero() {
       <div className="inline-flex items-center justify-center rounded-full bg-accent px-5 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-gold-foreground">
         AI Voice Agents for Your Business
       </div>
-      <h1 className="mt-8 font-display text-5xl font-bold leading-[1.05] tracking-tight md:text-6xl">
-        Your business deserves a receptionist that{" "}
-        <span className="italic text-gold">never sleeps</span>
+      <h1 className="mt-8 font-display text-6xl font-bold leading-[1.02] tracking-tight md:text-7xl">
+        Ask <span className="italic text-gold">Janice</span>
       </h1>
-      <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">
-        A custom AI voice agent trained on your business. Answers calls, captures leads,
-        books appointments, and follows up automatically. 24/7.
+      <p className="mx-auto mt-6 font-display text-2xl font-medium leading-snug text-foreground md:text-3xl">
+        The AI receptionist that <span className="italic text-gold">never sleeps</span>.
+      </p>
+      <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">
+        Ask Janice answers your business calls 24/7, captures leads, and books appointments
+        straight into your calendar — so you never miss a customer again.
       </p>
     </section>
   );
