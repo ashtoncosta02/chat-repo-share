@@ -425,6 +425,18 @@ function ConversationsPage() {
                   ))}
                 </SelectContent>
               </Select>
+              <Input
+                type="date"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="w-[170px]"
+                aria-label="Filter by date"
+              />
+              {dateFilter && (
+                <Button variant="ghost" size="sm" onClick={() => setDateFilter("")}>
+                  Clear date
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -437,7 +449,7 @@ function ConversationsPage() {
               </Button>
             </div>
           </div>
-          {(searchQuery || intentFilter !== "all" || statusFilter !== "all") && (
+          {(searchQuery || intentFilter !== "all" || statusFilter !== "all" || dateFilter) && (
             <p className="text-xs text-muted-foreground">
               Showing {filteredConvs.length} of {convs.length} conversations
             </p>
