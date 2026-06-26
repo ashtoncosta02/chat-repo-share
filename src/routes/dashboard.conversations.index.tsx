@@ -344,6 +344,44 @@ function ConversationsPage() {
         description="Every lead and conversation in one place — calls, chats, and bookings"
       />
       <div className="p-8 space-y-6">
+        <div className="flex items-center gap-2 border-b border-border -mt-2">
+          <button
+            type="button"
+            onClick={() => setView("active")}
+            className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition ${
+              view === "active"
+                ? "border-[var(--gold)] text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Active
+          </button>
+          <button
+            type="button"
+            onClick={() => setView("archived")}
+            className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition inline-flex items-center gap-1.5 ${
+              view === "archived"
+                ? "border-[var(--gold)] text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Archive className="h-3.5 w-3.5" />
+            Archived
+            {archivedCount > 0 && (
+              <span className="text-xs px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                {archivedCount}
+              </span>
+            )}
+          </button>
+          <Link
+            to="/dashboard/conversations/blocked"
+            className="px-3 py-2 text-sm font-medium border-b-2 -mb-px border-transparent text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5"
+          >
+            <Ban className="h-3.5 w-3.5" />
+            Blocked
+          </Link>
+        </div>
+
         <div className="flex flex-col gap-4">
           <div className="flex flex-col md:flex-row md:items-center gap-3">
             <div className="relative flex-1 max-w-md">
