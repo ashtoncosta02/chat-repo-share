@@ -24,6 +24,28 @@ export const Route = createFileRoute("/api/public/twilio/voice")({
             .maybeSingle();
           if (!phoneRow?.agent_id) return voiceMessage("Sorry, this number is not connected yet.");
 
+          // Look up the agent owner so we can check the blocked-caller list.
+          const { data: agentOwner } = await supabaseAdmin
+            .from("agents")
+            .select("user_id")
+            .eq("id", phoneRow.agent_id)
+            .maybeSingle();
+          if (agentOwner?.user_id) {
+            const fromD = digitsOnly(from);
+            const { data: blocks } = await supabaseAdmin
+              .from("blocked_callers")
+              .select("phone")
+              .eq("user_id", agentOwner.user_id);
+            const isBlocked = (blocks ?? []).some((b) =>
+              samePhone(fromD, String(b.phone || "")),
+            );
+            if (isBlocked) {
+              return new Response(`<Response><Reject reason="busy" /></Response>`, {
+                headers: { "Content-Type": "application/xml" },
+              });
+            }
+          }
+
           const { data: agent } = await supabaseAdmin
             .from("agents")
             .select("id, user_id, elevenlabs_agent_id")

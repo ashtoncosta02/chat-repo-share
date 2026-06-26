@@ -3,13 +3,14 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/dashboard/PageHeader";
-import { MessageSquare, ChevronRight, Mic, Trash2, RefreshCw, Phone as PhoneIcon, Search, PhoneCall, Bot, Loader2, Mail } from "lucide-react";
+import { MessageSquare, ChevronRight, Mic, Trash2, RefreshCw, Phone as PhoneIcon, Search, PhoneCall, Bot, Loader2, Mail, MoreVertical, Archive, ArchiveRestore, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -36,6 +37,7 @@ import { summarizeConversation } from "@/lib/conversation-summary.functions";
 import { aiCallbackLead } from "@/lib/lead-callback.functions";
 import { startOutboundCall } from "@/lib/dialer.functions";
 import { getAutoDeleteSetting, setAutoDeleteSetting } from "@/lib/thread-cleanup.functions";
+import { archiveConversation, blockCaller } from "@/lib/thread-actions.functions";
 import { ResizableTable } from "@/components/dashboard/ResizableTable";
 
 
@@ -54,6 +56,7 @@ interface ConvRow {
   agent_id: string | null;
   recording_url: string | null;
   ai_summary: string | null;
+  archived_at: string | null;
   lead_id: string | null;
   lead_name: string | null;
   lead_phone: string | null;
@@ -73,11 +76,12 @@ function ConversationsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [intentFilter, setIntentFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [view, setView] = useState<"active" | "archived">("active");
 
   const loadConvs = async () => {
     const { data } = await supabase
       .from("conversations")
-      .select("id, message_count, duration_seconds, started_at, agent_id, recording_url, ai_summary, lead_id")
+      .select("id, message_count, duration_seconds, started_at, agent_id, recording_url, ai_summary, lead_id, archived_at")
       .order("started_at", { ascending: false });
     const rows = (data ?? []) as Array<{
       id: string;
@@ -88,6 +92,7 @@ function ConversationsPage() {
       recording_url: string | null;
       ai_summary: string | null;
       lead_id: string | null;
+      archived_at: string | null;
     }>;
     type LeadLite = { id: string; name: string | null; phone: string | null; email: string | null; notes: string | null; source: string | null; status: string | null };
     const byConvId = new Map<string, LeadLite>();
@@ -128,6 +133,7 @@ function ConversationsPage() {
           agent_id: r.agent_id,
           recording_url: r.recording_url,
           ai_summary: r.ai_summary,
+          archived_at: r.archived_at,
           lead_id: l?.id ?? r.lead_id ?? null,
           lead_name: l?.name ?? null,
           lead_phone: l?.phone ?? null,
@@ -216,6 +222,29 @@ function ConversationsPage() {
     toast.success("Conversation deleted.");
   };
 
+  const handleArchive = async (id: string, archived: boolean) => {
+    try {
+      await archiveConversation({ data: { conversationId: id, archived } });
+      setConvs((prev) =>
+        prev.map((c) =>
+          c.id === id ? { ...c, archived_at: archived ? new Date().toISOString() : null } : c,
+        ),
+      );
+      toast.success(archived ? "Thread archived." : "Thread restored.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not update thread.");
+    }
+  };
+
+  const handleBlock = async (phone: string, agentId: string | null) => {
+    try {
+      await blockCaller({ data: { phone, agentId } });
+      toast.success(`Blocked ${phone}. They can no longer reach your receptionist.`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not block caller.");
+    }
+  };
+
   const [callingId, setCallingId] = useState<string | null>(null);
 
   const updateLeadStatus = async (leadId: string, status: string) => {
@@ -273,9 +302,12 @@ function ConversationsPage() {
   const totalDuration = convs.reduce((s, c) => s + c.duration_seconds, 0);
   const totalMin = Math.round(totalDuration / 60);
 
+  const archivedCount = useMemo(() => convs.filter((c) => !!c.archived_at).length, [convs]);
+
   const filteredConvs = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return convs.filter((c) => {
+      const matchesView = view === "archived" ? !!c.archived_at : !c.archived_at;
       const matchesSearch = !q
         ? true
         : (c.lead_name ?? "").toLowerCase().includes(q) ||
@@ -284,9 +316,9 @@ function ConversationsPage() {
           (c.lead_notes ?? "").toLowerCase().includes(q);
       const matchesIntent = intentFilter === "all" ? true : (c.lead_source ?? "") === intentFilter;
       const matchesStatus = statusFilter === "all" ? true : (c.lead_status ?? "") === statusFilter;
-      return matchesSearch && matchesIntent && matchesStatus;
+      return matchesView && matchesSearch && matchesIntent && matchesStatus;
     });
-  }, [convs, searchQuery, intentFilter, statusFilter]);
+  }, [convs, view, searchQuery, intentFilter, statusFilter]);
 
   const intentOptions = [
     { value: "all", label: "All Intents" },
@@ -312,6 +344,44 @@ function ConversationsPage() {
         description="Every lead and conversation in one place — calls, chats, and bookings"
       />
       <div className="p-8 space-y-6">
+        <div className="flex items-center gap-2 border-b border-border -mt-2">
+          <button
+            type="button"
+            onClick={() => setView("active")}
+            className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition ${
+              view === "active"
+                ? "border-[var(--gold)] text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Active
+          </button>
+          <button
+            type="button"
+            onClick={() => setView("archived")}
+            className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition inline-flex items-center gap-1.5 ${
+              view === "archived"
+                ? "border-[var(--gold)] text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Archive className="h-3.5 w-3.5" />
+            Archived
+            {archivedCount > 0 && (
+              <span className="text-xs px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                {archivedCount}
+              </span>
+            )}
+          </button>
+          <Link
+            to="/dashboard/conversations/blocked"
+            className="px-3 py-2 text-sm font-medium border-b-2 -mb-px border-transparent text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5"
+          >
+            <Ban className="h-3.5 w-3.5" />
+            Blocked
+          </Link>
+        </div>
+
         <div className="flex flex-col gap-4">
           <div className="flex flex-col md:flex-row md:items-center gap-3">
             <div className="relative flex-1 max-w-md">
@@ -410,6 +480,8 @@ function ConversationsPage() {
                         c={c}
                         deletingId={deletingId}
                         onDelete={handleDelete}
+                        onArchive={handleArchive}
+                        onBlock={handleBlock}
                         callingId={callingId}
                         onAiCallback={triggerAiCallback}
                         onHumanCallback={triggerHumanCallback}
@@ -427,6 +499,8 @@ function ConversationsPage() {
                     c={c}
                     deletingId={deletingId}
                     onDelete={handleDelete}
+                    onArchive={handleArchive}
+                    onBlock={handleBlock}
                     callingId={callingId}
                     onAiCallback={triggerAiCallback}
                     onHumanCallback={triggerHumanCallback}
@@ -434,6 +508,7 @@ function ConversationsPage() {
                   />
                 ))}
               </ul>
+
             </>
           )}
         </div>
@@ -445,23 +520,134 @@ function ConversationsPage() {
 
 const LEAD_STATUS_OPTIONS = ["new", "contacted", "won", "lost"] as const;
 
-function ConversationRow({
+function ThreadActionsMenu({
   c,
   deletingId,
   onDelete,
-  callingId,
-  onAiCallback,
-  onHumanCallback,
-  onStatusChange,
+  onArchive,
+  onBlock,
 }: {
   c: ConvRow;
   deletingId: string | null;
   onDelete: (id: string) => void;
+  onArchive: (id: string, archived: boolean) => void;
+  onBlock: (phone: string, agentId: string | null) => void;
+}) {
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [blockOpen, setBlockOpen] = useState(false);
+  const isArchived = !!c.archived_at;
+  const phone = c.lead_phone ?? "";
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-muted-foreground hover:text-foreground"
+            disabled={deletingId === c.id}
+            aria-label="Thread actions"
+          >
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuItem onClick={() => onArchive(c.id, !isArchived)}>
+            {isArchived ? (
+              <>
+                <ArchiveRestore className="h-3.5 w-3.5 mr-2" />
+                Unarchive
+              </>
+            ) : (
+              <>
+                <Archive className="h-3.5 w-3.5 mr-2" />
+                Archive
+              </>
+            )}
+          </DropdownMenuItem>
+          {phone && (
+            <DropdownMenuItem onClick={() => setBlockOpen(true)}>
+              <Ban className="h-3.5 w-3.5 mr-2" />
+              Block caller
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => setDeleteOpen(true)}
+            className="text-destructive focus:text-destructive"
+          >
+            <Trash2 className="h-3.5 w-3.5 mr-2" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this thread?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove the transcript and any messages. This can't be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => onDelete(c.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={blockOpen} onOpenChange={setBlockOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Block {phone || "this caller"}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Future calls from this number will be rejected automatically before reaching your
+              receptionist. You can unblock them anytime from the Blocked tab.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => onBlock(phone, c.agent_id ?? null)}>
+              Block caller
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+
+
+
+type RowActionsProps = {
+  c: ConvRow;
+  deletingId: string | null;
+  onDelete: (id: string) => void;
+  onArchive: (id: string, archived: boolean) => void;
+  onBlock: (phone: string, agentId: string | null) => void;
   callingId: string | null;
   onAiCallback: (leadId: string) => void;
   onHumanCallback: (leadId: string, phone: string) => void;
   onStatusChange: (leadId: string, status: string) => void;
-}) {
+};
+
+function ConversationRow({
+  c,
+  deletingId,
+  onDelete,
+  onArchive,
+  onBlock,
+  callingId,
+  onAiCallback,
+  onHumanCallback,
+  onStatusChange,
+}: RowActionsProps) {
   const displayName = c.lead_name ?? "Unknown Caller";
   const initials = c.lead_name
     ? c.lead_name
@@ -574,36 +760,13 @@ function ConversationRow({
               </DropdownMenuContent>
             </DropdownMenu>
           )}
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-muted-foreground hover:text-destructive"
-                disabled={deletingId === c.id}
-                aria-label="Delete conversation"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete this thread?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will permanently remove the transcript and any messages. This can't be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => onDelete(c.id)}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <ThreadActionsMenu
+            c={c}
+            deletingId={deletingId}
+            onDelete={onDelete}
+            onArchive={onArchive}
+            onBlock={onBlock}
+          />
           <Link
             to="/dashboard/conversations/$conversationId"
             params={{ conversationId: c.id }}
@@ -622,19 +785,13 @@ function ConversationCard({
   c,
   deletingId,
   onDelete,
+  onArchive,
+  onBlock,
   callingId,
   onAiCallback,
   onHumanCallback,
   onStatusChange,
-}: {
-  c: ConvRow;
-  deletingId: string | null;
-  onDelete: (id: string) => void;
-  callingId: string | null;
-  onAiCallback: (leadId: string) => void;
-  onHumanCallback: (leadId: string, phone: string) => void;
-  onStatusChange: (leadId: string, status: string) => void;
-}) {
+}: RowActionsProps) {
   const displayName = c.lead_name ?? "Unknown Caller";
   const initials = c.lead_name
     ? c.lead_name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()
@@ -715,36 +872,13 @@ function ConversationCard({
               </DropdownMenuContent>
             </DropdownMenu>
           )}
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-muted-foreground hover:text-destructive"
-                disabled={deletingId === c.id}
-                aria-label="Delete conversation"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete this thread?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will permanently remove the transcript and any messages. This can't be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => onDelete(c.id)}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <ThreadActionsMenu
+            c={c}
+            deletingId={deletingId}
+            onDelete={onDelete}
+            onArchive={onArchive}
+            onBlock={onBlock}
+          />
           <Link
             to="/dashboard/conversations/$conversationId"
             params={{ conversationId: c.id }}

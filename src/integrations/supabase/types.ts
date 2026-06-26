@@ -283,6 +283,33 @@ export type Database = {
         }
         Relationships: []
       }
+      blocked_callers: {
+        Row: {
+          agent_id: string | null
+          created_at: string
+          id: string
+          phone: string
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          created_at?: string
+          id?: string
+          phone: string
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          created_at?: string
+          id?: string
+          phone?: string
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       calendar_bookings: {
         Row: {
           agent_id: string
@@ -353,6 +380,7 @@ export type Database = {
         Row: {
           agent_id: string | null
           ai_summary: string | null
+          archived_at: string | null
           duration_seconds: number
           elevenlabs_conversation_id: string | null
           ended_at: string | null
@@ -366,6 +394,7 @@ export type Database = {
         Insert: {
           agent_id?: string | null
           ai_summary?: string | null
+          archived_at?: string | null
           duration_seconds?: number
           elevenlabs_conversation_id?: string | null
           ended_at?: string | null
@@ -379,6 +408,7 @@ export type Database = {
         Update: {
           agent_id?: string | null
           ai_summary?: string | null
+          archived_at?: string | null
           duration_seconds?: number
           elevenlabs_conversation_id?: string | null
           ended_at?: string | null

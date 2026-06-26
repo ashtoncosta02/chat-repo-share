@@ -33,6 +33,7 @@ import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
 import { Route as DashboardAccountRouteImport } from './routes/dashboard.account'
 import { Route as DashboardConversationsIndexRouteImport } from './routes/dashboard.conversations.index'
 import { Route as DashboardAdminIndexRouteImport } from './routes/dashboard.admin.index'
+import { Route as DashboardConversationsBlockedRouteImport } from './routes/dashboard.conversations.blocked'
 import { Route as DashboardConversationsConversationIdRouteImport } from './routes/dashboard.conversations.$conversationId'
 import { Route as DashboardAgentsAgentIdRouteImport } from './routes/dashboard.agents.$agentId'
 import { Route as DashboardAdminUsersRouteImport } from './routes/dashboard.admin.users'
@@ -180,6 +181,12 @@ const DashboardAdminIndexRoute = DashboardAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardAdminRoute,
 } as any)
+const DashboardConversationsBlockedRoute =
+  DashboardConversationsBlockedRouteImport.update({
+    id: '/blocked',
+    path: '/blocked',
+    getParentRoute: () => DashboardConversationsRoute,
+  } as any)
 const DashboardConversationsConversationIdRoute =
   DashboardConversationsConversationIdRouteImport.update({
     id: '/$conversationId',
@@ -350,6 +357,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/admin/users': typeof DashboardAdminUsersRouteWithChildren
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
+  '/dashboard/conversations/blocked': typeof DashboardConversationsBlockedRoute
   '/dashboard/admin/': typeof DashboardAdminIndexRoute
   '/dashboard/conversations/': typeof DashboardConversationsIndexRoute
   '/api/public/elevenlabs/postcall': typeof ApiPublicElevenlabsPostcallRoute
@@ -396,6 +404,7 @@ export interface FileRoutesByTo {
   '/dashboard/admin/health': typeof DashboardAdminHealthRoute
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
+  '/dashboard/conversations/blocked': typeof DashboardConversationsBlockedRoute
   '/dashboard/admin': typeof DashboardAdminIndexRoute
   '/dashboard/conversations': typeof DashboardConversationsIndexRoute
   '/api/public/elevenlabs/postcall': typeof ApiPublicElevenlabsPostcallRoute
@@ -448,6 +457,7 @@ export interface FileRoutesById {
   '/dashboard/admin/users': typeof DashboardAdminUsersRouteWithChildren
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
+  '/dashboard/conversations/blocked': typeof DashboardConversationsBlockedRoute
   '/dashboard/admin/': typeof DashboardAdminIndexRoute
   '/dashboard/conversations/': typeof DashboardConversationsIndexRoute
   '/api/public/elevenlabs/postcall': typeof ApiPublicElevenlabsPostcallRoute
@@ -501,6 +511,7 @@ export interface FileRouteTypes {
     | '/dashboard/admin/users'
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
+    | '/dashboard/conversations/blocked'
     | '/dashboard/admin/'
     | '/dashboard/conversations/'
     | '/api/public/elevenlabs/postcall'
@@ -547,6 +558,7 @@ export interface FileRouteTypes {
     | '/dashboard/admin/health'
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
+    | '/dashboard/conversations/blocked'
     | '/dashboard/admin'
     | '/dashboard/conversations'
     | '/api/public/elevenlabs/postcall'
@@ -598,6 +610,7 @@ export interface FileRouteTypes {
     | '/dashboard/admin/users'
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
+    | '/dashboard/conversations/blocked'
     | '/dashboard/admin/'
     | '/dashboard/conversations/'
     | '/api/public/elevenlabs/postcall'
@@ -817,6 +830,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/admin/'
       preLoaderRoute: typeof DashboardAdminIndexRouteImport
       parentRoute: typeof DashboardAdminRoute
+    }
+    '/dashboard/conversations/blocked': {
+      id: '/dashboard/conversations/blocked'
+      path: '/blocked'
+      fullPath: '/dashboard/conversations/blocked'
+      preLoaderRoute: typeof DashboardConversationsBlockedRouteImport
+      parentRoute: typeof DashboardConversationsRoute
     }
     '/dashboard/conversations/$conversationId': {
       id: '/dashboard/conversations/$conversationId'
@@ -1044,6 +1064,7 @@ const DashboardAdminRouteWithChildren = DashboardAdminRoute._addFileChildren(
 
 interface DashboardConversationsRouteChildren {
   DashboardConversationsConversationIdRoute: typeof DashboardConversationsConversationIdRoute
+  DashboardConversationsBlockedRoute: typeof DashboardConversationsBlockedRoute
   DashboardConversationsIndexRoute: typeof DashboardConversationsIndexRoute
 }
 
@@ -1051,6 +1072,7 @@ const DashboardConversationsRouteChildren: DashboardConversationsRouteChildren =
   {
     DashboardConversationsConversationIdRoute:
       DashboardConversationsConversationIdRoute,
+    DashboardConversationsBlockedRoute: DashboardConversationsBlockedRoute,
     DashboardConversationsIndexRoute: DashboardConversationsIndexRoute,
   }
 
@@ -1129,13 +1151,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
