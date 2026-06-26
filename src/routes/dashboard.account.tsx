@@ -1,9 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/dashboard/PageHeader";
-import { Mail, KeyRound, CreditCard, CheckCircle2, AlertCircle } from "lucide-react";
+import { deleteOwnAccount } from "@/lib/account.functions";
+import { Mail, KeyRound, CreditCard, CheckCircle2, AlertCircle, Trash2, LifeBuoy } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard/account")({
   head: () => ({
