@@ -480,6 +480,8 @@ function ConversationsPage() {
                         c={c}
                         deletingId={deletingId}
                         onDelete={handleDelete}
+                        onArchive={handleArchive}
+                        onBlock={handleBlock}
                         callingId={callingId}
                         onAiCallback={triggerAiCallback}
                         onHumanCallback={triggerHumanCallback}
@@ -497,6 +499,8 @@ function ConversationsPage() {
                     c={c}
                     deletingId={deletingId}
                     onDelete={handleDelete}
+                    onArchive={handleArchive}
+                    onBlock={handleBlock}
                     callingId={callingId}
                     onAiCallback={triggerAiCallback}
                     onHumanCallback={triggerHumanCallback}
@@ -504,6 +508,7 @@ function ConversationsPage() {
                   />
                 ))}
               </ul>
+
             </>
           )}
         </div>
