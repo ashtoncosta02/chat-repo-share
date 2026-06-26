@@ -222,6 +222,29 @@ function ConversationsPage() {
     toast.success("Conversation deleted.");
   };
 
+  const handleArchive = async (id: string, archived: boolean) => {
+    try {
+      await archiveConversation({ data: { conversationId: id, archived } });
+      setConvs((prev) =>
+        prev.map((c) =>
+          c.id === id ? { ...c, archived_at: archived ? new Date().toISOString() : null } : c,
+        ),
+      );
+      toast.success(archived ? "Thread archived." : "Thread restored.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not update thread.");
+    }
+  };
+
+  const handleBlock = async (phone: string, agentId: string | null) => {
+    try {
+      await blockCaller({ data: { phone, agentId } });
+      toast.success(`Blocked ${phone}. They can no longer reach your receptionist.`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not block caller.");
+    }
+  };
+
   const [callingId, setCallingId] = useState<string | null>(null);
 
   const updateLeadStatus = async (leadId: string, status: string) => {
