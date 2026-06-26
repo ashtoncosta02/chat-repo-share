@@ -37,6 +37,7 @@ import { summarizeConversation } from "@/lib/conversation-summary.functions";
 import { aiCallbackLead } from "@/lib/lead-callback.functions";
 import { startOutboundCall } from "@/lib/dialer.functions";
 import { getAutoDeleteSetting, setAutoDeleteSetting } from "@/lib/thread-cleanup.functions";
+import { archiveConversation, blockCaller } from "@/lib/thread-actions.functions";
 import { ResizableTable } from "@/components/dashboard/ResizableTable";
 
 
