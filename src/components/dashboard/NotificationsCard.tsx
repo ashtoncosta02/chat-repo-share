@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import {
   updateAgentNotifications,
   sendTestTranscriptEmail,
+  sendTestTranscriptSms,
 } from "@/lib/notifications.functions";
 
 interface Props {
