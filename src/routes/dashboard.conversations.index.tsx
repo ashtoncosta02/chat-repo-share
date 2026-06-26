@@ -703,19 +703,13 @@ function ConversationCard({
   c,
   deletingId,
   onDelete,
+  onArchive,
+  onBlock,
   callingId,
   onAiCallback,
   onHumanCallback,
   onStatusChange,
-}: {
-  c: ConvRow;
-  deletingId: string | null;
-  onDelete: (id: string) => void;
-  callingId: string | null;
-  onAiCallback: (leadId: string) => void;
-  onHumanCallback: (leadId: string, phone: string) => void;
-  onStatusChange: (leadId: string, status: string) => void;
-}) {
+}: RowActionsProps) {
   const displayName = c.lead_name ?? "Unknown Caller";
   const initials = c.lead_name
     ? c.lead_name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()
