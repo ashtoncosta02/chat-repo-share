@@ -46,6 +46,12 @@ export const Route = createRootRoute({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Ask Janice — AI Voice Agents for Your Business" },
+      { name: "description", content: "Ask Janice answers your business calls 24/7, captures leads, and books appointments straight into your calendar — so you never miss a customer again." },
+      { property: "og:description", content: "Ask Janice answers your business calls 24/7, captures leads, and books appointments straight into your calendar — so you never miss a customer again." },
+      { name: "twitter:description", content: "Ask Janice answers your business calls 24/7, captures leads, and books appointments straight into your calendar — so you never miss a customer again." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/bdf233e4-c52b-4b09-802c-6f9c4dad8519/id-preview-970c1d47--d1e796ad-671c-47e1-843b-cdecc02fe11f.lovable.app-1782442129187.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/bdf233e4-c52b-4b09-802c-6f9c4dad8519/id-preview-970c1d47--d1e796ad-671c-47e1-843b-cdecc02fe11f.lovable.app-1782442129187.png" },
     ],
     links: [
       {
