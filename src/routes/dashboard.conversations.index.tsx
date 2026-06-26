@@ -76,6 +76,7 @@ function ConversationsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [intentFilter, setIntentFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [dateFilter, setDateFilter] = useState<string>(""); // YYYY-MM-DD in local tz
   const [view, setView] = useState<"active" | "archived">("active");
 
   const loadConvs = async () => {
