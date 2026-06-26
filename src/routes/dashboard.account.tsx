@@ -153,23 +153,129 @@ function AccountPage() {
         </form>
       </section>
 
-      {/* Billing */}
+      {/* Subscription */}
       <section id="billing" className="mt-6 rounded-xl border border-border bg-card p-6 scroll-mt-20">
         <div className="flex items-center gap-2">
           <CreditCard className="h-4 w-4 text-foreground" />
-          <h2 className="text-base font-semibold text-foreground">Billing</h2>
+          <h2 className="text-base font-semibold text-foreground">Subscription &amp; billing</h2>
+        </div>
+        <dl className="mt-4 text-sm">
+          <div className="flex justify-between py-2 border-b border-border">
+            <dt className="text-muted-foreground">Current plan</dt>
+            <dd className="text-foreground font-medium">Founding member (free preview)</dd>
+          </div>
+          <div className="flex justify-between py-2 border-b border-border">
+            <dt className="text-muted-foreground">Status</dt>
+            <dd className="text-foreground font-medium">Active</dd>
+          </div>
+          <div className="flex justify-between py-2">
+            <dt className="text-muted-foreground">Next charge</dt>
+            <dd className="text-foreground font-medium">—</dd>
+          </div>
+        </dl>
+        <p className="mt-3 text-sm text-muted-foreground">
+          Paid plans aren't live yet. While we finish setting up payments, your account is on the
+          house. When billing turns on you'll be able to start, upgrade, downgrade, pause, or cancel
+          your subscription right here — and we'll email you well before anything is charged.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            disabled
+            className="rounded-lg border border-border bg-muted px-4 py-2 text-sm font-medium text-muted-foreground cursor-not-allowed"
+          >
+            Start a paid plan (coming soon)
+          </button>
+          <button
+            disabled
+            className="rounded-lg border border-border bg-muted px-4 py-2 text-sm font-medium text-muted-foreground cursor-not-allowed"
+          >
+            Update payment method
+          </button>
+          <button
+            disabled
+            className="rounded-lg border border-border bg-muted px-4 py-2 text-sm font-medium text-muted-foreground cursor-not-allowed"
+          >
+            Cancel subscription
+          </button>
+        </div>
+        <p className="mt-3 text-xs text-muted-foreground">
+          Need to cancel or change something now? Open a support ticket below and we'll handle it
+          for you within one business day.
+        </p>
+      </section>
+
+      {/* Support */}
+      <section id="support" className="mt-6 rounded-xl border border-border bg-card p-6 scroll-mt-20">
+        <div className="flex items-center gap-2">
+          <LifeBuoy className="h-4 w-4 text-foreground" />
+          <h2 className="text-base font-semibold text-foreground">Help &amp; support</h2>
         </div>
         <p className="mt-2 text-sm text-muted-foreground">
-          Billing isn't connected yet. Once Stripe is set up, you'll be able to view invoices,
-          update your payment method, and manage your subscription here.
+          Questions about your account, billing, or your receptionist? Open a ticket and we'll get
+          back to you fast.
         </p>
-        <button
-          disabled
-          className="mt-4 rounded-lg border border-border bg-muted px-4 py-2 text-sm font-medium text-muted-foreground cursor-not-allowed"
+        <a
+          href="/dashboard/help"
+          className="mt-4 inline-block rounded-lg bg-[var(--gold)] text-[var(--gold-foreground)] px-4 py-2 text-sm font-medium hover:opacity-90"
         >
-          Coming soon
-        </button>
+          Open a support ticket
+        </a>
       </section>
+
+      {/* Danger zone */}
+      <section id="danger" className="mt-6 rounded-xl border border-destructive/40 bg-card p-6 scroll-mt-20">
+        <div className="flex items-center gap-2">
+          <Trash2 className="h-4 w-4 text-destructive" />
+          <h2 className="text-base font-semibold text-destructive">Delete account</h2>
+        </div>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Permanently delete your account, your receptionist, conversations, leads, bookings, and
+          connected phone numbers. This cannot be undone.
+        </p>
+        <DeleteAccountButton onDone={async () => { await signOut(); navigate({ to: "/" }); }} />
+      </section>
+    </div>
+  );
+}
+
+function DeleteAccountButton({ onDone }: { onDone: () => Promise<void> | void }) {
+  const [confirm, setConfirm] = useState("");
+  const [busy, setBusy] = useState(false);
+  const canDelete = confirm === "DELETE";
+
+  async function handleDelete() {
+    if (!canDelete) return;
+    setBusy(true);
+    try {
+      await deleteOwnAccount({ data: { confirm: "DELETE" } });
+      toast.success("Account deleted.");
+      await onDone();
+    } catch (e) {
+      setBusy(false);
+      toast.error(e instanceof Error ? e.message : "Could not delete account.");
+    }
+  }
+
+  return (
+    <div className="mt-4 space-y-3">
+      <label className="block text-xs text-muted-foreground">
+        Type <span className="font-mono font-semibold">DELETE</span> to confirm
+      </label>
+      <input
+        type="text"
+        value={confirm}
+        onChange={(e) => setConfirm(e.target.value)}
+        placeholder="DELETE"
+        className="w-full max-w-xs rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-destructive"
+      />
+      <button
+        type="button"
+        onClick={handleDelete}
+        disabled={!canDelete || busy}
+        className="rounded-lg bg-destructive text-destructive-foreground px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50"
+      >
+        {busy ? "Deleting…" : "Permanently delete my account"}
+      </button>
     </div>
   );
 }
