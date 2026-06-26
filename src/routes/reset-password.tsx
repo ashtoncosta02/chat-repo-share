@@ -1,13 +1,17 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { z } from "zod";
 import { AgentFactoryLogo } from "@/components/AgentFactoryLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { resetPasswordWithToken } from "@/lib/password-reset.functions";
+
+const resetSearchSchema = z.object({ token: z.string().optional() });
 
 export const Route = createFileRoute("/reset-password")({
+  validateSearch: resetSearchSchema,
   head: () => ({
     meta: [
       { title: "Set new password — Ask Janice" },
@@ -19,32 +23,25 @@ export const Route = createFileRoute("/reset-password")({
 
 function ResetPasswordPage() {
   const navigate = useNavigate();
-  const [ready, setReady] = useState(false);
+  const { token } = Route.useSearch();
   const [pwd, setPwd] = useState("");
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") setReady(true);
-    });
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setReady(true);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
-
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!token) return toast.error("Missing reset token.");
     if (pwd.length < 8) return toast.error("Password must be at least 8 characters.");
     if (pwd !== confirm) return toast.error("Passwords do not match.");
     setBusy(true);
-    const { error } = await supabase.auth.updateUser({ password: pwd });
-    setBusy(false);
-    if (error) toast.error(error.message);
-    else {
-      toast.success("Password updated. You're signed in.");
-      navigate({ to: "/dashboard" });
+    try {
+      await resetPasswordWithToken({ data: { token, password: pwd } });
+      toast.success("Password updated. Please sign in.");
+      navigate({ to: "/auth" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not reset password.");
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -56,10 +53,14 @@ function ResetPasswordPage() {
         </Link>
         <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
           <h1 className="text-xl font-semibold text-foreground">Choose a new password</h1>
-          {!ready ? (
+          {!token ? (
             <p className="mt-4 text-sm text-muted-foreground">
-              Open this page using the link from your password-reset email. If the link has expired,{" "}
-              <Link to="/forgot-password" className="underline">request a new one</Link>.
+              This link is missing its reset token. Please open the page using the link from your
+              password-reset email, or{" "}
+              <Link to="/forgot-password" className="underline">
+                request a new one
+              </Link>
+              .
             </p>
           ) : (
             <form onSubmit={onSubmit} className="mt-6 space-y-4">
