@@ -56,6 +56,7 @@ interface ConvRow {
   agent_id: string | null;
   recording_url: string | null;
   ai_summary: string | null;
+  archived_at: string | null;
   lead_id: string | null;
   lead_name: string | null;
   lead_phone: string | null;
