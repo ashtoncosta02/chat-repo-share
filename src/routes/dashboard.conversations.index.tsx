@@ -520,23 +520,29 @@ function ConversationsPage() {
 
 const LEAD_STATUS_OPTIONS = ["new", "contacted", "won", "lost"] as const;
 
-function ConversationRow({
-  c,
-  deletingId,
-  onDelete,
-  callingId,
-  onAiCallback,
-  onHumanCallback,
-  onStatusChange,
-}: {
+type RowActionsProps = {
   c: ConvRow;
   deletingId: string | null;
   onDelete: (id: string) => void;
+  onArchive: (id: string, archived: boolean) => void;
+  onBlock: (phone: string, agentId: string | null) => void;
   callingId: string | null;
   onAiCallback: (leadId: string) => void;
   onHumanCallback: (leadId: string, phone: string) => void;
   onStatusChange: (leadId: string, status: string) => void;
-}) {
+};
+
+function ConversationRow({
+  c,
+  deletingId,
+  onDelete,
+  onArchive,
+  onBlock,
+  callingId,
+  onAiCallback,
+  onHumanCallback,
+  onStatusChange,
+}: RowActionsProps) {
   const displayName = c.lead_name ?? "Unknown Caller";
   const initials = c.lead_name
     ? c.lead_name
