@@ -767,36 +767,13 @@ function ConversationCard({
               </DropdownMenuContent>
             </DropdownMenu>
           )}
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-muted-foreground hover:text-destructive"
-                disabled={deletingId === c.id}
-                aria-label="Delete conversation"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete this thread?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will permanently remove the transcript and any messages. This can't be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => onDelete(c.id)}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <ThreadActionsMenu
+            c={c}
+            deletingId={deletingId}
+            onDelete={onDelete}
+            onArchive={onArchive}
+            onBlock={onBlock}
+          />
           <Link
             to="/dashboard/conversations/$conversationId"
             params={{ conversationId: c.id }}
