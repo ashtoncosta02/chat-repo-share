@@ -97,7 +97,38 @@ export const sendTestTranscriptEmail = createServerFn({ method: "POST" })
         phone: "+1 (555) 123-4567",
         address: "123 Main St, Toronto, ON",
       },
+  });
+
+export const sendTestTranscriptSms = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ to: z.string().min(7).max(40) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: agent } = await supabase
+      .from("agents")
+      .select("business_name")
+      .eq("user_id", userId)
+      .maybeSingle();
+    const { sendTranscriptSms } = await import("@/server/sms.server");
+    const sid = await sendTranscriptSms({
+      userId,
+      to: data.to,
+      businessName: agent?.business_name || "Your business",
+      callerNumber: "+15551234567",
+      durationSeconds: 92,
+      summary:
+        "TEST: caller asked about hours and booked a tasting for Saturday at 2pm.",
+      dashboardUrl: "https://www.askjanice.net/dashboard/conversations",
     });
+    if (!sid) {
+      throw new Error(
+        "Couldn't send SMS. Make sure you have a connected phone number in Phone Numbers.",
+      );
+    }
+    return { ok: true as const, sid };
+  });
     const id = await sendEmail({
       to: data.to,
       subject: `[TEST] ${subject}`,
