@@ -116,7 +116,15 @@ function AuthPage() {
                   <Input id="signin-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
                 </div>
                 <div>
-                  <Label htmlFor="signin-password">Password</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="signin-password">Password</Label>
+                    <Link
+                      to="/forgot-password"
+                      className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                    >
+                      Forgot password?
+                    </Link>
+                  </div>
                   <PasswordInput id="signin-password" value={password} onChange={setPassword} />
                 </div>
                 <Button type="submit" className="w-full" disabled={submitting}>
