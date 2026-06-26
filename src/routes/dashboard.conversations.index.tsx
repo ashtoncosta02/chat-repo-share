@@ -520,6 +520,111 @@ function ConversationsPage() {
 
 const LEAD_STATUS_OPTIONS = ["new", "contacted", "won", "lost"] as const;
 
+function ThreadActionsMenu({
+  c,
+  deletingId,
+  onDelete,
+  onArchive,
+  onBlock,
+}: {
+  c: ConvRow;
+  deletingId: string | null;
+  onDelete: (id: string) => void;
+  onArchive: (id: string, archived: boolean) => void;
+  onBlock: (phone: string, agentId: string | null) => void;
+}) {
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [blockOpen, setBlockOpen] = useState(false);
+  const isArchived = !!c.archived_at;
+  const phone = c.lead_phone ?? "";
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-muted-foreground hover:text-foreground"
+            disabled={deletingId === c.id}
+            aria-label="Thread actions"
+          >
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuItem onClick={() => onArchive(c.id, !isArchived)}>
+            {isArchived ? (
+              <>
+                <ArchiveRestore className="h-3.5 w-3.5 mr-2" />
+                Unarchive
+              </>
+            ) : (
+              <>
+                <Archive className="h-3.5 w-3.5 mr-2" />
+                Archive
+              </>
+            )}
+          </DropdownMenuItem>
+          {phone && (
+            <DropdownMenuItem onClick={() => setBlockOpen(true)}>
+              <Ban className="h-3.5 w-3.5 mr-2" />
+              Block caller
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => setDeleteOpen(true)}
+            className="text-destructive focus:text-destructive"
+          >
+            <Trash2 className="h-3.5 w-3.5 mr-2" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this thread?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove the transcript and any messages. This can't be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => onDelete(c.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={blockOpen} onOpenChange={setBlockOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Block {phone || "this caller"}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Future calls from this number will be rejected automatically before reaching your
+              receptionist. You can unblock them anytime from the Blocked tab.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => onBlock(phone, c.agent_id ?? null)}>
+              Block caller
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+
+const _LEAD_STATUS_OPTIONS_DUP = LEAD_STATUS_OPTIONS;
+
 type RowActionsProps = {
   c: ConvRow;
   deletingId: string | null;
