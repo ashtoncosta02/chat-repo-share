@@ -198,7 +198,7 @@ export function NotificationsCard({
                 Text a short transcript to your phone after every call.
               </p>
               {smsEnabled && (
-                <div className="mt-3">
+                <div className="mt-3 space-y-2">
                   <Label htmlFor="notify-phone" className="text-xs">
                     Send to
                   </Label>
@@ -209,8 +209,19 @@ export function NotificationsCard({
                     value={phoneDraft}
                     onChange={(e) => setPhoneDraft(e.target.value)}
                     onBlur={savePhone}
-                    className="mt-1 h-9"
+                    className="h-9"
                   />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={sendTestSms}
+                    disabled={sendingTestSms}
+                    className="h-8"
+                  >
+                    <Send className="h-3.5 w-3.5 mr-1.5" />
+                    {sendingTestSms ? "Sending…" : "Send test text"}
+                  </Button>
                 </div>
               )}
             </div>
@@ -220,8 +231,8 @@ export function NotificationsCard({
       </div>
 
       <p className="text-xs text-muted-foreground mt-4">
-        Emails are sent from <span className="font-medium">hello@askjanice.net</span> right
-        after each call. SMS delivery is coming soon — your preference is saved.
+        Emails are sent from <span className="font-medium">hello@askjanice.net</span> and
+        texts are sent from your connected business number — both fire right after each call.
       </p>
     </div>
   );
