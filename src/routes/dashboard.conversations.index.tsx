@@ -132,6 +132,7 @@ function ConversationsPage() {
           agent_id: r.agent_id,
           recording_url: r.recording_url,
           ai_summary: r.ai_summary,
+          archived_at: r.archived_at,
           lead_id: l?.id ?? r.lead_id ?? null,
           lead_name: l?.name ?? null,
           lead_phone: l?.phone ?? null,
