@@ -37,10 +37,12 @@ export function NotificationsCard({
 }: Props) {
   const updateFn = useServerFn(updateAgentNotifications);
   const sendTestFn = useServerFn(sendTestTranscriptEmail);
+  const sendTestSmsFn = useServerFn(sendTestTranscriptSms);
 
   const [emailDraft, setEmailDraft] = useState(email ?? accountEmail ?? "");
   const [phoneDraft, setPhoneDraft] = useState(phone ?? "");
   const [sendingTest, setSendingTest] = useState(false);
+  const [sendingTestSms, setSendingTestSms] = useState(false);
 
   useEffect(() => {
     setEmailDraft(email ?? accountEmail ?? "");
