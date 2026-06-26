@@ -1,11 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { AgentFactoryLogo } from "@/components/AgentFactoryLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { requestPasswordReset } from "@/lib/password-reset.functions";
 
 export const Route = createFileRoute("/forgot-password")({
   head: () => ({
@@ -25,12 +25,14 @@ function ForgotPasswordPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    setBusy(false);
-    if (error) toast.error(error.message);
-    else setSent(true);
+    try {
+      await requestPasswordReset({ data: { email } });
+      setSent(true);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -47,7 +49,7 @@ function ForgotPasswordPage() {
           {sent ? (
             <div className="mt-6 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
               If an account exists for <strong>{email}</strong>, a reset link is on its way.
-              Check your inbox (and spam folder).
+              Check your inbox (and spam folder). The link expires in 60 minutes.
             </div>
           ) : (
             <form onSubmit={onSubmit} className="mt-6 space-y-4">
