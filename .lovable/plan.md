@@ -1,20 +1,25 @@
-## What's happening
+# Submit `calendar.events` justification only
 
-`askjanice.net` is connected to Lovable, but the project has never been **Published**. The URL serves Lovable's "No working published build found yet" placeholder — not your homepage. Google's verification bot fetches that placeholder, sees no app name and no purpose, and rejects you.
+Your console already has the minimal scope set. No code change needed, no scopes to remove. Just fill in **one** justification box.
 
-Every code change I've made is live in the **preview** only. To put it on `askjanice.net`, it has to be published.
+## What you do in Google Console
 
-## Steps
+1. OAuth consent screen → **Data access** → **Edit**.
+2. Find the row for `.../auth/calendar.events`.
+3. In its "How will the scope be used?" box, paste:
 
-1. I'll click **Publish** for you (with your approval) — this builds the site and pushes it live to `askjanice.net`.
-2. Wait ~1–2 minutes for the deploy to finish.
-3. Open `https://askjanice.net` in an incognito window and confirm you see the new hero ("Ask Janice" headline + purpose line) — not the Lovable placeholder.
-4. Go back to Google Cloud Console → OAuth consent screen → resubmit for verification. The two branding errors will clear because Google can now actually read the page.
+> AskJanice is an AI receptionist for small businesses. Each business owner connects their own Google Calendar from their dashboard via OAuth. We use the `calendar.events` scope for two purposes:
+>
+> 1. **Check availability** — When a caller (phone) or website chat visitor asks to book an appointment, we call the Google Calendar `freeBusy` API to read busy time windows on the connected calendar so the AI only offers genuinely available slots.
+>
+> 2. **Create bookings** — When the caller or visitor confirms a time, we create a single calendar event on the connected calendar with the customer added as an attendee, so Google sends them the invite and reminders.
+>
+> We do not read, modify, or delete events that the user created outside of AskJanice. We do not share calendar data with third parties. Users can disconnect at any time from their dashboard, which deletes the stored refresh token. This use complies with the Google API Services User Data Policy, including the Limited Use requirements.
 
-## After publish, every future change works the same way
+4. Save and resubmit for verification.
 
-Code changes only appear on `askjanice.net` after you click **Publish → Update** in the top-right of Lovable. The preview URL updates instantly; the live custom domain does not.
+## Optional supporting items Google often asks for
+- Make sure your privacy policy at `askjanice.net/privacy` includes the **Limited Use disclosure** (mention Google user data, that it's only used for the features above, and not transferred to others except as required).
+- Record a short demo video showing: sign in → connect Google Calendar from dashboard → a test booking that creates an event. Upload to YouTube (unlisted is fine) and paste the link in the verification form.
 
-## Approve and I'll publish
-
-Once you say go, I'll publish. Nothing else needs to change in the code right now.
+Say "go" if you want me to (a) double-check your privacy policy has the Limited Use disclosure, or (b) write you a demo video script.
