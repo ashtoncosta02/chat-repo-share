@@ -55,8 +55,11 @@ function getOrigin(request: Request): string {
   return `${url.protocol}//${url.host}`;
 }
 
-export function getRedirectUri(request: Request): string {
-  return `${getOrigin(request)}/api/public/google-calendar/callback`;
+export function getRedirectUri(_request: Request): string {
+  // Always return the canonical production redirect URI. This is the only value
+  // registered in Google Cloud Console, so OAuth works from any origin (preview,
+  // apex domain, www, new tab) without "Access blocked: invalid request".
+  return `${CANONICAL_OAUTH_ORIGIN}/api/public/google-calendar/callback`;
 }
 
 export function getClientCreds() {
