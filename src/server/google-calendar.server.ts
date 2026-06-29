@@ -6,6 +6,11 @@ const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo";
 const CALENDAR_API = "https://www.googleapis.com/calendar/v3";
+// Canonical production origin for OAuth. Google only allows whitelisted redirect URIs,
+// so we ALWAYS use this single origin regardless of where the user starts the flow
+// (preview, custom domain apex, www, new tab, etc.). This must match the redirect URI
+// registered in Google Cloud Console exactly.
+const CANONICAL_OAUTH_ORIGIN = "https://www.askjanice.net";
 const LOVABLE_DEV_ORIGIN = "https://project--d1e796ad-671c-47e1-843b-cdecc02fe11f-dev.lovable.app";
 
 export const SCOPES = [
