@@ -122,43 +122,16 @@ function PricingCard() {
         </div>
       </div>
 
-      <form
-        className="mt-8 space-y-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          navigate({
-            to: "/auth",
-            search: {
-              mode: "signup",
-              email: email || undefined,
-              business: businessName || undefined,
-            },
-          });
-        }}
-      >
-        <input
-          type="text"
-          placeholder="Your business name"
-          value={businessName}
-          onChange={(e) => setBusinessName(e.target.value)}
-          className="w-full rounded-xl border border-border bg-background px-5 py-4 text-base text-foreground placeholder:text-muted-foreground focus:border-gold focus:outline-none focus:ring-2 focus:ring-gold/30"
-          required
-        />
-        <input
-          type="email"
-          placeholder="Your email address"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full rounded-xl border border-border bg-background px-5 py-4 text-base text-foreground placeholder:text-muted-foreground focus:border-gold focus:outline-none focus:ring-2 focus:ring-gold/30"
-          required
-        />
-        <button
-          type="submit"
-          className="w-full rounded-xl bg-primary px-5 py-5 text-lg font-semibold text-primary-foreground shadow-sm transition-all hover:opacity-95 active:scale-[0.99]"
-        >
-          Get Started — $197/mo
-        </button>
-      </form>
+      <div className="mt-8 rounded-xl border border-dashed border-border bg-secondary/40 p-6 text-center">
+        <p className="text-sm font-semibold text-foreground">Signups are temporarily closed</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          We're updating billing. To be notified when sign-ups reopen, email{" "}
+          <a href="mailto:ashtoncosta02@gmail.com" className="font-medium text-gold hover:underline">
+            ashtoncosta02@gmail.com
+          </a>
+          .
+        </p>
+      </div>
 
       <p className="mt-5 flex items-center justify-center gap-2 text-center text-sm text-muted-foreground">
         <Lock className="h-3.5 w-3.5" />
