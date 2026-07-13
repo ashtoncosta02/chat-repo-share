@@ -69,12 +69,16 @@ export function OutlookCalendarCard({ agentId }: Props) {
   const startConnect = useServerFn(startOutlookCalendarConnect);
   const disconnect = useServerFn(disconnectOutlookCalendar);
   const saveSettings = useServerFn(updateOutlookCalendarSettings);
+  const healthFn = useServerFn(getOutlookCalendarHealth);
   const [conn, setConn] = useState<Connection | null>(null);
   const [googleConnected, setGoogleConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [manualUrl, setManualUrl] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [health, setHealth] = useState<"ok" | "needs_reconnect" | "error" | null>(null);
+  const [healthReason, setHealthReason] = useState<string | null>(null);
+  const [lastChecked, setLastChecked] = useState<Date | null>(null);
 
   const [tz, setTz] = useState("America/New_York");
   const [duration, setDuration] = useState(30);
