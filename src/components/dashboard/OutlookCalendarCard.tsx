@@ -12,7 +12,6 @@ import {
 
 interface Props {
   agentId: string;
-  googleConnected: boolean;
 }
 
 interface DayHours {
@@ -64,11 +63,12 @@ const DEFAULT_HOURS: BusinessHours = {
   saturday: { enabled: false, start: "09:00", end: "17:00" },
 };
 
-export function OutlookCalendarCard({ agentId, googleConnected }: Props) {
+export function OutlookCalendarCard({ agentId }: Props) {
   const startConnect = useServerFn(startOutlookCalendarConnect);
   const disconnect = useServerFn(disconnectOutlookCalendar);
   const saveSettings = useServerFn(updateOutlookCalendarSettings);
   const [conn, setConn] = useState<Connection | null>(null);
+  const [googleConnected, setGoogleConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [manualUrl, setManualUrl] = useState<string | null>(null);
@@ -81,13 +81,17 @@ export function OutlookCalendarCard({ agentId, googleConnected }: Props) {
   const [savingSettings, setSavingSettings] = useState(false);
 
   const load = async () => {
-    const { data } = await supabase
-      .from("agent_outlook_calendar")
-      .select(
-        "microsoft_account_email, calendar_name, timezone, default_event_duration_minutes, booking_buffer_minutes, business_hours",
-      )
-      .eq("agent_id", agentId)
-      .maybeSingle();
+    const [{ data }, { data: googleRow }] = await Promise.all([
+      supabase
+        .from("agent_outlook_calendar")
+        .select(
+          "microsoft_account_email, calendar_name, timezone, default_event_duration_minutes, booking_buffer_minutes, business_hours",
+        )
+        .eq("agent_id", agentId)
+        .maybeSingle(),
+      supabase.from("agent_google_calendar").select("id").eq("agent_id", agentId).maybeSingle(),
+    ]);
+    setGoogleConnected(Boolean(googleRow));
     if (data) {
       const c: Connection = {
         microsoft_account_email: data.microsoft_account_email,

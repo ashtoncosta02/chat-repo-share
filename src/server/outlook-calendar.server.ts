@@ -6,7 +6,10 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 const MS_AUTH_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize";
 const MS_TOKEN_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
 const GRAPH_API = "https://graph.microsoft.com/v1.0";
-const LOVABLE_DEV_ORIGIN = "https://project--d1e796ad-671c-47e1-843b-cdecc02fe11f-dev.lovable.app";
+// Microsoft Entra requires redirect URIs to be registered exactly.
+// Like Google Calendar, we use one canonical production origin so the user
+// only has to register a single callback URL in Azure.
+const CANONICAL_OAUTH_ORIGIN = "https://www.askjanice.net";
 
 export const SCOPES = [
   "openid",
@@ -17,43 +20,8 @@ export const SCOPES = [
   "User.Read",
 ].join(" ");
 
-function isLocalOrigin(origin: string): boolean {
-  try {
-    const host = new URL(origin).hostname;
-    return host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0";
-  } catch {
-    return false;
-  }
-}
-
-function isPrivatePreviewOrigin(origin: string): boolean {
-  try {
-    const host = new URL(origin).hostname;
-    return host.endsWith(".lovableproject.com") || host.startsWith("id-preview--");
-  } catch {
-    return false;
-  }
-}
-
-function getOrigin(request: Request): string {
-  const origin = request.headers.get("origin");
-  if (origin && !isLocalOrigin(origin) && !isPrivatePreviewOrigin(origin)) return origin;
-
-  const forwardedHost = request.headers.get("x-forwarded-host");
-  if (forwardedHost) {
-    const forwardedProto = request.headers.get("x-forwarded-proto") || "https";
-    const forwardedOrigin = `${forwardedProto}://${forwardedHost}`;
-    if (!isLocalOrigin(forwardedOrigin) && !isPrivatePreviewOrigin(forwardedOrigin))
-      return forwardedOrigin;
-  }
-
-  const url = new URL(request.url);
-  if (isLocalOrigin(url.origin) || isPrivatePreviewOrigin(url.origin)) return LOVABLE_DEV_ORIGIN;
-  return `${url.protocol}//${url.host}`;
-}
-
-export function getRedirectUri(request: Request): string {
-  return `${getOrigin(request)}/api/public/outlook-calendar/callback`;
+export function getRedirectUri(_request: Request): string {
+  return `${CANONICAL_OAUTH_ORIGIN}/api/public/outlook-calendar/callback`;
 }
 
 export function getClientCreds() {
