@@ -81,13 +81,17 @@ export function OutlookCalendarCard({ agentId }: Props) {
   const [savingSettings, setSavingSettings] = useState(false);
 
   const load = async () => {
-    const { data } = await supabase
-      .from("agent_outlook_calendar")
-      .select(
-        "microsoft_account_email, calendar_name, timezone, default_event_duration_minutes, booking_buffer_minutes, business_hours",
-      )
-      .eq("agent_id", agentId)
-      .maybeSingle();
+    const [{ data }, { data: googleRow }] = await Promise.all([
+      supabase
+        .from("agent_outlook_calendar")
+        .select(
+          "microsoft_account_email, calendar_name, timezone, default_event_duration_minutes, booking_buffer_minutes, business_hours",
+        )
+        .eq("agent_id", agentId)
+        .maybeSingle(),
+      supabase.from("agent_google_calendar").select("id").eq("agent_id", agentId).maybeSingle(),
+    ]);
+    setGoogleConnected(Boolean(googleRow));
     if (data) {
       const c: Connection = {
         microsoft_account_email: data.microsoft_account_email,
