@@ -68,6 +68,7 @@ export function OutlookCalendarCard({ agentId }: Props) {
   const disconnect = useServerFn(disconnectOutlookCalendar);
   const saveSettings = useServerFn(updateOutlookCalendarSettings);
   const [conn, setConn] = useState<Connection | null>(null);
+  const [googleConnected, setGoogleConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [manualUrl, setManualUrl] = useState<string | null>(null);
