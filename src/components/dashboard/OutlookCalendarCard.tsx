@@ -63,7 +63,7 @@ const DEFAULT_HOURS: BusinessHours = {
   saturday: { enabled: false, start: "09:00", end: "17:00" },
 };
 
-export function OutlookCalendarCard({ agentId, googleConnected }: Props) {
+export function OutlookCalendarCard({ agentId }: Props) {
   const startConnect = useServerFn(startOutlookCalendarConnect);
   const disconnect = useServerFn(disconnectOutlookCalendar);
   const saveSettings = useServerFn(updateOutlookCalendarSettings);
