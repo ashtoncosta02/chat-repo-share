@@ -118,11 +118,42 @@ export function OutlookCalendarCard({ agentId }: Props) {
     setLoading(false);
   };
 
+  const checkHealth = async () => {
+    try {
+      const accessToken = await getAccessToken();
+      if (!accessToken) return;
+      const res = await healthFn({ data: { accessToken, agent_id: agentId } });
+      if (res.status === "ok") {
+        setHealth("ok");
+        setHealthReason(null);
+      } else if (res.status === "needs_reconnect") {
+        setHealth("needs_reconnect");
+        setHealthReason("reason" in res ? res.reason ?? null : null);
+      } else if (res.status === "not_connected") {
+        setHealth(null);
+        setHealthReason(null);
+      } else {
+        setHealth("error");
+        setHealthReason("error" in res ? res.error ?? null : null);
+      }
+      setLastChecked(new Date());
+    } catch (e) {
+      console.error("outlook health check failed", e);
+    }
+  };
+
   useEffect(() => {
-    load();
-    const onFocus = () => load();
+    load().then(() => checkHealth());
+    const onFocus = () => {
+      load();
+      checkHealth();
+    };
     window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
+    const interval = setInterval(checkHealth, 5 * 60 * 1000);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      clearInterval(interval);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agentId]);
 
