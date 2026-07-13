@@ -12,7 +12,6 @@ import {
 
 interface Props {
   agentId: string;
-  googleConnected: boolean;
 }
 
 interface DayHours {
