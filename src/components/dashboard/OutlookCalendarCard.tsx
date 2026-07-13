@@ -240,7 +240,23 @@ export function OutlookCalendarCard({ agentId }: Props) {
           <div>
             <h3 className="font-semibold text-foreground flex items-center gap-2">
               Outlook Calendar
-              {conn && (
+              {conn && health === "needs_reconnect" && (
+                <span
+                  className="inline-flex items-center gap-1 text-xs font-medium text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full"
+                  title={healthReason ?? undefined}
+                >
+                  <AlertTriangle className="h-3 w-3" /> Reconnect needed
+                </span>
+              )}
+              {conn && health === "error" && (
+                <span
+                  className="inline-flex items-center gap-1 text-xs font-medium text-red-800 bg-red-50 px-2 py-0.5 rounded-full"
+                  title={healthReason ?? undefined}
+                >
+                  <AlertTriangle className="h-3 w-3" /> Error
+                </span>
+              )}
+              {conn && (health === "ok" || health === null) && (
                 <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
                   <Check className="h-3 w-3" /> Connected
                 </span>
@@ -251,6 +267,11 @@ export function OutlookCalendarCard({ agentId }: Props) {
                 ? `${conn.microsoft_account_email ?? "Outlook"} · ${conn.timezone}`
                 : "For Microsoft 365, Outlook.com, or Hotmail accounts."}
             </p>
+            {conn && lastChecked && (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Last checked {formatRelative(lastChecked)}
+              </p>
+            )}
           </div>
         </div>
 
@@ -261,7 +282,17 @@ export function OutlookCalendarCard({ agentId }: Props) {
               {showSettings ? "Hide settings" : "Booking settings"}
             </Button>
           )}
-          {conn ? (
+          {conn && health === "needs_reconnect" ? (
+            <Button
+              size="sm"
+              onClick={handleConnect}
+              disabled={busy}
+              className="bg-amber-600 hover:bg-amber-600/90 text-white"
+            >
+              {busy ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : null}
+              Reconnect
+            </Button>
+          ) : conn ? (
             <Button variant="outline" size="sm" onClick={handleDisconnect} disabled={busy}>
               <Unlink className="h-3.5 w-3.5 mr-1.5" /> Disconnect
             </Button>
@@ -278,6 +309,7 @@ export function OutlookCalendarCard({ agentId }: Props) {
           )}
         </div>
       </div>
+
 
       {manualUrl && !conn && (
         <div className="mt-4 flex flex-col gap-2 rounded-xl border border-border bg-background/60 p-3">
