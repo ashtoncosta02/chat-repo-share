@@ -8,7 +8,9 @@ import {
   startOutlookCalendarConnect,
   disconnectOutlookCalendar,
   updateOutlookCalendarSettings,
+  getOutlookCalendarHealth,
 } from "@/lib/outlook-calendar.functions";
+import { AlertTriangle } from "lucide-react";
 
 interface Props {
   agentId: string;
@@ -63,16 +65,29 @@ const DEFAULT_HOURS: BusinessHours = {
   saturday: { enabled: false, start: "09:00", end: "17:00" },
 };
 
+function formatRelative(d: Date): string {
+  const s = Math.max(0, Math.floor((Date.now() - d.getTime()) / 1000));
+  if (s < 60) return "just now";
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  return `${h}h ago`;
+}
+
 export function OutlookCalendarCard({ agentId }: Props) {
   const startConnect = useServerFn(startOutlookCalendarConnect);
   const disconnect = useServerFn(disconnectOutlookCalendar);
   const saveSettings = useServerFn(updateOutlookCalendarSettings);
+  const healthFn = useServerFn(getOutlookCalendarHealth);
   const [conn, setConn] = useState<Connection | null>(null);
   const [googleConnected, setGoogleConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [manualUrl, setManualUrl] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [health, setHealth] = useState<"ok" | "needs_reconnect" | "error" | null>(null);
+  const [healthReason, setHealthReason] = useState<string | null>(null);
+  const [lastChecked, setLastChecked] = useState<Date | null>(null);
 
   const [tz, setTz] = useState("America/New_York");
   const [duration, setDuration] = useState(30);
@@ -112,11 +127,42 @@ export function OutlookCalendarCard({ agentId }: Props) {
     setLoading(false);
   };
 
+  const checkHealth = async () => {
+    try {
+      const accessToken = await getAccessToken();
+      if (!accessToken) return;
+      const res = await healthFn({ data: { accessToken, agent_id: agentId } });
+      if (res.status === "ok") {
+        setHealth("ok");
+        setHealthReason(null);
+      } else if (res.status === "needs_reconnect") {
+        setHealth("needs_reconnect");
+        setHealthReason("reason" in res ? res.reason ?? null : null);
+      } else if (res.status === "not_connected") {
+        setHealth(null);
+        setHealthReason(null);
+      } else {
+        setHealth("error");
+        setHealthReason("error" in res ? res.error ?? null : null);
+      }
+      setLastChecked(new Date());
+    } catch (e) {
+      console.error("outlook health check failed", e);
+    }
+  };
+
   useEffect(() => {
-    load();
-    const onFocus = () => load();
+    load().then(() => checkHealth());
+    const onFocus = () => {
+      load();
+      checkHealth();
+    };
     window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
+    const interval = setInterval(checkHealth, 5 * 60 * 1000);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      clearInterval(interval);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agentId]);
 
@@ -203,7 +249,23 @@ export function OutlookCalendarCard({ agentId }: Props) {
           <div>
             <h3 className="font-semibold text-foreground flex items-center gap-2">
               Outlook Calendar
-              {conn && (
+              {conn && health === "needs_reconnect" && (
+                <span
+                  className="inline-flex items-center gap-1 text-xs font-medium text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full"
+                  title={healthReason ?? undefined}
+                >
+                  <AlertTriangle className="h-3 w-3" /> Reconnect needed
+                </span>
+              )}
+              {conn && health === "error" && (
+                <span
+                  className="inline-flex items-center gap-1 text-xs font-medium text-red-800 bg-red-50 px-2 py-0.5 rounded-full"
+                  title={healthReason ?? undefined}
+                >
+                  <AlertTriangle className="h-3 w-3" /> Error
+                </span>
+              )}
+              {conn && (health === "ok" || health === null) && (
                 <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
                   <Check className="h-3 w-3" /> Connected
                 </span>
@@ -214,6 +276,11 @@ export function OutlookCalendarCard({ agentId }: Props) {
                 ? `${conn.microsoft_account_email ?? "Outlook"} · ${conn.timezone}`
                 : "For Microsoft 365, Outlook.com, or Hotmail accounts."}
             </p>
+            {conn && lastChecked && (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Last checked {formatRelative(lastChecked)}
+              </p>
+            )}
           </div>
         </div>
 
@@ -224,7 +291,17 @@ export function OutlookCalendarCard({ agentId }: Props) {
               {showSettings ? "Hide settings" : "Booking settings"}
             </Button>
           )}
-          {conn ? (
+          {conn && health === "needs_reconnect" ? (
+            <Button
+              size="sm"
+              onClick={handleConnect}
+              disabled={busy}
+              className="bg-amber-600 hover:bg-amber-600/90 text-white"
+            >
+              {busy ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : null}
+              Reconnect
+            </Button>
+          ) : conn ? (
             <Button variant="outline" size="sm" onClick={handleDisconnect} disabled={busy}>
               <Unlink className="h-3.5 w-3.5 mr-1.5" /> Disconnect
             </Button>
@@ -241,6 +318,7 @@ export function OutlookCalendarCard({ agentId }: Props) {
           )}
         </div>
       </div>
+
 
       {manualUrl && !conn && (
         <div className="mt-4 flex flex-col gap-2 rounded-xl border border-border bg-background/60 p-3">
