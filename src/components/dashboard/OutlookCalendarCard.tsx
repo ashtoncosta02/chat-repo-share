@@ -65,6 +65,15 @@ const DEFAULT_HOURS: BusinessHours = {
   saturday: { enabled: false, start: "09:00", end: "17:00" },
 };
 
+function formatRelative(d: Date): string {
+  const s = Math.max(0, Math.floor((Date.now() - d.getTime()) / 1000));
+  if (s < 60) return "just now";
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  return `${h}h ago`;
+}
+
 export function OutlookCalendarCard({ agentId }: Props) {
   const startConnect = useServerFn(startOutlookCalendarConnect);
   const disconnect = useServerFn(disconnectOutlookCalendar);
