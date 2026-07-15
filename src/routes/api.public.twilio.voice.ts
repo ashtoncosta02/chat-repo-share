@@ -3,6 +3,8 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { registerTwilioCall } from "@/server/elevenlabs-agent.server";
 import { verifyTwilioSignature, formDataToRecord } from "@/server/twilio-signature.server";
 
+const PROJECT_ID = "d1e796ad-671c-47e1-843b-cdecc02fe11f";
+
 export const Route = createFileRoute("/api/public/twilio/voice")({
   server: {
     handlers: {
@@ -48,10 +50,33 @@ export const Route = createFileRoute("/api/public/twilio/voice")({
 
           const { data: agent } = await supabaseAdmin
             .from("agents")
-            .select("id, user_id, elevenlabs_agent_id")
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .select("id, user_id, elevenlabs_agent_id, answer_mode, owner_forward_phone" as any)
             .eq("id", phoneRow.agent_id)
             .maybeSingle();
           if (!agent?.elevenlabs_agent_id) return voiceMessage("Sorry, the receptionist is unavailable right now.");
+
+          // Forward-first mode: ring the owner's cell, then fall through to the AI on no-answer.
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const agentAny = agent as any;
+          const forward = String(agentAny.owner_forward_phone || "").trim();
+          const mode = String(agentAny.answer_mode || "immediate");
+          if (mode === "after_4_rings" && forward) {
+            const fallbackUrl =
+              `https://project--${PROJECT_ID}-dev.lovable.app/api/public/twilio/voice-fallback` +
+              `?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+            const safeForward = escapeXml(forward);
+            const safeAction = escapeXml(fallbackUrl);
+            const safeCallerId = escapeXml(from);
+            // timeout=24 ≈ 4 rings (~6s each). answerOnBridge so the caller hears ringing.
+            const twiml =
+              `<?xml version="1.0" encoding="UTF-8"?><Response>` +
+              `<Dial timeout="24" answerOnBridge="true" callerId="${safeCallerId}" action="${safeAction}" method="POST">` +
+              `<Number>${safeForward}</Number>` +
+              `</Dial>` +
+              `</Response>`;
+            return new Response(twiml, { headers: { "Content-Type": "application/xml" } });
+          }
 
           const fromDigits = digitsOnly(from);
           const { data: leadRows } = await supabaseAdmin
@@ -87,16 +112,16 @@ export const Route = createFileRoute("/api/public/twilio/voice")({
 });
 
 function voiceMessage(message: string) {
-  const safe = message.replace(/[<>&'"]/g, (c) => ({
-    "<": "&lt;",
-    ">": "&gt;",
-    "&": "&amp;",
-    "'": "&apos;",
-    '"': "&quot;",
-  })[c] || c);
+  const safe = escapeXml(message);
   return new Response(`<Response><Say>${safe}</Say><Hangup /></Response>`, {
     headers: { "Content-Type": "application/xml" },
   });
+}
+
+function escapeXml(s: string) {
+  return s.replace(/[<>&'"]/g, (c) =>
+    c === "<" ? "&lt;" : c === ">" ? "&gt;" : c === "&" ? "&amp;" : c === "'" ? "&apos;" : "&quot;",
+  );
 }
 
 function digitsOnly(phone: string) {
