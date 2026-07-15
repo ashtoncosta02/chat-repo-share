@@ -596,7 +596,11 @@ function AgentDetailPage() {
         <AnswerModeCard
           agentId={agent.id}
           value={agent.answer_mode}
+          forwardPhone={agent.owner_forward_phone}
           onChange={(next) => setAgent((prev) => (prev ? { ...prev, answer_mode: next } : prev))}
+          onForwardPhoneChange={(next) =>
+            setAgent((prev) => (prev ? { ...prev, owner_forward_phone: next } : prev))
+          }
         />
         <GoogleCalendarCard agentId={agent.id} />
         <OutlookCalendarCard agentId={agent.id} />
