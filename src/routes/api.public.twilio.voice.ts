@@ -50,17 +50,21 @@ export const Route = createFileRoute("/api/public/twilio/voice")({
 
           const { data: agent } = await supabaseAdmin
             .from("agents")
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .select("id, user_id, elevenlabs_agent_id, answer_mode, owner_forward_phone" as any)
+            .select("id, user_id, elevenlabs_agent_id, answer_mode")
             .eq("id", phoneRow.agent_id)
             .maybeSingle();
           if (!agent?.elevenlabs_agent_id) return voiceMessage("Sorry, the receptionist is unavailable right now.");
 
-          // Forward-first mode: ring the owner's cell, then fall through to the AI on no-answer.
+          // Fetch owner_forward_phone separately (not yet in generated types).
+          const { data: fwdRow } = await supabaseAdmin
+            .from("agents")
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .select("owner_forward_phone" as any)
+            .eq("id", phoneRow.agent_id)
+            .maybeSingle();
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const agentAny = agent as any;
-          const forward = String(agentAny.owner_forward_phone || "").trim();
-          const mode = String(agentAny.answer_mode || "immediate");
+          const forward = String((fwdRow as any)?.owner_forward_phone || "").trim();
+          const mode = String(agent.answer_mode || "immediate");
           if (mode === "after_4_rings" && forward) {
             const fallbackUrl =
               `https://project--${PROJECT_ID}-dev.lovable.app/api/public/twilio/voice-fallback` +
