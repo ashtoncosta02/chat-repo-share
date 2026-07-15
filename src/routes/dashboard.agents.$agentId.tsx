@@ -73,6 +73,7 @@ interface Agent {
   escalation_triggers: string | null;
   is_live: boolean;
   answer_mode: "immediate" | "after_4_rings";
+  owner_forward_phone: string | null;
   voice_id: string | null;
   elevenlabs_agent_id: string | null;
   notify_email_transcript: boolean;
