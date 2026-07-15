@@ -50,6 +50,7 @@ import { Route as ApiPublicWidgetChatRouteImport } from './routes/api.public.wid
 import { Route as ApiPublicVoicemailAudioRouteImport } from './routes/api.public.voicemail.audio'
 import { Route as ApiPublicVoiceToolsFindSlotsRouteImport } from './routes/api.public.voice-tools.find-slots'
 import { Route as ApiPublicVoiceToolsBookAppointmentRouteImport } from './routes/api.public.voice-tools.book-appointment'
+import { Route as ApiPublicTwilioVoiceFallbackRouteImport } from './routes/api.public.twilio.voice-fallback'
 import { Route as ApiPublicTwilioVoiceRouteImport } from './routes/api.public.twilio.voice'
 import { Route as ApiPublicTwilioSmsRouteImport } from './routes/api.public.twilio.sms'
 import { Route as ApiPublicTwilioDialerBridgeRouteImport } from './routes/api.public.twilio.dialer-bridge'
@@ -276,6 +277,12 @@ const ApiPublicVoiceToolsBookAppointmentRoute =
     path: '/api/public/voice-tools/book-appointment',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicTwilioVoiceFallbackRoute =
+  ApiPublicTwilioVoiceFallbackRouteImport.update({
+    id: '/api/public/twilio/voice-fallback',
+    path: '/api/public/twilio/voice-fallback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicTwilioVoiceRoute = ApiPublicTwilioVoiceRouteImport.update({
   id: '/api/public/twilio/voice',
   path: '/api/public/twilio/voice',
@@ -368,6 +375,7 @@ export interface FileRoutesByFullPath {
   '/api/public/twilio/dialer-bridge': typeof ApiPublicTwilioDialerBridgeRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
   '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRoute
+  '/api/public/twilio/voice-fallback': typeof ApiPublicTwilioVoiceFallbackRoute
   '/api/public/voice-tools/book-appointment': typeof ApiPublicVoiceToolsBookAppointmentRoute
   '/api/public/voice-tools/find-slots': typeof ApiPublicVoiceToolsFindSlotsRoute
   '/api/public/voicemail/audio': typeof ApiPublicVoicemailAudioRoute
@@ -415,6 +423,7 @@ export interface FileRoutesByTo {
   '/api/public/twilio/dialer-bridge': typeof ApiPublicTwilioDialerBridgeRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
   '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRoute
+  '/api/public/twilio/voice-fallback': typeof ApiPublicTwilioVoiceFallbackRoute
   '/api/public/voice-tools/book-appointment': typeof ApiPublicVoiceToolsBookAppointmentRoute
   '/api/public/voice-tools/find-slots': typeof ApiPublicVoiceToolsFindSlotsRoute
   '/api/public/voicemail/audio': typeof ApiPublicVoicemailAudioRoute
@@ -468,6 +477,7 @@ export interface FileRoutesById {
   '/api/public/twilio/dialer-bridge': typeof ApiPublicTwilioDialerBridgeRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
   '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRoute
+  '/api/public/twilio/voice-fallback': typeof ApiPublicTwilioVoiceFallbackRoute
   '/api/public/voice-tools/book-appointment': typeof ApiPublicVoiceToolsBookAppointmentRoute
   '/api/public/voice-tools/find-slots': typeof ApiPublicVoiceToolsFindSlotsRoute
   '/api/public/voicemail/audio': typeof ApiPublicVoicemailAudioRoute
@@ -522,6 +532,7 @@ export interface FileRouteTypes {
     | '/api/public/twilio/dialer-bridge'
     | '/api/public/twilio/sms'
     | '/api/public/twilio/voice'
+    | '/api/public/twilio/voice-fallback'
     | '/api/public/voice-tools/book-appointment'
     | '/api/public/voice-tools/find-slots'
     | '/api/public/voicemail/audio'
@@ -569,6 +580,7 @@ export interface FileRouteTypes {
     | '/api/public/twilio/dialer-bridge'
     | '/api/public/twilio/sms'
     | '/api/public/twilio/voice'
+    | '/api/public/twilio/voice-fallback'
     | '/api/public/voice-tools/book-appointment'
     | '/api/public/voice-tools/find-slots'
     | '/api/public/voicemail/audio'
@@ -621,6 +633,7 @@ export interface FileRouteTypes {
     | '/api/public/twilio/dialer-bridge'
     | '/api/public/twilio/sms'
     | '/api/public/twilio/voice'
+    | '/api/public/twilio/voice-fallback'
     | '/api/public/voice-tools/book-appointment'
     | '/api/public/voice-tools/find-slots'
     | '/api/public/voicemail/audio'
@@ -652,6 +665,7 @@ export interface RootRouteChildren {
   ApiPublicTwilioDialerBridgeRoute: typeof ApiPublicTwilioDialerBridgeRoute
   ApiPublicTwilioSmsRoute: typeof ApiPublicTwilioSmsRoute
   ApiPublicTwilioVoiceRoute: typeof ApiPublicTwilioVoiceRoute
+  ApiPublicTwilioVoiceFallbackRoute: typeof ApiPublicTwilioVoiceFallbackRoute
   ApiPublicVoiceToolsBookAppointmentRoute: typeof ApiPublicVoiceToolsBookAppointmentRoute
   ApiPublicVoiceToolsFindSlotsRoute: typeof ApiPublicVoiceToolsFindSlotsRoute
   ApiPublicVoicemailAudioRoute: typeof ApiPublicVoicemailAudioRoute
@@ -950,6 +964,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicVoiceToolsBookAppointmentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/twilio/voice-fallback': {
+      id: '/api/public/twilio/voice-fallback'
+      path: '/api/public/twilio/voice-fallback'
+      fullPath: '/api/public/twilio/voice-fallback'
+      preLoaderRoute: typeof ApiPublicTwilioVoiceFallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/twilio/voice': {
       id: '/api/public/twilio/voice'
       path: '/api/public/twilio/voice'
@@ -1139,6 +1160,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicTwilioDialerBridgeRoute: ApiPublicTwilioDialerBridgeRoute,
   ApiPublicTwilioSmsRoute: ApiPublicTwilioSmsRoute,
   ApiPublicTwilioVoiceRoute: ApiPublicTwilioVoiceRoute,
+  ApiPublicTwilioVoiceFallbackRoute: ApiPublicTwilioVoiceFallbackRoute,
   ApiPublicVoiceToolsBookAppointmentRoute:
     ApiPublicVoiceToolsBookAppointmentRoute,
   ApiPublicVoiceToolsFindSlotsRoute: ApiPublicVoiceToolsFindSlotsRoute,
@@ -1151,13 +1173,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

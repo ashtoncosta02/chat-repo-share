@@ -73,6 +73,7 @@ interface Agent {
   escalation_triggers: string | null;
   is_live: boolean;
   answer_mode: "immediate" | "after_4_rings";
+  owner_forward_phone: string | null;
   voice_id: string | null;
   elevenlabs_agent_id: string | null;
   notify_email_transcript: boolean;
@@ -595,7 +596,11 @@ function AgentDetailPage() {
         <AnswerModeCard
           agentId={agent.id}
           value={agent.answer_mode}
+          forwardPhone={agent.owner_forward_phone}
           onChange={(next) => setAgent((prev) => (prev ? { ...prev, answer_mode: next } : prev))}
+          onForwardPhoneChange={(next) =>
+            setAgent((prev) => (prev ? { ...prev, owner_forward_phone: next } : prev))
+          }
         />
         <GoogleCalendarCard agentId={agent.id} />
         <OutlookCalendarCard agentId={agent.id} />

@@ -194,6 +194,7 @@ export type Database = {
           notify_phone: string | null
           notify_sms_transcript: boolean
           onboarding_completed: boolean
+          owner_forward_phone: string | null
           pricing_notes: string | null
           primary_goal: string | null
           services: string | null
@@ -231,6 +232,7 @@ export type Database = {
           notify_phone?: string | null
           notify_sms_transcript?: boolean
           onboarding_completed?: boolean
+          owner_forward_phone?: string | null
           pricing_notes?: string | null
           primary_goal?: string | null
           services?: string | null
@@ -268,6 +270,7 @@ export type Database = {
           notify_phone?: string | null
           notify_sms_transcript?: boolean
           onboarding_completed?: boolean
+          owner_forward_phone?: string | null
           pricing_notes?: string | null
           primary_goal?: string | null
           services?: string | null
