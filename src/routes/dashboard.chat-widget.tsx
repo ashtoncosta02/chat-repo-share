@@ -326,7 +326,7 @@ export function ChatWidgetPage() {
                   on every page where you want the chat bubble to appear.
                 </p>
                 <div className="relative">
-                  <pre className="rounded-lg bg-[oklch(0.18_0.01_290)] text-[oklch(0.96_0.02_290)] p-4 text-xs overflow-x-auto font-mono leading-relaxed">
+                  <pre className="rounded-lg bg-[oklch(0.18_0.01_290)] text-[oklch(0.96_0.02_290)] p-4 pr-20 text-xs font-mono leading-relaxed whitespace-pre-wrap break-all">
                     {scriptTag}
                   </pre>
                   <button
