@@ -320,14 +320,16 @@ export const acceptInvitationAndSignup = createServerFn({ method: "POST" })
 
     // The handle_new_user trigger creates the base profile row. Now apply the
     // trial settings on top of it.
-    const trialPatch: Record<string, unknown> = {
-      display_name: data.displayName,
-      billing_status: "trial",
-      trial_unlimited: inv.trial_days == null,
-      trial_ends_at:
-        inv.trial_days == null ? null : new Date(Date.now() + inv.trial_days * 86400000).toISOString(),
-    };
-    await supabaseAdmin.from("profiles").update(trialPatch).eq("user_id", userId);
+    await supabaseAdmin
+      .from("profiles")
+      .update({
+        display_name: data.displayName,
+        billing_status: "trial",
+        trial_unlimited: inv.trial_days == null,
+        trial_ends_at:
+          inv.trial_days == null ? null : new Date(Date.now() + inv.trial_days * 86400000).toISOString(),
+      })
+      .eq("user_id", userId);
 
     // Mark the invitation accepted
     await supabaseAdmin

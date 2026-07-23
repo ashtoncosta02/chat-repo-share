@@ -61,16 +61,17 @@ function InvitePage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (state.kind !== "ready" || !token) return;
+    const email = state.email;
+    const trialDays = state.trialDays;
     setState({ kind: "creating" });
     const res = await acceptInvitationAndSignup({
       data: { token, password, displayName: displayName.trim() },
     });
     if (!res.success) {
       toast.error(res.error);
-      setState({ kind: "ready", email: state.email, trialDays: state.trialDays });
+      setState({ kind: "ready", email, trialDays });
       return;
     }
-    // Sign the user in immediately
     const { error: signInErr } = await supabase.auth.signInWithPassword({
       email: res.email,
       password,
