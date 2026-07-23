@@ -60,16 +60,6 @@ function AdminUsersPage() {
   const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const reload = () => {
-    if (!session?.access_token) return;
-    setLoading(true);
-    getAdminUsers({ data: { accessToken: session.access_token } })
-      .then((res) => {
-        if ("users" in res) setUsers(res.users as AdminUser[]);
-      })
-      .finally(() => setLoading(false));
-  };
-
   const confirmDelete = async () => {
     if (!deleteTarget || !session?.access_token) return;
     setDeleting(true);
