@@ -33,7 +33,7 @@ function ResetPasswordPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!token) return toast.error("Missing reset token.");
-    if (pwd.length < 8) return toast.error("Password must be at least 8 characters.");
+    if (!isPasswordStrong(pwd)) return toast.error(PASSWORD_REQUIREMENTS_TEXT);
     if (pwd !== confirm) return toast.error("Passwords do not match.");
     setBusy(true);
     try {
@@ -69,6 +69,7 @@ function ResetPasswordPage() {
               <div>
                 <Label htmlFor="pwd">New password</Label>
                 <Input id="pwd" type="password" required minLength={8} value={pwd} onChange={(e) => setPwd(e.target.value)} />
+                <PasswordStrength password={pwd} />
               </div>
               <div>
                 <Label htmlFor="cpwd">Confirm password</Label>

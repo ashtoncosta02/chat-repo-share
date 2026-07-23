@@ -55,8 +55,8 @@ function AccountPage() {
   async function updatePassword(e: React.FormEvent) {
     e.preventDefault();
     setPwdMsg(null);
-    if (newPwd.length < 8) {
-      setPwdMsg({ type: "error", text: "Password must be at least 8 characters." });
+    if (!isPasswordStrong(newPwd)) {
+      setPwdMsg({ type: "error", text: PASSWORD_REQUIREMENTS_TEXT });
       return;
     }
     if (newPwd !== confirmPwd) {
