@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const searchSchema = z.object({ token: z.string().optional() });
 
-export const Route = createFileRoute("/auth/invite")({
+export const Route = createFileRoute("/auth_/invite")({
   validateSearch: searchSchema,
   head: () => ({
     meta: [
