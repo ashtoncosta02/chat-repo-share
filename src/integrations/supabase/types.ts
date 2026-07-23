@@ -197,6 +197,7 @@ export type Database = {
           owner_forward_phone: string | null
           pricing_notes: string | null
           primary_goal: string | null
+          scenarios: Json
           services: string | null
           sms_followup_enabled: boolean
           source_url: string | null
@@ -235,6 +236,7 @@ export type Database = {
           owner_forward_phone?: string | null
           pricing_notes?: string | null
           primary_goal?: string | null
+          scenarios?: Json
           services?: string | null
           sms_followup_enabled?: boolean
           source_url?: string | null
@@ -273,6 +275,7 @@ export type Database = {
           owner_forward_phone?: string | null
           pricing_notes?: string | null
           primary_goal?: string | null
+          scenarios?: Json
           services?: string | null
           sms_followup_enabled?: boolean
           source_url?: string | null
