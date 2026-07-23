@@ -21,9 +21,26 @@ import {
   ArrowLeft,
   HelpCircle,
   Layers,
+  Phone,
+  Calendar,
+  GripVertical,
+  Check,
 } from "lucide-react";
 import { syncReceptionistAgent } from "@/lib/elevenlabs-agent.functions";
 import { coerceFaqs, newFaq, type StructuredFaq } from "@/lib/faqs";
+import {
+  coerceScenarios,
+  newScenario,
+  newInstructionStep,
+  newCollectStep,
+  fieldLabel,
+  COLLECT_FIELD_LABELS,
+  SCENARIO_SUGGESTIONS,
+  type StructuredScenario,
+  type ScenarioStep,
+  type ScenarioAction,
+  type CollectFieldKey,
+} from "@/lib/scenarios";
 
 export const Route = createFileRoute("/dashboard/knowledge")({
   head: () => ({
@@ -45,13 +62,14 @@ interface Agent {
   booking_link: string | null;
   emergency_number: string | null;
   faqs_structured: unknown;
+  scenarios: unknown;
   sms_followup_enabled: boolean;
   pricing_notes: string | null;
   escalation_triggers: string | null;
   elevenlabs_agent_id: string | null;
 }
 
-type View = "index" | "faqs" | "scenarios";
+type View = "index" | "faqs" | "scenarios" | "scenario-detail";
 
 function KnowledgePage() {
   const { user } = useAuth();
@@ -64,6 +82,7 @@ function KnowledgePage() {
   const [view, setView] = useState<View>("index");
   const [expandedFaqId, setExpandedFaqId] = useState<string | null>(null);
   const [editingFaqId, setEditingFaqId] = useState<string | null>(null);
+  const [openScenarioId, setOpenScenarioId] = useState<string | null>(null);
   const [edit, setEdit] = useState({
     business_name: "",
     assistant_name: "",
@@ -73,6 +92,7 @@ function KnowledgePage() {
     booking_link: "",
     emergency_number: "",
     faqs_structured: [] as StructuredFaq[],
+    scenarios: [] as StructuredScenario[],
     sms_followup_enabled: false,
     pricing_notes: "",
     escalation_triggers: "",
@@ -85,7 +105,7 @@ function KnowledgePage() {
       const { data, error } = await supabase
         .from("agents")
         .select(
-          "id, business_name, assistant_name, tone, primary_goal, services, booking_link, emergency_number, faqs_structured, sms_followup_enabled, pricing_notes, escalation_triggers, elevenlabs_agent_id"
+          "id, business_name, assistant_name, tone, primary_goal, services, booking_link, emergency_number, faqs_structured, scenarios, sms_followup_enabled, pricing_notes, escalation_triggers, elevenlabs_agent_id"
         )
         .eq("user_id", user.id)
         .maybeSingle();
@@ -110,6 +130,7 @@ function KnowledgePage() {
         booking_link: a.booking_link ?? "",
         emergency_number: a.emergency_number ?? "",
         faqs_structured: coerceFaqs(a.faqs_structured),
+        scenarios: coerceScenarios(a.scenarios),
         sms_followup_enabled: a.sms_followup_enabled,
         pricing_notes: a.pricing_notes ?? "",
         escalation_triggers: a.escalation_triggers ?? "",
@@ -150,12 +171,16 @@ function KnowledgePage() {
       emergency_number: edit.emergency_number.trim() || null,
       faqs: null,
       faqs_structured: cleanFaqs,
+      scenarios: edit.scenarios,
       sms_followup_enabled: edit.sms_followup_enabled,
       pricing_notes: edit.pricing_notes.trim() || null,
       escalation_triggers: edit.escalation_triggers.trim() || null,
     };
 
-    const { error } = await supabase.from("agents").update(payload).eq("id", agent.id);
+    const { error } = await supabase
+      .from("agents")
+      .update(payload as never)
+      .eq("id", agent.id);
     if (error) {
       setSaving(false);
       toast.error("Couldn't save changes", { description: error.message });
@@ -433,10 +458,30 @@ function KnowledgePage() {
     );
   }
 
-  // ---------- Scenario drilldown ----------
+  // ---------- Scenarios list ----------
+  const scenarios = edit.scenarios;
+  const activeScenarioCount = scenarios.filter((s) => s.intent.trim()).length;
+  const openScenario = scenarios.find((s) => s.id === openScenarioId) ?? null;
+  const openScenarioIdx = openScenario
+    ? scenarios.findIndex((s) => s.id === openScenarioId)
+    : -1;
+
+  const updateScenario = (idx: number, patch: Partial<StructuredScenario>) => {
+    const next = [...scenarios];
+    next[idx] = { ...next[idx], ...patch };
+    setEdit({ ...edit, scenarios: next });
+  };
+
+  const addScenario = (intent = "") => {
+    const s = newScenario(intent);
+    setEdit({ ...edit, scenarios: [s, ...scenarios] });
+    setOpenScenarioId(s.id);
+    setView("scenario-detail");
+  };
+
   if (view === "scenarios") {
     return (
-      <div className="max-w-3xl mx-auto px-4 md:px-8 py-8">
+      <div className="max-w-6xl mx-auto px-4 md:px-8 py-8">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <button
@@ -446,31 +491,403 @@ function KnowledgePage() {
             >
               <ArrowLeft className="h-4 w-4" /> Back to Knowledge
             </button>
-            <h1 className="font-display text-2xl font-bold text-foreground">Scenarios</h1>
+            <h1 className="font-display text-2xl font-bold text-foreground">Scenario builder</h1>
             <p className="text-muted-foreground text-sm mt-1">
-              Custom situations {assistantName} should handle a specific way.
+              Script exactly how {assistantName} should handle specific customer requests.
             </p>
           </div>
           <Button
             type="button"
-            disabled
             className="bg-primary hover:bg-primary/90 text-primary-foreground shrink-0"
+            onClick={() => addScenario()}
           >
-            <Plus className="h-4 w-4 mr-1" /> New Scenario
+            <Plus className="h-4 w-4 mr-1" /> New scenario
           </Button>
         </div>
 
-        <div className="rounded-lg border border-dashed border-border p-10 text-center">
-          <Layers className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-          <p className="text-sm font-medium text-foreground">Scenarios are coming soon</p>
-          <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
-            You'll be able to script custom situations — like after-hours callers, price shoppers,
-            or emergencies — and tell {assistantName} exactly how to respond.
-          </p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Suggestions */}
+          <section>
+            <h2 className="text-sm font-semibold text-foreground mb-3">Suggestions for you</h2>
+            <div className="space-y-2">
+              {SCENARIO_SUGGESTIONS.filter(
+                (sug) =>
+                  !scenarios.some(
+                    (s) => s.intent.trim().toLowerCase() === sug.toLowerCase(),
+                  ),
+              ).map((sug) => (
+                <button
+                  key={sug}
+                  type="button"
+                  onClick={() => addScenario(sug)}
+                  className="w-full flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3 text-left hover:border-primary/50 hover:shadow-sm transition"
+                >
+                  <span className="text-sm text-foreground">{sug}</span>
+                  <Plus className="h-4 w-4 text-muted-foreground shrink-0" />
+                </button>
+              ))}
+              {SCENARIO_SUGGESTIONS.every((sug) =>
+                scenarios.some(
+                  (s) => s.intent.trim().toLowerCase() === sug.toLowerCase(),
+                ),
+              ) && (
+                <p className="text-xs text-muted-foreground py-6 text-center border border-dashed border-border rounded-lg">
+                  You've added all suggested scenarios.
+                </p>
+              )}
+            </div>
+          </section>
+
+          {/* All scenarios */}
+          <section>
+            <div className="flex items-center gap-2 mb-3">
+              <h2 className="text-sm font-semibold text-foreground">All scenarios</h2>
+              <span className="inline-flex items-center rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
+                {activeScenarioCount} active
+              </span>
+            </div>
+            {scenarios.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-10 text-center border border-dashed border-border rounded-lg">
+                No scenarios yet. Add a suggestion on the left or click "New scenario".
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {scenarios.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => {
+                      setOpenScenarioId(s.id);
+                      setView("scenario-detail");
+                    }}
+                    className="w-full flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3 text-left hover:border-primary/50 hover:shadow-sm transition"
+                  >
+                    <div className="min-w-0 flex items-start gap-3">
+                      <div className="h-8 w-8 rounded-md bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center shrink-0">
+                        <Layers className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          If customer wants to:
+                        </div>
+                        <div className="text-sm font-medium text-foreground truncate">
+                          {s.intent.trim() || (
+                            <span className="text-muted-foreground italic">Untitled scenario</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
         </div>
+
+        {saveButton}
       </div>
     );
   }
+
+  // ---------- Scenario detail ----------
+  if (view === "scenario-detail" && openScenario && openScenarioIdx >= 0) {
+    const s = openScenario;
+    const idx = openScenarioIdx;
+
+    const updateStep = (stepIdx: number, patch: Partial<ScenarioStep>) => {
+      const nextSteps = [...s.steps];
+      nextSteps[stepIdx] = { ...nextSteps[stepIdx], ...patch } as ScenarioStep;
+      updateScenario(idx, { steps: nextSteps });
+    };
+    const removeStep = (stepIdx: number) => {
+      updateScenario(idx, { steps: s.steps.filter((_, i) => i !== stepIdx) });
+    };
+    const setAction = (a: ScenarioAction) => updateScenario(idx, { action: a });
+
+    const collectStepIdx = s.steps.findIndex((st) => st.kind === "collect_info");
+    const hasCollect = collectStepIdx >= 0;
+
+    return (
+      <div className="max-w-3xl mx-auto px-4 md:px-8 py-8">
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <button
+            type="button"
+            onClick={() => {
+              setView("scenarios");
+              setOpenScenarioId(null);
+            }}
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition"
+          >
+            <ArrowLeft className="h-4 w-4" /> All scenarios
+          </button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-destructive"
+            onClick={() => {
+              setEdit({
+                ...edit,
+                scenarios: scenarios.filter((_, i) => i !== idx),
+              });
+              setOpenScenarioId(null);
+              setView("scenarios");
+            }}
+          >
+            <Trash2 className="h-4 w-4 mr-1" /> Delete scenario
+          </Button>
+        </div>
+
+        <div className="space-y-8">
+          {/* 1. Customer intent */}
+          <section>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="h-6 w-6 rounded-md bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center">
+                1
+              </span>
+              <h2 className="text-base font-semibold text-foreground">Customer intent</h2>
+            </div>
+            <div className="rounded-lg border border-border bg-card p-4">
+              <Label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                If customer wants to:
+              </Label>
+              <Textarea
+                value={s.intent}
+                onChange={(e) => updateScenario(idx, { intent: e.target.value })}
+                placeholder="e.g. request a quote for a bathroom renovation"
+                rows={2}
+                className="mt-2 border-0 shadow-none focus-visible:ring-0 p-0 resize-none"
+              />
+            </div>
+          </section>
+
+          {/* 2. Steps */}
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="h-6 w-6 rounded-md bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center">
+                  2
+                </span>
+                <h2 className="text-base font-semibold text-foreground">Steps</h2>
+              </div>
+              <div className="flex items-center gap-2">
+                {!hasCollect && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      updateScenario(idx, { steps: [...s.steps, newCollectStep()] })
+                    }
+                  >
+                    Add collect info
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  size="sm"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                  onClick={() =>
+                    updateScenario(idx, { steps: [...s.steps, newInstructionStep()] })
+                  }
+                >
+                  Add step
+                </Button>
+              </div>
+            </div>
+
+            {s.steps.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-8 text-center border border-dashed border-border rounded-lg">
+                Add a step to tell {assistantName} what to say or ask.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {s.steps.map((step, stepIdx) => (
+                  <div
+                    key={step.id}
+                    className="rounded-lg border border-border bg-card p-4"
+                  >
+                    <div className="flex items-start gap-2">
+                      <GripVertical className="h-4 w-4 text-muted-foreground/60 mt-1 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        {step.kind === "instruction" ? (
+                          <>
+                            <Label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                              Then:
+                            </Label>
+                            <Textarea
+                              value={step.text}
+                              onChange={(e) => updateStep(stepIdx, { text: e.target.value })}
+                              placeholder='e.g. say "no problem at all" and offer to send them a photo upload link'
+                              rows={3}
+                              className="mt-2 border-0 shadow-none focus-visible:ring-0 p-0 resize-none"
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <Label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                              Collect customer info
+                            </Label>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {(Object.keys(COLLECT_FIELD_LABELS) as CollectFieldKey[]).map(
+                                (key) => {
+                                  const selected = step.fields.includes(key);
+                                  return (
+                                    <button
+                                      key={key}
+                                      type="button"
+                                      onClick={() => {
+                                        const nextFields = selected
+                                          ? step.fields.filter((f) => f !== key)
+                                          : [...step.fields, key];
+                                        updateStep(stepIdx, { fields: nextFields });
+                                      }}
+                                      className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs transition ${
+                                        selected
+                                          ? "border-primary bg-primary/10 text-primary"
+                                          : "border-border text-muted-foreground hover:border-primary/50"
+                                      }`}
+                                    >
+                                      {selected && <Check className="h-3 w-3" />}
+                                      {fieldLabel(key)}
+                                    </button>
+                                  );
+                                },
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeStep(stepIdx)}
+                        className="text-muted-foreground hover:text-destructive transition shrink-0"
+                        aria-label="Remove step"
+                      >
+                        <XIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* 3. Select action */}
+          <section>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="h-6 w-6 rounded-md bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center">
+                3
+              </span>
+              <h2 className="text-base font-semibold text-foreground">
+                Select action{" "}
+                <span className="text-muted-foreground font-normal text-sm">(optional)</span>
+              </h2>
+            </div>
+
+            {s.action === null ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setAction({ type: "call_transfer", phone: "" })}
+                  className="rounded-lg border border-border bg-card p-4 hover:border-primary/50 hover:shadow-sm transition flex items-center justify-center gap-2 text-sm text-foreground"
+                >
+                  <Phone className="h-4 w-4" /> Call Transfer
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setAction({
+                      type: "post_call_sms",
+                      message: "",
+                    })
+                  }
+                  className="rounded-lg border border-border bg-card p-4 hover:border-primary/50 hover:shadow-sm transition flex items-center justify-center gap-2 text-sm text-foreground"
+                >
+                  <MessageSquare className="h-4 w-4" /> Post call SMS
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAction({ type: "schedule_appointment" })}
+                  className="rounded-lg border border-border bg-card p-4 hover:border-primary/50 hover:shadow-sm transition flex items-center justify-center gap-2 text-sm text-foreground"
+                >
+                  <Calendar className="h-4 w-4" /> Schedule appointment
+                </button>
+              </div>
+            ) : (
+              <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                    {s.action.type === "call_transfer" && (
+                      <>
+                        <Phone className="h-4 w-4" /> Call Transfer
+                      </>
+                    )}
+                    {s.action.type === "post_call_sms" && (
+                      <>
+                        <MessageSquare className="h-4 w-4" /> Post call SMS
+                      </>
+                    )}
+                    {s.action.type === "schedule_appointment" && (
+                      <>
+                        <Calendar className="h-4 w-4" /> Schedule appointment
+                      </>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    className="text-xs text-muted-foreground hover:text-destructive transition"
+                    onClick={() => setAction(null)}
+                  >
+                    Remove
+                  </button>
+                </div>
+                {s.action.type === "call_transfer" && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">
+                      Phone number to transfer to
+                    </Label>
+                    <Input
+                      value={s.action.phone}
+                      onChange={(e) =>
+                        setAction({ type: "call_transfer", phone: e.target.value })
+                      }
+                      placeholder="+1 555 123 4567"
+                      className="mt-1"
+                    />
+                  </div>
+                )}
+                {s.action.type === "post_call_sms" && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">SMS message</Label>
+                    <Textarea
+                      value={s.action.message}
+                      onChange={(e) =>
+                        setAction({ type: "post_call_sms", message: e.target.value })
+                      }
+                      placeholder="Hi there! Thanks for calling — here's the link we talked about: …"
+                      rows={4}
+                      className="mt-1"
+                    />
+                  </div>
+                )}
+                {s.action.type === "schedule_appointment" && (
+                  <p className="text-xs text-muted-foreground">
+                    {assistantName} will use your connected calendar to find times and book the
+                    appointment.
+                  </p>
+                )}
+              </div>
+            )}
+          </section>
+        </div>
+
+        {saveButton}
+      </div>
+    );
+  }
+
 
   // ---------- Index ----------
   return (
@@ -521,7 +938,7 @@ function KnowledgePage() {
               <div>
                 <div className="text-sm font-semibold text-foreground">Scenario</div>
                 <div className="mt-1 inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
-                  Coming soon
+                  {activeScenarioCount} {activeScenarioCount === 1 ? "scenario" : "scenarios"}
                 </div>
               </div>
             </div>

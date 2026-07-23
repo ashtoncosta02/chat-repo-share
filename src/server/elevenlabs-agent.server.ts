@@ -27,6 +27,7 @@ export interface AgentBusinessProfile {
   escalation_triggers: string | null;
   voice_id: string | null;
   faqs_structured: Array<{ question: string; answer: string }> | null;
+  scenarios_prompt?: string | null;
   greeting_message?: string | null;
   farewell_message?: string | null;
   // Set when the agent has Google Calendar connected — enables booking tools + prompt.
@@ -142,6 +143,12 @@ export function buildSystemPrompt(p: AgentBusinessProfile): string {
         lines.push(``);
       }
     }
+  }
+
+  if (p.scenarios_prompt && p.scenarios_prompt.trim()) {
+    lines.push(``);
+    lines.push(`# Scenarios (follow these when the caller's intent matches)`);
+    lines.push(p.scenarios_prompt.trim());
   }
 
   if (p.farewell_message && p.farewell_message.trim()) {
