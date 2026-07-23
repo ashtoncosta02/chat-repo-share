@@ -407,8 +407,13 @@ function KnowledgePage() {
                               type="button"
                               size="sm"
                               variant="outline"
-                              onClick={() => setEditingFaqId(null)}
+                              disabled={saving}
+                              onClick={async () => {
+                                setEditingFaqId(null);
+                                await handleSave();
+                              }}
                             >
+                              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
                               Done
                             </Button>
                           </div>
@@ -432,30 +437,15 @@ function KnowledgePage() {
                                     : "always off"}
                               </span>
                             </span>
-                            <div className="flex items-center gap-1">
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="ghost"
-                                className="h-8 text-primary hover:text-primary"
-                                onClick={() => setEditingFaqId(faq.id)}
-                              >
-                                <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
-                              </Button>
-                              <Button
-                                type="button"
-                                size="icon"
-                                variant="ghost"
-                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                onClick={() => {
-                                  const next = edit.faqs_structured.filter((_, i) => i !== idx);
-                                  setEdit({ ...edit, faqs_structured: next });
-                                }}
-                                aria-label="Delete FAQ"
-                              >
-                                <XIcon className="h-4 w-4" />
-                              </Button>
-                            </div>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 text-primary hover:text-primary"
+                              onClick={() => setEditingFaqId(faq.id)}
+                            >
+                              <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
+                            </Button>
                           </div>
                         </>
                       )}
@@ -467,7 +457,7 @@ function KnowledgePage() {
           </div>
         )}
 
-        {saveButton}
+
       </div>
     );
   }
