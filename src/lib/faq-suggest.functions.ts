@@ -23,7 +23,7 @@ export const suggestFaqs = createServerFn({ method: "POST" })
     const { data: agent, error: aErr } = await supabase
       .from("agents")
       .select(
-        "id, business_name, industry, services, pricing_notes, booking_link, emergency_number, primary_goal, faqs_structured, website_summary",
+        "id, business_name, industry, services, pricing_notes, booking_link, emergency_number, primary_goal, faqs_structured, source_url, tone",
       )
       .eq("id", data.agentId)
       .maybeSingle();
