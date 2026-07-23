@@ -179,6 +179,7 @@ function InvitePage() {
                     {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+                <PasswordStrength password={password} />
               </div>
               <Button type="submit" className="w-full" disabled={state.kind === "creating"}>
                 {state.kind === "creating" ? "Creating your account…" : "Create account & start trial"}
