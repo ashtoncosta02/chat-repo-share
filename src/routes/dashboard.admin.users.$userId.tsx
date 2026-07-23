@@ -82,6 +82,25 @@ function AdminUserDetailPage() {
       "Calendar connection cleared. User can now reconnect.");
   };
 
+  const [showDelete, setShowDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const doDelete = async () => {
+    if (!session?.access_token) return;
+    setDeleting(true);
+    try {
+      const r = await adminDeleteUser({ data: { accessToken: session.access_token, userId } });
+      if (r.success) {
+        toast.success("User and all their data deleted.");
+        navigate({ to: "/dashboard/admin/users" });
+      } else {
+        toast.error(r.error ?? "Delete failed.");
+        setDeleting(false);
+      }
+    } catch {
+      setDeleting(false);
+    }
+  };
+
   if (!checked || !isAdmin) return <div className="p-8 text-muted-foreground">Loading…</div>;
   if (loading || !data) return <div className="p-8 text-muted-foreground">Loading account…</div>;
   if (!("profile" in data) || !data.profile) return <div className="p-8 text-muted-foreground">User not found.</div>;
