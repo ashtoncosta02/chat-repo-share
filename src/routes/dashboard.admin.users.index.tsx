@@ -163,16 +163,17 @@ function AdminUsersPage() {
                   <th className="text-right px-4 py-3 font-medium">Bookings</th>
                   <th className="text-right px-4 py-3 font-medium">Leads</th>
                   <th className="text-right px-4 py-3 font-medium">Last activity</th>
+                  <th className="text-right px-4 py-3 font-medium w-10"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {loading ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">Loading…</td>
+                    <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">Loading…</td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">No users found.</td>
+                    <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">No users found.</td>
                   </tr>
                 ) : (
                   filtered.map((u) => (
