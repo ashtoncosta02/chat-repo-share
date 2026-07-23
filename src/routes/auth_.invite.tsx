@@ -63,6 +63,10 @@ function InvitePage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (state.kind !== "ready" || !token) return;
+    if (!isPasswordStrong(password)) {
+      toast.error(PASSWORD_REQUIREMENTS_TEXT);
+      return;
+    }
     const email = state.email;
     const trialDays = state.trialDays;
     setState({ kind: "creating" });
