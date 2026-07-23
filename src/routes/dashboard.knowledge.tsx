@@ -372,6 +372,107 @@ function KnowledgePage() {
           </div>
         </section>
 
+        {(() => {
+          const visible = (suggestions ?? []).filter(
+            (s) => !dismissedSuggestions.has(s.question),
+          );
+          return (
+            <section className="rounded-lg border border-primary/30 bg-primary/5 p-4 mb-6">
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="flex items-start gap-2">
+                  <Sparkles className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                  <div>
+                    <h2 className="text-sm font-semibold text-foreground">Recommended FAQs</h2>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Suggestions based on your business info
+                      {suggestionsHasCallData ? " and recent calls" : ""}. Tap Add to include one.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="shrink-0 text-xs"
+                  disabled={suggestionsLoading}
+                  onClick={() => {
+                    setDismissedSuggestions(new Set());
+                    setSuggestions(null);
+                    loadSuggestions();
+                  }}
+                >
+                  {suggestionsLoading ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    "Refresh"
+                  )}
+                </Button>
+              </div>
+              {suggestionsLoading && !suggestions ? (
+                <p className="text-xs text-muted-foreground py-4 text-center">
+                  Thinking of good questions to ask…
+                </p>
+              ) : visible.length === 0 ? (
+                <p className="text-xs text-muted-foreground py-4 text-center">
+                  No new suggestions right now. Add some FAQs or take a few calls, then Refresh.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {visible.map((s) => (
+                    <div
+                      key={s.question}
+                      className="rounded-md border border-border bg-card p-3"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm font-medium text-foreground">{s.question}</p>
+                            <span
+                              className={`text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded ${s.source === "calls" ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"}`}
+                            >
+                              {s.source === "calls" ? "From calls" : "From your info"}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">
+                            {s.answer}
+                          </p>
+                        </div>
+                        <div className="flex flex-col gap-1 shrink-0">
+                          <Button
+                            type="button"
+                            size="sm"
+                            className="h-7 px-2 text-xs bg-primary hover:bg-primary/90 text-primary-foreground"
+                            onClick={() => addSuggestion(s)}
+                          >
+                            <Plus className="h-3 w-3 mr-1" /> Add
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2 text-xs text-muted-foreground"
+                            onClick={() =>
+                              setDismissedSuggestions((prev) => {
+                                const next = new Set(prev);
+                                next.add(s.question);
+                                return next;
+                              })
+                            }
+                          >
+                            Dismiss
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          );
+        })()}
+
+
+
         {faqCount === 0 ? (
           <p className="text-sm text-muted-foreground py-10 text-center border border-dashed border-border rounded-lg">
             No FAQs yet. Click "New FAQ" to create one.
