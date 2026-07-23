@@ -50,6 +50,7 @@ import { Route as ApiPublicWidgetChatRouteImport } from './routes/api.public.wid
 import { Route as ApiPublicVoicemailAudioRouteImport } from './routes/api.public.voicemail.audio'
 import { Route as ApiPublicVoiceToolsFindSlotsRouteImport } from './routes/api.public.voice-tools.find-slots'
 import { Route as ApiPublicVoiceToolsBookAppointmentRouteImport } from './routes/api.public.voice-tools.book-appointment'
+import { Route as ApiPublicTwilioVoiceWhisperRouteImport } from './routes/api.public.twilio.voice-whisper'
 import { Route as ApiPublicTwilioVoiceFallbackRouteImport } from './routes/api.public.twilio.voice-fallback'
 import { Route as ApiPublicTwilioVoiceRouteImport } from './routes/api.public.twilio.voice'
 import { Route as ApiPublicTwilioSmsRouteImport } from './routes/api.public.twilio.sms'
@@ -277,6 +278,12 @@ const ApiPublicVoiceToolsBookAppointmentRoute =
     path: '/api/public/voice-tools/book-appointment',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicTwilioVoiceWhisperRoute =
+  ApiPublicTwilioVoiceWhisperRouteImport.update({
+    id: '/api/public/twilio/voice-whisper',
+    path: '/api/public/twilio/voice-whisper',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicTwilioVoiceFallbackRoute =
   ApiPublicTwilioVoiceFallbackRouteImport.update({
     id: '/api/public/twilio/voice-fallback',
@@ -376,6 +383,7 @@ export interface FileRoutesByFullPath {
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
   '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRoute
   '/api/public/twilio/voice-fallback': typeof ApiPublicTwilioVoiceFallbackRoute
+  '/api/public/twilio/voice-whisper': typeof ApiPublicTwilioVoiceWhisperRoute
   '/api/public/voice-tools/book-appointment': typeof ApiPublicVoiceToolsBookAppointmentRoute
   '/api/public/voice-tools/find-slots': typeof ApiPublicVoiceToolsFindSlotsRoute
   '/api/public/voicemail/audio': typeof ApiPublicVoicemailAudioRoute
@@ -424,6 +432,7 @@ export interface FileRoutesByTo {
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
   '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRoute
   '/api/public/twilio/voice-fallback': typeof ApiPublicTwilioVoiceFallbackRoute
+  '/api/public/twilio/voice-whisper': typeof ApiPublicTwilioVoiceWhisperRoute
   '/api/public/voice-tools/book-appointment': typeof ApiPublicVoiceToolsBookAppointmentRoute
   '/api/public/voice-tools/find-slots': typeof ApiPublicVoiceToolsFindSlotsRoute
   '/api/public/voicemail/audio': typeof ApiPublicVoicemailAudioRoute
@@ -478,6 +487,7 @@ export interface FileRoutesById {
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
   '/api/public/twilio/voice': typeof ApiPublicTwilioVoiceRoute
   '/api/public/twilio/voice-fallback': typeof ApiPublicTwilioVoiceFallbackRoute
+  '/api/public/twilio/voice-whisper': typeof ApiPublicTwilioVoiceWhisperRoute
   '/api/public/voice-tools/book-appointment': typeof ApiPublicVoiceToolsBookAppointmentRoute
   '/api/public/voice-tools/find-slots': typeof ApiPublicVoiceToolsFindSlotsRoute
   '/api/public/voicemail/audio': typeof ApiPublicVoicemailAudioRoute
@@ -533,6 +543,7 @@ export interface FileRouteTypes {
     | '/api/public/twilio/sms'
     | '/api/public/twilio/voice'
     | '/api/public/twilio/voice-fallback'
+    | '/api/public/twilio/voice-whisper'
     | '/api/public/voice-tools/book-appointment'
     | '/api/public/voice-tools/find-slots'
     | '/api/public/voicemail/audio'
@@ -581,6 +592,7 @@ export interface FileRouteTypes {
     | '/api/public/twilio/sms'
     | '/api/public/twilio/voice'
     | '/api/public/twilio/voice-fallback'
+    | '/api/public/twilio/voice-whisper'
     | '/api/public/voice-tools/book-appointment'
     | '/api/public/voice-tools/find-slots'
     | '/api/public/voicemail/audio'
@@ -634,6 +646,7 @@ export interface FileRouteTypes {
     | '/api/public/twilio/sms'
     | '/api/public/twilio/voice'
     | '/api/public/twilio/voice-fallback'
+    | '/api/public/twilio/voice-whisper'
     | '/api/public/voice-tools/book-appointment'
     | '/api/public/voice-tools/find-slots'
     | '/api/public/voicemail/audio'
@@ -666,6 +679,7 @@ export interface RootRouteChildren {
   ApiPublicTwilioSmsRoute: typeof ApiPublicTwilioSmsRoute
   ApiPublicTwilioVoiceRoute: typeof ApiPublicTwilioVoiceRoute
   ApiPublicTwilioVoiceFallbackRoute: typeof ApiPublicTwilioVoiceFallbackRoute
+  ApiPublicTwilioVoiceWhisperRoute: typeof ApiPublicTwilioVoiceWhisperRoute
   ApiPublicVoiceToolsBookAppointmentRoute: typeof ApiPublicVoiceToolsBookAppointmentRoute
   ApiPublicVoiceToolsFindSlotsRoute: typeof ApiPublicVoiceToolsFindSlotsRoute
   ApiPublicVoicemailAudioRoute: typeof ApiPublicVoicemailAudioRoute
@@ -964,6 +978,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicVoiceToolsBookAppointmentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/twilio/voice-whisper': {
+      id: '/api/public/twilio/voice-whisper'
+      path: '/api/public/twilio/voice-whisper'
+      fullPath: '/api/public/twilio/voice-whisper'
+      preLoaderRoute: typeof ApiPublicTwilioVoiceWhisperRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/twilio/voice-fallback': {
       id: '/api/public/twilio/voice-fallback'
       path: '/api/public/twilio/voice-fallback'
@@ -1161,6 +1182,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicTwilioSmsRoute: ApiPublicTwilioSmsRoute,
   ApiPublicTwilioVoiceRoute: ApiPublicTwilioVoiceRoute,
   ApiPublicTwilioVoiceFallbackRoute: ApiPublicTwilioVoiceFallbackRoute,
+  ApiPublicTwilioVoiceWhisperRoute: ApiPublicTwilioVoiceWhisperRoute,
   ApiPublicVoiceToolsBookAppointmentRoute:
     ApiPublicVoiceToolsBookAppointmentRoute,
   ApiPublicVoiceToolsFindSlotsRoute: ApiPublicVoiceToolsFindSlotsRoute,

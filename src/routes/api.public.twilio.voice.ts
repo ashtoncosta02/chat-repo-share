@@ -66,24 +66,32 @@ export const Route = createFileRoute("/api/public/twilio/voice")({
           const forward = String((fwdRow as any)?.owner_forward_phone || "").trim();
           const mode = String(agent.answer_mode || "immediate");
           if (mode === "after_4_rings" && forward) {
+            const base = `https://project--${PROJECT_ID}-dev.lovable.app`;
             const fallbackUrl =
-              `https://project--${PROJECT_ID}-dev.lovable.app/api/public/twilio/voice-fallback` +
+              `${base}/api/public/twilio/voice-fallback` +
               `?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+            const whisperUrl =
+              `${base}/api/public/twilio/voice-whisper` +
+              `?caller=${encodeURIComponent(from)}`;
             const safeForward = escapeXml(forward);
             const safeAction = escapeXml(fallbackUrl);
-            // Use the Twilio DID as callerId — using the caller's number
-            // requires it be a verified number on the account, otherwise
-            // Twilio refuses to dial and the owner phone never rings.
-            const safeCallerId = escapeXml(to);
+            const safeWhisper = escapeXml(whisperUrl);
+            // Use the original caller's number as callerId so the owner sees
+            // who's actually calling. A whisper prompt on the owner leg
+            // ("Press 1 to accept") prevents voicemail from silently
+            // intercepting the call — if the owner doesn't press 1, the
+            // owner leg hangs up and the AI receptionist picks up.
+            const safeCallerId = escapeXml(from);
             const twiml =
               `<?xml version="1.0" encoding="UTF-8"?><Response>` +
-              `<Dial timeout="10" answerOnBridge="true" callerId="${safeCallerId}" ` +
+              `<Dial timeout="15" answerOnBridge="true" callerId="${safeCallerId}" ` +
               `action="${safeAction}" method="POST">` +
-              `<Number>${safeForward}</Number>` +
+              `<Number url="${safeWhisper}" method="POST">${safeForward}</Number>` +
               `</Dial>` +
               `</Response>`;
             return new Response(twiml, { headers: { "Content-Type": "application/xml" } });
           }
+
 
           const fromDigits = digitsOnly(from);
           const { data: leadRows } = await supabaseAdmin

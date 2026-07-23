@@ -20,16 +20,20 @@ export const Route = createFileRoute("/api/public/twilio/voice-fallback")({
 
           // DialCallStatus: completed | busy | no-answer | failed | canceled | answered
           const dialStatus = String(form.get("DialCallStatus") || "").toLowerCase();
-          // AnsweredBy from machineDetection: human | machine_start | machine_end_* | fax | unknown
-          const answeredBy = String(form.get("AnsweredBy") || "").toLowerCase();
-          const hitVoicemail = answeredBy.startsWith("machine") || answeredBy === "fax";
+          // DialCallDuration is "0" when the owner leg hung up before bridging
+          // (e.g. whisper prompt not accepted, or owner declined). Anything > 0
+          // means the two legs actually bridged and the owner spoke to the caller.
+          const dialDuration = parseInt(String(form.get("DialCallDuration") || "0"), 10) || 0;
+          const bridged =
+            (dialStatus === "completed" || dialStatus === "answered") && dialDuration > 0;
 
-          // The owner personally answered → let the bridged call continue and hang up cleanly.
-          if (!hitVoicemail && (dialStatus === "completed" || dialStatus === "answered")) {
+          // The owner personally answered and bridged → end cleanly.
+          if (bridged) {
             return xml(`<?xml version="1.0" encoding="UTF-8"?><Response><Hangup/></Response>`);
           }
 
-          // Otherwise (no-answer / busy / failed / canceled) → route to AI.
+          // Otherwise (no-answer / busy / failed / canceled / whisper-declined) → route to AI.
+
           const { data: phoneRow } = await supabaseAdmin
             .from("phone_numbers")
             .select("agent_id")
