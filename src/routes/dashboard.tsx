@@ -148,7 +148,7 @@ function DashboardLayout() {
       </aside>
 
       {/* Mobile top bar */}
-      <header className="md:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between border-b border-border bg-card px-4 h-14">
+      <header className="md:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between border-b border-border bg-card px-4 h-20">
         <button
           onClick={() => setMobileOpen(true)}
           aria-label="Open menu"
