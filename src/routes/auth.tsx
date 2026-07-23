@@ -89,6 +89,10 @@ function AuthPage() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isPasswordStrong(password)) {
+      toast.error(PASSWORD_REQUIREMENTS_TEXT);
+      return;
+    }
     setSubmitting(true);
     const { error } = await signUp(email, password, displayName);
     setSubmitting(false);
