@@ -420,6 +420,23 @@ function AdminUserDetailPage() {
           )}
         </Section>
       </div>
+
+      <ConfirmDialog
+        open={showDelete}
+        onOpenChange={(o) => !o && !deleting && setShowDelete(false)}
+        title={`Delete ${profile.display_name || profile.email || "this user"}?`}
+        description={
+          <span>
+            This permanently removes their account, receptionist, conversations, leads, bookings,
+            and all related data. Any invitations for <strong>{profile.email}</strong> will also
+            be cleared so the address can be re-invited. This cannot be undone.
+          </span>
+        }
+        confirmLabel="Delete permanently"
+        destructive
+        loading={deleting}
+        onConfirm={doDelete}
+      />
     </div>
   );
 }
