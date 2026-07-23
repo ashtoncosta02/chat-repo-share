@@ -458,7 +458,6 @@ function KnowledgePage() {
         )}
 
 
-        {saveButton}
       </div>
     );
   }
