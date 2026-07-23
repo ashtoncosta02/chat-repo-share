@@ -29,6 +29,7 @@ import {
   Briefcase,
   DollarSign,
   AlertTriangle,
+  Sparkles,
 } from "lucide-react";
 
 import { syncReceptionistAgent } from "@/lib/elevenlabs-agent.functions";
