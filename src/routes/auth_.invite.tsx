@@ -9,6 +9,8 @@ import { AgentFactoryLogo } from "@/components/AgentFactoryLogo";
 import { Eye, EyeOff, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { getInvitationByToken, acceptInvitationAndSignup } from "@/lib/invitations.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { isPasswordStrong, PASSWORD_REQUIREMENTS_TEXT } from "@/lib/password-strength";
+import { PasswordStrength } from "@/components/PasswordStrength";
 
 const searchSchema = z.object({ token: z.string().optional() });
 
@@ -61,6 +63,10 @@ function InvitePage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (state.kind !== "ready" || !token) return;
+    if (!isPasswordStrong(password)) {
+      toast.error(PASSWORD_REQUIREMENTS_TEXT);
+      return;
+    }
     const email = state.email;
     const trialDays = state.trialDays;
     setState({ kind: "creating" });
@@ -159,7 +165,7 @@ function InvitePage() {
                     id="invite-password"
                     type={show ? "text" : "password"}
                     required
-                    minLength={6}
+                    minLength={8}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pr-10"
@@ -173,6 +179,7 @@ function InvitePage() {
                     {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+                <PasswordStrength password={password} />
               </div>
               <Button type="submit" className="w-full" disabled={state.kind === "creating"}>
                 {state.kind === "creating" ? "Creating your account…" : "Create account & start trial"}

@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { AgentFactoryLogo } from "@/components/AgentFactoryLogo";
 import { Eye, EyeOff } from "lucide-react";
+import { isPasswordStrong, PASSWORD_REQUIREMENTS_TEXT } from "@/lib/password-strength";
+import { PasswordStrength } from "@/components/PasswordStrength";
 
 const authSearchSchema = z.object({
   mode: z.enum(["signin", "signup"]).optional(),
@@ -87,6 +89,10 @@ function AuthPage() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isPasswordStrong(password)) {
+      toast.error(PASSWORD_REQUIREMENTS_TEXT);
+      return;
+    }
     setSubmitting(true);
     const { error } = await signUp(email, password, displayName);
     setSubmitting(false);
@@ -143,7 +149,8 @@ function AuthPage() {
                 </div>
                 <div>
                   <Label htmlFor="signup-password">Password</Label>
-                  <PasswordInput id="signup-password" value={password} onChange={setPassword} minLength={6} />
+                  <PasswordInput id="signup-password" value={password} onChange={setPassword} minLength={8} />
+                  <PasswordStrength password={password} />
                 </div>
                 <Button type="submit" className="w-full" disabled={submitting}>
                   {submitting ? "Creating…" : "Create account"}

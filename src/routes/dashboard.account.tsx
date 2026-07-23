@@ -6,6 +6,8 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { deleteOwnAccount } from "@/lib/account.functions";
 import { Mail, KeyRound, CreditCard, CheckCircle2, AlertCircle, Trash2, LifeBuoy } from "lucide-react";
 import { toast } from "sonner";
+import { isPasswordStrong, PASSWORD_REQUIREMENTS_TEXT } from "@/lib/password-strength";
+import { PasswordStrength } from "@/components/PasswordStrength";
 
 export const Route = createFileRoute("/dashboard/account")({
   head: () => ({
@@ -55,8 +57,8 @@ function AccountPage() {
   async function updatePassword(e: React.FormEvent) {
     e.preventDefault();
     setPwdMsg(null);
-    if (newPwd.length < 8) {
-      setPwdMsg({ type: "error", text: "Password must be at least 8 characters." });
+    if (!isPasswordStrong(newPwd)) {
+      setPwdMsg({ type: "error", text: PASSWORD_REQUIREMENTS_TEXT });
       return;
     }
     if (newPwd !== confirmPwd) {
@@ -135,6 +137,7 @@ function AccountPage() {
             placeholder="New password (min 8 characters)"
             className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--gold)]"
           />
+          <PasswordStrength password={newPwd} />
           <input
             type="password"
             value={confirmPwd}
