@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, X as XIcon, MessageSquare, Loader2 } from "lucide-react";
+import { Plus, X as XIcon, MessageSquare, Loader2, ChevronDown, Pencil, Trash2 } from "lucide-react";
 import { syncReceptionistAgent } from "@/lib/elevenlabs-agent.functions";
 import { coerceFaqs, newFaq, type StructuredFaq } from "@/lib/faqs";
 
