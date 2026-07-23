@@ -171,13 +171,16 @@ function KnowledgePage() {
       emergency_number: edit.emergency_number.trim() || null,
       faqs: null,
       faqs_structured: cleanFaqs,
-      scenarios: edit.scenarios as unknown as never,
+      scenarios: edit.scenarios,
       sms_followup_enabled: edit.sms_followup_enabled,
       pricing_notes: edit.pricing_notes.trim() || null,
       escalation_triggers: edit.escalation_triggers.trim() || null,
     };
 
-    const { error } = await supabase.from("agents").update(payload).eq("id", agent.id);
+    const { error } = await supabase
+      .from("agents")
+      .update(payload as never)
+      .eq("id", agent.id);
     if (error) {
       setSaving(false);
       toast.error("Couldn't save changes", { description: error.message });
