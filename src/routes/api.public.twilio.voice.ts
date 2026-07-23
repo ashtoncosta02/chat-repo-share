@@ -72,12 +72,12 @@ export const Route = createFileRoute("/api/public/twilio/voice")({
             const safeForward = escapeXml(forward);
             const safeAction = escapeXml(fallbackUrl);
             const safeCallerId = escapeXml(from);
-            // timeout=20 ≈ 4 rings — short enough to beat most carrier voicemails (~25s).
-            // machineDetection detects voicemail; if AnsweredBy is a machine, the fallback
-            // route hangs up the owner leg and routes the caller to the AI receptionist.
+            // timeout=15 ≈ 2–3 rings — short enough to beat carrier voicemail (~20–30s).
+            // machineDetection is kept as a safety net if voicemail still answers early.
             const twiml =
               `<?xml version="1.0" encoding="UTF-8"?><Response>` +
-              `<Dial timeout="20" answerOnBridge="true" callerId="${safeCallerId}" ` +
+              `<Dial timeout="15" answerOnBridge="true" callerId="${safeCallerId}" ` +
+              `action="${safeAction}" method="POST" ` +
               `action="${safeAction}" method="POST" ` +
               `machineDetection="Enable" machineDetectionTimeout="8">` +
               `<Number>${safeForward}</Number>` +
