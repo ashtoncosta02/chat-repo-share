@@ -156,7 +156,7 @@ function DashboardLayout() {
         >
           <Menu className="h-5 w-5 text-foreground" />
         </button>
-        <AgentFactoryLogo imgClassName="h-10 w-auto object-contain" />
+        <AgentFactoryLogo imgClassName="h-20 w-auto object-contain" />
         <AccountMenu />
       </header>
 
