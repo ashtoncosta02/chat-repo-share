@@ -366,7 +366,6 @@ export async function persistPostCall(
     } catch (e) {
       console.error("postcall: transcript SMS failed", e);
     }
-    }
   }
 
   // Scenario-driven post-call SMS to the caller (e.g. "text me the pricing sheet").
@@ -380,6 +379,7 @@ export async function persistPostCall(
     });
   } catch (e) {
     console.error("postcall: scenario SMS failed", e);
+  }
 
   console.log(
     `postcall: saved conversation ${convo.id} (${messageCount} messages) for agent ${agent.id}`,
