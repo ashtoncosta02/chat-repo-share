@@ -373,7 +373,36 @@ function KnowledgePage() {
           </div>
         </section>
 
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Suggestions (left) */}
+          <section className="min-w-0">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="h-4 w-4 text-primary shrink-0" />
+              <h2 className="text-sm font-semibold text-foreground">Suggestions for you</h2>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="ml-auto shrink-0 text-xs h-7"
+                disabled={suggestionsLoading}
+                onClick={() => {
+                  setDismissedSuggestions(new Set());
+                  setSuggestions(null);
+                  loadSuggestions();
+                }}
+              >
+                {suggestionsLoading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  "Refresh"
+                )}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              Based on your business info{suggestionsHasCallData ? " and recent calls" : ""}. Tap Add to include one.
+            </p>
         {(() => {
+
           const visible = (suggestions ?? []).filter(
             (s) => !dismissedSuggestions.has(s.question),
           );
