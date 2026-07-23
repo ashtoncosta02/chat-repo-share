@@ -973,7 +973,7 @@ function KnowledgePage() {
             const cards: Array<{
               key: View;
               title: string;
-              icon: JSX.Element;
+              icon: React.ReactNode;
               iconWrap: string;
               chip: string;
             }> = [
