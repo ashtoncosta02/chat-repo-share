@@ -137,6 +137,7 @@ function AccountPage() {
             placeholder="New password (min 8 characters)"
             className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--gold)]"
           />
+          <PasswordStrength password={newPwd} />
           <input
             type="password"
             value={confirmPwd}
