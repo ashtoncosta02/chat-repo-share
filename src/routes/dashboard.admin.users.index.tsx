@@ -57,6 +57,37 @@ function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const reload = () => {
+    if (!session?.access_token) return;
+    setLoading(true);
+    getAdminUsers({ data: { accessToken: session.access_token } })
+      .then((res) => {
+        if ("users" in res) setUsers(res.users as AdminUser[]);
+      })
+      .finally(() => setLoading(false));
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget || !session?.access_token) return;
+    setDeleting(true);
+    try {
+      const r = await adminDeleteUser({
+        data: { accessToken: session.access_token, userId: deleteTarget.user_id },
+      });
+      if (r.success) {
+        toast.success("User and all their data deleted.");
+        setUsers((prev) => prev.filter((u) => u.user_id !== deleteTarget.user_id));
+        setDeleteTarget(null);
+      } else {
+        toast.error(r.error ?? "Delete failed.");
+      }
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   useEffect(() => {
     if (checked && !isAdmin) navigate({ to: "/dashboard" });
