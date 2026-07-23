@@ -31,6 +31,7 @@ import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard.analy
 import { Route as DashboardAgentRouteImport } from './routes/dashboard.agent'
 import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
 import { Route as DashboardAccountRouteImport } from './routes/dashboard.account'
+import { Route as AuthInviteRouteImport } from './routes/auth.invite'
 import { Route as DashboardConversationsIndexRouteImport } from './routes/dashboard.conversations.index'
 import { Route as DashboardAdminIndexRouteImport } from './routes/dashboard.admin.index'
 import { Route as DashboardConversationsBlockedRouteImport } from './routes/dashboard.conversations.blocked'
@@ -38,6 +39,7 @@ import { Route as DashboardConversationsConversationIdRouteImport } from './rout
 import { Route as DashboardAgentsAgentIdRouteImport } from './routes/dashboard.agents.$agentId'
 import { Route as DashboardAdminUsersRouteImport } from './routes/dashboard.admin.users'
 import { Route as DashboardAdminTicketsRouteImport } from './routes/dashboard.admin.tickets'
+import { Route as DashboardAdminInvitationsRouteImport } from './routes/dashboard.admin.invitations'
 import { Route as DashboardAdminHealthRouteImport } from './routes/dashboard.admin.health'
 import { Route as ApiPublicOwnerChatRouteImport } from './routes/api.public.owner-chat'
 import { Route as DashboardAdminUsersIndexRouteImport } from './routes/dashboard.admin.users.index'
@@ -172,6 +174,11 @@ const DashboardAccountRoute = DashboardAccountRouteImport.update({
   path: '/account',
   getParentRoute: () => DashboardRoute,
 } as any)
+const AuthInviteRoute = AuthInviteRouteImport.update({
+  id: '/invite',
+  path: '/invite',
+  getParentRoute: () => AuthRoute,
+} as any)
 const DashboardConversationsIndexRoute =
   DashboardConversationsIndexRouteImport.update({
     id: '/',
@@ -210,6 +217,12 @@ const DashboardAdminTicketsRoute = DashboardAdminTicketsRouteImport.update({
   path: '/tickets',
   getParentRoute: () => DashboardAdminRoute,
 } as any)
+const DashboardAdminInvitationsRoute =
+  DashboardAdminInvitationsRouteImport.update({
+    id: '/invitations',
+    path: '/invitations',
+    getParentRoute: () => DashboardAdminRoute,
+  } as any)
 const DashboardAdminHealthRoute = DashboardAdminHealthRouteImport.update({
   id: '/health',
   path: '/health',
@@ -344,12 +357,13 @@ const ApiPublicWidgetConfigAgentIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/dashboard': typeof DashboardRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
+  '/auth/invite': typeof AuthInviteRoute
   '/dashboard/account': typeof DashboardAccountRoute
   '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/agent': typeof DashboardAgentRoute
@@ -367,6 +381,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/': typeof DashboardIndexRoute
   '/api/public/owner-chat': typeof ApiPublicOwnerChatRoute
   '/dashboard/admin/health': typeof DashboardAdminHealthRoute
+  '/dashboard/admin/invitations': typeof DashboardAdminInvitationsRoute
   '/dashboard/admin/tickets': typeof DashboardAdminTicketsRouteWithChildren
   '/dashboard/admin/users': typeof DashboardAdminUsersRouteWithChildren
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
@@ -398,11 +413,12 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
+  '/auth/invite': typeof AuthInviteRoute
   '/dashboard/account': typeof DashboardAccountRoute
   '/dashboard/agent': typeof DashboardAgentRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
@@ -418,6 +434,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardIndexRoute
   '/api/public/owner-chat': typeof ApiPublicOwnerChatRoute
   '/dashboard/admin/health': typeof DashboardAdminHealthRoute
+  '/dashboard/admin/invitations': typeof DashboardAdminInvitationsRoute
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
   '/dashboard/conversations/$conversationId': typeof DashboardConversationsConversationIdRoute
   '/dashboard/conversations/blocked': typeof DashboardConversationsBlockedRoute
@@ -448,12 +465,13 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/dashboard': typeof DashboardRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
+  '/auth/invite': typeof AuthInviteRoute
   '/dashboard/account': typeof DashboardAccountRoute
   '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/agent': typeof DashboardAgentRoute
@@ -471,6 +489,7 @@ export interface FileRoutesById {
   '/dashboard/': typeof DashboardIndexRoute
   '/api/public/owner-chat': typeof ApiPublicOwnerChatRoute
   '/dashboard/admin/health': typeof DashboardAdminHealthRoute
+  '/dashboard/admin/invitations': typeof DashboardAdminInvitationsRoute
   '/dashboard/admin/tickets': typeof DashboardAdminTicketsRouteWithChildren
   '/dashboard/admin/users': typeof DashboardAdminUsersRouteWithChildren
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
@@ -510,6 +529,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/reset-password'
     | '/terms'
+    | '/auth/invite'
     | '/dashboard/account'
     | '/dashboard/admin'
     | '/dashboard/agent'
@@ -527,6 +547,7 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/api/public/owner-chat'
     | '/dashboard/admin/health'
+    | '/dashboard/admin/invitations'
     | '/dashboard/admin/tickets'
     | '/dashboard/admin/users'
     | '/dashboard/agents/$agentId'
@@ -563,6 +584,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/reset-password'
     | '/terms'
+    | '/auth/invite'
     | '/dashboard/account'
     | '/dashboard/agent'
     | '/dashboard/analytics'
@@ -578,6 +600,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/api/public/owner-chat'
     | '/dashboard/admin/health'
+    | '/dashboard/admin/invitations'
     | '/dashboard/agents/$agentId'
     | '/dashboard/conversations/$conversationId'
     | '/dashboard/conversations/blocked'
@@ -613,6 +636,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/reset-password'
     | '/terms'
+    | '/auth/invite'
     | '/dashboard/account'
     | '/dashboard/admin'
     | '/dashboard/agent'
@@ -630,6 +654,7 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/api/public/owner-chat'
     | '/dashboard/admin/health'
+    | '/dashboard/admin/invitations'
     | '/dashboard/admin/tickets'
     | '/dashboard/admin/users'
     | '/dashboard/agents/$agentId'
@@ -662,7 +687,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AuthRoute: typeof AuthRoute
+  AuthRoute: typeof AuthRouteWithChildren
   DashboardRoute: typeof DashboardRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -845,6 +870,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAccountRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/auth/invite': {
+      id: '/auth/invite'
+      path: '/invite'
+      fullPath: '/auth/invite'
+      preLoaderRoute: typeof AuthInviteRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/dashboard/conversations/': {
       id: '/dashboard/conversations/'
       path: '/'
@@ -892,6 +924,13 @@ declare module '@tanstack/react-router' {
       path: '/tickets'
       fullPath: '/dashboard/admin/tickets'
       preLoaderRoute: typeof DashboardAdminTicketsRouteImport
+      parentRoute: typeof DashboardAdminRoute
+    }
+    '/dashboard/admin/invitations': {
+      id: '/dashboard/admin/invitations'
+      path: '/invitations'
+      fullPath: '/dashboard/admin/invitations'
+      preLoaderRoute: typeof DashboardAdminInvitationsRouteImport
       parentRoute: typeof DashboardAdminRoute
     }
     '/dashboard/admin/health': {
@@ -1058,6 +1097,16 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthRouteChildren {
+  AuthInviteRoute: typeof AuthInviteRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthInviteRoute: AuthInviteRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
 interface DashboardAdminTicketsRouteChildren {
   DashboardAdminTicketsTicketIdRoute: typeof DashboardAdminTicketsTicketIdRoute
   DashboardAdminTicketsIndexRoute: typeof DashboardAdminTicketsIndexRoute
@@ -1088,6 +1137,7 @@ const DashboardAdminUsersRouteWithChildren =
 
 interface DashboardAdminRouteChildren {
   DashboardAdminHealthRoute: typeof DashboardAdminHealthRoute
+  DashboardAdminInvitationsRoute: typeof DashboardAdminInvitationsRoute
   DashboardAdminTicketsRoute: typeof DashboardAdminTicketsRouteWithChildren
   DashboardAdminUsersRoute: typeof DashboardAdminUsersRouteWithChildren
   DashboardAdminIndexRoute: typeof DashboardAdminIndexRoute
@@ -1095,6 +1145,7 @@ interface DashboardAdminRouteChildren {
 
 const DashboardAdminRouteChildren: DashboardAdminRouteChildren = {
   DashboardAdminHealthRoute: DashboardAdminHealthRoute,
+  DashboardAdminInvitationsRoute: DashboardAdminInvitationsRoute,
   DashboardAdminTicketsRoute: DashboardAdminTicketsRouteWithChildren,
   DashboardAdminUsersRoute: DashboardAdminUsersRouteWithChildren,
   DashboardAdminIndexRoute: DashboardAdminIndexRoute,
@@ -1165,7 +1216,7 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AuthRoute: AuthRoute,
+  AuthRoute: AuthRouteWithChildren,
   DashboardRoute: DashboardRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
   PrivacyRoute: PrivacyRoute,

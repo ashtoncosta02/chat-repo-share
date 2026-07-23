@@ -236,3 +236,49 @@ function formatDuration(totalSeconds: number): string {
   if (sec === 0) return `${m} min`;
   return `${m}m ${sec}s`;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Invitation email (from owner → invited user)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface InvitationEmailInput {
+  toEmail: string;
+  inviteUrl: string;
+  trialLabel: string; // e.g. "30-day free trial" or "unlimited free trial"
+}
+
+export function renderInvitationEmail(input: InvitationEmailInput): {
+  subject: string;
+  html: string;
+} {
+  const subject = `You're invited to Ask Janice — ${input.trialLabel}`;
+
+  const body = `
+    <h1 style="margin:0 0 12px 0;font-size:22px;font-weight:600;letter-spacing:-0.01em;">You're invited to Ask Janice</h1>
+    <p style="margin:0 0 16px 0;color:#374151;">
+      You've been invited to set up your own AI receptionist on Ask Janice —
+      answers calls, takes messages, books appointments, and sends you the
+      transcripts. You're getting an <strong>${escape(input.trialLabel)}</strong>
+      to try everything out.
+    </p>
+    <div style="margin:24px 0;">
+      <a href="${escape(input.inviteUrl)}" style="display:inline-block;background:#1a1a1a;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:500;">Create your account</a>
+    </div>
+    <p style="margin:16px 0 0 0;color:#6b7280;font-size:13px;">
+      Or paste this link in your browser:<br />
+      <span style="word-break:break-all;color:#374151;">${escape(input.inviteUrl)}</span>
+    </p>
+    <p style="margin:20px 0 0 0;color:#6b7280;font-size:13px;">
+      This invite link is single-use and expires in 30 days.
+    </p>
+  `;
+
+  return {
+    subject,
+    html: shell({
+      preheader: `Set up your Ask Janice AI receptionist — ${input.trialLabel}.`,
+      title: subject,
+      bodyHtml: body,
+    }),
+  };
+}
