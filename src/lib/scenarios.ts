@@ -30,7 +30,7 @@ export interface ScenarioStepCollect {
 export type ScenarioStep = ScenarioStepInstruction | ScenarioStepCollect;
 
 export type ScenarioAction =
-  | { type: "call_transfer"; phone: string }
+  | { type: "call_transfer"; phone: string; voicemailFallback?: boolean }
   | { type: "post_call_sms"; message: string }
   | { type: "schedule_appointment" }
   | null;
