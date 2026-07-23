@@ -1060,18 +1060,50 @@ function KnowledgePage() {
                   </button>
                 </div>
                 {s.action.type === "call_transfer" && (
-                  <div>
-                    <Label className="text-xs text-muted-foreground">
-                      Phone number to transfer to
-                    </Label>
-                    <Input
-                      value={s.action.phone}
-                      onChange={(e) =>
-                        setAction({ type: "call_transfer", phone: e.target.value })
-                      }
-                      placeholder="+1 555 123 4567"
-                      className="mt-1"
-                    />
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">
+                        Phone number to transfer to
+                      </Label>
+                      <Input
+                        value={s.action.phone}
+                        onChange={(e) =>
+                          setAction({
+                            type: "call_transfer",
+                            phone: e.target.value,
+                            voicemailFallback:
+                              s.action?.type === "call_transfer"
+                                ? s.action.voicemailFallback === true
+                                : false,
+                          })
+                        }
+                        placeholder="+1 555 123 4567"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div className="flex items-start justify-between gap-4 rounded-md border border-border/60 bg-muted/30 p-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium">
+                          If they don't pick up, send caller to their voicemail
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {s.action.voicemailFallback
+                            ? `Caller hears ringing, then is dropped into the voicemail at ${s.action.phone || "that number"} on no-answer — ${assistantName} won't take a message.`
+                            : `${assistantName} will take a message instead of routing the caller to voicemail.`}
+                        </p>
+                      </div>
+                      <Switch
+                        checked={s.action.voicemailFallback === true}
+                        onCheckedChange={(checked) =>
+                          setAction({
+                            type: "call_transfer",
+                            phone:
+                              s.action?.type === "call_transfer" ? s.action.phone : "",
+                            voicemailFallback: checked,
+                          })
+                        }
+                      />
+                    </div>
                   </div>
                 )}
                 {s.action.type === "post_call_sms" && (

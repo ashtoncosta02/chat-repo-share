@@ -30,7 +30,7 @@ export interface ScenarioStepCollect {
 export type ScenarioStep = ScenarioStepInstruction | ScenarioStepCollect;
 
 export type ScenarioAction =
-  | { type: "call_transfer"; phone: string }
+  | { type: "call_transfer"; phone: string; voicemailFallback?: boolean }
   | { type: "post_call_sms"; message: string }
   | { type: "schedule_appointment" }
   | null;
@@ -85,7 +85,11 @@ export function coerceScenarios(raw: unknown): StructuredScenario[] {
       if (o.action && typeof o.action === "object") {
         const ao = o.action as Record<string, unknown>;
         if (ao.type === "call_transfer" && typeof ao.phone === "string") {
-          action = { type: "call_transfer", phone: ao.phone };
+          action = {
+            type: "call_transfer",
+            phone: ao.phone,
+            voicemailFallback: ao.voicemailFallback === true,
+          };
         } else if (ao.type === "post_call_sms" && typeof ao.message === "string") {
           action = { type: "post_call_sms", message: ao.message };
         } else if (ao.type === "schedule_appointment") {
@@ -126,6 +130,11 @@ export function scenariosToPromptText(scenarios: StructuredScenario[]): string {
     if (s.action) {
       if (s.action.type === "call_transfer") {
         parts.push(`  Then offer to transfer them to ${s.action.phone}.`);
+        if (s.action.voicemailFallback) {
+          parts.push(
+            `  If that line doesn't pick up, let the caller leave a voicemail there instead of taking a message yourself.`,
+          );
+        }
       } else if (s.action.type === "post_call_sms") {
         parts.push(
           `  Then let them know you'll text them right after this call. (SMS body: "${s.action.message.trim()}")`,
