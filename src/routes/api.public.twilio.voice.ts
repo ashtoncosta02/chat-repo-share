@@ -71,14 +71,14 @@ export const Route = createFileRoute("/api/public/twilio/voice")({
               `?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
             const safeForward = escapeXml(forward);
             const safeAction = escapeXml(fallbackUrl);
-            const safeCallerId = escapeXml(from);
-            // timeout=10 ≈ 1–2 rings — short enough to beat fast carrier voicemail.
-            // machineDetection is kept as a safety net if voicemail still answers early.
+            // Use the Twilio DID as callerId — using the caller's number
+            // requires it be a verified number on the account, otherwise
+            // Twilio refuses to dial and the owner phone never rings.
+            const safeCallerId = escapeXml(to);
             const twiml =
               `<?xml version="1.0" encoding="UTF-8"?><Response>` +
               `<Dial timeout="10" answerOnBridge="true" callerId="${safeCallerId}" ` +
-              `action="${safeAction}" method="POST" ` +
-              `machineDetection="Enable" machineDetectionTimeout="8">` +
+              `action="${safeAction}" method="POST">` +
               `<Number>${safeForward}</Number>` +
               `</Dial>` +
               `</Response>`;
