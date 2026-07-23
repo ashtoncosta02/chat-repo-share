@@ -112,7 +112,7 @@ export function AnswerModeCard({
           onClick={() => update("immediate")}
           icon={<Zap className="h-5 w-5" />}
           title="Answer immediately"
-          description="AI picks up on the first ring."
+          description="Best for after-hours and forwarded calls — the AI answers instantly."
         />
         <ModeButton
           active={value === "after_4_rings"}
