@@ -149,7 +149,8 @@ function AuthPage() {
                 </div>
                 <div>
                   <Label htmlFor="signup-password">Password</Label>
-                  <PasswordInput id="signup-password" value={password} onChange={setPassword} minLength={6} />
+                  <PasswordInput id="signup-password" value={password} onChange={setPassword} minLength={8} />
+                  <PasswordStrength password={password} />
                 </div>
                 <Button type="submit" className="w-full" disabled={submitting}>
                   {submitting ? "Creating…" : "Create account"}
