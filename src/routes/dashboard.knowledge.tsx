@@ -633,9 +633,12 @@ function KnowledgePage() {
             })}
           </div>
         )}
+          </section>
+        </div>
 
 
       </div>
+
     );
   }
 
