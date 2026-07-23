@@ -245,8 +245,12 @@ function buildAgentPayload(p: AgentBusinessProfile): ElevenLabsAgentConfig {
           prompt: buildSystemPrompt(p),
           // Bumped from gemini-2.0-flash — ElevenLabs explicitly recommends
           // 2.5-flash (or stronger) when the agent has webhook tools because
-          // 2.0-flash is unreliable at extracting tool parameters.
-          llm: "gemini-2.5-flash",
+          // 2.0-flash is unreliable at extracting tool parameters. When the
+          // agent has NO booking tools, use flash-lite for lower latency.
+          llm:
+            p.tool_ids && p.tool_ids.length > 0
+              ? "gemini-2.5-flash"
+              : "gemini-2.5-flash-lite",
           tool_ids: p.tool_ids && p.tool_ids.length > 0 ? p.tool_ids : undefined,
           // Voicemail detection is a built-in system tool (not a workspace tool).
           // EL rejects mixing the legacy `tools[]` array with `tool_ids`, so we
@@ -281,9 +285,8 @@ function buildAgentPayload(p: AgentBusinessProfile): ElevenLabsAgentConfig {
       },
       turn: {
         // How long the agent waits in silence before deciding the caller is
-        // done talking. Lower = snappier replies. 2s is a good phone-call
-        // sweet spot — fast without cutting people off mid-sentence.
-        turn_timeout: 2,
+        // done talking. 1s keeps replies snappy on a phone call.
+        turn_timeout: 1,
         mode: "turn",
       },
     },
