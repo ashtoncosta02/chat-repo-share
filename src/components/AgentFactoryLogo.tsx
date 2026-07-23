@@ -2,7 +2,7 @@ import logoAsset from "@/assets/janice-logo.png.asset.json";
 
 export function AgentFactoryLogo({
   className = "",
-  imgClassName = "h-10 w-auto object-contain",
+  imgClassName = "h-20 w-auto object-contain",
 }: {
   className?: string;
   imgClassName?: string;
