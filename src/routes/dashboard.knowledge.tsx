@@ -171,7 +171,7 @@ function KnowledgePage() {
       emergency_number: edit.emergency_number.trim() || null,
       faqs: null,
       faqs_structured: cleanFaqs,
-      scenarios: edit.scenarios,
+      scenarios: edit.scenarios as unknown as never,
       sms_followup_enabled: edit.sms_followup_enabled,
       pricing_notes: edit.pricing_notes.trim() || null,
       escalation_triggers: edit.escalation_triggers.trim() || null,
