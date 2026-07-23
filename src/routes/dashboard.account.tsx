@@ -6,6 +6,8 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { deleteOwnAccount } from "@/lib/account.functions";
 import { Mail, KeyRound, CreditCard, CheckCircle2, AlertCircle, Trash2, LifeBuoy } from "lucide-react";
 import { toast } from "sonner";
+import { isPasswordStrong, PASSWORD_REQUIREMENTS_TEXT } from "@/lib/password-strength";
+import { PasswordStrength } from "@/components/PasswordStrength";
 
 export const Route = createFileRoute("/dashboard/account")({
   head: () => ({
