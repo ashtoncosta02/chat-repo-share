@@ -29,9 +29,11 @@ import {
   Briefcase,
   DollarSign,
   AlertTriangle,
+  Sparkles,
 } from "lucide-react";
 
 import { syncReceptionistAgent } from "@/lib/elevenlabs-agent.functions";
+import { suggestFaqs, type SuggestedFaq } from "@/lib/faq-suggest.functions";
 import { coerceFaqs, newFaq, type StructuredFaq } from "@/lib/faqs";
 import {
   coerceScenarios,
@@ -89,6 +91,7 @@ function KnowledgePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const syncEl = useServerFn(syncReceptionistAgent);
+  const suggestFaqsFn = useServerFn(suggestFaqs);
 
   const [agent, setAgent] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(true);
@@ -97,6 +100,10 @@ function KnowledgePage() {
   const [expandedFaqId, setExpandedFaqId] = useState<string | null>(null);
   const [editingFaqId, setEditingFaqId] = useState<string | null>(null);
   const [openScenarioId, setOpenScenarioId] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<SuggestedFaq[] | null>(null);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [suggestionsHasCallData, setSuggestionsHasCallData] = useState(false);
+  const [dismissedSuggestions, setDismissedSuggestions] = useState<Set<string>>(new Set());
   const [edit, setEdit] = useState({
     business_name: "",
     assistant_name: "",
@@ -223,6 +230,66 @@ function KnowledgePage() {
     toast.success("Knowledge & facts updated");
   };
 
+  const loadSuggestions = async (opts?: { silent?: boolean }) => {
+    if (!agent) return;
+    setSuggestionsLoading(true);
+    try {
+      const r = await suggestFaqsFn({ data: { agentId: agent.id } });
+      if (r.success) {
+        setSuggestions(r.suggestions);
+        setSuggestionsHasCallData(r.hasCallData);
+      } else if (!opts?.silent) {
+        toast.error("Couldn't load recommendations", { description: r.error });
+      }
+    } catch (e) {
+      if (!opts?.silent) {
+        toast.error("Couldn't load recommendations", {
+          description: e instanceof Error ? e.message : "Unknown error",
+        });
+      }
+    } finally {
+      setSuggestionsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (view === "faqs" && agent && suggestions === null && !suggestionsLoading) {
+      loadSuggestions({ silent: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, agent?.id]);
+
+  const addSuggestion = async (s: SuggestedFaq) => {
+    const f: StructuredFaq = {
+      id: crypto.randomUUID(),
+      question: s.question,
+      answer: s.answer,
+      sms_followup: undefined,
+    };
+    const nextFaqs = [f, ...edit.faqs_structured];
+    setEdit((p) => ({ ...p, faqs_structured: nextFaqs }));
+    setSuggestions((prev) => (prev ? prev.filter((x) => x.question !== s.question) : prev));
+    // Persist immediately so it survives navigation.
+    if (!agent) return;
+    const cleanFaqs = nextFaqs
+      .map((x) => ({
+        id: x.id,
+        question: x.question.trim(),
+        answer: x.answer.trim(),
+        sms_followup: x.sms_followup,
+      }))
+      .filter((x) => x.question || x.answer);
+    const { error } = await supabase
+      .from("agents")
+      .update({ faqs_structured: cleanFaqs, faqs: null } as never)
+      .eq("id", agent.id);
+    if (error) {
+      toast.error("Couldn't save FAQ", { description: error.message });
+    } else {
+      toast.success("Added to your FAQs");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center text-muted-foreground">
@@ -304,6 +371,107 @@ function KnowledgePage() {
             />
           </div>
         </section>
+
+        {(() => {
+          const visible = (suggestions ?? []).filter(
+            (s) => !dismissedSuggestions.has(s.question),
+          );
+          return (
+            <section className="rounded-lg border border-primary/30 bg-primary/5 p-4 mb-6">
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="flex items-start gap-2">
+                  <Sparkles className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                  <div>
+                    <h2 className="text-sm font-semibold text-foreground">Recommended FAQs</h2>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Suggestions based on your business info
+                      {suggestionsHasCallData ? " and recent calls" : ""}. Tap Add to include one.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="shrink-0 text-xs"
+                  disabled={suggestionsLoading}
+                  onClick={() => {
+                    setDismissedSuggestions(new Set());
+                    setSuggestions(null);
+                    loadSuggestions();
+                  }}
+                >
+                  {suggestionsLoading ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    "Refresh"
+                  )}
+                </Button>
+              </div>
+              {suggestionsLoading && !suggestions ? (
+                <p className="text-xs text-muted-foreground py-4 text-center">
+                  Thinking of good questions to ask…
+                </p>
+              ) : visible.length === 0 ? (
+                <p className="text-xs text-muted-foreground py-4 text-center">
+                  No new suggestions right now. Add some FAQs or take a few calls, then Refresh.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {visible.map((s) => (
+                    <div
+                      key={s.question}
+                      className="rounded-md border border-border bg-card p-3"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm font-medium text-foreground">{s.question}</p>
+                            <span
+                              className={`text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded ${s.source === "calls" ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"}`}
+                            >
+                              {s.source === "calls" ? "From calls" : "From your info"}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">
+                            {s.answer}
+                          </p>
+                        </div>
+                        <div className="flex flex-col gap-1 shrink-0">
+                          <Button
+                            type="button"
+                            size="sm"
+                            className="h-7 px-2 text-xs bg-primary hover:bg-primary/90 text-primary-foreground"
+                            onClick={() => addSuggestion(s)}
+                          >
+                            <Plus className="h-3 w-3 mr-1" /> Add
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2 text-xs text-muted-foreground"
+                            onClick={() =>
+                              setDismissedSuggestions((prev) => {
+                                const next = new Set(prev);
+                                next.add(s.question);
+                                return next;
+                              })
+                            }
+                          >
+                            Dismiss
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          );
+        })()}
+
+
 
         {faqCount === 0 ? (
           <p className="text-sm text-muted-foreground py-10 text-center border border-dashed border-border rounded-lg">
