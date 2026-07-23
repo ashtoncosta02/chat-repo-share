@@ -43,6 +43,21 @@ function DashboardLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [agentId, setAgentId] = useState<string | null>(null);
+  // First-time hint pointing new users at the Knowledge nav item.
+  // Dismissed permanently the first time they click it (or the bubble).
+  const knowledgeHintKey = user ? `janice.knowledge-hint-dismissed.${user.id}` : null;
+  const [showKnowledgeHint, setShowKnowledgeHint] = useState(false);
+  useEffect(() => {
+    if (!knowledgeHintKey) return;
+    if (typeof window === "undefined") return;
+    setShowKnowledgeHint(window.localStorage.getItem(knowledgeHintKey) !== "1");
+  }, [knowledgeHintKey]);
+  const dismissKnowledgeHint = () => {
+    setShowKnowledgeHint(false);
+    if (knowledgeHintKey && typeof window !== "undefined") {
+      window.localStorage.setItem(knowledgeHintKey, "1");
+    }
+  };
   const [dialerOpen, setDialerOpen] = useState(false);
 
   useEffect(() => {
