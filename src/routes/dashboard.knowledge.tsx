@@ -230,6 +230,66 @@ function KnowledgePage() {
     toast.success("Knowledge & facts updated");
   };
 
+  const loadSuggestions = async (opts?: { silent?: boolean }) => {
+    if (!agent) return;
+    setSuggestionsLoading(true);
+    try {
+      const r = await suggestFaqsFn({ data: { agentId: agent.id } });
+      if (r.success) {
+        setSuggestions(r.suggestions);
+        setSuggestionsHasCallData(r.hasCallData);
+      } else if (!opts?.silent) {
+        toast.error("Couldn't load recommendations", { description: r.error });
+      }
+    } catch (e) {
+      if (!opts?.silent) {
+        toast.error("Couldn't load recommendations", {
+          description: e instanceof Error ? e.message : "Unknown error",
+        });
+      }
+    } finally {
+      setSuggestionsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (view === "faqs" && agent && suggestions === null && !suggestionsLoading) {
+      loadSuggestions({ silent: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, agent?.id]);
+
+  const addSuggestion = async (s: SuggestedFaq) => {
+    const f: StructuredFaq = {
+      id: crypto.randomUUID(),
+      question: s.question,
+      answer: s.answer,
+      sms_followup: undefined,
+    };
+    const nextFaqs = [f, ...edit.faqs_structured];
+    setEdit((p) => ({ ...p, faqs_structured: nextFaqs }));
+    setSuggestions((prev) => (prev ? prev.filter((x) => x.question !== s.question) : prev));
+    // Persist immediately so it survives navigation.
+    if (!agent) return;
+    const cleanFaqs = nextFaqs
+      .map((x) => ({
+        id: x.id,
+        question: x.question.trim(),
+        answer: x.answer.trim(),
+        sms_followup: x.sms_followup,
+      }))
+      .filter((x) => x.question || x.answer);
+    const { error } = await supabase
+      .from("agents")
+      .update({ faqs_structured: cleanFaqs, faqs: null } as never)
+      .eq("id", agent.id);
+    if (error) {
+      toast.error("Couldn't save FAQ", { description: error.message });
+    } else {
+      toast.success("Added to your FAQs");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center text-muted-foreground">
