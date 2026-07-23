@@ -2,9 +2,17 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
-import { getAdminUsers } from "@/lib/admin.functions";
+import { getAdminUsers, adminDeleteUser } from "@/lib/admin.functions";
 import { PageHeader } from "@/components/dashboard/PageHeader";
-import { ArrowLeft, Shield, Search } from "lucide-react";
+import { ArrowLeft, Shield, Search, MoreVertical, Trash2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard/admin/users/")({
   head: () => ({ meta: [{ title: "Admin · Users — Ask Janice" }] }),
