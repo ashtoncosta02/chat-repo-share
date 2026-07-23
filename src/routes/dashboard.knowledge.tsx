@@ -324,7 +324,8 @@ function KnowledgePage() {
   // ---------- FAQ drilldown ----------
   if (view === "faqs") {
     return (
-      <div className="max-w-3xl mx-auto px-4 md:px-8 py-8">
+      <div className="max-w-6xl mx-auto px-4 md:px-8 py-8">
+
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <button
@@ -372,42 +373,42 @@ function KnowledgePage() {
           </div>
         </section>
 
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Suggestions (left) */}
+          <section className="min-w-0">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="h-4 w-4 text-primary shrink-0" />
+              <h2 className="text-sm font-semibold text-foreground">Suggestions for you</h2>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="ml-auto shrink-0 text-xs h-7"
+                disabled={suggestionsLoading}
+                onClick={() => {
+                  setDismissedSuggestions(new Set());
+                  setSuggestions(null);
+                  loadSuggestions();
+                }}
+              >
+                {suggestionsLoading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  "Refresh"
+                )}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              Based on your business info{suggestionsHasCallData ? " and recent calls" : ""}. Tap Add to include one.
+            </p>
         {(() => {
+
           const visible = (suggestions ?? []).filter(
             (s) => !dismissedSuggestions.has(s.question),
           );
           return (
-            <section className="rounded-lg border border-primary/30 bg-primary/5 p-4 mb-6">
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="flex items-start gap-2">
-                  <Sparkles className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                  <div>
-                    <h2 className="text-sm font-semibold text-foreground">Recommended FAQs</h2>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Suggestions based on your business info
-                      {suggestionsHasCallData ? " and recent calls" : ""}. Tap Add to include one.
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  className="shrink-0 text-xs"
-                  disabled={suggestionsLoading}
-                  onClick={() => {
-                    setDismissedSuggestions(new Set());
-                    setSuggestions(null);
-                    loadSuggestions();
-                  }}
-                >
-                  {suggestionsLoading ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    "Refresh"
-                  )}
-                </Button>
-              </div>
+            <div>
+
               {suggestionsLoading && !suggestions ? (
                 <p className="text-xs text-muted-foreground py-4 text-center">
                   Thinking of good questions to ask…
@@ -467,17 +468,25 @@ function KnowledgePage() {
                   ))}
                 </div>
               )}
-            </section>
+            </div>
           );
         })()}
+          </section>
 
-
-
+          {/* All FAQs (right) */}
+          <section className="min-w-0">
+            <div className="flex items-center gap-2 mb-3">
+              <h2 className="text-sm font-semibold text-foreground">All FAQs</h2>
+              <span className="inline-flex items-center rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
+                {faqCount}
+              </span>
+            </div>
         {faqCount === 0 ? (
           <p className="text-sm text-muted-foreground py-10 text-center border border-dashed border-border rounded-lg">
             No FAQs yet. Click "New FAQ" to create one.
           </p>
         ) : (
+
           <div className="space-y-2">
             {edit.faqs_structured.map((faq, idx) => {
               const isOpen = expandedFaqId === faq.id;
@@ -624,9 +633,12 @@ function KnowledgePage() {
             })}
           </div>
         )}
+          </section>
+        </div>
 
 
       </div>
+
     );
   }
 
