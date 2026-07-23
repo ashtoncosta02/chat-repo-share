@@ -225,6 +225,31 @@ function AdminUsersPage() {
                       <td className="px-4 py-3 text-right text-xs text-muted-foreground whitespace-nowrap">
                         {relativeTime(u.last_activity_at)}
                       </td>
+                      <td className="px-2 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              className="p-1.5 rounded hover:bg-muted"
+                              aria-label="Row actions"
+                              disabled={u.is_admin}
+                              title={u.is_admin ? "Admin accounts cannot be deleted here" : "Actions"}
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              className="text-red-600 focus:text-red-600"
+                              onSelect={(e) => {
+                                e.preventDefault();
+                                setDeleteTarget(u);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" /> Delete user & all data
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
                     </tr>
                   ))
                 )}
