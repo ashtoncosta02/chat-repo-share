@@ -31,7 +31,7 @@ import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard.analy
 import { Route as DashboardAgentRouteImport } from './routes/dashboard.agent'
 import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
 import { Route as DashboardAccountRouteImport } from './routes/dashboard.account'
-import { Route as AuthInviteRouteImport } from './routes/auth.invite'
+import { Route as AuthInviteRouteImport } from './routes/auth_.invite'
 import { Route as DashboardConversationsIndexRouteImport } from './routes/dashboard.conversations.index'
 import { Route as DashboardAdminIndexRouteImport } from './routes/dashboard.admin.index'
 import { Route as DashboardConversationsBlockedRouteImport } from './routes/dashboard.conversations.blocked'
@@ -175,9 +175,9 @@ const DashboardAccountRoute = DashboardAccountRouteImport.update({
   getParentRoute: () => DashboardRoute,
 } as any)
 const AuthInviteRoute = AuthInviteRouteImport.update({
-  id: '/invite',
-  path: '/invite',
-  getParentRoute: () => AuthRoute,
+  id: '/auth_/invite',
+  path: '/auth/invite',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardConversationsIndexRoute =
   DashboardConversationsIndexRouteImport.update({
@@ -357,7 +357,7 @@ const ApiPublicWidgetConfigAgentIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRouteWithChildren
+  '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/privacy': typeof PrivacyRoute
@@ -413,7 +413,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRouteWithChildren
+  '/auth': typeof AuthRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -465,13 +465,13 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/auth': typeof AuthRouteWithChildren
+  '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
-  '/auth/invite': typeof AuthInviteRoute
+  '/auth_/invite': typeof AuthInviteRoute
   '/dashboard/account': typeof DashboardAccountRoute
   '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/agent': typeof DashboardAgentRoute
@@ -636,7 +636,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/reset-password'
     | '/terms'
-    | '/auth/invite'
+    | '/auth_/invite'
     | '/dashboard/account'
     | '/dashboard/admin'
     | '/dashboard/agent'
@@ -687,12 +687,13 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AuthRoute: typeof AuthRouteWithChildren
+  AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   TermsRoute: typeof TermsRoute
+  AuthInviteRoute: typeof AuthInviteRoute
   WidgetAgentIdRoute: typeof WidgetAgentIdRoute
   ApiPublicOwnerChatRoute: typeof ApiPublicOwnerChatRoute
   ApiPublicElevenlabsPostcallRoute: typeof ApiPublicElevenlabsPostcallRoute
@@ -870,12 +871,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAccountRouteImport
       parentRoute: typeof DashboardRoute
     }
-    '/auth/invite': {
-      id: '/auth/invite'
-      path: '/invite'
+    '/auth_/invite': {
+      id: '/auth_/invite'
+      path: '/auth/invite'
       fullPath: '/auth/invite'
       preLoaderRoute: typeof AuthInviteRouteImport
-      parentRoute: typeof AuthRoute
+      parentRoute: typeof rootRouteImport
     }
     '/dashboard/conversations/': {
       id: '/dashboard/conversations/'
@@ -1097,16 +1098,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthRouteChildren {
-  AuthInviteRoute: typeof AuthInviteRoute
-}
-
-const AuthRouteChildren: AuthRouteChildren = {
-  AuthInviteRoute: AuthInviteRoute,
-}
-
-const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
-
 interface DashboardAdminTicketsRouteChildren {
   DashboardAdminTicketsTicketIdRoute: typeof DashboardAdminTicketsTicketIdRoute
   DashboardAdminTicketsIndexRoute: typeof DashboardAdminTicketsIndexRoute
@@ -1216,12 +1207,13 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AuthRoute: AuthRouteWithChildren,
+  AuthRoute: AuthRoute,
   DashboardRoute: DashboardRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   TermsRoute: TermsRoute,
+  AuthInviteRoute: AuthInviteRoute,
   WidgetAgentIdRoute: WidgetAgentIdRoute,
   ApiPublicOwnerChatRoute: ApiPublicOwnerChatRoute,
   ApiPublicElevenlabsPostcallRoute: ApiPublicElevenlabsPostcallRoute,
