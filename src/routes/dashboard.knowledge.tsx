@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 
 import { syncReceptionistAgent } from "@/lib/elevenlabs-agent.functions";
+import { suggestFaqs, type SuggestedFaq } from "@/lib/faq-suggest.functions";
 import { coerceFaqs, newFaq, type StructuredFaq } from "@/lib/faqs";
 import {
   coerceScenarios,
