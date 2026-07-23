@@ -2,12 +2,13 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
-import { getAdminUserDetail, adminBackfillUserCalls, adminRelinkPhone, adminResyncReceptionist, adminClearGoogleCalendar, adminSetUserPlan, adminSetUserBilling, adminUpdateAgent, adminUpdateProfile, adminImpersonateUser } from "@/lib/admin.functions";
+import { getAdminUserDetail, adminBackfillUserCalls, adminRelinkPhone, adminResyncReceptionist, adminClearGoogleCalendar, adminSetUserPlan, adminSetUserBilling, adminUpdateAgent, adminUpdateProfile, adminImpersonateUser, adminDeleteUser } from "@/lib/admin.functions";
 import { PageHeader } from "@/components/dashboard/PageHeader";
-import { Shield, ArrowLeft, AlertTriangle, CheckCircle2, Phone, Calendar, MessageSquare, User as UserIcon, RefreshCw, Pencil, Save, X, LogIn } from "lucide-react";
+import { Shield, ArrowLeft, AlertTriangle, CheckCircle2, Phone, Calendar, MessageSquare, User as UserIcon, RefreshCw, Pencil, Save, X, LogIn, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { saveAdminReturnSession } from "@/components/dashboard/ImpersonationBanner";
 import { supabase } from "@/integrations/supabase/client";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 export const Route = createFileRoute("/dashboard/admin/users/$userId")({
   head: () => ({ meta: [{ title: "Admin · User detail" }] }),
@@ -81,6 +82,25 @@ function AdminUserDetailPage() {
       "Calendar connection cleared. User can now reconnect.");
   };
 
+  const [showDelete, setShowDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const doDelete = async () => {
+    if (!session?.access_token) return;
+    setDeleting(true);
+    try {
+      const r = await adminDeleteUser({ data: { accessToken: session.access_token, userId } });
+      if (r.success) {
+        toast.success("User and all their data deleted.");
+        navigate({ to: "/dashboard/admin/users" });
+      } else {
+        toast.error(r.error ?? "Delete failed.");
+        setDeleting(false);
+      }
+    } catch {
+      setDeleting(false);
+    }
+  };
+
   if (!checked || !isAdmin) return <div className="p-8 text-muted-foreground">Loading…</div>;
   if (loading || !data) return <div className="p-8 text-muted-foreground">Loading account…</div>;
   if (!("profile" in data) || !data.profile) return <div className="p-8 text-muted-foreground">User not found.</div>;
@@ -125,6 +145,12 @@ function AdminUserDetailPage() {
               className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90 disabled:opacity-50"
             >
               <RefreshCw className={`h-4 w-4 ${backfilling ? "animate-spin" : ""}`} /> Backfill voice calls
+            </button>
+            <button
+              onClick={() => setShowDelete(true)}
+              className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 text-red-700 px-4 py-2 text-sm font-medium hover:bg-red-100"
+            >
+              <Trash2 className="h-4 w-4" /> Delete user
             </button>
           </div>
         }
@@ -394,6 +420,23 @@ function AdminUserDetailPage() {
           )}
         </Section>
       </div>
+
+      <ConfirmDialog
+        open={showDelete}
+        onOpenChange={(o) => !o && !deleting && setShowDelete(false)}
+        title={`Delete ${profile.display_name || profile.email || "this user"}?`}
+        description={
+          <span>
+            This permanently removes their account, receptionist, conversations, leads, bookings,
+            and all related data. Any invitations for <strong>{profile.email}</strong> will also
+            be cleared so the address can be re-invited. This cannot be undone.
+          </span>
+        }
+        confirmLabel="Delete permanently"
+        destructive
+        loading={deleting}
+        onConfirm={doDelete}
+      />
     </div>
   );
 }

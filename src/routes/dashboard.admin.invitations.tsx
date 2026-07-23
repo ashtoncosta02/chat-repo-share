@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 export const Route = createFileRoute("/dashboard/admin/invitations")({
   head: () => ({ meta: [{ title: "Admin · Invitations" }] }),
@@ -294,22 +295,31 @@ function InvitationRow({
     return <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 text-blue-700 text-xs px-2 py-0.5"><Mail className="h-3 w-3" />Pending</span>;
   })();
 
-  const revoke = async () => {
+  const [confirmMode, setConfirmMode] = useState<null | "revoke" | "delete">(null);
+  const [busy, setBusy] = useState(false);
+
+  const doRevoke = async () => {
     if (!accessToken) return;
-    if (!confirm("Revoke this invitation? The link will stop working.")) return;
-    const r = await adminRevokeInvitation({ data: { accessToken, invitationId: inv.id } });
-    if (r.success) { toast.success("Revoked"); onChange(); } else toast.error(r.error);
+    setBusy(true);
+    try {
+      const r = await adminRevokeInvitation({ data: { accessToken, invitationId: inv.id } });
+      if (r.success) { toast.success("Revoked"); onChange(); setConfirmMode(null); }
+      else toast.error(r.error);
+    } finally { setBusy(false); }
   };
   const resend = async () => {
     if (!accessToken) return;
     const r = await adminResendInvitation({ data: { accessToken, invitationId: inv.id } });
     if (r.success) { toast.success("Invitation re-sent"); onChange(); } else toast.error(r.error);
   };
-  const del = async () => {
+  const doDelete = async () => {
     if (!accessToken) return;
-    if (!confirm("Delete this invitation record permanently?")) return;
-    const r = await adminDeleteInvitation({ data: { accessToken, invitationId: inv.id } });
-    if (r.success) { toast.success("Deleted"); onChange(); } else toast.error(r.error);
+    setBusy(true);
+    try {
+      const r = await adminDeleteInvitation({ data: { accessToken, invitationId: inv.id } });
+      if (r.success) { toast.success("Deleted"); onChange(); setConfirmMode(null); }
+      else toast.error(r.error);
+    } finally { setBusy(false); }
   };
 
   return (
@@ -343,16 +353,40 @@ function InvitationRow({
             </DropdownMenuItem>
           )}
           {inv.status === "pending" && (
-            <DropdownMenuItem onClick={revoke}>
+            <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setConfirmMode("revoke"); }}>
               <X className="h-4 w-4 mr-2" /> Revoke
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={del} className="text-red-600 focus:text-red-600">
+          <DropdownMenuItem
+            onSelect={(e) => { e.preventDefault(); setConfirmMode("delete"); }}
+            className="text-red-600 focus:text-red-600"
+          >
             <Trash2 className="h-4 w-4 mr-2" /> Delete record
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <ConfirmDialog
+        open={confirmMode === "revoke"}
+        onOpenChange={(o) => !o && !busy && setConfirmMode(null)}
+        title="Revoke this invitation?"
+        description={<span>The link sent to <strong>{inv.email}</strong> will stop working immediately.</span>}
+        confirmLabel="Revoke"
+        destructive
+        loading={busy}
+        onConfirm={doRevoke}
+      />
+      <ConfirmDialog
+        open={confirmMode === "delete"}
+        onOpenChange={(o) => !o && !busy && setConfirmMode(null)}
+        title="Delete this invitation record?"
+        description={<span>Removes the invitation for <strong>{inv.email}</strong> permanently. You can send a fresh invite afterwards.</span>}
+        confirmLabel="Delete permanently"
+        destructive
+        loading={busy}
+        onConfirm={doDelete}
+      />
     </div>
   );
 }

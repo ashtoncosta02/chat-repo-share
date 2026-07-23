@@ -2,9 +2,17 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
-import { getAdminUsers } from "@/lib/admin.functions";
+import { getAdminUsers, adminDeleteUser } from "@/lib/admin.functions";
 import { PageHeader } from "@/components/dashboard/PageHeader";
-import { ArrowLeft, Shield, Search } from "lucide-react";
+import { ArrowLeft, Shield, Search, MoreVertical, Trash2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard/admin/users/")({
   head: () => ({ meta: [{ title: "Admin · Users — Ask Janice" }] }),
@@ -49,6 +57,27 @@ function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const confirmDelete = async () => {
+    if (!deleteTarget || !session?.access_token) return;
+    setDeleting(true);
+    try {
+      const r = await adminDeleteUser({
+        data: { accessToken: session.access_token, userId: deleteTarget.user_id },
+      });
+      if (r.success) {
+        toast.success("User and all their data deleted.");
+        setUsers((prev) => prev.filter((u) => u.user_id !== deleteTarget.user_id));
+        setDeleteTarget(null);
+      } else {
+        toast.error(r.error ?? "Delete failed.");
+      }
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   useEffect(() => {
     if (checked && !isAdmin) navigate({ to: "/dashboard" });
@@ -124,16 +153,17 @@ function AdminUsersPage() {
                   <th className="text-right px-4 py-3 font-medium">Bookings</th>
                   <th className="text-right px-4 py-3 font-medium">Leads</th>
                   <th className="text-right px-4 py-3 font-medium">Last activity</th>
+                  <th className="text-right px-4 py-3 font-medium w-10"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {loading ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">Loading…</td>
+                    <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">Loading…</td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">No users found.</td>
+                    <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">No users found.</td>
                   </tr>
                 ) : (
                   filtered.map((u) => (
@@ -185,6 +215,31 @@ function AdminUsersPage() {
                       <td className="px-4 py-3 text-right text-xs text-muted-foreground whitespace-nowrap">
                         {relativeTime(u.last_activity_at)}
                       </td>
+                      <td className="px-2 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              className="p-1.5 rounded hover:bg-muted"
+                              aria-label="Row actions"
+                              disabled={u.is_admin}
+                              title={u.is_admin ? "Admin accounts cannot be deleted here" : "Actions"}
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              className="text-red-600 focus:text-red-600"
+                              onSelect={(e) => {
+                                e.preventDefault();
+                                setDeleteTarget(u);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" /> Delete user & all data
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -193,6 +248,23 @@ function AdminUsersPage() {
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => !o && !deleting && setDeleteTarget(null)}
+        title={`Delete ${deleteTarget?.display_name || deleteTarget?.email || "user"}?`}
+        description={
+          <span>
+            This permanently removes their account, receptionist, conversations, leads, bookings,
+            and all related data. Any invitations for <strong>{deleteTarget?.email}</strong> will
+            also be cleared so the address can be re-invited. This cannot be undone.
+          </span>
+        }
+        confirmLabel="Delete permanently"
+        destructive
+        loading={deleting}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

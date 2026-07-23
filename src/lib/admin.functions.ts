@@ -1015,3 +1015,43 @@ export const adminImpersonateUser = createServerFn({ method: "POST" })
       targetEmail: targetProfile.email,
     };
   });
+
+// ─────────────────────────────────────────────────────────────
+// Admin: permanently delete a user and all their data.
+// Cascades via FKs to auth.users (profiles, agents, conversations,
+// leads, roles, tickets, etc.). Also clears invitation records tied
+// to that email so the address can be re-invited fresh.
+// ─────────────────────────────────────────────────────────────
+export const adminDeleteUser = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z.object({
+      accessToken: z.string().min(1),
+      userId: z.string().uuid(),
+    }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    const auth = await requireAdmin(data.accessToken);
+    if ("error" in auth) return { success: false as const, error: auth.error };
+    if (auth.userId === data.userId) {
+      return { success: false as const, error: "You cannot delete your own admin account." };
+    }
+
+    // Grab email first so we can wipe matching invitations after delete.
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("email")
+      .eq("user_id", data.userId)
+      .maybeSingle();
+    const email = profile?.email ?? null;
+
+    // Delete the auth user — cascades through public tables with FK to auth.users.
+    const { error: delErr } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
+    if (delErr) return { success: false as const, error: delErr.message };
+
+    // Wipe any invitations for this email so the address is free to re-invite.
+    if (email) {
+      await supabaseAdmin.from("account_invitations").delete().eq("email", email);
+    }
+
+    return { success: true as const };
+  });
