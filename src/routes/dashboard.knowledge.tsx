@@ -407,37 +407,8 @@ function KnowledgePage() {
             (s) => !dismissedSuggestions.has(s.question),
           );
           return (
-            <section className="rounded-lg border border-primary/30 bg-primary/5 p-4 mb-6">
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="flex items-start gap-2">
-                  <Sparkles className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                  <div>
-                    <h2 className="text-sm font-semibold text-foreground">Recommended FAQs</h2>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Suggestions based on your business info
-                      {suggestionsHasCallData ? " and recent calls" : ""}. Tap Add to include one.
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  className="shrink-0 text-xs"
-                  disabled={suggestionsLoading}
-                  onClick={() => {
-                    setDismissedSuggestions(new Set());
-                    setSuggestions(null);
-                    loadSuggestions();
-                  }}
-                >
-                  {suggestionsLoading ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    "Refresh"
-                  )}
-                </Button>
-              </div>
+            <div>
+
               {suggestionsLoading && !suggestions ? (
                 <p className="text-xs text-muted-foreground py-4 text-center">
                   Thinking of good questions to ask…
