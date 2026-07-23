@@ -100,6 +100,7 @@ function KnowledgePage() {
   const [expandedFaqId, setExpandedFaqId] = useState<string | null>(null);
   const [editingFaqId, setEditingFaqId] = useState<string | null>(null);
   const [openScenarioId, setOpenScenarioId] = useState<string | null>(null);
+  const [dragStepIdx, setDragStepIdx] = useState<number | null>(null);
   const [suggestions, setSuggestions] = useState<SuggestedFaq[] | null>(null);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [suggestionsHasCallData, setSuggestionsHasCallData] = useState(false);
