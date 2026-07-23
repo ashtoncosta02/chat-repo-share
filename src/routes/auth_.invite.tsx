@@ -9,6 +9,8 @@ import { AgentFactoryLogo } from "@/components/AgentFactoryLogo";
 import { Eye, EyeOff, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { getInvitationByToken, acceptInvitationAndSignup } from "@/lib/invitations.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { isPasswordStrong, PASSWORD_REQUIREMENTS_TEXT } from "@/lib/password-strength";
+import { PasswordStrength } from "@/components/PasswordStrength";
 
 const searchSchema = z.object({ token: z.string().optional() });
 
