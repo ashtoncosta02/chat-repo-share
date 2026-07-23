@@ -187,11 +187,28 @@ function KnowledgePage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 md:px-8 py-8">
-      <div className="mb-6">
-        <h1 className="font-display text-2xl font-bold text-foreground">Knowledge & Facts</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Edit what {assistantName} knows about your business.
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-foreground">Knowledge & Facts</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Edit what {assistantName} knows about your business.
+          </p>
+        </div>
+        <Button
+          type="button"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground shrink-0"
+          onClick={() => {
+            const f = newFaq();
+            setEdit((p) => ({ ...p, faqs_structured: [f, ...p.faqs_structured] }));
+            setExpandedFaqId(f.id);
+            setEditingFaqId(f.id);
+            requestAnimationFrame(() => {
+              document.getElementById("faqs-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            });
+          }}
+        >
+          <Plus className="h-4 w-4 mr-1" /> New FAQ
+        </Button>
       </div>
 
       <div className="space-y-6">
