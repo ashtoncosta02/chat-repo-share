@@ -146,6 +146,12 @@ function AdminUserDetailPage() {
             >
               <RefreshCw className={`h-4 w-4 ${backfilling ? "animate-spin" : ""}`} /> Backfill voice calls
             </button>
+            <button
+              onClick={() => setShowDelete(true)}
+              className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 text-red-700 px-4 py-2 text-sm font-medium hover:bg-red-100"
+            >
+              <Trash2 className="h-4 w-4" /> Delete user
+            </button>
           </div>
         }
       />
