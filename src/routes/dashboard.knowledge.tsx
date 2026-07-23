@@ -957,63 +957,82 @@ function KnowledgePage() {
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground shrink-0" />
           </button>
+
+          {(() => {
+            const servicesCount = edit.services
+              .split("\n")
+              .map((l) => l.trim())
+              .filter(Boolean).length;
+            const pricingSet = edit.pricing_notes.trim().length > 0;
+            const bookingFilled =
+              (edit.booking_link.trim() ? 1 : 0) + (edit.emergency_number.trim() ? 1 : 0);
+            const escalationCount = edit.escalation_triggers
+              .split("\n")
+              .map((l) => l.trim())
+              .filter(Boolean).length;
+            const cards: Array<{
+              key: View;
+              title: string;
+              icon: JSX.Element;
+              iconWrap: string;
+              chip: string;
+            }> = [
+              {
+                key: "services",
+                title: "Services",
+                iconWrap: "bg-amber-50 dark:bg-amber-950/40",
+                icon: <Briefcase className="h-5 w-5 text-amber-600 dark:text-amber-400" />,
+                chip: servicesCount ? `${servicesCount} items` : "Empty",
+              },
+              {
+                key: "pricing",
+                title: "Pricing",
+                iconWrap: "bg-green-50 dark:bg-green-950/40",
+                icon: <DollarSign className="h-5 w-5 text-green-600 dark:text-green-400" />,
+                chip: pricingSet ? "Set" : "Not set",
+              },
+              {
+                key: "booking",
+                title: "Booking & Contact",
+                iconWrap: "bg-sky-50 dark:bg-sky-950/40",
+                icon: <Calendar className="h-5 w-5 text-sky-600 dark:text-sky-400" />,
+                chip: bookingFilled === 0 ? "Not set" : `${bookingFilled} of 2`,
+              },
+              {
+                key: "escalation",
+                title: "Escalation triggers",
+                iconWrap: "bg-rose-50 dark:bg-rose-950/40",
+                icon: <AlertTriangle className="h-5 w-5 text-rose-600 dark:text-rose-400" />,
+                chip: escalationCount ? `${escalationCount} triggers` : "Empty",
+              },
+            ];
+            return cards.map((c) => (
+              <button
+                key={c.key}
+                type="button"
+                onClick={() => setView(c.key)}
+                className="group rounded-xl border border-border bg-card hover:border-primary/50 hover:shadow-sm transition p-4 text-left flex items-center justify-between"
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${c.iconWrap}`}
+                  >
+                    {c.icon}
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-foreground">{c.title}</div>
+                    <div className="mt-1 inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                      {c.chip}
+                    </div>
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground shrink-0" />
+              </button>
+            ));
+          })()}
         </div>
       </section>
-
-      <div className="space-y-6">
-
-        <section>
-          <Label htmlFor="services">Services</Label>
-          <Textarea
-            id="services"
-            value={edit.services}
-            onChange={(e) => setEdit({ ...edit, services: e.target.value })}
-            rows={4}
-            placeholder="List the services your business offers so your receptionist can answer questions about them."
-          />
-        </section>
-
-        <section>
-          <Label htmlFor="pricing_notes">Pricing notes</Label>
-          <Textarea
-            id="pricing_notes"
-            value={edit.pricing_notes}
-            onChange={(e) => setEdit({ ...edit, pricing_notes: e.target.value })}
-            rows={2}
-          />
-        </section>
-
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="booking_link">Booking link</Label>
-            <Input
-              id="booking_link"
-              value={edit.booking_link}
-              onChange={(e) => setEdit({ ...edit, booking_link: e.target.value })}
-            />
-          </div>
-          <div>
-            <Label htmlFor="emergency_number">Emergency number</Label>
-            <Input
-              id="emergency_number"
-              value={edit.emergency_number}
-              onChange={(e) => setEdit({ ...edit, emergency_number: e.target.value })}
-            />
-          </div>
-        </section>
-
-        <section>
-          <Label htmlFor="escalation_triggers">Escalation triggers</Label>
-          <Textarea
-            id="escalation_triggers"
-            value={edit.escalation_triggers}
-            onChange={(e) => setEdit({ ...edit, escalation_triggers: e.target.value })}
-            rows={2}
-          />
-        </section>
-
-        {saveButton}
-      </div>
     </div>
   );
 }
+
