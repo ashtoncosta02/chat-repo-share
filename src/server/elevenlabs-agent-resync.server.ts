@@ -6,6 +6,7 @@ import {
   syncBookingToolsForAgent,
   type AgentBusinessProfile,
 } from "./elevenlabs-agent.server";
+import { coerceScenarios, scenariosToPromptText } from "@/lib/scenarios";
 
 interface AgentRow {
   id: string;
@@ -22,6 +23,7 @@ interface AgentRow {
   escalation_triggers: string | null;
   voice_id: string | null;
   faqs_structured: unknown;
+  scenarios: unknown;
   greeting_message: string | null;
   farewell_message: string | null;
   elevenlabs_agent_id: string | null;
@@ -40,6 +42,7 @@ function rowToProfile(row: AgentRow): AgentBusinessProfile {
       })
       .filter((f) => f.question || f.answer);
   }
+  const scenariosPrompt = scenariosToPromptText(coerceScenarios(row.scenarios));
   return {
     business_name: row.business_name,
     assistant_name: row.assistant_name,
@@ -53,6 +56,7 @@ function rowToProfile(row: AgentRow): AgentBusinessProfile {
     escalation_triggers: row.escalation_triggers,
     voice_id: row.voice_id,
     faqs_structured: faqs,
+    scenarios_prompt: scenariosPrompt || null,
     greeting_message: row.greeting_message,
     farewell_message: row.farewell_message,
   };
@@ -64,7 +68,7 @@ export async function resyncReceptionistById(
   const { data: row, error: rowErr } = await supabaseAdmin
     .from("agents")
     .select(
-      "id, user_id, business_name, assistant_name, industry, tone, primary_goal, services, booking_link, emergency_number, pricing_notes, escalation_triggers, voice_id, faqs_structured, greeting_message, farewell_message, elevenlabs_agent_id",
+      "id, user_id, business_name, assistant_name, industry, tone, primary_goal, services, booking_link, emergency_number, pricing_notes, escalation_triggers, voice_id, faqs_structured, scenarios, greeting_message, farewell_message, elevenlabs_agent_id",
     )
     .eq("id", agentDbId)
     .maybeSingle();
