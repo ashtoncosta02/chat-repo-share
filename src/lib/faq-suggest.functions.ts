@@ -72,9 +72,7 @@ export const suggestFaqs = createServerFn({ method: "POST" })
     const businessCtx = [
       `Business: ${agent.business_name}`,
       agent.industry ? `Industry: ${agent.industry}` : null,
-      (agent as { website_summary?: string | null }).website_summary
-        ? `Website summary: ${(agent as { website_summary?: string | null }).website_summary}`
-        : null,
+      agent.source_url ? `Website: ${agent.source_url}` : null,
       agent.primary_goal ? `Primary goal: ${agent.primary_goal}` : null,
       agent.services ? `Services:\n${agent.services}` : null,
       agent.pricing_notes ? `Pricing notes: ${agent.pricing_notes}` : null,
