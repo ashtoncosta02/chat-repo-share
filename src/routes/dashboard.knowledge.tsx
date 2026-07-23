@@ -468,17 +468,25 @@ function KnowledgePage() {
                   ))}
                 </div>
               )}
-            </section>
+            </div>
           );
         })()}
+          </section>
 
-
-
+          {/* All FAQs (right) */}
+          <section className="min-w-0">
+            <div className="flex items-center gap-2 mb-3">
+              <h2 className="text-sm font-semibold text-foreground">All FAQs</h2>
+              <span className="inline-flex items-center rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
+                {faqCount}
+              </span>
+            </div>
         {faqCount === 0 ? (
           <p className="text-sm text-muted-foreground py-10 text-center border border-dashed border-border rounded-lg">
             No FAQs yet. Click "New FAQ" to create one.
           </p>
         ) : (
+
           <div className="space-y-2">
             {edit.faqs_structured.map((faq, idx) => {
               const isOpen = expandedFaqId === faq.id;
