@@ -5,6 +5,7 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { getAdminOverview, adminResyncAllReceptionists } from "@/lib/admin.functions";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Users, Bot, MessageSquare, Phone, Calendar, User as UserIcon, Shield, DollarSign, AlertCircle, TrendingUp, Clock, LifeBuoy } from "lucide-react";
+import { getLoadedAssetHash } from "@/components/NewVersionBanner";
 
 export const Route = createFileRoute("/dashboard/admin/")({
   head: () => ({ meta: [{ title: "Admin — Ask Janice" }] }),
@@ -72,6 +73,7 @@ function AdminOverviewPage() {
       />
 
       <div className="p-4 md:p-8 space-y-8">
+        <BuildVersionCard />
         {loading || !stats ? (
           <div className="text-muted-foreground">Loading stats…</div>
         ) : (
@@ -222,3 +224,32 @@ function ResyncAllButton({ accessToken }: { accessToken: string | undefined }) {
     </button>
   );
 }
+
+function BuildVersionCard() {
+  const [hash, setHash] = useState<string | null>(null);
+  const [loadedAt] = useState(() => new Date());
+
+  useEffect(() => {
+    setHash(getLoadedAssetHash());
+  }, []);
+
+  const short = hash ? hash.split("|")[0].replace(/\.js$/, "").slice(-12) : "unknown";
+
+  return (
+    <section className="rounded-xl border border-border bg-card p-4 flex items-center justify-between gap-4 flex-wrap">
+      <div className="flex items-center gap-3">
+        <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_10px] shadow-emerald-500/60" />
+        <div>
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">Current live build</div>
+          <div className="font-mono text-sm text-foreground">{short}</div>
+        </div>
+      </div>
+      <div className="text-xs text-muted-foreground">
+        Loaded {loadedAt.toLocaleString()} · Customers on older builds see a
+        <span className="mx-1 inline-flex items-center rounded-full bg-lime-400 px-2 py-0.5 text-[10px] font-semibold text-lime-950">Refresh</span>
+        banner automatically within ~60s.
+      </div>
+    </section>
+  );
+}
+
