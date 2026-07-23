@@ -176,9 +176,9 @@ export function ChatWidgetPage() {
             }
           />
         ) : (
-          <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
             {/* Left: configuration */}
-            <div className="space-y-6">
+            <div className="space-y-6 min-w-0">
               {/* Receptionist picker (always 1, but kept as a labeled summary for clarity) */}
               <div className="rounded-xl border border-border bg-card p-5">
                 <label className="text-sm font-medium text-foreground block mb-2">
