@@ -353,14 +353,32 @@ function StepWebsite({
           We'll read your site and extract your business info, services, hours, and FAQs.
         </p>
         <div className="flex flex-col sm:flex-row gap-2">
-          <Input
-            type="url"
-            placeholder="https://yourbusiness.com"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            className="flex-1"
-            disabled={scraping}
-          />
+          <div className="flex-1 flex items-center rounded-md border border-input bg-background px-3 py-2 focus-within:ring-1 focus-within:ring-ring focus-within:border-ring disabled:opacity-50 disabled:cursor-not-allowed">
+            <span className="shrink-0 text-sm font-bold text-foreground mr-2 select-none">
+              https://
+            </span>
+            <input
+              type="text"
+              inputMode="url"
+              placeholder="yourbusiness.com"
+              value={url.replace(/^https?:\/\//i, "")}
+              onChange={(e) => {
+                const raw = e.target.value.trim();
+                // Strip any protocol the user pasted/typed so the prefix owns it
+                const domain = raw.replace(/^https?:\/\//i, "");
+                setUrl(domain ? `https://${domain}` : "");
+              }}
+              onBlur={(e) => {
+                const domain = e.target.value.trim().replace(/^https?:\/\//i, "");
+                setUrl(domain ? `https://${domain}` : "");
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") onScrape();
+              }}
+              disabled={scraping}
+              className="flex-1 min-w-0 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 outline-none"
+            />
+          </div>
           <Button
             type="button"
             onClick={onScrape}
@@ -370,6 +388,9 @@ function StepWebsite({
             {scraping ? "Scanning your site…" : scraped ? "Re-scan" : "Scan & Fill"}
           </Button>
         </div>
+        <p className="text-xs text-muted-foreground/70">
+          Example: yourbusiness.com or www.yourbusiness.net
+        </p>
       </div>
 
       {(scraped || profile.business_name) && (
