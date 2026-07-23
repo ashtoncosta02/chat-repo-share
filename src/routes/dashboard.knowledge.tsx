@@ -47,6 +47,8 @@ function KnowledgePage() {
   const [agent, setAgent] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [expandedFaqId, setExpandedFaqId] = useState<string | null>(null);
+  const [editingFaqId, setEditingFaqId] = useState<string | null>(null);
   const [edit, setEdit] = useState({
     business_name: "",
     assistant_name: "",
