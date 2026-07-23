@@ -73,7 +73,16 @@ interface Agent {
   elevenlabs_agent_id: string | null;
 }
 
-type View = "index" | "faqs" | "scenarios" | "scenario-detail";
+type View =
+  | "index"
+  | "faqs"
+  | "scenarios"
+  | "scenario-detail"
+  | "services"
+  | "pricing"
+  | "booking"
+  | "escalation";
+
 
 function KnowledgePage() {
   const { user } = useAuth();
