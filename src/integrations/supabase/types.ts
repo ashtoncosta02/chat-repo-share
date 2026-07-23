@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_invitations: {
+        Row: {
+          accepted_at: string | null
+          accepted_user_id: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string | null
+          status: string
+          token: string
+          trial_days: number | null
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_user_id?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          status?: string
+          token: string
+          trial_days?: number | null
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_user_id?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          status?: string
+          token?: string
+          trial_days?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       admin_impersonation_log: {
         Row: {
           admin_user_id: string
@@ -728,6 +770,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          billing_status: string
           created_at: string
           display_name: string | null
           email: string | null
@@ -735,10 +778,13 @@ export type Database = {
           id: string
           monthly_price_override_cents: number | null
           plan: Database["public"]["Enums"]["user_plan"]
+          trial_ends_at: string | null
+          trial_unlimited: boolean
           updated_at: string
           user_id: string
         }
         Insert: {
+          billing_status?: string
           created_at?: string
           display_name?: string | null
           email?: string | null
@@ -746,10 +792,13 @@ export type Database = {
           id?: string
           monthly_price_override_cents?: number | null
           plan?: Database["public"]["Enums"]["user_plan"]
+          trial_ends_at?: string | null
+          trial_unlimited?: boolean
           updated_at?: string
           user_id: string
         }
         Update: {
+          billing_status?: string
           created_at?: string
           display_name?: string | null
           email?: string | null
@@ -757,6 +806,8 @@ export type Database = {
           id?: string
           monthly_price_override_cents?: number | null
           plan?: Database["public"]["Enums"]["user_plan"]
+          trial_ends_at?: string | null
+          trial_unlimited?: boolean
           updated_at?: string
           user_id?: string
         }
