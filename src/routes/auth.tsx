@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { AgentFactoryLogo } from "@/components/AgentFactoryLogo";
 import { Eye, EyeOff } from "lucide-react";
+import { isPasswordStrong, PASSWORD_REQUIREMENTS_TEXT } from "@/lib/password-strength";
+import { PasswordStrength } from "@/components/PasswordStrength";
 
 const authSearchSchema = z.object({
   mode: z.enum(["signin", "signup"]).optional(),
