@@ -25,7 +25,11 @@ import {
   Calendar,
   GripVertical,
   Check,
+  Briefcase,
+  DollarSign,
+  AlertTriangle,
 } from "lucide-react";
+
 import { syncReceptionistAgent } from "@/lib/elevenlabs-agent.functions";
 import { coerceFaqs, newFaq, type StructuredFaq } from "@/lib/faqs";
 import {
