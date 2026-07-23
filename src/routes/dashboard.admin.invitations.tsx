@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 export const Route = createFileRoute("/dashboard/admin/invitations")({
   head: () => ({ meta: [{ title: "Admin · Invitations" }] }),
