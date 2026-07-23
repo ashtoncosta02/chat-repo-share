@@ -3,6 +3,7 @@ import { AuthProvider } from "@/lib/auth-context";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
+import { NewVersionBanner } from "@/components/NewVersionBanner";
 
 import appCss from "../styles.css?url";
 
