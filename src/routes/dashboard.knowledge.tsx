@@ -948,44 +948,6 @@ function KnowledgePage() {
       </section>
 
       <div className="space-y-6">
-        <section className="space-y-4">
-          <div>
-            <Label htmlFor="business_name">Business name</Label>
-            <Input
-              id="business_name"
-              value={edit.business_name}
-              onChange={(e) => setEdit({ ...edit, business_name: e.target.value })}
-            />
-          </div>
-          <div>
-            <Label htmlFor="assistant_name">Receptionist name</Label>
-            <Input
-              id="assistant_name"
-              value={edit.assistant_name}
-              onChange={(e) => setEdit({ ...edit, assistant_name: e.target.value })}
-              placeholder="Janice"
-            />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="tone">Tone</Label>
-              <Input
-                id="tone"
-                value={edit.tone}
-                onChange={(e) => setEdit({ ...edit, tone: e.target.value })}
-                placeholder="Friendly, professional"
-              />
-            </div>
-            <div>
-              <Label htmlFor="primary_goal">Primary goal</Label>
-              <Input
-                id="primary_goal"
-                value={edit.primary_goal}
-                onChange={(e) => setEdit({ ...edit, primary_goal: e.target.value })}
-              />
-            </div>
-          </div>
-        </section>
 
         <section>
           <Label htmlFor="services">Services</Label>
