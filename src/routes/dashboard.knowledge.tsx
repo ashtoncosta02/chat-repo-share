@@ -100,6 +100,7 @@ function KnowledgePage() {
   const [expandedFaqId, setExpandedFaqId] = useState<string | null>(null);
   const [editingFaqId, setEditingFaqId] = useState<string | null>(null);
   const [openScenarioId, setOpenScenarioId] = useState<string | null>(null);
+  const [dragStepIdx, setDragStepIdx] = useState<number | null>(null);
   const [suggestions, setSuggestions] = useState<SuggestedFaq[] | null>(null);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [suggestionsHasCallData, setSuggestionsHasCallData] = useState(false);
@@ -787,6 +788,13 @@ function KnowledgePage() {
     const removeStep = (stepIdx: number) => {
       updateScenario(idx, { steps: s.steps.filter((_, i) => i !== stepIdx) });
     };
+    const moveStep = (from: number, to: number) => {
+      if (from === to || to < 0 || to >= s.steps.length) return;
+      const next = [...s.steps];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      updateScenario(idx, { steps: next });
+    };
     const setAction = (a: ScenarioAction) => updateScenario(idx, { action: a });
 
     const collectStepIdx = s.steps.findIndex((st) => st.kind === "collect_info");
@@ -890,10 +898,29 @@ function KnowledgePage() {
                 {s.steps.map((step, stepIdx) => (
                   <div
                     key={step.id}
-                    className="rounded-lg border border-border bg-card p-4"
+                    onDragOver={(e) => {
+                      if (dragStepIdx !== null) e.preventDefault();
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (dragStepIdx !== null) moveStep(dragStepIdx, stepIdx);
+                      setDragStepIdx(null);
+                    }}
+                    className={`rounded-lg border border-border bg-card p-4 transition ${
+                      dragStepIdx === stepIdx ? "opacity-50" : ""
+                    }`}
                   >
                     <div className="flex items-start gap-2">
-                      <GripVertical className="h-4 w-4 text-muted-foreground/60 mt-1 shrink-0" />
+                      <button
+                        type="button"
+                        draggable
+                        onDragStart={() => setDragStepIdx(stepIdx)}
+                        onDragEnd={() => setDragStepIdx(null)}
+                        className="cursor-grab active:cursor-grabbing text-muted-foreground/60 hover:text-muted-foreground mt-1 shrink-0"
+                        aria-label="Drag to reorder"
+                      >
+                        <GripVertical className="h-4 w-4" />
+                      </button>
                       <div className="flex-1 min-w-0">
                         {step.kind === "instruction" ? (
                           <>
@@ -903,17 +930,22 @@ function KnowledgePage() {
                             <Textarea
                               value={step.text}
                               onChange={(e) => updateStep(stepIdx, { text: e.target.value })}
-                              placeholder='e.g. say "no problem at all" and offer to send them a photo upload link'
+                              placeholder='e.g. "Ask what city they are located in"'
                               rows={3}
                               className="mt-2 border-0 shadow-none focus-visible:ring-0 p-0 resize-none"
                             />
                           </>
                         ) : (
                           <>
-                            <Label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                              Collect customer info
-                            </Label>
-                            <div className="mt-2 flex flex-wrap gap-2">
+                            <div className="flex items-center gap-2">
+                              <Label className="text-sm font-semibold text-foreground">
+                                Collect customer info
+                              </Label>
+                              <span className="text-[10px] rounded bg-emerald-500/10 text-emerald-600 px-1.5 py-0.5 font-medium">
+                                {step.fields.length} selected
+                              </span>
+                            </div>
+                            <div className="mt-3 flex flex-wrap gap-2">
                               {(Object.keys(COLLECT_FIELD_LABELS) as CollectFieldKey[]).map(
                                 (key) => {
                                   const selected = step.fields.includes(key);
@@ -949,7 +981,7 @@ function KnowledgePage() {
                         className="text-muted-foreground hover:text-destructive transition shrink-0"
                         aria-label="Remove step"
                       >
-                        <XIcon className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </div>

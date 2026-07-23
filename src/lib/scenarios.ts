@@ -43,7 +43,7 @@ export interface StructuredScenario {
 }
 
 export function newScenario(intent = ""): StructuredScenario {
-  return { id: crypto.randomUUID(), intent, steps: [], action: null };
+  return { id: crypto.randomUUID(), intent, steps: [newCollectStep()], action: null };
 }
 
 export function newInstructionStep(): ScenarioStepInstruction {
