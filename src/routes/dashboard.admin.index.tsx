@@ -73,6 +73,7 @@ function AdminOverviewPage() {
       />
 
       <div className="p-4 md:p-8 space-y-8">
+        <BuildVersionCard />
         {loading || !stats ? (
           <div className="text-muted-foreground">Loading stats…</div>
         ) : (
