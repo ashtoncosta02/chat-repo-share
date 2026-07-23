@@ -21,9 +21,26 @@ import {
   ArrowLeft,
   HelpCircle,
   Layers,
+  Phone,
+  Calendar,
+  GripVertical,
+  Check,
 } from "lucide-react";
 import { syncReceptionistAgent } from "@/lib/elevenlabs-agent.functions";
 import { coerceFaqs, newFaq, type StructuredFaq } from "@/lib/faqs";
+import {
+  coerceScenarios,
+  newScenario,
+  newInstructionStep,
+  newCollectStep,
+  fieldLabel,
+  COLLECT_FIELD_LABELS,
+  SCENARIO_SUGGESTIONS,
+  type StructuredScenario,
+  type ScenarioStep,
+  type ScenarioAction,
+  type CollectFieldKey,
+} from "@/lib/scenarios";
 
 export const Route = createFileRoute("/dashboard/knowledge")({
   head: () => ({
@@ -45,13 +62,14 @@ interface Agent {
   booking_link: string | null;
   emergency_number: string | null;
   faqs_structured: unknown;
+  scenarios: unknown;
   sms_followup_enabled: boolean;
   pricing_notes: string | null;
   escalation_triggers: string | null;
   elevenlabs_agent_id: string | null;
 }
 
-type View = "index" | "faqs" | "scenarios";
+type View = "index" | "faqs" | "scenarios" | "scenario-detail";
 
 function KnowledgePage() {
   const { user } = useAuth();
@@ -64,6 +82,7 @@ function KnowledgePage() {
   const [view, setView] = useState<View>("index");
   const [expandedFaqId, setExpandedFaqId] = useState<string | null>(null);
   const [editingFaqId, setEditingFaqId] = useState<string | null>(null);
+  const [openScenarioId, setOpenScenarioId] = useState<string | null>(null);
   const [edit, setEdit] = useState({
     business_name: "",
     assistant_name: "",
@@ -73,6 +92,7 @@ function KnowledgePage() {
     booking_link: "",
     emergency_number: "",
     faqs_structured: [] as StructuredFaq[],
+    scenarios: [] as StructuredScenario[],
     sms_followup_enabled: false,
     pricing_notes: "",
     escalation_triggers: "",
@@ -85,7 +105,7 @@ function KnowledgePage() {
       const { data, error } = await supabase
         .from("agents")
         .select(
-          "id, business_name, assistant_name, tone, primary_goal, services, booking_link, emergency_number, faqs_structured, sms_followup_enabled, pricing_notes, escalation_triggers, elevenlabs_agent_id"
+          "id, business_name, assistant_name, tone, primary_goal, services, booking_link, emergency_number, faqs_structured, scenarios, sms_followup_enabled, pricing_notes, escalation_triggers, elevenlabs_agent_id"
         )
         .eq("user_id", user.id)
         .maybeSingle();
@@ -110,6 +130,7 @@ function KnowledgePage() {
         booking_link: a.booking_link ?? "",
         emergency_number: a.emergency_number ?? "",
         faqs_structured: coerceFaqs(a.faqs_structured),
+        scenarios: coerceScenarios(a.scenarios),
         sms_followup_enabled: a.sms_followup_enabled,
         pricing_notes: a.pricing_notes ?? "",
         escalation_triggers: a.escalation_triggers ?? "",
@@ -150,6 +171,7 @@ function KnowledgePage() {
       emergency_number: edit.emergency_number.trim() || null,
       faqs: null,
       faqs_structured: cleanFaqs,
+      scenarios: edit.scenarios,
       sms_followup_enabled: edit.sms_followup_enabled,
       pricing_notes: edit.pricing_notes.trim() || null,
       escalation_triggers: edit.escalation_triggers.trim() || null,
