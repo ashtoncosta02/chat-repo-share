@@ -2,12 +2,13 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
-import { getAdminUserDetail, adminBackfillUserCalls, adminRelinkPhone, adminResyncReceptionist, adminClearGoogleCalendar, adminSetUserPlan, adminSetUserBilling, adminUpdateAgent, adminUpdateProfile, adminImpersonateUser } from "@/lib/admin.functions";
+import { getAdminUserDetail, adminBackfillUserCalls, adminRelinkPhone, adminResyncReceptionist, adminClearGoogleCalendar, adminSetUserPlan, adminSetUserBilling, adminUpdateAgent, adminUpdateProfile, adminImpersonateUser, adminDeleteUser } from "@/lib/admin.functions";
 import { PageHeader } from "@/components/dashboard/PageHeader";
-import { Shield, ArrowLeft, AlertTriangle, CheckCircle2, Phone, Calendar, MessageSquare, User as UserIcon, RefreshCw, Pencil, Save, X, LogIn } from "lucide-react";
+import { Shield, ArrowLeft, AlertTriangle, CheckCircle2, Phone, Calendar, MessageSquare, User as UserIcon, RefreshCw, Pencil, Save, X, LogIn, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { saveAdminReturnSession } from "@/components/dashboard/ImpersonationBanner";
 import { supabase } from "@/integrations/supabase/client";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 export const Route = createFileRoute("/dashboard/admin/users/$userId")({
   head: () => ({ meta: [{ title: "Admin · User detail" }] }),
