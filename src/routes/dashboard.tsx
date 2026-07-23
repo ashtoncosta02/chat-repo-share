@@ -120,19 +120,41 @@ function DashboardLayout() {
         {items.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.to, "exact" in item ? item.exact : false);
+          const isKnowledge = item.to === "/dashboard/knowledge";
           return (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-                active
-                  ? "bg-[oklch(0.96_0.04_290)] text-[var(--gold-foreground)] font-medium"
-                  : "text-foreground/80 hover:bg-muted"
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              {item.label}
-            </Link>
+            <div key={item.to} className="relative">
+              <Link
+                to={item.to}
+                onClick={() => {
+                  if (isKnowledge) dismissKnowledgeHint();
+                  setMobileOpen(false);
+                }}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                  active
+                    ? "bg-[oklch(0.96_0.04_290)] text-[var(--gold-foreground)] font-medium"
+                    : "text-foreground/80 hover:bg-muted"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                {item.label}
+              </Link>
+              {isKnowledge && showKnowledgeHint && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    dismissKnowledgeHint();
+                    navigate({ to: "/dashboard/knowledge" });
+                    setMobileOpen(false);
+                  }}
+                  aria-label="Add knowledge to your agent"
+                  className="absolute left-full top-1/2 -translate-y-1/2 ml-3 z-20 whitespace-nowrap rounded-full bg-lime-400 text-lime-950 text-xs font-semibold px-3 py-1.5 shadow-lg shadow-lime-500/40 ring-1 ring-lime-500/60 animate-fade-in hover:bg-lime-300 transition-colors"
+                >
+                  <span className="pointer-events-none absolute inset-0 rounded-full bg-lime-400 animate-ping opacity-40" />
+                  <span className="relative">Add knowledge to your agent →</span>
+                </button>
+              )}
+            </div>
           );
         })}
       </>
