@@ -198,7 +198,7 @@ function ResyncAllButton({ accessToken }: { accessToken: string | undefined }) {
       const res = await adminResyncAllReceptionists({ data: { accessToken } });
       if (!res.success) {
         setState("error");
-        setMsg(res.error);
+        setMsg(res.error ?? "Failed");
         return;
       }
       setState("done");
