@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
-import { getAdminOverview } from "@/lib/admin.functions";
+import { getAdminOverview, adminResyncAllReceptionists } from "@/lib/admin.functions";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Users, Bot, MessageSquare, Phone, Calendar, User as UserIcon, Shield, DollarSign, AlertCircle, TrendingUp, Clock, LifeBuoy } from "lucide-react";
 
@@ -62,6 +62,7 @@ function AdminOverviewPage() {
         }
         action={
           <div className="flex gap-2 flex-wrap">
+            <ResyncAllButton accessToken={session?.access_token} />
             <Link to="/dashboard/admin/tickets" className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-muted">Tickets</Link>
             <Link to="/dashboard/admin/health" className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-muted">System health</Link>
             <Link to="/dashboard/admin/users" className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90">All users</Link>
@@ -181,5 +182,42 @@ function MetricCard({ icon, iconBg, label, value, sublabel }: { icon: React.Reac
       <div className="font-display text-2xl font-semibold mt-1">{value}</div>
       {sublabel && <div className="text-xs text-muted-foreground mt-1">{sublabel}</div>}
     </div>
+  );
+}
+
+function ResyncAllButton({ accessToken }: { accessToken: string | undefined }) {
+  const [state, setState] = useState<"idle" | "running" | "done" | "error">("idle");
+  const [msg, setMsg] = useState<string>("");
+
+  const run = async () => {
+    if (!accessToken) return;
+    if (!confirm("Push the latest voice-agent settings to every receptionist? This can take a minute.")) return;
+    setState("running");
+    setMsg("");
+    try {
+      const res = await adminResyncAllReceptionists({ data: { accessToken } });
+      if (!res.success) {
+        setState("error");
+        setMsg(res.error ?? "Failed");
+        return;
+      }
+      setState("done");
+      setMsg(`Resynced ${res.succeeded}/${res.total}${res.failed ? ` (${res.failed} failed)` : ""}`);
+    } catch (e: any) {
+      setState("error");
+      setMsg(e?.message ?? "Failed");
+    }
+  };
+
+  return (
+    <button
+      onClick={run}
+      disabled={state === "running" || !accessToken}
+      className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-60"
+      title="Push server-side agent config changes (LLM, prompts, timeouts, tools) to every receptionist in ElevenLabs."
+    >
+      {state === "running" ? "Resyncing…" : "Resync all receptionists"}
+      {msg && <span className="text-xs text-muted-foreground ml-1">— {msg}</span>}
+    </button>
   );
 }

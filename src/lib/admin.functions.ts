@@ -694,6 +694,38 @@ export const adminResyncReceptionist = createServerFn({ method: "POST" })
     }
   });
 
+export const adminResyncAllReceptionists = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => tokenSchema.parse(input))
+  .handler(async ({ data }) => {
+    const auth = await requireAdmin(data.accessToken);
+    if ("error" in auth) return { success: false as const, error: auth.error };
+
+    const { data: agents, error } = await supabaseAdmin
+      .from("agents")
+      .select("id");
+    if (error) return { success: false as const, error: error.message };
+
+    const { resyncReceptionistById } = await import("@/server/elevenlabs-agent-resync.server");
+    let succeeded = 0;
+    const failures: { agentId: string; error: string }[] = [];
+    for (const a of agents ?? []) {
+      try {
+        const r = await resyncReceptionistById(a.id);
+        if (r.success) succeeded++;
+        else failures.push({ agentId: a.id, error: r.error });
+      } catch (e: any) {
+        failures.push({ agentId: a.id, error: e?.message ?? "Unknown error" });
+      }
+    }
+    return {
+      success: true as const,
+      total: agents?.length ?? 0,
+      succeeded,
+      failed: failures.length,
+      failures: failures.slice(0, 10),
+    };
+  });
+
 export const adminClearGoogleCalendar = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => userIdSchema.parse(input))
   .handler(async ({ data }) => {
