@@ -275,7 +275,7 @@ function buildAgentPayload(p: AgentBusinessProfile): ElevenLabsAgentConfig {
       },
       asr: {
         quality: "high",
-        provider: "elevenlabs",
+        provider: "scribe_realtime",
         // Twilio phone calls arrive as μ-law 8kHz audio.
         user_input_audio_format: "ulaw_8000",
       },
