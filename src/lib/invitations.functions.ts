@@ -221,24 +221,36 @@ export const adminSetUserTrial = createServerFn({ method: "POST" })
     const auth = await requireAdmin(data.accessToken);
     if ("error" in auth) return { success: false as const, error: auth.error };
 
-    let patch: Record<string, unknown> = {};
     if (data.action === "extend_days") {
       if (!data.days) return { success: false as const, error: "Days required" };
-      patch = {
-        trial_ends_at: new Date(Date.now() + data.days * 86400000).toISOString(),
-        trial_unlimited: false,
-        billing_status: "trial",
-      };
+      const { error } = await supabaseAdmin
+        .from("profiles")
+        .update({
+          trial_ends_at: new Date(Date.now() + data.days * 86400000).toISOString(),
+          trial_unlimited: false,
+          billing_status: "trial",
+        })
+        .eq("user_id", data.userId);
+      if (error) return { success: false as const, error: error.message };
     } else if (data.action === "unlimited") {
-      patch = { trial_ends_at: null, trial_unlimited: true, billing_status: "trial" };
+      const { error } = await supabaseAdmin
+        .from("profiles")
+        .update({ trial_ends_at: null, trial_unlimited: true, billing_status: "trial" })
+        .eq("user_id", data.userId);
+      if (error) return { success: false as const, error: error.message };
     } else if (data.action === "end_trial") {
-      patch = { billing_status: "trial_expired", trial_unlimited: false };
+      const { error } = await supabaseAdmin
+        .from("profiles")
+        .update({ billing_status: "trial_expired", trial_unlimited: false })
+        .eq("user_id", data.userId);
+      if (error) return { success: false as const, error: error.message };
     } else if (data.action === "activate") {
-      patch = { billing_status: "active" };
+      const { error } = await supabaseAdmin
+        .from("profiles")
+        .update({ billing_status: "active" })
+        .eq("user_id", data.userId);
+      if (error) return { success: false as const, error: error.message };
     }
-
-    const { error } = await supabaseAdmin.from("profiles").update(patch).eq("user_id", data.userId);
-    if (error) return { success: false as const, error: error.message };
     return { success: true as const };
   });
 
