@@ -85,7 +85,11 @@ export function coerceScenarios(raw: unknown): StructuredScenario[] {
       if (o.action && typeof o.action === "object") {
         const ao = o.action as Record<string, unknown>;
         if (ao.type === "call_transfer" && typeof ao.phone === "string") {
-          action = { type: "call_transfer", phone: ao.phone };
+          action = {
+            type: "call_transfer",
+            phone: ao.phone,
+            voicemailFallback: ao.voicemailFallback === true,
+          };
         } else if (ao.type === "post_call_sms" && typeof ao.message === "string") {
           action = { type: "post_call_sms", message: ao.message };
         } else if (ao.type === "schedule_appointment") {
