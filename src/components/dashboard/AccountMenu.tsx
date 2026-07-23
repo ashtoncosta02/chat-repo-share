@@ -1,5 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,9 +15,22 @@ import { User as UserIcon, Mail, KeyRound, CreditCard, LogOut } from "lucide-rea
 export function AccountMenu() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { data: businessName } = useQuery({
+    queryKey: ["account-menu-business-name", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("agents")
+        .select("business_name")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data?.business_name?.trim() || null;
+    },
+  });
   if (!user) return null;
 
-  const initial = (user.email || "?").charAt(0).toUpperCase();
+  const label = businessName || "Profile";
+  const initial = (businessName || user.email || "?").charAt(0).toUpperCase();
 
   return (
     <DropdownMenu>
@@ -26,8 +41,8 @@ export function AccountMenu() {
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[oklch(0.96_0.04_290)] text-[var(--gold-foreground)] text-xs font-semibold">
           {initial}
         </span>
-        <span className="hidden sm:inline text-sm text-foreground max-w-[180px] truncate">
-          {user.email}
+        <span className="hidden sm:inline text-sm text-foreground max-w-[200px] truncate">
+          {label}
         </span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
