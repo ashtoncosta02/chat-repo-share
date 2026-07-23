@@ -20,9 +20,12 @@ export const Route = createFileRoute("/api/public/twilio/voice-fallback")({
 
           // DialCallStatus: completed | busy | no-answer | failed | canceled | answered
           const dialStatus = String(form.get("DialCallStatus") || "").toLowerCase();
+          // AnsweredBy from machineDetection: human | machine_start | machine_end_* | fax | unknown
+          const answeredBy = String(form.get("AnsweredBy") || "").toLowerCase();
+          const hitVoicemail = answeredBy.startsWith("machine") || answeredBy === "fax";
 
-          // The owner answered and the call is done — hang up cleanly.
-          if (dialStatus === "completed" || dialStatus === "answered") {
+          // The owner personally answered → let the bridged call continue and hang up cleanly.
+          if (!hitVoicemail && (dialStatus === "completed" || dialStatus === "answered")) {
             return xml(`<?xml version="1.0" encoding="UTF-8"?><Response><Hangup/></Response>`);
           }
 
