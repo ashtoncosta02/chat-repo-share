@@ -148,7 +148,7 @@ function DashboardLayout() {
       </aside>
 
       {/* Mobile top bar */}
-      <header className="md:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between border-b border-border bg-card px-4 h-14">
+      <header className="md:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between border-b border-border bg-card px-4 h-20">
         <button
           onClick={() => setMobileOpen(true)}
           aria-label="Open menu"
@@ -225,7 +225,7 @@ function DashboardLayout() {
       )}
 
       {/* Main */}
-      <main className="flex-1 overflow-auto pt-14 md:pt-0">
+      <main className="flex-1 overflow-auto pt-20 md:pt-0">
         {/* Desktop top bar with account menu */}
         <div className="hidden md:flex items-center justify-end gap-3 border-b border-border bg-card/60 backdrop-blur px-6 h-14 sticky top-0 z-20">
           <AccountMenu />
