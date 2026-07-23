@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, X as XIcon, MessageSquare, Loader2 } from "lucide-react";
+import { Plus, X as XIcon, MessageSquare, Loader2, ChevronDown, Pencil, Trash2 } from "lucide-react";
 import { syncReceptionistAgent } from "@/lib/elevenlabs-agent.functions";
 import { coerceFaqs, newFaq, type StructuredFaq } from "@/lib/faqs";
 
@@ -47,6 +47,8 @@ function KnowledgePage() {
   const [agent, setAgent] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [expandedFaqId, setExpandedFaqId] = useState<string | null>(null);
+  const [editingFaqId, setEditingFaqId] = useState<string | null>(null);
   const [edit, setEdit] = useState({
     business_name: "",
     assistant_name: "",
@@ -185,11 +187,28 @@ function KnowledgePage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 md:px-8 py-8">
-      <div className="mb-6">
-        <h1 className="font-display text-2xl font-bold text-foreground">Knowledge & Facts</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Edit what {assistantName} knows about your business.
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-foreground">Knowledge & Facts</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Edit what {assistantName} knows about your business.
+          </p>
+        </div>
+        <Button
+          type="button"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground shrink-0"
+          onClick={() => {
+            const f = newFaq();
+            setEdit((p) => ({ ...p, faqs_structured: [f, ...p.faqs_structured] }));
+            setExpandedFaqId(f.id);
+            setEditingFaqId(f.id);
+            requestAnimationFrame(() => {
+              document.getElementById("faqs-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            });
+          }}
+        >
+          <Plus className="h-4 w-4 mr-1" /> New FAQ
+        </Button>
       </div>
 
       <div className="space-y-6">
@@ -258,97 +277,188 @@ function KnowledgePage() {
           </div>
         </section>
 
-        <section>
-          <div className="flex items-center justify-between mb-2">
-            <Label>FAQs</Label>
+        <section id="faqs-section">
+          <div className="flex items-baseline justify-between mb-3">
+            <h2 className="font-display text-lg font-semibold text-foreground">
+              All FAQs <span className="text-muted-foreground font-normal">({edit.faqs_structured.length})</span>
+            </h2>
             <Button
               type="button"
               size="sm"
               variant="outline"
-              onClick={() =>
-                setEdit({ ...edit, faqs_structured: [...edit.faqs_structured, newFaq()] })
-              }
+              onClick={() => {
+                const f = newFaq();
+                setEdit({ ...edit, faqs_structured: [f, ...edit.faqs_structured] });
+                setExpandedFaqId(f.id);
+                setEditingFaqId(f.id);
+              }}
             >
               <Plus className="h-3.5 w-3.5 mr-1" /> Add FAQ
             </Button>
           </div>
           {edit.faqs_structured.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-3 text-center border border-dashed border-border rounded-md">
-              No FAQs yet. Click "Add FAQ" to create one.
+            <p className="text-sm text-muted-foreground py-6 text-center border border-dashed border-border rounded-lg">
+              No FAQs yet. Click "New FAQ" to create one.
             </p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {edit.faqs_structured.map((faq, idx) => {
+                const isOpen = expandedFaqId === faq.id;
+                const isEditing = editingFaqId === faq.id;
                 const smsOn = faq.sms_followup ?? edit.sms_followup_enabled;
+                const updateFaq = (patch: Partial<StructuredFaq>) => {
+                  const next = [...edit.faqs_structured];
+                  next[idx] = { ...faq, ...patch };
+                  setEdit({ ...edit, faqs_structured: next });
+                };
                 return (
                   <div
                     key={faq.id}
-                    className="rounded-lg border border-border bg-card p-3 space-y-2"
+                    className="rounded-lg border border-border bg-card overflow-hidden transition-shadow hover:shadow-sm"
                   >
-                    <div className="flex items-start gap-2">
-                      <Input
-                        placeholder="Question (e.g. What are your hours?)"
-                        value={faq.question}
-                        onChange={(e) => {
-                          const next = [...edit.faqs_structured];
-                          next[idx] = { ...faq, question: e.target.value };
-                          setEdit({ ...edit, faqs_structured: next });
-                        }}
-                      />
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="ghost"
-                        className="text-muted-foreground hover:text-destructive shrink-0"
-                        onClick={() => {
-                          const next = edit.faqs_structured.filter((_, i) => i !== idx);
-                          setEdit({ ...edit, faqs_structured: next });
-                        }}
-                        aria-label="Remove FAQ"
-                      >
-                        <XIcon className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <Textarea
-                      placeholder="Answer"
-                      value={faq.answer}
-                      rows={2}
-                      onChange={(e) => {
-                        const next = [...edit.faqs_structured];
-                        next[idx] = { ...faq, answer: e.target.value };
-                        setEdit({ ...edit, faqs_structured: next });
-                      }}
-                    />
                     <button
                       type="button"
-                      className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition"
+                      className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left"
                       onClick={() => {
-                        const next = [...edit.faqs_structured];
-                        const cur = faq.sms_followup;
-                        const newVal =
-                          cur === undefined ? true : cur === true ? false : undefined;
-                        next[idx] = { ...faq, sms_followup: newVal };
-                        setEdit({ ...edit, faqs_structured: next });
+                        if (isEditing) return;
+                        setExpandedFaqId(isOpen ? null : faq.id);
                       }}
                     >
-                      <MessageSquare className="h-3.5 w-3.5" />
-                      SMS follow-up:{" "}
-                      <span
-                        className={`font-medium ${smsOn ? "text-emerald-600" : "text-muted-foreground"}`}
-                      >
-                        {faq.sms_followup === undefined
-                          ? `default (${edit.sms_followup_enabled ? "on" : "off"})`
-                          : faq.sms_followup
-                            ? "always on"
-                            : "always off"}
+                      <span className="text-sm font-medium text-foreground truncate">
+                        {faq.question.trim() || (
+                          <span className="text-muted-foreground italic">Untitled question</span>
+                        )}
                       </span>
+                      <ChevronDown
+                        className={`h-4 w-4 text-muted-foreground shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                      />
                     </button>
+                    {isOpen && (
+                      <div className="px-4 pb-4 pt-0 border-t border-border/60 space-y-3">
+                        {isEditing ? (
+                          <>
+                            <div>
+                              <Label className="text-xs text-muted-foreground">Question</Label>
+                              <Input
+                                autoFocus
+                                placeholder="What are your hours?"
+                                value={faq.question}
+                                onChange={(e) => updateFaq({ question: e.target.value })}
+                                className="mt-1"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs text-muted-foreground">Answer</Label>
+                              <Textarea
+                                placeholder="Answer"
+                                value={faq.answer}
+                                rows={3}
+                                onChange={(e) => updateFaq({ answer: e.target.value })}
+                                className="mt-1"
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition"
+                              onClick={() => {
+                                const cur = faq.sms_followup;
+                                const newVal =
+                                  cur === undefined ? true : cur === true ? false : undefined;
+                                updateFaq({ sms_followup: newVal });
+                              }}
+                            >
+                              <MessageSquare className="h-3.5 w-3.5" />
+                              SMS follow-up:{" "}
+                              <span
+                                className={`font-medium ${smsOn ? "text-emerald-600" : "text-muted-foreground"}`}
+                              >
+                                {faq.sms_followup === undefined
+                                  ? `default (${edit.sms_followup_enabled ? "on" : "off"})`
+                                  : faq.sms_followup
+                                    ? "always on"
+                                    : "always off"}
+                              </span>
+                            </button>
+                            <div className="flex items-center justify-between pt-1">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                className="text-muted-foreground hover:text-destructive"
+                                onClick={() => {
+                                  const next = edit.faqs_structured.filter((_, i) => i !== idx);
+                                  setEdit({ ...edit, faqs_structured: next });
+                                  setEditingFaqId(null);
+                                  setExpandedFaqId(null);
+                                }}
+                              >
+                                <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setEditingFaqId(null)}
+                              >
+                                Done
+                              </Button>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed">
+                              {faq.answer.trim() || (
+                                <span className="text-muted-foreground italic">No answer yet.</span>
+                              )}
+                            </p>
+                            <div className="flex items-center justify-between gap-2 pt-1">
+                              <span className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                                <MessageSquare className="h-3 w-3" />
+                                SMS follow-up:{" "}
+                                <span className={smsOn ? "text-emerald-600 font-medium" : ""}>
+                                  {faq.sms_followup === undefined
+                                    ? `default (${edit.sms_followup_enabled ? "on" : "off"})`
+                                    : faq.sms_followup
+                                      ? "always on"
+                                      : "always off"}
+                                </span>
+                              </span>
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 text-primary hover:text-primary"
+                                  onClick={() => setEditingFaqId(faq.id)}
+                                >
+                                  <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                  onClick={() => {
+                                    const next = edit.faqs_structured.filter((_, i) => i !== idx);
+                                    setEdit({ ...edit, faqs_structured: next });
+                                  }}
+                                  aria-label="Delete FAQ"
+                                >
+                                  <XIcon className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
             </div>
           )}
         </section>
+
 
         <section>
           <Label htmlFor="pricing_notes">Pricing notes</Label>
