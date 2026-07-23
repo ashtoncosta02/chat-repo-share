@@ -407,8 +407,13 @@ function KnowledgePage() {
                               type="button"
                               size="sm"
                               variant="outline"
-                              onClick={() => setEditingFaqId(null)}
+                              disabled={saving}
+                              onClick={async () => {
+                                setEditingFaqId(null);
+                                await handleSave();
+                              }}
                             >
+                              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
                               Done
                             </Button>
                           </div>
