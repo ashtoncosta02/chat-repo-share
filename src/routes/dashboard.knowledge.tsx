@@ -902,8 +902,101 @@ function KnowledgePage() {
     );
   }
 
+  // ---------- Simple field drilldowns ----------
+  const simpleViews: Record<
+    "services" | "pricing" | "booking" | "escalation",
+    { title: string; helper: string; body: React.ReactNode }
+  > = {
+    services: {
+      title: "Services",
+      helper: `List the services your business offers so ${assistantName} can answer questions about them.`,
+      body: (
+        <Textarea
+          id="services"
+          value={edit.services}
+          onChange={(e) => setEdit({ ...edit, services: e.target.value })}
+          rows={10}
+          placeholder="One service per line"
+        />
+      ),
+    },
+    pricing: {
+      title: "Pricing",
+      helper: `Short pricing notes ${assistantName} can reference when callers ask.`,
+      body: (
+        <Textarea
+          id="pricing_notes"
+          value={edit.pricing_notes}
+          onChange={(e) => setEdit({ ...edit, pricing_notes: e.target.value })}
+          rows={6}
+          placeholder="e.g. Honey ranges from $4.00 to $84.00…"
+        />
+      ),
+    },
+    booking: {
+      title: "Booking & Contact",
+      helper: "Where callers can book, and a number to reach a human in emergencies.",
+      body: (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="booking_link">Booking link</Label>
+            <Input
+              id="booking_link"
+              value={edit.booking_link}
+              onChange={(e) => setEdit({ ...edit, booking_link: e.target.value })}
+              className="mt-1"
+              placeholder="https://…"
+            />
+          </div>
+          <div>
+            <Label htmlFor="emergency_number">Emergency number</Label>
+            <Input
+              id="emergency_number"
+              value={edit.emergency_number}
+              onChange={(e) => setEdit({ ...edit, emergency_number: e.target.value })}
+              className="mt-1"
+              placeholder="(555) 555-5555"
+            />
+          </div>
+        </div>
+      ),
+    },
+    escalation: {
+      title: "Escalation triggers",
+      helper: `Situations where ${assistantName} should stop and escalate to a human.`,
+      body: (
+        <Textarea
+          id="escalation_triggers"
+          value={edit.escalation_triggers}
+          onChange={(e) => setEdit({ ...edit, escalation_triggers: e.target.value })}
+          rows={8}
+          placeholder="One trigger per line"
+        />
+      ),
+    },
+  };
+
+  if (view === "services" || view === "pricing" || view === "booking" || view === "escalation") {
+    const v = simpleViews[view];
+    return (
+      <div className="max-w-3xl mx-auto px-4 md:px-8 py-8">
+        <button
+          type="button"
+          onClick={() => setView("index")}
+          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition mb-2"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back to Knowledge
+        </button>
+        <h1 className="font-display text-2xl font-bold text-foreground">{v.title}</h1>
+        <p className="text-muted-foreground text-sm mt-1 mb-6">{v.helper}</p>
+        {v.body}
+        {saveButton}
+      </div>
+    );
+  }
 
   // ---------- Index ----------
+
   return (
     <div className="max-w-3xl mx-auto px-4 md:px-8 py-8">
       <div className="mb-6">
