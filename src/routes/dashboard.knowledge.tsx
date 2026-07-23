@@ -91,6 +91,7 @@ function KnowledgePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const syncEl = useServerFn(syncReceptionistAgent);
+  const suggestFaqsFn = useServerFn(suggestFaqs);
 
   const [agent, setAgent] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(true);
