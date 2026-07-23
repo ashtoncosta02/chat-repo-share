@@ -140,7 +140,7 @@ function InvitePage() {
               </div>
               <div>
                 <Label htmlFor="invite-email">Email</Label>
-                <Input id="invite-email" type="email" value={state.email} disabled />
+                <Input id="invite-email" type="email" value={state.kind === "ready" ? state.email : ""} disabled />
               </div>
               <div>
                 <Label htmlFor="invite-name">Your name</Label>
