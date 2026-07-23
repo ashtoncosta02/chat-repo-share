@@ -68,6 +68,12 @@ function WidgetChat() {
 
   useEffect(() => {
     let cancelled = false;
+    // Preview overrides from parent (dashboard live preview)
+    const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+    const overrideColor = params?.get("color") || null;
+    const overrideGreeting = params?.get("greeting");
+    const overridePos = params?.get("pos");
+
     fetch(`/api/public/widget/config/${agentId}`)
       .then(async (r) => {
         const data = await r.json();
@@ -76,10 +82,19 @@ function WidgetChat() {
           setConfigError(data?.error || "Failed to load");
           return;
         }
-        setConfig(data);
+        const merged: WidgetConfig = {
+          ...data,
+          widgetColor: overrideColor || data.widgetColor,
+          widgetGreeting: overrideGreeting !== null ? overrideGreeting : data.widgetGreeting,
+          widgetPosition:
+            overridePos === "bottom-left" || overridePos === "bottom-right"
+              ? overridePos
+              : data.widgetPosition,
+        };
+        setConfig(merged);
         const greeting =
-          (data.widgetGreeting && data.widgetGreeting.trim()) ||
-          `Hi! I'm ${data.assistantName} from ${data.businessName}. How can I help you today?`;
+          (merged.widgetGreeting && merged.widgetGreeting.trim()) ||
+          `Hi! I'm ${merged.assistantName} from ${merged.businessName}. How can I help you today?`;
         setMessages([{ role: "assistant", content: greeting }]);
       })
       .catch(() => {
