@@ -788,6 +788,13 @@ function KnowledgePage() {
     const removeStep = (stepIdx: number) => {
       updateScenario(idx, { steps: s.steps.filter((_, i) => i !== stepIdx) });
     };
+    const moveStep = (from: number, to: number) => {
+      if (from === to || to < 0 || to >= s.steps.length) return;
+      const next = [...s.steps];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      updateScenario(idx, { steps: next });
+    };
     const setAction = (a: ScenarioAction) => updateScenario(idx, { action: a });
 
     const collectStepIdx = s.steps.findIndex((st) => st.kind === "collect_info");
