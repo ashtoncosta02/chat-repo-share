@@ -107,6 +107,7 @@ function RootComponent() {
       <AuthProvider>
         <Outlet />
         <Toaster richColors position="top-right" />
+        <NewVersionBanner />
       </AuthProvider>
     </QueryClientProvider>
   );
