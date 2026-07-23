@@ -80,7 +80,24 @@ export function ChatWidgetPage() {
     ? `<script src="${origin}/api/public/widget/embed.js?agent=${selected.id}" async></script>`
     : "";
 
-  const previewUrl = selected ? `/widget/${selected.id}` : "";
+  // Debounce draft values so the preview iframe doesn't reload on every keystroke.
+  const [debouncedDraft, setDebouncedDraft] = useState({
+    color: draftColor,
+    greeting: draftGreeting,
+    position: draftPosition,
+  });
+  useEffect(() => {
+    const t = setTimeout(
+      () => setDebouncedDraft({ color: draftColor, greeting: draftGreeting, position: draftPosition }),
+      400,
+    );
+    return () => clearTimeout(t);
+  }, [draftColor, draftGreeting, draftPosition]);
+
+  const previewUrl = selected
+    ? `/widget/${selected.id}?color=${encodeURIComponent(debouncedDraft.color)}&greeting=${encodeURIComponent(debouncedDraft.greeting)}&pos=${debouncedDraft.position}`
+    : "";
+
 
   const isDirty =
     !!selected &&
