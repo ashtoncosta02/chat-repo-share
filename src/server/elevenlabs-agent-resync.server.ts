@@ -4,6 +4,7 @@ import {
   updateElevenLabsAgent,
   deleteElevenLabsAgent,
   syncBookingToolsForAgent,
+  normalizePhoneE164,
   type AgentBusinessProfile,
 } from "./elevenlabs-agent.server";
 import { coerceScenarios, scenariosToPromptText } from "@/lib/scenarios";
