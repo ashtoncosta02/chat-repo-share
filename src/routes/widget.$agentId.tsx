@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import ReactMarkdown from "react-markdown";
+import poweredByLogo from "@/assets/powered-by-ask-janice.png.asset.json";
 
 export const Route = createFileRoute("/widget/$agentId")({
   head: () => ({
@@ -402,6 +403,30 @@ function WidgetChat() {
           Send
         </button>
       </form>
+
+      {/* Footer */}
+      <a
+        href="https://www.askjanice.net"
+        target="_blank"
+        rel="noreferrer"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "8px 12px 10px",
+          background: "#fff",
+          borderTop: "1px solid #f0ece1",
+          flexShrink: 0,
+          textDecoration: "none",
+        }}
+        aria-label="Powered by Ask Janice"
+      >
+        <img
+          src={poweredByLogo.url}
+          alt="Powered by Ask Janice"
+          style={{ height: 18, width: "auto", opacity: 0.9 }}
+        />
+      </a>
 
       {/* Minimal markdown styling without Tailwind */}
       <style>{`
