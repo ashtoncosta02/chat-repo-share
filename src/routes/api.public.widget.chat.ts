@@ -438,16 +438,19 @@ export const Route = createFileRoute("/api/public/widget/chat")({
         // forget, which is why notified_at stayed null and no email/SMS ever
         // went out for widget chats.
         const userMsgCount = messages.filter((m) => m.role === "user").length;
-        if (userMsgCount >= 2) {
+        if (userMsgCount >= 2 && threadId) {
           const allMessages = [
             ...messages.map((m) => ({ role: m.role, content: m.content })),
             { role: "assistant" as const, content: finalText },
           ];
           try {
+            // Pass the mirrored thread id (not the widget conversation id)
+            // so leads.conversation_id links to the row the Threads UI reads,
+            // and the visitor's name shows up instead of "Unknown Caller".
             await captureLeadFromWidget({
               agentId,
               userId: agent.user_id,
-              conversationId,
+              conversationId: threadId,
               messages: allMessages,
             });
           } catch (e) {
