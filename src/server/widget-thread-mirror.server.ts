@@ -118,6 +118,9 @@ export async function maybeNotifyOwnerForWidgetChat(args: NotifyArgs): Promise<v
     .maybeSingle();
   if (!claimed) return;
 
+  let anySendAttempted = false;
+  let anySendSucceeded = false;
+
   try {
     const { data: agent } = await supabaseAdmin
       .from("agents")
@@ -156,7 +159,7 @@ export async function maybeNotifyOwnerForWidgetChat(args: NotifyArgs): Promise<v
       .map((t) => ({ role: t.role as "user" | "assistant", content: t.content }));
 
     const callerLabel =
-      args.visitorName || args.visitorEmail || args.pageUrl || "Website visitor";
+      lead?.name || args.visitorName || args.visitorEmail || args.pageUrl || "Website visitor";
 
     // Email
     if (agent.notify_email_transcript !== false) {
@@ -171,6 +174,7 @@ export async function maybeNotifyOwnerForWidgetChat(args: NotifyArgs): Promise<v
         ownerEmail = prof?.email?.trim() || null;
       }
       if (ownerEmail) {
+        anySendAttempted = true;
         const { subject, html } = renderTranscriptEmail({
           businessName: agent.business_name || "Your business",
           callerNumber: callerLabel,
@@ -194,34 +198,62 @@ export async function maybeNotifyOwnerForWidgetChat(args: NotifyArgs): Promise<v
               },
         });
         const wsSubject = subject.replace(/^New call/i, "New website chat");
-        await sendEmail({ to: ownerEmail, subject: wsSubject, html });
+        const id = await sendEmail({ to: ownerEmail, subject: wsSubject, html });
+        if (id) {
+          anySendSucceeded = true;
+          console.log("widget notify: email sent", { to: ownerEmail, id });
+        } else {
+          console.error("widget notify: email send returned null", { to: ownerEmail });
+        }
+      } else {
+        console.warn("widget notify: no owner email configured", { agentId: args.agentId });
       }
     }
 
     // SMS
     if (agent.notify_sms_transcript && agent.notify_phone?.trim()) {
-      const { sendTranscriptSms } = await import("@/server/sms.server");
-      const summary =
-        thread?.ai_summary ||
-        cleanedTurns
-          .filter((t) => t.role === "user")
-          .map((t) => t.content)
-          .join(" • ")
-          .slice(0, 400) ||
-        "New website chat started.";
-      await sendTranscriptSms({
-        userId: args.userId,
-        to: agent.notify_phone.trim(),
-        businessName: agent.business_name || "Your business",
-        callerNumber: callerLabel,
-        durationSeconds: 0,
-        summary,
-        dashboardUrl,
-      });
+      anySendAttempted = true;
+      try {
+        const { sendTranscriptSms } = await import("@/server/sms.server");
+        const summary =
+          thread?.ai_summary ||
+          cleanedTurns
+            .filter((t) => t.role === "user")
+            .map((t) => t.content)
+            .join(" • ")
+            .slice(0, 400) ||
+          "New website chat started.";
+        const sid = await sendTranscriptSms({
+          userId: args.userId,
+          to: agent.notify_phone.trim(),
+          businessName: agent.business_name || "Your business",
+          callerNumber: callerLabel,
+          durationSeconds: 0,
+          summary,
+          dashboardUrl,
+        });
+        if (sid) {
+          anySendSucceeded = true;
+          console.log("widget notify: sms sent", { to: agent.notify_phone, sid });
+        } else {
+          console.error("widget notify: sms send returned null");
+        }
+      } catch (e) {
+        console.error("widget notify: sms send threw", e);
+      }
     }
   } catch (e) {
     console.error("widget notify: failed", e);
-    // Leave notified_at set to avoid retry storms; owner can still see the
-    // thread in the dashboard.
+  } finally {
+    // If we attempted sends but none succeeded, release the claim so the
+    // next user message can retry the notification instead of silently
+    // dropping it forever.
+    if (anySendAttempted && !anySendSucceeded) {
+      await supabaseAdmin
+        .from("widget_conversations")
+        .update({ notified_at: null })
+        .eq("id", args.widgetConversationId);
+    }
   }
 }
+
