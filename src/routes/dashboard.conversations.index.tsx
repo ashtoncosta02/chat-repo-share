@@ -318,7 +318,12 @@ function ConversationsPage() {
           (c.lead_phone ?? "").toLowerCase().includes(q) ||
           (c.ai_summary ?? "").toLowerCase().includes(q) ||
           (c.lead_notes ?? "").toLowerCase().includes(q);
-      const matchesIntent = intentFilter === "all" ? true : (c.lead_source ?? "") === intentFilter;
+      const matchesIntent =
+        intentFilter === "all"
+          ? true
+          : intentFilter === "widget"
+            ? (c.lead_source ?? "") === "widget" || (c.source ?? "") === "widget"
+            : (c.lead_source ?? "") === intentFilter;
       const matchesStatus = statusFilter === "all" ? true : (c.lead_status ?? "") === statusFilter;
       let matchesDate = true;
       if (dateFilter) {
