@@ -156,13 +156,9 @@ export async function maybeNotifyOwnerForWidgetChat(args: NotifyArgs): Promise<v
   } else {
     claimQuery = claimQuery.is("notified_at", null);
   }
-  const { data: claimed } = await supabaseAdmin
-    .from("widget_conversations")
-    .select("id")
-    .maybeSingle();
   const { data: claimRows } = await claimQuery;
   const claimedRow = Array.isArray(claimRows) ? claimRows[0] : claimRows;
-  if (!claimedRow && !claimed) return;
+  if (!claimedRow) return;
 
   let anySendAttempted = false;
   let anySendSucceeded = false;
