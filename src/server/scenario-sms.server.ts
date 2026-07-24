@@ -88,13 +88,14 @@ async function matchIntents(
         {
           role: "system",
           content:
-            'You are given a phone-call transcript and a list of possible caller intents. Return ONLY a JSON array (no prose, no code fences) of the intent strings that the caller clearly expressed or asked about during the call. Copy each matching intent verbatim from the list. If none match, return [].',
+            'You classify phone call transcripts against a fixed list of caller intents. Return ONLY a JSON array (no prose, no code fences) of intent strings that the CALLER explicitly and unambiguously requested or asked to do during THIS call. Copy matches verbatim from the provided list. Rules: (1) Only include an intent if the caller clearly asked for that specific thing — not if it was merely mentioned, offered by the agent, or tangentially related. (2) Do NOT include an intent just because it is the only option in the list. (3) A generic question, a hang-up, wrong number, or a call the agent could not help with = []. (4) When unsure, return []. Empty array is the correct answer for most calls.',
         },
         {
           role: "user",
-          content: `Intents:\n${intents.map((i) => `- ${i}`).join("\n")}\n\nTranscript:\n${transcript}`,
+          content: `Allowed intents:\n${intents.map((i) => `- ${i}`).join("\n")}\n\nTranscript:\n${transcript}\n\nReturn the JSON array now.`,
         },
       ],
+      temperature: 0,
     }),
   });
   if (!res.ok) {
