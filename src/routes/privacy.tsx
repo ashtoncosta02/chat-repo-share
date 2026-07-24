@@ -85,8 +85,8 @@ function PrivacyPage() {
           <p>
             Depending on your location (GDPR, CCPA, etc.), you may have rights to access, correct,
             delete, or export your data. Email{" "}
-            <a href="mailto:ashtoncosta02@gmail.com" className="text-gold hover:underline">
-              ashtoncosta02@gmail.com
+            <a href="mailto:hello@askjanice.net" className="text-gold hover:underline">
+              hello@askjanice.net
             </a>{" "}
             to exercise them. End-user callers should direct requests to the business they called;
             we act as a processor on the business's behalf.
@@ -111,8 +111,8 @@ function PrivacyPage() {
           <h2 className="font-display text-2xl font-semibold">11. Contact</h2>
           <p>
             Email{" "}
-            <a href="mailto:ashtoncosta02@gmail.com" className="text-gold hover:underline">
-              ashtoncosta02@gmail.com
+            <a href="mailto:hello@askjanice.net" className="text-gold hover:underline">
+              hello@askjanice.net
             </a>
             .
           </p>
