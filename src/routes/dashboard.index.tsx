@@ -91,6 +91,9 @@ function DashboardHome() {
   }
 
   const assistantName = agent.assistant_name?.trim() || "Janice";
+  const voice =
+    VOICE_OPTIONS.find((v) => v.id === (agent.voice_id ?? DEFAULT_VOICE_ID)) ??
+    VOICE_OPTIONS[0];
 
   return (
     <div>
@@ -122,59 +125,47 @@ function DashboardHome() {
           />
         </div>
 
-        <div className="rounded-xl border border-border bg-card">
-          <div className="border-b border-border px-4 md:px-6 py-4">
-            <h2 className="font-semibold text-foreground">Your AI Receptionist</h2>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Click to edit, test, or manage settings.
-            </p>
+        <Link
+          to="/dashboard/agents/$agentId"
+          params={{ agentId: agent.id }}
+          className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 hover:bg-muted/50 transition max-w-md"
+        >
+          <img
+            src={voice.avatar}
+            alt={assistantName}
+            className="h-10 w-10 rounded-full object-cover shrink-0"
+          />
+          <div className="min-w-0 flex-1">
+            <div className="font-semibold text-foreground truncate text-sm">
+              {assistantName}
+            </div>
+            <div className="text-xs text-muted-foreground truncate">
+              Your AI Receptionist
+            </div>
           </div>
-          <Link
-            to="/dashboard/agents/$agentId"
-            params={{ agentId: agent.id }}
-            className="flex items-center justify-between px-4 md:px-6 py-5 hover:bg-muted/50 transition gap-4"
+          <span
+            className={`hidden sm:inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+              calendarConnected
+                ? "bg-emerald-50 text-emerald-700"
+                : "bg-amber-50 text-amber-700"
+            }`}
           >
-            <div className="flex items-center gap-4 min-w-0">
-              <div className="h-12 w-12 rounded-full bg-[oklch(0.95_0.05_290)] flex items-center justify-center shrink-0">
-                <Bot className="h-6 w-6 text-[var(--gold)]" />
-              </div>
-              <div className="min-w-0">
-                <div className="font-semibold text-foreground truncate">
-                  {assistantName}{" "}
-                  <span className="font-normal text-muted-foreground">
-                    · {agent.business_name}
-                  </span>
-                </div>
-                {agent.industry && (
-                  <div className="text-sm text-muted-foreground truncate">{agent.industry}</div>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <span
-                className={`hidden sm:inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full font-medium ${
-                  calendarConnected
-                    ? "bg-emerald-50 text-emerald-700"
-                    : "bg-amber-50 text-amber-700"
-                }`}
-              >
-                <Calendar className="h-3 w-3" />
-                {calendarConnected ? "Calendar on" : "Calendar off"}
-              </span>
-              <span
-                className={`text-xs px-2 py-1 rounded-full font-medium ${
-                  agent.is_live
-                    ? "bg-emerald-100 text-emerald-700"
-                    : "bg-muted text-muted-foreground"
-                }`}
-              >
-                {agent.is_live ? "Live" : "Draft"}
-              </span>
-              <ChevronRight className="h-5 w-5 text-muted-foreground" />
-            </div>
-          </Link>
-        </div>
+            <Calendar className="h-2.5 w-2.5" />
+            {calendarConnected ? "Cal on" : "Cal off"}
+          </span>
+          <span
+            className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+              agent.is_live
+                ? "bg-emerald-100 text-emerald-700"
+                : "bg-muted text-muted-foreground"
+            }`}
+          >
+            {agent.is_live ? "Live" : "Draft"}
+          </span>
+          <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+        </Link>
       </div>
+
 
       <AnalyticsPage />
     </div>
