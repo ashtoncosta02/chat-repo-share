@@ -817,7 +817,7 @@ function ConversationCard({
           </div>
         </Link>
         <div className="shrink-0 flex items-center gap-1">
-          <IntentTag source={c.lead_source} />
+          <IntentTag source={c.lead_source ?? (c.source === "widget" ? "widget" : null)} />
         </div>
       </div>
       <p className="mt-3 text-sm text-foreground/80 whitespace-pre-wrap break-words leading-relaxed">
