@@ -296,6 +296,23 @@ function buildAgentPayload(p: AgentBusinessProfile): ElevenLabsAgentConfig {
                 voicemail_message: `Hi {{lead_name}}, this is ${p.assistant_name || "the receptionist"} from ${p.business_name}. I'm calling to follow up on your earlier inquiry. Please call us back when you have a chance. Thank you, goodbye.`,
               },
             },
+            transfer_to_number:
+              p.transfer_numbers && p.transfer_numbers.length > 0
+                ? {
+                    type: "system",
+                    name: "transfer_to_number",
+                    description:
+                      "Warm-transfer the live caller to a human at the phone number that matches their request. Call this AFTER you've collected the caller's name and reason for calling.",
+                    params: {
+                      system_tool_type: "transfer_to_number",
+                      transfers: p.transfer_numbers.map((t) => ({
+                        phone_number: t.phone,
+                        condition: t.condition,
+                        transfer_type: "conference",
+                      })),
+                    },
+                  }
+                : null,
           },
         },
       },
