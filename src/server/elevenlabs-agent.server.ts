@@ -35,6 +35,23 @@ export interface AgentBusinessProfile {
   booking_prompt_addendum?: string | null;
   // Workspace tool ids to attach to the agent (find_slots + book_appointment).
   tool_ids?: string[];
+  // Phone numbers the agent can warm-transfer callers to (built from scenarios).
+  transfer_numbers?: Array<{ phone: string; condition: string }>;
+}
+
+/** Normalize a user-typed phone to E.164. Assumes US/CA (+1) when 10 digits. */
+export function normalizePhoneE164(raw: string): string | null {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith("+")) {
+    const digits = trimmed.slice(1).replace(/\D/g, "");
+    return digits.length >= 8 ? `+${digits}` : null;
+  }
+  const digits = trimmed.replace(/\D/g, "");
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
+  return digits.length >= 8 ? `+${digits}` : null;
 }
 
 
@@ -204,6 +221,19 @@ interface ElevenLabsAgentConfig {
               voicemail_message?: string;
             };
           } | null;
+          transfer_to_number?: {
+            type: "system";
+            name: "transfer_to_number";
+            description?: string;
+            params: {
+              system_tool_type: "transfer_to_number";
+              transfers: Array<{
+                phone_number: string;
+                condition: string;
+                transfer_type?: "conference" | "sip_refer";
+              }>;
+            };
+          } | null;
         };
       };
     };
@@ -266,6 +296,23 @@ function buildAgentPayload(p: AgentBusinessProfile): ElevenLabsAgentConfig {
                 voicemail_message: `Hi {{lead_name}}, this is ${p.assistant_name || "the receptionist"} from ${p.business_name}. I'm calling to follow up on your earlier inquiry. Please call us back when you have a chance. Thank you, goodbye.`,
               },
             },
+            transfer_to_number:
+              p.transfer_numbers && p.transfer_numbers.length > 0
+                ? {
+                    type: "system",
+                    name: "transfer_to_number",
+                    description:
+                      "Warm-transfer the live caller to a human at the phone number that matches their request. Call this AFTER you've collected the caller's name and reason for calling.",
+                    params: {
+                      system_tool_type: "transfer_to_number",
+                      transfers: p.transfer_numbers.map((t) => ({
+                        phone_number: t.phone,
+                        condition: t.condition,
+                        transfer_type: "conference",
+                      })),
+                    },
+                  }
+                : null,
           },
         },
       },

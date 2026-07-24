@@ -4,6 +4,7 @@ import {
   updateElevenLabsAgent,
   deleteElevenLabsAgent,
   syncBookingToolsForAgent,
+  normalizePhoneE164,
   type AgentBusinessProfile,
 } from "./elevenlabs-agent.server";
 import { coerceScenarios, scenariosToPromptText } from "@/lib/scenarios";
@@ -42,7 +43,26 @@ function rowToProfile(row: AgentRow): AgentBusinessProfile {
       })
       .filter((f) => f.question || f.answer);
   }
-  const scenariosPrompt = scenariosToPromptText(coerceScenarios(row.scenarios));
+  const scenarios = coerceScenarios(row.scenarios);
+  const scenariosPrompt = scenariosToPromptText(scenarios);
+  const transferNumbers: Array<{ phone: string; condition: string }> = [];
+  const seen = new Set<string>();
+  for (const s of scenarios) {
+    if (s.action?.type === "call_transfer") {
+      const phone = normalizePhoneE164(s.action.phone);
+      const intent = s.intent.trim();
+      if (phone && intent) {
+        const key = `${phone}::${intent.toLowerCase()}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          transferNumbers.push({
+            phone,
+            condition: `The caller wants to ${intent}.`,
+          });
+        }
+      }
+    }
+  }
   return {
     business_name: row.business_name,
     assistant_name: row.assistant_name,
@@ -59,6 +79,7 @@ function rowToProfile(row: AgentRow): AgentBusinessProfile {
     scenarios_prompt: scenariosPrompt || null,
     greeting_message: row.greeting_message,
     farewell_message: row.farewell_message,
+    transfer_numbers: transferNumbers,
   };
 }
 
