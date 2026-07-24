@@ -861,7 +861,7 @@ function KnowledgePage() {
                 onChange={(e) => updateScenario(idx, { intent: e.target.value })}
                 placeholder="e.g. request a quote for a bathroom renovation"
                 rows={2}
-                className="mt-2 border-0 shadow-none focus-visible:ring-0 p-0 resize-none"
+                className="mt-2 border-0 shadow-none focus-visible:ring-0 px-2 py-1 resize-none"
               />
             </div>
           </section>
@@ -944,7 +944,7 @@ function KnowledgePage() {
                               onChange={(e) => updateStep(stepIdx, { text: e.target.value })}
                               placeholder='e.g. "Ask what city they are located in"'
                               rows={3}
-                              className="mt-2 border-0 shadow-none focus-visible:ring-0 p-0 resize-none"
+                              className="mt-2 border-0 shadow-none focus-visible:ring-0 px-2 py-1 resize-none"
                             />
                           </>
                         ) : (
