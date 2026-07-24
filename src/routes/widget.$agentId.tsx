@@ -114,6 +114,13 @@ function WidgetChat() {
     });
   }, [messages, sending]);
 
+  // Keep focus in the input so users can type continuously after sending
+  useEffect(() => {
+    if (!sending && config) {
+      inputRef.current?.focus();
+    }
+  }, [sending, config, messages]);
+
   async function send(e: FormEvent) {
     e.preventDefault();
     const text = input.trim();
