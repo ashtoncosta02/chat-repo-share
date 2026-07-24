@@ -24,6 +24,8 @@ async function getCurrentAssetHash(): Promise<string | null> {
 export function NewVersionBanner() {
   const [initialHash, setInitialHash] = useState<string | null>(null);
   const [updateAvailable, setUpdateAvailable] = useState(false);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isDashboard = pathname.startsWith("/dashboard");
 
   useEffect(() => {
     let cancelled = false;
