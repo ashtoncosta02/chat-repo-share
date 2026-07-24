@@ -82,6 +82,7 @@ function buildSystemPrompt(agent: {
   emergency_number: string | null;
   primary_goal: string | null;
   escalation_triggers: string | null;
+  widget_instructions: string | null;
 }): string {
   const name = agent.assistant_name || "Assistant";
   const tone = agent.tone || "friendly and professional";
@@ -131,8 +132,14 @@ function buildSystemPrompt(agent: {
   if (agent.emergency_number) sections.push(`For urgent issues, share this emergency number: ${agent.emergency_number}.`);
   if (agent.escalation_triggers) sections.push(`Escalate (suggest contacting a human) when: ${agent.escalation_triggers}.`);
 
+  if (agent.widget_instructions && agent.widget_instructions.trim()) {
+    sections.push(
+      `Additional instructions from the business owner (these take priority — follow them carefully):\n${agent.widget_instructions.trim()}`,
+    );
+  }
+
   sections.push(
-    `Rules: Never invent services, prices, or hours not listed above. If you don't know, say you'll have someone follow up and ask for the visitor's email. Never claim to be human.`
+    `Rules: Never invent services, prices, or hours not listed above. If you don't know, say you'll have someone follow up and ask for the visitor's email. Never claim to be human. Do not repeat filler phrases like "yes we can definitely help with that" — get straight to the useful answer.`
   );
 
   return sections.join("\n\n");
@@ -250,7 +257,7 @@ export const Route = createFileRoute("/api/public/widget/chat")({
         const { data: agent, error: agentErr } = await supabaseAdmin
           .from("agents")
           .select(
-            "id, user_id, business_name, assistant_name, tone, industry, services, faqs, faqs_structured, scenarios, sms_followup_enabled, pricing_notes, booking_link, emergency_number, primary_goal, escalation_triggers"
+            "id, user_id, business_name, assistant_name, tone, industry, services, faqs, faqs_structured, scenarios, sms_followup_enabled, pricing_notes, booking_link, emergency_number, primary_goal, escalation_triggers, widget_instructions"
           )
           .eq("id", agentId)
           .maybeSingle();
