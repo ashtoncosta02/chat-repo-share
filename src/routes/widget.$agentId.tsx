@@ -378,10 +378,12 @@ function WidgetChat() {
         }}
       >
         <input
+          ref={inputRef}
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type your message…"
+          autoFocus
           disabled={!config || sending}
           style={{
             flex: 1,
