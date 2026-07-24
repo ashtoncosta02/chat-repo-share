@@ -16,6 +16,8 @@ interface Params {
  */
 export async function sendScenarioPostCallSms(p: Params): Promise<void> {
   if (!p.callerNumber || p.turns.length === 0) return;
+  const callerTurns = p.turns.filter((t) => t.role === "user" && t.content.trim());
+  if (callerTurns.length === 0) return;
 
   const { data: agent } = await supabaseAdmin
     .from("agents")
