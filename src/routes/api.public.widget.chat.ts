@@ -373,6 +373,14 @@ export const Route = createFileRoute("/api/public/widget/chat")({
             .from("widget_conversations")
             .update({ updated_at: new Date().toISOString() })
             .eq("id", conversationId);
+          if (threadId) {
+            await mirrorTurnToThread({
+              threadId,
+              userId: agent.user_id,
+              role: "assistant",
+              content: finalText,
+            });
+          }
         } catch (err) {
           console.error("Failed to persist assistant message:", err);
         }
@@ -393,6 +401,24 @@ export const Route = createFileRoute("/api/public/widget/chat")({
             messages: allMessages,
           }).catch((e) => console.error("lead capture bg error:", e));
         }
+
+        // Owner alert (email + SMS) — fires once per widget conversation
+        // after the visitor has clearly engaged. Mirrors voice-call behavior.
+        if (threadId) {
+          maybeNotifyOwnerForWidgetChat({
+            widgetConversationId: conversationId,
+            threadId,
+            agentId,
+            userId: agent.user_id,
+            pageUrl: pageUrl ?? null,
+            visitorName: body.visitorName ?? null,
+            visitorEmail: body.visitorEmail ?? null,
+            userTurnCount: userMsgCount,
+          }).catch((e) => console.error("widget notify bg error:", e));
+        }
+
+        return sseFromText(finalText, conversationId);
+
 
         return sseFromText(finalText, conversationId);
       },
