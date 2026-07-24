@@ -110,7 +110,10 @@ async function matchIntents(
   try {
     const arr = JSON.parse(cleaned);
     if (Array.isArray(arr)) {
-      return arr.filter((x): x is string => typeof x === "string");
+      const allowed = new Set(intents.map((i) => i.toLowerCase()));
+      return arr
+        .filter((x): x is string => typeof x === "string")
+        .filter((x) => allowed.has(x.trim().toLowerCase()));
     }
   } catch {
     // fall through
