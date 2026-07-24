@@ -40,7 +40,7 @@ function TermsPage() {
           <p>
             By creating an account or using Ask Janice ("Service"), you agree to these Terms of
             Service. If you do not agree, do not use the Service. The Service is provided by
-            Ask Janice ("we", "us", "our"). Contact: ashtoncosta02@gmail.com.
+            Ask Janice ("we", "us", "our"). Contact: hello@askjanice.net.
           </p>
 
           <h2 className="font-display text-2xl font-semibold">2. Description of Service</h2>
@@ -129,8 +129,8 @@ function TermsPage() {
           <h2 className="font-display text-2xl font-semibold">13. Contact</h2>
           <p>
             Questions? Email{" "}
-            <a href="mailto:ashtoncosta02@gmail.com" className="text-gold hover:underline">
-              ashtoncosta02@gmail.com
+            <a href="mailto:hello@askjanice.net" className="text-gold hover:underline">
+              hello@askjanice.net
             </a>
             .
           </p>

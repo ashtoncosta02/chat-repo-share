@@ -126,8 +126,8 @@ function PricingCard() {
         <p className="text-sm font-semibold text-foreground">Signups are temporarily closed</p>
         <p className="mt-2 text-sm text-muted-foreground">
           We're updating billing. To be notified when sign-ups reopen, email{" "}
-          <a href="mailto:ashtoncosta02@gmail.com" className="font-medium text-gold hover:underline">
-            ashtoncosta02@gmail.com
+          <a href="mailto:hello@askjanice.net" className="font-medium text-gold hover:underline">
+            hello@askjanice.net
           </a>
           .
         </p>
@@ -140,10 +140,10 @@ function PricingCard() {
       <p className="mt-2 text-center text-sm text-muted-foreground">
         Questions? Email{" "}
         <a
-          href="mailto:ashtoncosta02@gmail.com"
+          href="mailto:hello@askjanice.net"
           className="font-medium text-gold hover:underline"
         >
-          ashtoncosta02@gmail.com
+          hello@askjanice.net
         </a>
       </p>
     </section>
@@ -175,7 +175,7 @@ function ExtraNote() {
         <span className="font-semibold text-foreground">Need more agents?</span>{" "}
         Additional agents for multiple locations or departments are available.{" "}
         <a
-          href="mailto:ashtoncosta02@gmail.com"
+          href="mailto:hello@askjanice.net"
           className="font-medium text-gold hover:underline"
         >
           Contact us for custom pricing.
