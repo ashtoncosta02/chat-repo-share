@@ -65,6 +65,7 @@ function WidgetChat() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const sessionToken = useMemo(() => getOrCreateSessionToken(agentId), [agentId]);
 
   useEffect(() => {
