@@ -221,6 +221,19 @@ interface ElevenLabsAgentConfig {
               voicemail_message?: string;
             };
           } | null;
+          transfer_to_number?: {
+            type: "system";
+            name: "transfer_to_number";
+            description?: string;
+            params: {
+              system_tool_type: "transfer_to_number";
+              transfers: Array<{
+                phone_number: string;
+                condition: string;
+                transfer_type?: "conference" | "sip_refer";
+              }>;
+            };
+          } | null;
         };
       };
     };
