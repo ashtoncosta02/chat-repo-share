@@ -164,6 +164,18 @@ function KnowledgePage() {
     };
   }, [user, navigate]);
 
+  // Clicking the Knowledge sidebar item while inside a drilldown resets to the index view.
+  useEffect(() => {
+    const onReset = () => {
+      setView("index");
+      setExpandedFaqId(null);
+      setEditingFaqId(null);
+      setOpenScenarioId(null);
+    };
+    window.addEventListener("reset-knowledge-view", onReset);
+    return () => window.removeEventListener("reset-knowledge-view", onReset);
+  }, []);
+
   const assistantName = agent?.assistant_name?.trim() || "your receptionist";
 
   const handleSave = async () => {
