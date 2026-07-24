@@ -716,7 +716,7 @@ function ConversationRow({
       </td>
 
       <td className="px-4 py-4 text-sm text-muted-foreground whitespace-nowrap">
-        {formatTime(c.started_at)}
+        {formatTime(c.ended_at ?? c.started_at)}
       </td>
       <td className="px-4 py-4">
         {c.lead_id ? (
