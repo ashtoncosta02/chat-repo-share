@@ -53,6 +53,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
+const WIDGET_SESSION_IDLE_MS = 30 * 60 * 1000;
+
+function isStaleWidgetConversation(updatedAt: string | null | undefined): boolean {
+  if (!updatedAt) return false;
+  const updated = new Date(updatedAt).getTime();
+  if (!Number.isFinite(updated)) return false;
+  return Date.now() - updated > WIDGET_SESSION_IDLE_MS;
+}
+
 interface IncomingMessage {
   role: "user" | "assistant";
   content: string;
@@ -267,13 +276,15 @@ export const Route = createFileRoute("/api/public/widget/chat")({
         // Find or create conversation
         const { data: existingConvo } = await supabaseAdmin
           .from("widget_conversations")
-          .select("id")
+          .select("id, updated_at")
           .eq("agent_id", agentId)
           .eq("session_token", sessionToken)
+          .order("updated_at", { ascending: false })
+          .limit(1)
           .maybeSingle();
 
         let conversationId: string;
-        if (existingConvo) {
+        if (existingConvo && !isStaleWidgetConversation(existingConvo.updated_at)) {
           conversationId = existingConvo.id;
         } else {
           const userAgent = request.headers.get("user-agent") || null;
