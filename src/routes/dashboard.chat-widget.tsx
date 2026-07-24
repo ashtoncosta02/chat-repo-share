@@ -65,13 +65,16 @@ export function ChatWidgetPage() {
     [agents, selectedId]
   );
 
-  // Sync draft when agent selection changes
+  // Sync draft only when the *selected agent id* changes, not on every
+  // re-render / agents refetch — otherwise picking a new color snaps back
+  // to the saved value as soon as `agents` re-emits.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!selected) return;
     setDraftColor(selected.widget_color || "#b8893a");
     setDraftGreeting(selected.widget_greeting || "");
     setDraftPosition((selected.widget_position as "bottom-right" | "bottom-left") || "bottom-right");
-  }, [selected]);
+  }, [selectedId]);
 
   const origin =
     typeof window !== "undefined" ? window.location.origin : "";
