@@ -44,7 +44,7 @@ const features = [
   { icon: BarChart3, label: "Analytics dashboard — call volume, peak hours, leads" },
   { icon: MessageSquare, label: "SMS follow-up after every call (optional)" },
   { icon: MessageCircle, label: "Live chat widget for your website" },
-  { icon: Sparkles, label: "Personal AI assistant to manage your agent" },
+  
   { icon: PhoneForwarded, label: "Instant human transfer for emergencies" },
   { icon: CalendarCheck, label: "Google Calendar booking integration" },
   { icon: PhoneCall, label: "One-click callback from your leads dashboard" },
