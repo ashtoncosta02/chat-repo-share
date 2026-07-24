@@ -9,6 +9,11 @@ import {
   isCalendarConnected,
 } from "@/server/widget-booking-tools";
 import { captureLeadFromWidget } from "@/server/widget-lead-capture";
+import {
+  ensureThreadForWidgetConversation,
+  maybeNotifyOwnerForWidgetChat,
+  mirrorTurnToThread,
+} from "@/server/widget-thread-mirror.server";
 import { coerceFaqs, faqsToPromptText, faqAllowsSms } from "@/lib/faqs";
 
 const corsHeaders = {
