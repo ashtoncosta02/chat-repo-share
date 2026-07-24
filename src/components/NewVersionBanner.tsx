@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
+import { useRouterState } from "@tanstack/react-router";
 
 /**
  * Auto-detects new deployments by polling the app's main script hash.
