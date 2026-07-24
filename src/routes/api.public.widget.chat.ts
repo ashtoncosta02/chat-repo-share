@@ -15,6 +15,37 @@ import {
   mirrorTurnToThread,
 } from "@/server/widget-thread-mirror.server";
 import { coerceFaqs, faqsToPromptText, faqAllowsSms } from "@/lib/faqs";
+import { coerceScenarios, fieldLabel, type StructuredScenario } from "@/lib/scenarios";
+
+/** Render scenarios for the chat widget (no phone-transfer language). */
+function scenariosToChatPromptText(scenarios: StructuredScenario[]): string {
+  const usable = scenarios.filter((s) => s.intent.trim());
+  if (usable.length === 0) return "";
+  const blocks: string[] = [];
+  for (const s of usable) {
+    const parts: string[] = [`If the visitor wants to ${s.intent.trim()}:`];
+    s.steps.forEach((step, i) => {
+      if (step.kind === "collect_info" && step.fields.length > 0) {
+        parts.push(`  ${i + 1}. Collect: ${step.fields.map(fieldLabel).join(", ")}.`);
+      } else if (step.kind === "instruction" && step.text.trim()) {
+        parts.push(`  ${i + 1}. ${step.text.trim()}`);
+      }
+    });
+    if (s.action) {
+      if (s.action.type === "call_transfer") {
+        parts.push(
+          `  Then let them know a team member will call them shortly at the number they provided (this is a chat — you cannot transfer calls).`,
+        );
+      } else if (s.action.type === "post_call_sms") {
+        parts.push(`  Then let them know the team will follow up by text shortly.`);
+      } else if (s.action.type === "schedule_appointment") {
+        parts.push(`  Then help them book an appointment using the booking tool if available, or collect a preferred time and email.`);
+      }
+    }
+    blocks.push(parts.join("\n"));
+  }
+  return blocks.join("\n\n");
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
