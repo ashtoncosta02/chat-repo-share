@@ -126,7 +126,10 @@ function DashboardLayout() {
               <Link
                 to={item.to}
                 onClick={() => {
-                  if (isKnowledge) dismissKnowledgeHint();
+                  if (isKnowledge) {
+                    dismissKnowledgeHint();
+                    window.dispatchEvent(new CustomEvent("reset-knowledge-view"));
+                  }
                   setMobileOpen(false);
                 }}
                 className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
