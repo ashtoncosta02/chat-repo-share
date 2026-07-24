@@ -65,6 +65,7 @@ function WidgetChat() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const sessionToken = useMemo(() => getOrCreateSessionToken(agentId), [agentId]);
 
   useEffect(() => {
@@ -112,6 +113,13 @@ function WidgetChat() {
       behavior: "smooth",
     });
   }, [messages, sending]);
+
+  // Keep focus in the input so users can type continuously after sending
+  useEffect(() => {
+    if (!sending && config) {
+      inputRef.current?.focus();
+    }
+  }, [sending, config, messages]);
 
   async function send(e: FormEvent) {
     e.preventDefault();
@@ -370,10 +378,12 @@ function WidgetChat() {
         }}
       >
         <input
+          ref={inputRef}
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type your message…"
+          autoFocus
           disabled={!config || sending}
           style={{
             flex: 1,
