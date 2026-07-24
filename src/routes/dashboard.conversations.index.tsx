@@ -57,6 +57,7 @@ interface ConvRow {
   recording_url: string | null;
   ai_summary: string | null;
   archived_at: string | null;
+  source: string | null;
   lead_id: string | null;
   lead_name: string | null;
   lead_phone: string | null;
@@ -82,7 +83,7 @@ function ConversationsPage() {
   const loadConvs = async () => {
     const { data } = await supabase
       .from("conversations")
-      .select("id, message_count, duration_seconds, started_at, agent_id, recording_url, ai_summary, lead_id, archived_at")
+      .select("id, message_count, duration_seconds, started_at, agent_id, recording_url, ai_summary, lead_id, archived_at, source")
       .order("started_at", { ascending: false });
     const rows = (data ?? []) as Array<{
       id: string;
@@ -94,6 +95,7 @@ function ConversationsPage() {
       ai_summary: string | null;
       lead_id: string | null;
       archived_at: string | null;
+      source: string | null;
     }>;
     type LeadLite = { id: string; name: string | null; phone: string | null; email: string | null; notes: string | null; source: string | null; status: string | null };
     const byConvId = new Map<string, LeadLite>();
@@ -135,6 +137,7 @@ function ConversationsPage() {
           recording_url: r.recording_url,
           ai_summary: r.ai_summary,
           archived_at: r.archived_at,
+          source: r.source,
           lead_id: l?.id ?? r.lead_id ?? null,
           lead_name: l?.name ?? null,
           lead_phone: l?.phone ?? null,
@@ -315,7 +318,12 @@ function ConversationsPage() {
           (c.lead_phone ?? "").toLowerCase().includes(q) ||
           (c.ai_summary ?? "").toLowerCase().includes(q) ||
           (c.lead_notes ?? "").toLowerCase().includes(q);
-      const matchesIntent = intentFilter === "all" ? true : (c.lead_source ?? "") === intentFilter;
+      const matchesIntent =
+        intentFilter === "all"
+          ? true
+          : intentFilter === "widget"
+            ? (c.lead_source ?? "") === "widget" || (c.source ?? "") === "widget"
+            : (c.lead_source ?? "") === intentFilter;
       const matchesStatus = statusFilter === "all" ? true : (c.lead_status ?? "") === statusFilter;
       let matchesDate = true;
       if (dateFilter) {
@@ -680,7 +688,7 @@ function ConversationRow({
         </Link>
       </td>
       <td className="px-4 py-4">
-        <IntentTag source={c.lead_source} />
+        <IntentTag source={c.lead_source ?? (c.source === "widget" ? "widget" : null)} />
       </td>
       <td className="px-4 py-4 align-top">
         <p className="text-sm text-foreground/80 whitespace-pre-wrap break-words leading-relaxed">
@@ -809,7 +817,7 @@ function ConversationCard({
           </div>
         </Link>
         <div className="shrink-0 flex items-center gap-1">
-          <IntentTag source={c.lead_source} />
+          <IntentTag source={c.lead_source ?? (c.source === "widget" ? "widget" : null)} />
         </div>
       </div>
       <p className="mt-3 text-sm text-foreground/80 whitespace-pre-wrap break-words leading-relaxed">

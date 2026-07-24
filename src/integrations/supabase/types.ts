@@ -436,8 +436,10 @@ export type Database = {
           lead_id: string | null
           message_count: number
           recording_url: string | null
+          source: string
           started_at: string
           user_id: string
+          widget_conversation_id: string | null
         }
         Insert: {
           agent_id?: string | null
@@ -450,8 +452,10 @@ export type Database = {
           lead_id?: string | null
           message_count?: number
           recording_url?: string | null
+          source?: string
           started_at?: string
           user_id: string
+          widget_conversation_id?: string | null
         }
         Update: {
           agent_id?: string | null
@@ -464,8 +468,10 @@ export type Database = {
           lead_id?: string | null
           message_count?: number
           recording_url?: string | null
+          source?: string
           started_at?: string
           user_id?: string
+          widget_conversation_id?: string | null
         }
         Relationships: [
           {
@@ -473,6 +479,13 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_widget_conversation_id_fkey"
+            columns: ["widget_conversation_id"]
+            isOneToOne: true
+            referencedRelation: "widget_conversations"
             referencedColumns: ["id"]
           },
         ]
@@ -964,6 +977,7 @@ export type Database = {
           agent_id: string
           created_at: string
           id: string
+          notified_at: string | null
           page_url: string | null
           session_token: string
           updated_at: string
@@ -976,6 +990,7 @@ export type Database = {
           agent_id: string
           created_at?: string
           id?: string
+          notified_at?: string | null
           page_url?: string | null
           session_token: string
           updated_at?: string
@@ -988,6 +1003,7 @@ export type Database = {
           agent_id?: string
           created_at?: string
           id?: string
+          notified_at?: string | null
           page_url?: string | null
           session_token?: string
           updated_at?: string
