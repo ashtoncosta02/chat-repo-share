@@ -129,7 +129,9 @@ export function scenariosToPromptText(scenarios: StructuredScenario[]): string {
     });
     if (s.action) {
       if (s.action.type === "call_transfer") {
-        parts.push(`  Then offer to transfer them to ${s.action.phone}.`);
+        parts.push(
+          `  Then briefly say you're transferring them (e.g. "One moment while I connect you"), and IMMEDIATELY call the \`transfer_to_number\` tool with the number ${s.action.phone}. Do NOT just say goodbye — you must call the tool to actually connect the call.`,
+        );
         if (s.action.voicemailFallback) {
           parts.push(
             `  If that line doesn't pick up, let the caller leave a voicemail there instead of taking a message yourself.`,
