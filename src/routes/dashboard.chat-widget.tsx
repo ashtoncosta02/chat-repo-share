@@ -283,6 +283,31 @@ export function ChatWidgetPage() {
                   </p>
                 </div>
 
+                {/* Additional instructions */}
+                <div>
+                  <label className="text-sm font-medium text-foreground block mb-2">
+                    Additional instructions
+                  </label>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Your AI has all the knowledge trained from your receptionist.
+                    Add any extra guidance for how it should behave in the
+                    website chat (tone quirks, phrases to avoid, things to
+                    always mention, etc.).
+                  </p>
+                  <textarea
+                    value={draftInstructions}
+                    onChange={(e) => setDraftInstructions(e.target.value)}
+                    placeholder="e.g. Be very friendly. Skip filler like 'yes we can definitely help with that'. If they ask about pricing, always offer to text them the quote."
+                    rows={5}
+                    maxLength={2000}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--gold)]/30 resize-y"
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground text-right">
+                    {draftInstructions.length}/2000
+                  </p>
+                </div>
+
+
                 {/* Position */}
                 <div>
                   <label className="text-sm font-medium text-foreground block mb-2">
