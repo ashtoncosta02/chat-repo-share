@@ -3,8 +3,9 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, StatCard } from "@/components/dashboard/PageHeader";
-import { Bot, Calendar, CheckCircle2, MessageSquare, Phone, ChevronRight } from "lucide-react";
+import { Calendar, CheckCircle2, MessageSquare, Phone, ChevronRight } from "lucide-react";
 import { AnalyticsPage } from "./dashboard.analytics";
+import { VOICE_OPTIONS, DEFAULT_VOICE_ID } from "@/lib/voices";
 
 export const Route = createFileRoute("/dashboard/")({
   head: () => ({ meta: [{ title: "Dashboard — Ask Janice" }] }),
@@ -17,8 +18,10 @@ interface AgentRow {
   assistant_name: string | null;
   industry: string | null;
   is_live: boolean;
+  voice_id: string | null;
   created_at: string;
 }
+
 
 function DashboardHome() {
   const { user } = useAuth();
