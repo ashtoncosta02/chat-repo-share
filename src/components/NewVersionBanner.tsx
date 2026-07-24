@@ -58,7 +58,7 @@ export function NewVersionBanner() {
     };
   }, [initialHash]);
 
-  if (!updateAvailable) return null;
+  if (!updateAvailable || !isDashboard) return null;
 
   return (
     <div className="fixed bottom-4 left-1/2 z-[100] -translate-x-1/2 animate-in fade-in slide-in-from-bottom-4">
