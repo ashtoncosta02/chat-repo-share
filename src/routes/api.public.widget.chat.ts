@@ -119,6 +119,14 @@ function buildSystemPrompt(agent: {
     sections.push(`FAQs:\n${agent.faqs}`);
   }
 
+  const scenarios = coerceScenarios(agent.scenarios);
+  const scenarioText = scenariosToChatPromptText(scenarios);
+  if (scenarioText) {
+    sections.push(
+      `Scenarios (follow these step-by-step flows when the visitor's intent matches):\n${scenarioText}`,
+    );
+  }
+
   if (agent.booking_link) sections.push(`Booking link to share when relevant: ${agent.booking_link}`);
   if (agent.emergency_number) sections.push(`For urgent issues, share this emergency number: ${agent.emergency_number}.`);
   if (agent.escalation_triggers) sections.push(`Escalate (suggest contacting a human) when: ${agent.escalation_triggers}.`);
