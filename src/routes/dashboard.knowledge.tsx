@@ -861,7 +861,7 @@ function KnowledgePage() {
                 onChange={(e) => updateScenario(idx, { intent: e.target.value })}
                 placeholder="e.g. request a quote for a bathroom renovation"
                 rows={2}
-                className="mt-2 border-0 shadow-none focus-visible:ring-0 p-0 resize-none"
+                className="mt-2 border-0 shadow-none focus-visible:ring-0 px-2 py-1 resize-none"
               />
             </div>
           </section>
