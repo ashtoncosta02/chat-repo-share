@@ -19,6 +19,7 @@ interface AgentRow {
   widget_color: string | null;
   widget_greeting: string | null;
   widget_position: "bottom-right" | "bottom-left" | null;
+  widget_instructions: string | null;
 }
 
 const PRESET_COLORS = [
@@ -43,6 +44,7 @@ export function ChatWidgetPage() {
   const [draftColor, setDraftColor] = useState("#b8893a");
   const [draftGreeting, setDraftGreeting] = useState("");
   const [draftPosition, setDraftPosition] = useState<"bottom-right" | "bottom-left">("bottom-right");
+  const [draftInstructions, setDraftInstructions] = useState("");
   const [saving, setSaving] = useState(false);
   const [previewKey, setPreviewKey] = useState(0);
 
@@ -50,7 +52,7 @@ export function ChatWidgetPage() {
     if (!user) return;
     supabase
       .from("agents")
-      .select("id, business_name, is_live, widget_color, widget_greeting, widget_position")
+      .select("id, business_name, is_live, widget_color, widget_greeting, widget_position, widget_instructions")
       .order("created_at", { ascending: false })
       .then(({ data }) => {
         const rows = (data ?? []) as AgentRow[];
@@ -74,6 +76,7 @@ export function ChatWidgetPage() {
     setDraftColor(selected.widget_color || "#b8893a");
     setDraftGreeting(selected.widget_greeting || "");
     setDraftPosition((selected.widget_position as "bottom-right" | "bottom-left") || "bottom-right");
+    setDraftInstructions(selected.widget_instructions || "");
   }, [selectedId]);
 
   const origin =
@@ -106,7 +109,8 @@ export function ChatWidgetPage() {
     !!selected &&
     (draftColor !== (selected.widget_color || "#b8893a") ||
       draftGreeting !== (selected.widget_greeting || "") ||
-      draftPosition !== ((selected.widget_position as string) || "bottom-right"));
+      draftPosition !== ((selected.widget_position as string) || "bottom-right") ||
+      draftInstructions !== (selected.widget_instructions || ""));
 
   async function copy(value: string, kind: "script" | "tag") {
     try {
@@ -132,6 +136,7 @@ export function ChatWidgetPage() {
         widget_color: draftColor,
         widget_greeting: draftGreeting.trim() || null,
         widget_position: draftPosition,
+        widget_instructions: draftInstructions.trim() || null,
       })
       .eq("id", selected.id);
     setSaving(false);
@@ -147,6 +152,7 @@ export function ChatWidgetPage() {
               widget_color: draftColor,
               widget_greeting: draftGreeting.trim() || null,
               widget_position: draftPosition,
+              widget_instructions: draftInstructions.trim() || null,
             }
           : a
       )
