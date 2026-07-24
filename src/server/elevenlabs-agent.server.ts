@@ -284,9 +284,11 @@ function buildAgentPayload(p: AgentBusinessProfile): ElevenLabsAgentConfig {
         user_input_audio_format: "ulaw_8000",
       },
       turn: {
-        // How long the agent waits in silence before deciding the caller is
-        // done talking. 1s keeps replies snappy on a phone call.
-        turn_timeout: 1,
+        // How long the agent waits in silence before re-engaging with
+        // "are you still there?". 1s was too aggressive — callers pausing
+        // to think were getting prompted. 8s gives natural think-time
+        // without feeling abandoned.
+        turn_timeout: 8,
         mode: "turn",
       },
     },
