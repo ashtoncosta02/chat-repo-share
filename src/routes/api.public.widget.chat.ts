@@ -75,6 +75,7 @@ function buildSystemPrompt(agent: {
   services: string | null;
   faqs: string | null;
   faqs_structured: unknown;
+  scenarios: unknown;
   sms_followup_enabled: boolean | null;
   pricing_notes: string | null;
   booking_link: string | null;
