@@ -249,6 +249,7 @@ export type Database = {
           voice_id: string | null
           widget_color: string | null
           widget_greeting: string | null
+          widget_instructions: string | null
           widget_position: string
         }
         Insert: {
@@ -288,6 +289,7 @@ export type Database = {
           voice_id?: string | null
           widget_color?: string | null
           widget_greeting?: string | null
+          widget_instructions?: string | null
           widget_position?: string
         }
         Update: {
@@ -327,6 +329,7 @@ export type Database = {
           voice_id?: string | null
           widget_color?: string | null
           widget_greeting?: string | null
+          widget_instructions?: string | null
           widget_position?: string
         }
         Relationships: []
