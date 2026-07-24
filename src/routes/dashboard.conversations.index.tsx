@@ -83,7 +83,7 @@ function ConversationsPage() {
   const loadConvs = async () => {
     const { data } = await supabase
       .from("conversations")
-      .select("id, message_count, duration_seconds, started_at, agent_id, recording_url, ai_summary, lead_id, archived_at")
+      .select("id, message_count, duration_seconds, started_at, agent_id, recording_url, ai_summary, lead_id, archived_at, source")
       .order("started_at", { ascending: false });
     const rows = (data ?? []) as Array<{
       id: string;
@@ -95,6 +95,7 @@ function ConversationsPage() {
       ai_summary: string | null;
       lead_id: string | null;
       archived_at: string | null;
+      source: string | null;
     }>;
     type LeadLite = { id: string; name: string | null; phone: string | null; email: string | null; notes: string | null; source: string | null; status: string | null };
     const byConvId = new Map<string, LeadLite>();
