@@ -35,6 +35,23 @@ export interface AgentBusinessProfile {
   booking_prompt_addendum?: string | null;
   // Workspace tool ids to attach to the agent (find_slots + book_appointment).
   tool_ids?: string[];
+  // Phone numbers the agent can warm-transfer callers to (built from scenarios).
+  transfer_numbers?: Array<{ phone: string; condition: string }>;
+}
+
+/** Normalize a user-typed phone to E.164. Assumes US/CA (+1) when 10 digits. */
+export function normalizePhoneE164(raw: string): string | null {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith("+")) {
+    const digits = trimmed.slice(1).replace(/\D/g, "");
+    return digits.length >= 8 ? `+${digits}` : null;
+  }
+  const digits = trimmed.replace(/\D/g, "");
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
+  return digits.length >= 8 ? `+${digits}` : null;
 }
 
 
