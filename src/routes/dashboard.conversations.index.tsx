@@ -53,6 +53,7 @@ interface ConvRow {
   message_count: number;
   duration_seconds: number;
   started_at: string;
+  ended_at: string | null;
   agent_id: string | null;
   recording_url: string | null;
   ai_summary: string | null;
@@ -83,13 +84,14 @@ function ConversationsPage() {
   const loadConvs = async () => {
     const { data } = await supabase
       .from("conversations")
-      .select("id, message_count, duration_seconds, started_at, agent_id, recording_url, ai_summary, lead_id, archived_at, source")
+      .select("id, message_count, duration_seconds, started_at, ended_at, agent_id, recording_url, ai_summary, lead_id, archived_at, source")
       .order("started_at", { ascending: false });
     const rows = (data ?? []) as Array<{
       id: string;
       message_count: number;
       duration_seconds: number;
       started_at: string;
+      ended_at: string | null;
       agent_id: string | null;
       recording_url: string | null;
       ai_summary: string | null;
@@ -126,13 +128,20 @@ function ConversationsPage() {
       }
     }
     setConvs(
-      rows.map((r) => {
+      rows
+        .sort(
+          (a, b) =>
+            new Date(b.ended_at ?? b.started_at).getTime() -
+            new Date(a.ended_at ?? a.started_at).getTime(),
+        )
+        .map((r) => {
         const l = (r.lead_id ? byLeadId.get(r.lead_id) : undefined) ?? byConvId.get(r.id);
         return {
           id: r.id,
           message_count: r.message_count,
           duration_seconds: r.duration_seconds,
           started_at: r.started_at,
+          ended_at: r.ended_at,
           agent_id: r.agent_id,
           recording_url: r.recording_url,
           ai_summary: r.ai_summary,
@@ -327,7 +336,7 @@ function ConversationsPage() {
       const matchesStatus = statusFilter === "all" ? true : (c.lead_status ?? "") === statusFilter;
       let matchesDate = true;
       if (dateFilter) {
-        const d = new Date(c.started_at);
+        const d = new Date(c.ended_at ?? c.started_at);
         const local = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
         matchesDate = local === dateFilter;
       }
@@ -707,7 +716,7 @@ function ConversationRow({
       </td>
 
       <td className="px-4 py-4 text-sm text-muted-foreground whitespace-nowrap">
-        {formatTime(c.started_at)}
+        {formatTime(c.ended_at ?? c.started_at)}
       </td>
       <td className="px-4 py-4">
         {c.lead_id ? (
@@ -812,7 +821,7 @@ function ConversationCard({
           <div className="min-w-0">
             <div className="font-medium text-foreground truncate">{displayName}</div>
             <div className="text-xs text-muted-foreground truncate">
-              {c.lead_phone ?? "No phone"} · {formatTime(c.started_at)}
+                  {c.lead_phone ?? "No phone"} · {formatTime(c.ended_at ?? c.started_at)}
             </div>
           </div>
         </Link>
