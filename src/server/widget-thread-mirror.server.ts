@@ -7,8 +7,9 @@ import { renderTranscriptEmail } from "@/server/email-templates.server";
  * Every widget conversation gets a mirror row in `conversations` (source =
  * "widget") so the dashboard shows chats alongside voice calls. Each user
  * and assistant turn is copied into `messages` for the transcript view.
- * The first meaningful chat also triggers an owner notification (email +
- * SMS if configured), exactly once per widget conversation.
+ * Meaningful chats also trigger owner notifications (email + SMS if
+ * configured), with a cooldown so a long-lived browser session can still
+ * alert the owner about a later new inquiry.
  */
 
 interface EnsureThreadArgs {
@@ -92,9 +93,18 @@ interface NotifyArgs {
   userTurnCount: number;
 }
 
+const WIDGET_NOTIFICATION_COOLDOWN_MS = 15 * 60 * 1000;
+
+function isNotificationRecent(notifiedAt: string | null): boolean {
+  if (!notifiedAt) return false;
+  const notifiedTime = new Date(notifiedAt).getTime();
+  if (!Number.isFinite(notifiedTime)) return false;
+  return Date.now() - notifiedTime < WIDGET_NOTIFICATION_COOLDOWN_MS;
+}
+
 /**
- * Fire the owner alert once per widget conversation, after the visitor
- * has clearly engaged (>= 2 user messages). Uses the same transcript
+ * Fire the owner alert after the visitor has clearly engaged (>= 2 user
+ * messages). Uses the same transcript
  * email + SMS helpers as voice calls, so notification preferences are
  * honored uniformly.
  */
@@ -106,31 +116,58 @@ export async function maybeNotifyOwnerForWidgetChat(args: NotifyArgs): Promise<v
     .select("notified_at")
     .eq("id", args.widgetConversationId)
     .maybeSingle();
-  if (!convo || convo.notified_at) return;
+  if (!convo || isNotificationRecent(convo.notified_at)) return;
+
+  const { data: agent } = await supabaseAdmin
+    .from("agents")
+    .select(
+      "business_name, notify_email, notify_email_transcript, notify_sms_transcript, notify_phone",
+    )
+    .eq("id", args.agentId)
+    .maybeSingle();
+  if (!agent) return;
+
+  let ownerEmail = agent.notify_email?.trim() || null;
+  if (agent.notify_email_transcript !== false && !ownerEmail) {
+    const { data: prof } = await supabaseAdmin
+      .from("profiles")
+      .select("email")
+      .eq("user_id", args.userId)
+      .maybeSingle();
+    ownerEmail = prof?.email?.trim() || null;
+  }
+
+  const wantsEmail = agent.notify_email_transcript !== false && !!ownerEmail;
+  const wantsSms = !!(agent.notify_sms_transcript && agent.notify_phone?.trim());
+  if (!wantsEmail && !wantsSms) return;
 
   // Claim the notification slot up front so parallel requests don't double-send.
+  // `notified_at` is treated as the last alert timestamp, not a permanent
+  // "already notified forever" flag. That matters because website widgets can
+  // keep the same browser session alive across multiple separate inquiries.
+  const nextNotifiedAt = new Date().toISOString();
+  let claimQuery = supabaseAdmin
+    .from("widget_conversations")
+    .update({ notified_at: nextNotifiedAt })
+    .eq("id", args.widgetConversationId)
+    .select("id");
+  if (convo.notified_at) {
+    claimQuery = claimQuery.eq("notified_at", convo.notified_at);
+  } else {
+    claimQuery = claimQuery.is("notified_at", null);
+  }
   const { data: claimed } = await supabaseAdmin
     .from("widget_conversations")
-    .update({ notified_at: new Date().toISOString() })
-    .eq("id", args.widgetConversationId)
-    .is("notified_at", null)
     .select("id")
     .maybeSingle();
-  if (!claimed) return;
+  const { data: claimRows } = await claimQuery;
+  const claimedRow = Array.isArray(claimRows) ? claimRows[0] : claimRows;
+  if (!claimedRow && !claimed) return;
 
   let anySendAttempted = false;
   let anySendSucceeded = false;
 
   try {
-    const { data: agent } = await supabaseAdmin
-      .from("agents")
-      .select(
-        "business_name, notify_email, notify_email_transcript, notify_sms_transcript, notify_phone",
-      )
-      .eq("id", args.agentId)
-      .maybeSingle();
-    if (!agent) return;
-
     const { data: thread } = await supabaseAdmin
       .from("conversations")
       .select("started_at, ai_summary")
@@ -162,51 +199,38 @@ export async function maybeNotifyOwnerForWidgetChat(args: NotifyArgs): Promise<v
       lead?.name || args.visitorName || args.visitorEmail || args.pageUrl || "Website visitor";
 
     // Email
-    if (agent.notify_email_transcript !== false) {
+    if (wantsEmail && ownerEmail) {
       const { sendEmail } = await import("@/server/email.server");
-      let ownerEmail = agent.notify_email?.trim() || null;
-      if (!ownerEmail) {
-        const { data: prof } = await supabaseAdmin
-          .from("profiles")
-          .select("email")
-          .eq("user_id", args.userId)
-          .maybeSingle();
-        ownerEmail = prof?.email?.trim() || null;
-      }
-      if (ownerEmail) {
-        anySendAttempted = true;
-        const { subject, html } = renderTranscriptEmail({
-          businessName: agent.business_name || "Your business",
-          callerNumber: callerLabel,
-          startedAt: new Date(thread?.started_at ?? Date.now()),
-          durationSeconds: 0,
-          summary: thread?.ai_summary ?? null,
-          turns: cleanedTurns,
-          conversationDashboardUrl: dashboardUrl,
-          lead: lead
-            ? {
-                name: lead.name,
-                email: lead.email,
-                phone: lead.phone,
-                address: lead.address,
-              }
-            : {
-                name: args.visitorName,
-                email: args.visitorEmail,
-                phone: null,
-                address: null,
-              },
-        });
-        const wsSubject = subject.replace(/^New call/i, "New website chat");
-        const id = await sendEmail({ to: ownerEmail, subject: wsSubject, html });
-        if (id) {
-          anySendSucceeded = true;
-          console.log("widget notify: email sent", { to: ownerEmail, id });
-        } else {
-          console.error("widget notify: email send returned null", { to: ownerEmail });
-        }
+      anySendAttempted = true;
+      const { subject, html } = renderTranscriptEmail({
+        businessName: agent.business_name || "Your business",
+        callerNumber: callerLabel,
+        startedAt: new Date(thread?.started_at ?? Date.now()),
+        durationSeconds: 0,
+        summary: thread?.ai_summary ?? null,
+        turns: cleanedTurns,
+        conversationDashboardUrl: dashboardUrl,
+        lead: lead
+          ? {
+              name: lead.name,
+              email: lead.email,
+              phone: lead.phone,
+              address: lead.address,
+            }
+          : {
+              name: args.visitorName,
+              email: args.visitorEmail,
+              phone: null,
+              address: null,
+            },
+      });
+      const wsSubject = subject.replace(/^New call/i, "New website chat");
+      const id = await sendEmail({ to: ownerEmail, subject: wsSubject, html });
+      if (id) {
+        anySendSucceeded = true;
+        console.log("widget notify: email sent", { to: ownerEmail, id });
       } else {
-        console.warn("widget notify: no owner email configured", { agentId: args.agentId });
+        console.error("widget notify: email send returned null", { to: ownerEmail });
       }
     }
 

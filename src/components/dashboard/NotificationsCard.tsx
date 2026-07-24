@@ -145,7 +145,7 @@ export function NotificationsCard({
         <h2 className="font-display text-lg font-bold text-foreground">Notifications</h2>
       </div>
       <p className="text-sm text-muted-foreground mb-4">
-        Get a transcript every time your receptionist finishes a call.
+        Get a transcript every time your receptionist gets a call or website chat.
       </p>
 
       <div className="space-y-4">
@@ -155,7 +155,7 @@ export function NotificationsCard({
             <div className="min-w-0 flex-1">
               <div className="font-semibold text-foreground text-sm">Email transcript</div>
               <p className="text-xs text-muted-foreground">
-                Send a full transcript to your inbox after every call.
+                Send a full transcript to your inbox after every call or website chat.
               </p>
               {emailEnabled && (
                 <div className="mt-3 space-y-2">
@@ -195,7 +195,7 @@ export function NotificationsCard({
             <div className="min-w-0">
               <div className="font-semibold text-foreground text-sm">SMS transcript</div>
               <p className="text-xs text-muted-foreground">
-                Text a short transcript to your phone after every call.
+                Text a short transcript to your phone after every call or website chat.
               </p>
               {smsEnabled && (
                 <div className="mt-3 space-y-2">
@@ -232,7 +232,7 @@ export function NotificationsCard({
 
       <p className="text-xs text-muted-foreground mt-4">
         Emails are sent from <span className="font-medium">hello@askjanice.net</span> and
-        texts are sent from your connected business number — both fire right after each call.
+        texts are sent from your connected business number — both fire after calls and website chats.
       </p>
     </div>
   );
