@@ -1,46 +1,24 @@
-## Goal
+## Problem
 
-Replace the long flat form (Services / Pricing notes / Booking link + Emergency number / Escalation triggers) on `dashboard.knowledge.tsx` with the same card + drilldown pattern already used for **FAQ** and **Scenario**, so the top of the page stays clean and everything is behind a click.
+`NewVersionBanner` is mounted in `src/routes/__root.tsx`, so it renders on **every** route — including `/widget/$agentId`, which is what your customers see embedded on your website. When a new deploy shipped, your visitors saw a big lime "A new version is available — Refresh" bubble floating over the chat widget.
 
-## New top-level layout
+That banner is meant only for you/your team inside the dashboard, never for end customers.
 
-Under **Context**, show a single responsive grid of clickable cards (same visual style as the existing FAQ / Scenario cards — icon, title, small summary chip, chevron):
+## Fix
 
-- FAQ *(unchanged)*
-- Scenario *(unchanged)*
-- **Services** — chip shows count of lines (e.g. "5 items")
-- **Pricing** — chip shows "Set" / "Not set"
-- **Booking & Contact** — groups Booking link + Emergency number; chip shows how many of the 2 are filled
-- **Escalation triggers** — chip shows count of lines
+Scope the banner to dashboard routes only. Two small changes:
 
-Nothing else is visible until a card is opened. "Save changes" and the sticky bar are removed from the top view.
+1. **`src/components/NewVersionBanner.tsx`** — gate rendering on the current path. If it doesn't start with `/dashboard`, render nothing. Use `useRouterState` from `@tanstack/react-router` so it reacts to navigation.
 
-## Drilldown behavior
+2. **`src/routes/__root.tsx`** — no structural change needed; the banner stays mounted globally but self-hides everywhere except `/dashboard/*`.
 
-Match the existing FAQ/Scenario drilldown:
+Result:
+- You + admins still get the refresh prompt inside the dashboard after a deploy.
+- The public chat widget (`/widget/$agentId`), auth pages, marketing/legal pages, and anything else outside `/dashboard` never show it.
+- Customers on your website see a clean widget — no refresh button, no version chatter.
 
-- Clicking a card swaps the main panel to that section's editor (same `view` state machine already in the file).
-- Each drilldown has: back button, section title + short helper text, the relevant field(s), and a **Save** button scoped to that section only (calls the same `updateAgent` mutation with just those fields, then returns to the card grid).
-- Unsaved-change indicator on the Save button (disabled until dirty), matching current FAQ/Scenario behavior.
+## Technical details
 
-## Cards → fields mapping
-
-| Card | Fields edited | Chip label logic |
-|---|---|---|
-| Services | `services` (textarea) | `${nonEmptyLines} items` or "Empty" |
-| Pricing | `pricing_notes` (textarea) | "Set" if non-empty, else "Not set" |
-| Booking & Contact | `booking_link` + `emergency_number` (two inputs) | "2 of 2" / "1 of 2" / "Not set" |
-| Escalation triggers | `escalation_triggers` (textarea) | `${nonEmptyLines} triggers` or "Empty" |
-
-## Out of scope
-
-- No schema changes, no server-fn changes, no copy rewrites beyond the small chip/helper text.
-- FAQ and Scenario cards + flows untouched.
-- Mobile layout inherits the existing responsive grid used by FAQ/Scenario.
-
-## Technical notes
-
-- Single file: `src/routes/dashboard.knowledge.tsx`.
-- Extend the existing `view` union (currently `"root" | "faq" | "scenario"`) with `"services" | "pricing" | "booking" | "escalation"`.
-- Reuse the existing card component/markup used for FAQ/Scenario so styling stays identical.
-- Reuse the existing `useMutation` for `updateAgent`; each section's Save sends only its fields.
+- Use `useRouterState({ select: (s) => s.location.pathname })` inside `NewVersionBanner`; early-return `null` when the pathname doesn't start with `/dashboard`.
+- Keep the polling/visibility logic as-is so the banner appears immediately once an admin navigates into the dashboard after a deploy.
+- No changes to `getLoadedAssetHash` (still used by the Admin build-version card).

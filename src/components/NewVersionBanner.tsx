@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
+import { useRouterState } from "@tanstack/react-router";
 
 /**
  * Auto-detects new deployments by polling the app's main script hash.
@@ -23,6 +24,8 @@ async function getCurrentAssetHash(): Promise<string | null> {
 export function NewVersionBanner() {
   const [initialHash, setInitialHash] = useState<string | null>(null);
   const [updateAvailable, setUpdateAvailable] = useState(false);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isDashboard = pathname.startsWith("/dashboard");
 
   useEffect(() => {
     let cancelled = false;
@@ -55,7 +58,7 @@ export function NewVersionBanner() {
     };
   }, [initialHash]);
 
-  if (!updateAvailable) return null;
+  if (!updateAvailable || !isDashboard) return null;
 
   return (
     <div className="fixed bottom-4 left-1/2 z-[100] -translate-x-1/2 animate-in fade-in slide-in-from-bottom-4">
