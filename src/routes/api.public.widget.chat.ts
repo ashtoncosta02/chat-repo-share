@@ -432,43 +432,45 @@ export const Route = createFileRoute("/api/public/widget/chat")({
           console.error("Failed to persist assistant message:", err);
         }
 
-        // Fire-and-forget lead capture — never block the response.
-        // Only run when there's enough context (>=2 user messages) to avoid
-        // wasting tokens on a single "hi".
+        // Lead capture + owner notification. We MUST await these — this runs
+        // on Cloudflare Workers, where any un-awaited promise is cancelled the
+        // moment the Response is returned. Previously these were fire-and-
+        // forget, which is why notified_at stayed null and no email/SMS ever
+        // went out for widget chats.
         const userMsgCount = messages.filter((m) => m.role === "user").length;
         if (userMsgCount >= 2) {
           const allMessages = [
             ...messages.map((m) => ({ role: m.role, content: m.content })),
             { role: "assistant" as const, content: finalText },
           ];
-          captureLeadFromWidget({
-            agentId,
-            userId: agent.user_id,
-            conversationId,
-            messages: allMessages,
-          }).catch((e) => console.error("lead capture bg error:", e));
+          try {
+            await captureLeadFromWidget({
+              agentId,
+              userId: agent.user_id,
+              conversationId,
+              messages: allMessages,
+            });
+          } catch (e) {
+            console.error("lead capture error:", e);
+          }
         }
 
-        // Owner alert (email + SMS) — fires once per widget conversation
-        // after the visitor has clearly engaged. Mirrors voice-call behavior.
         if (threadId) {
-          maybeNotifyOwnerForWidgetChat({
-            widgetConversationId: conversationId,
-            threadId,
-            agentId,
-            userId: agent.user_id,
-            pageUrl: pageUrl ?? null,
-            visitorName: body.visitorName ?? null,
-            visitorEmail: body.visitorEmail ?? null,
-            userTurnCount: userMsgCount,
-          }).catch((e) => console.error("widget notify bg error:", e));
+          try {
+            await maybeNotifyOwnerForWidgetChat({
+              widgetConversationId: conversationId,
+              threadId,
+              agentId,
+              userId: agent.user_id,
+              pageUrl: pageUrl ?? null,
+              visitorName: body.visitorName ?? null,
+              visitorEmail: body.visitorEmail ?? null,
+              userTurnCount: userMsgCount,
+            });
+          } catch (e) {
+            console.error("widget notify error:", e);
+          }
         }
 
         return sseFromText(finalText, conversationId);
 
-
-        return sseFromText(finalText, conversationId);
-      },
-    },
-  },
-});
