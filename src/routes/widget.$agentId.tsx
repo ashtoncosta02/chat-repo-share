@@ -404,6 +404,30 @@ function WidgetChat() {
         </button>
       </form>
 
+      {/* Footer */}
+      <a
+        href="https://www.askjanice.net"
+        target="_blank"
+        rel="noreferrer"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "8px 12px 10px",
+          background: "#fff",
+          borderTop: "1px solid #f0ece1",
+          flexShrink: 0,
+          textDecoration: "none",
+        }}
+        aria-label="Powered by Ask Janice"
+      >
+        <img
+          src={poweredByLogo.url}
+          alt="Powered by Ask Janice"
+          style={{ height: 18, width: "auto", opacity: 0.9 }}
+        />
+      </a>
+
       {/* Minimal markdown styling without Tailwind */}
       <style>{`
         .af-md p { margin: 0 0 6px 0; }
