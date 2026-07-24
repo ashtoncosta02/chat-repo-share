@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import ReactMarkdown from "react-markdown";
+import poweredByLogo from "@/assets/powered-by-ask-janice.png.asset.json";
 
 export const Route = createFileRoute("/widget/$agentId")({
   head: () => ({
