@@ -37,7 +37,7 @@ function DashboardHome() {
     (async () => {
       const { data: agentRow } = await supabase
         .from("agents")
-        .select("id, business_name, assistant_name, industry, is_live, created_at")
+        .select("id, business_name, assistant_name, industry, is_live, voice_id, created_at")
         .eq("user_id", user.id)
         .maybeSingle();
       if (cancelled) return;
