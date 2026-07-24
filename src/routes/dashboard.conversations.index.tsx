@@ -688,7 +688,7 @@ function ConversationRow({
         </Link>
       </td>
       <td className="px-4 py-4">
-        <IntentTag source={c.lead_source} />
+        <IntentTag source={c.lead_source ?? (c.source === "widget" ? "widget" : null)} />
       </td>
       <td className="px-4 py-4 align-top">
         <p className="text-sm text-foreground/80 whitespace-pre-wrap break-words leading-relaxed">
