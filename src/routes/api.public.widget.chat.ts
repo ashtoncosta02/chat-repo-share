@@ -473,4 +473,9 @@ export const Route = createFileRoute("/api/public/widget/chat")({
         }
 
         return sseFromText(finalText, conversationId);
+      },
+    },
+  },
+});
+
 
