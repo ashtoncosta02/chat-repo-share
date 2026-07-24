@@ -251,6 +251,23 @@ export const Route = createFileRoute("/api/public/widget/chat")({
           content: lastUser.content,
         });
 
+        // Mirror into the main Threads table so website chats appear
+        // alongside voice calls in the dashboard.
+        const threadId = await ensureThreadForWidgetConversation({
+          widgetConversationId: conversationId,
+          userId: agent.user_id,
+          agentId: agent.id,
+        });
+        if (threadId) {
+          await mirrorTurnToThread({
+            threadId,
+            userId: agent.user_id,
+            role: "user",
+            content: lastUser.content,
+          });
+        }
+
+
         const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
         if (!LOVABLE_API_KEY) return jsonResponse({ error: "AI gateway not configured" }, 500);
 
