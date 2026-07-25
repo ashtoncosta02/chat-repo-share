@@ -65,7 +65,7 @@ function DashboardHome() {
           .eq("agent_id", agentRow.id),
         supabase
           .from("conversations")
-          .select("id", { count: "exact", head: true })
+          .select("id, message_count, duration_seconds")
           .eq("agent_id", agentRow.id),
         supabase
           .from("agent_google_calendar")
@@ -78,10 +78,15 @@ function DashboardHome() {
       ]);
 
       if (cancelled) return;
+      const callRows = calls.data ?? [];
+      const totalMessages = callRows.reduce((s, c) => s + (c.message_count ?? 0), 0);
+      const totalDuration = callRows.reduce((s, c) => s + (c.duration_seconds ?? 0), 0);
       setStats({
         conversations: chats.count ?? 0,
         leads: leads.count ?? 0,
-        voiceCalls: calls.count ?? 0,
+        voiceCalls: callRows.length,
+        avgMessages: callRows.length ? Math.round(totalMessages / callRows.length) : 0,
+        totalDurationMin: Math.round(totalDuration / 60),
       });
       setCalendarConnected((cal.count ?? 0) + (outlook.count ?? 0) > 0);
       setLoading(false);
