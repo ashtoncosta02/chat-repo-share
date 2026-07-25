@@ -19,23 +19,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Mic, MicOff, Send, Bot, ArrowLeft, Calendar, Clock, Volume2, VolumeX, Trash2, Play, Plus, X as XIcon, MessageSquare } from "lucide-react";
+import { Mic, MicOff, Send, Bot, ArrowLeft, Calendar, Clock, Volume2, VolumeX, Play, Plus, X as XIcon, MessageSquare } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { PhoneNumberSetup } from "@/components/dashboard/PhoneNumberSetup";
@@ -47,7 +37,7 @@ import { LiveVoicePreview } from "@/components/dashboard/LiveVoicePreview";
 import { VoicePickerCard } from "@/components/dashboard/VoicePickerCard";
 import { GreetingFarewellCard } from "@/components/dashboard/GreetingFarewellCard";
 
-import { syncReceptionistAgent, deleteReceptionistAgent } from "@/lib/elevenlabs-agent.functions";
+import { syncReceptionistAgent } from "@/lib/elevenlabs-agent.functions";
 import { VOICE_OPTIONS, DEFAULT_VOICE_ID, getVoiceById } from "@/lib/voices";
 import { coerceFaqs, newFaq, parseLegacyFaqs, type StructuredFaq } from "@/lib/faqs";
 
@@ -99,7 +89,6 @@ function AgentDetailPage() {
   const transcribe = useServerFn(transcribeAudio);
   const extractLead = useServerFn(extractLeadFromChat);
   const syncEl = useServerFn(syncReceptionistAgent);
-  const deleteEl = useServerFn(deleteReceptionistAgent);
 
   const [agent, setAgent] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(true);
@@ -114,9 +103,7 @@ function AgentDetailPage() {
   const [nameDraft, setNameDraft] = useState<string>("");
   const [nameSaving, setNameSaving] = useState(false);
 
-  const [deleteOpen, setDeleteOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [edit, setEdit] = useState({
     business_name: "",
     assistant_name: "",
@@ -518,15 +505,6 @@ function AgentDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-destructive hover:text-destructive"
-            onClick={() => setDeleteOpen(true)}
-          >
-            <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete
-          </Button>
           <button
             type="button"
             onClick={() => {
@@ -1022,61 +1000,6 @@ function AgentDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete confirmation */}
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete this receptionist?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently remove <strong>{agent.business_name}</strong> along with its
-              conversations, messages, and leads. This cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={deleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={async (e) => {
-                e.preventDefault();
-                if (!user) return;
-                setDeleting(true);
-                // Best-effort: remove the live ElevenLabs agent first.
-                try {
-                  const { data: session } = await supabase.auth.getSession();
-                  const token = session.session?.access_token;
-                  if (token) {
-                    await deleteEl({ data: { accessToken: token, agentId: agent.id } });
-                  }
-                } catch (e) {
-                  console.error("EL delete failed (non-blocking):", e);
-                }
-                // Clean up dependent rows first (no FK cascade defined).
-                const { data: convs } = await supabase
-                  .from("conversations")
-                  .select("id")
-                  .eq("agent_id", agent.id);
-                const convIds = (convs ?? []).map((c) => c.id);
-                if (convIds.length > 0) {
-                  await supabase.from("messages").delete().in("conversation_id", convIds);
-                  await supabase.from("conversations").delete().in("id", convIds);
-                }
-                await supabase.from("leads").delete().eq("agent_id", agent.id);
-                const { error } = await supabase.from("agents").delete().eq("id", agent.id);
-                setDeleting(false);
-                if (error) {
-                  toast.error("Couldn't delete agent", { description: error.message });
-                  return;
-                }
-                toast.success("Receptionist deleted");
-                navigate({ to: "/dashboard" });
-              }}
-            >
-              {deleting ? "Deleting…" : "Delete receptionist"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
