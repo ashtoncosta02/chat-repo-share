@@ -7,12 +7,17 @@ interface Params {
   userId: string;
   callerNumber: string | null;
   turns: { role: "user" | "assistant"; content: string }[];
+  /** Optional conversation/thread id used for dedupe when the session can span
+   *  multiple turns (e.g. widget chat). If provided, we skip resending a body
+   *  we've already logged into `messages` for this thread. */
+  dedupeThreadId?: string | null;
 }
 
 /**
- * After a phone call ends, look at the agent's scenarios. For each scenario
- * with a `post_call_sms` action whose intent was triggered during the call,
- * text the configured message to the caller's phone number.
+ * Look at the agent's scenarios. For each scenario with a `post_call_sms`
+ * action whose intent was triggered during the conversation, text the
+ * configured message to the caller's phone number. Used for both finished
+ * voice calls and ongoing widget chats (deduped via `dedupeThreadId`).
  */
 export async function sendScenarioPostCallSms(p: Params): Promise<void> {
   if (!p.callerNumber || p.turns.length === 0) return;
@@ -31,7 +36,6 @@ export async function sendScenarioPostCallSms(p: Params): Promise<void> {
   );
   if (scenarios.length === 0) return;
 
-  // Ask the AI which intents were actually triggered in this call.
   const matched = await matchIntents(
     scenarios.map((s) => s.intent.trim()),
     p.turns,
@@ -50,6 +54,17 @@ export async function sendScenarioPostCallSms(p: Params): Promise<void> {
     return;
   }
 
+  // Load prior outbound messages on this thread once, for dedupe.
+  let alreadySent = new Set<string>();
+  if (p.dedupeThreadId) {
+    const { data: prior } = await supabaseAdmin
+      .from("messages")
+      .select("content")
+      .eq("conversation_id", p.dedupeThreadId)
+      .eq("role", "assistant");
+    alreadySent = new Set((prior ?? []).map((r) => (r.content ?? "").trim()));
+  }
+
   const seen = new Set<string>();
   for (const s of scenarios) {
     if (!matched.includes(s.intent.trim())) continue;
@@ -57,9 +72,21 @@ export async function sendScenarioPostCallSms(p: Params): Promise<void> {
     const body = s.action.message.trim();
     if (!body || seen.has(body)) continue;
     seen.add(body);
+    if (alreadySent.has(body)) {
+      console.log(`scenario-sms: skip already-sent SMS for intent "${s.intent}"`);
+      continue;
+    }
     try {
       await sendSms({ to: p.callerNumber, from, body });
       console.log(`scenario-sms: sent post-call SMS for intent "${s.intent}"`);
+      if (p.dedupeThreadId) {
+        await supabaseAdmin.from("messages").insert({
+          user_id: p.userId,
+          conversation_id: p.dedupeThreadId,
+          role: "assistant",
+          content: body,
+        });
+      }
     } catch (e) {
       console.error("scenario-sms: send failed", e);
     }
