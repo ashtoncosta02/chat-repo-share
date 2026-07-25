@@ -28,7 +28,13 @@ function DashboardHome() {
   const navigate = useNavigate();
   const [agent, setAgent] = useState<AgentRow | null>(null);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ conversations: 0, leads: 0, voiceCalls: 0 });
+  const [stats, setStats] = useState({
+    conversations: 0,
+    leads: 0,
+    voiceCalls: 0,
+    avgMessages: 0,
+    totalDurationMin: 0,
+  });
   const [calendarConnected, setCalendarConnected] = useState(false);
 
   useEffect(() => {
