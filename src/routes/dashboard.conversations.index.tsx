@@ -327,7 +327,7 @@ function ConversationsPage() {
           (c.lead_phone ?? "").toLowerCase().includes(q) ||
           (c.ai_summary ?? "").toLowerCase().includes(q) ||
           (c.lead_notes ?? "").toLowerCase().includes(q);
-      const source = (c.lead_source ?? c.source ?? "").toLowerCase();
+      const source = (c.source ?? c.lead_source ?? "").toLowerCase();
       const matchesIntent = intentFilter === "all" ? true : source === intentFilter;
       const matchesStatus = statusFilter === "all" ? true : (c.lead_status ?? "") === statusFilter;
       let matchesDate = true;
@@ -693,7 +693,7 @@ function ConversationRow({
         </Link>
       </td>
       <td className="px-4 py-4">
-        <IntentTag source={c.lead_source ?? c.source} />
+        <IntentTag source={c.source ?? c.lead_source} />
       </td>
       <td className="px-4 py-4 align-top">
         <p className="text-sm text-foreground/80 whitespace-pre-wrap break-words leading-relaxed">
@@ -822,7 +822,7 @@ function ConversationCard({
           </div>
         </Link>
         <div className="shrink-0 flex items-center gap-1">
-          <IntentTag source={c.lead_source ?? c.source} />
+          <IntentTag source={c.source ?? c.lead_source} />
         </div>
       </div>
       <Link
