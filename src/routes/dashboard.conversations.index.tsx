@@ -825,9 +825,13 @@ function ConversationCard({
           <IntentTag source={c.lead_source ?? c.source} />
         </div>
       </div>
-      <p className="mt-3 text-sm text-foreground/80 whitespace-pre-wrap break-words leading-relaxed">
+      <Link
+        to="/dashboard/conversations/$conversationId"
+        params={{ conversationId: c.id }}
+        className="block mt-3 text-sm text-foreground/80 whitespace-pre-wrap break-words leading-relaxed hover:underline"
+      >
         {summary}
-      </p>
+      </Link>
       {c.recording_url && (
         <span className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[oklch(0.95_0.05_290)] text-[var(--gold)]">
           <Mic className="h-3 w-3" />
