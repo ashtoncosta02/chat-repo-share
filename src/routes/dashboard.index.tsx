@@ -155,7 +155,7 @@ function DashboardHome() {
             }`}
           >
             <Calendar className="h-2.5 w-2.5" />
-            {calendarConnected ? "Cal on" : "Cal off"}
+            Bookings {calendarConnected ? "on" : "off"}
           </span>
           <span
             className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
