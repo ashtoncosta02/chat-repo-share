@@ -447,7 +447,7 @@ function ConversationDetailPage() {
                         <div className="flex-1 h-px bg-border" />
                       </div>
                     )}
-                    <li
+                    <div
                       className={`flex items-start gap-3 ${isUser ? "flex-row-reverse" : ""}`}
                     >
                       <div
@@ -478,7 +478,7 @@ function ConversationDetailPage() {
                           {ts}
                         </div>
                       </div>
-                    </li>
+                    </div>
                   </div>
                 );
               })}
