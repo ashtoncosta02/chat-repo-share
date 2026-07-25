@@ -297,6 +297,105 @@ function ConversationDetailPage() {
       </div>
 
       <div className="px-8 pb-12 space-y-6">
+        {relatedCalls.length > 0 && (
+          <div className="rounded-xl border border-border bg-card p-5">
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground mb-1">
+              <History className="h-4 w-4 text-[var(--gold)]" />
+              All interactions with {lead?.name || lead?.phone || "this caller"}
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              Grouped by date. Click any past interaction to open it.
+            </p>
+            {(() => {
+              const all = [
+                {
+                  id: conv.id,
+                  started_at: conv.started_at,
+                  duration_seconds: conv.duration_seconds,
+                  message_count: conv.message_count,
+                  ai_summary: null as string | null,
+                  isCurrent: true,
+                },
+                ...relatedCalls.map((rc) => ({ ...rc, isCurrent: false })),
+              ].sort(
+                (a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime()
+              );
+
+              const groups = new Map<string, typeof all>();
+              all.forEach((item) => {
+                const d = new Date(item.started_at);
+                const key = d.toLocaleDateString(undefined, {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                });
+                if (!groups.has(key)) groups.set(key, []);
+                groups.get(key)!.push(item);
+              });
+
+              return (
+                <div className="space-y-4">
+                  {Array.from(groups.entries()).map(([date, items]) => (
+                    <div key={date}>
+                      <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                        {date}
+                      </div>
+                      <ul className="divide-y divide-border rounded-lg border border-border overflow-hidden">
+                        {items.map((it) => {
+                          const mins = Math.max(1, Math.round(it.duration_seconds / 60));
+                          const time = new Date(it.started_at).toLocaleTimeString([], {
+                            hour: "numeric",
+                            minute: "2-digit",
+                          });
+                          const inner = (
+                            <div className="flex items-start justify-between gap-4 px-3 py-3">
+                              <div className="min-w-0">
+                                <div className="text-sm font-medium text-foreground flex items-center gap-2">
+                                  {time}
+                                  {it.isCurrent && (
+                                    <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-[var(--gold)] text-white">
+                                      Viewing
+                                    </span>
+                                  )}
+                                </div>
+                                {it.ai_summary && (
+                                  <div className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                                    {it.ai_summary}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="text-xs text-muted-foreground shrink-0 text-right">
+                                <div>{it.message_count} msgs</div>
+                                <div>{mins} min</div>
+                              </div>
+                            </div>
+                          );
+                          return (
+                            <li key={it.id} className={it.isCurrent ? "bg-muted/40" : ""}>
+                              {it.isCurrent ? (
+                                inner
+                              ) : (
+                                <Link
+                                  to="/dashboard/conversations/$conversationId"
+                                  params={{ conversationId: it.id }}
+                                  className="block hover:bg-muted/40 transition-colors"
+                                >
+                                  {inner}
+                                </Link>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
         {conv.recording_url && recordingUrl && (
           <div className="rounded-xl border border-border bg-card p-5">
             <div className="flex items-center gap-2 text-sm font-semibold text-foreground mb-3">
@@ -319,91 +418,74 @@ function ConversationDetailPage() {
               No messages recorded for this conversation.
             </div>
           ) : (
-            <ol className="space-y-5">
-              {messages.map((m) => {
+            <div className="space-y-5">
+              {messages.map((m, idx) => {
                 const isUser = m.role === "user";
-                const ts = new Date(m.created_at).toLocaleTimeString([], {
+                const d = new Date(m.created_at);
+                const ts = d.toLocaleTimeString([], {
                   hour: "numeric",
                   minute: "2-digit",
                 });
+                const dayKey = d.toDateString();
+                const prevDayKey =
+                  idx > 0 ? new Date(messages[idx - 1].created_at).toDateString() : null;
+                const showDaySeparator = dayKey !== prevDayKey;
+                const dayLabel = d.toLocaleDateString(undefined, {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                });
                 return (
-                  <li
-                    key={m.id}
-                    className={`flex items-start gap-3 ${isUser ? "flex-row-reverse" : ""}`}
-                  >
-                    <div
-                      className={`h-9 w-9 rounded-full flex items-center justify-center shrink-0 ${
-                        isUser
-                          ? "bg-muted text-muted-foreground"
-                          : "bg-[oklch(0.95_0.05_290)] text-[var(--gold)]"
-                      }`}
-                    >
-                      {isUser ? <UserIcon className="h-5 w-5" /> : <Bot className="h-5 w-5" />}
-                    </div>
-                    <div
-                      className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm ${
-                        isUser
-                          ? "bg-[var(--gold)] text-white"
-                          : "bg-background border border-border text-foreground"
-                      }`}
-                    >
-                      <div className="text-xs font-semibold uppercase tracking-wider mb-1 opacity-70">
-                        {isUser ? "Caller" : assistantName}
+                  <div key={m.id}>
+                    {showDaySeparator && (
+                      <div className="flex items-center gap-3 my-4 first:mt-0">
+                        <div className="flex-1 h-px bg-border" />
+                        <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                          {dayLabel}
+                        </div>
+                        <div className="flex-1 h-px bg-border" />
                       </div>
-                      <div className="whitespace-pre-wrap">{m.content}</div>
+                    )}
+                    <div
+                      className={`flex items-start gap-3 ${isUser ? "flex-row-reverse" : ""}`}
+                    >
                       <div
-                        className={`text-xs mt-1 ${
-                          isUser ? "text-white/70" : "text-muted-foreground"
+                        className={`h-9 w-9 rounded-full flex items-center justify-center shrink-0 ${
+                          isUser
+                            ? "bg-muted text-muted-foreground"
+                            : "bg-[oklch(0.95_0.05_290)] text-[var(--gold)]"
                         }`}
                       >
-                        {ts}
+                        {isUser ? <UserIcon className="h-5 w-5" /> : <Bot className="h-5 w-5" />}
+                      </div>
+                      <div
+                        className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm ${
+                          isUser
+                            ? "bg-[var(--gold)] text-white"
+                            : "bg-background border border-border text-foreground"
+                        }`}
+                      >
+                        <div className="text-xs font-semibold uppercase tracking-wider mb-1 opacity-70">
+                          {isUser ? "Caller" : assistantName}
+                        </div>
+                        <div className="whitespace-pre-wrap">{m.content}</div>
+                        <div
+                          className={`text-xs mt-1 ${
+                            isUser ? "text-white/70" : "text-muted-foreground"
+                          }`}
+                        >
+                          {ts}
+                        </div>
                       </div>
                     </div>
-                  </li>
+                  </div>
                 );
               })}
-            </ol>
+            </div>
           )}
         </div>
 
-        {relatedCalls.length > 0 && (
-          <div className="rounded-xl border border-border bg-card p-5">
-            <div className="flex items-center gap-2 text-sm font-semibold text-foreground mb-1">
-              <History className="h-4 w-4 text-[var(--gold)]" />
-              Related calls with {lead?.name || lead?.phone || "this caller"}
-            </div>
-            <p className="text-xs text-muted-foreground mb-3">
-              Other conversations tied to the same contact.
-            </p>
-            <ul className="divide-y divide-border">
-              {relatedCalls.map((rc) => {
-                const mins = Math.max(1, Math.round(rc.duration_seconds / 60));
-                return (
-                  <li key={rc.id}>
-                    <Link
-                      to="/dashboard/conversations/$conversationId"
-                      params={{ conversationId: rc.id }}
-                      className="flex items-start justify-between gap-4 py-3 hover:bg-muted/40 -mx-2 px-2 rounded-md transition-colors"
-                    >
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium text-foreground">
-                          {new Date(rc.started_at).toLocaleString()}
-                        </div>
-                        <div className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
-                          {rc.ai_summary || "No summary available."}
-                        </div>
-                      </div>
-                      <div className="text-xs text-muted-foreground shrink-0 text-right">
-                        <div>{rc.message_count} msgs</div>
-                        <div>{mins} min</div>
-                      </div>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        )}
 
         {/* Follow-up actions */}
         <div className="grid md:grid-cols-2 gap-5">
