@@ -121,25 +121,37 @@ function BookingsPage() {
     <div>
       <PageHeader
         title="Bookings"
-        description="Appointments booked by your AI receptionist on your Google Calendar"
+        description="Appointments booked by your AI receptionist on your connected calendar"
         action={
-          bookableAgents.length > 0 ? (
-            <button
-              onClick={() => setShowDialog(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--gold)] text-white text-sm font-medium hover:opacity-90"
+          <div className="flex items-center gap-2">
+            <span
+              className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full font-medium ${
+                bookableAgents.length > 0
+                  ? "bg-emerald-50 text-emerald-700"
+                  : "bg-amber-50 text-amber-700"
+              }`}
             >
-              <Plus className="h-4 w-4" />
-              New Booking
-            </button>
-          ) : !loading && Object.keys(agents).length > 0 ? (
-            <a
-              href={`/dashboard/agents/${Object.keys(agents)[0]}`}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--gold)] text-white text-sm font-medium hover:opacity-90"
-            >
-              <Calendar className="h-4 w-4" />
-              Connect Google Calendar
-            </a>
-          ) : null
+              <Calendar className="h-3 w-3" />
+              Bookings {bookableAgents.length > 0 ? "active" : "inactive"}
+            </span>
+            {bookableAgents.length > 0 ? (
+              <button
+                onClick={() => setShowDialog(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--gold)] text-white text-sm font-medium hover:opacity-90"
+              >
+                <Plus className="h-4 w-4" />
+                New Booking
+              </button>
+            ) : !loading && Object.keys(agents).length > 0 ? (
+              <a
+                href={`/dashboard/agents/${Object.keys(agents)[0]}`}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--gold)] text-white text-sm font-medium hover:opacity-90"
+              >
+                <Calendar className="h-4 w-4" />
+                Connect Calendar
+              </a>
+            ) : null}
+          </div>
         }
       />
       <div className="p-4 md:p-8 space-y-4 md:space-y-6">
