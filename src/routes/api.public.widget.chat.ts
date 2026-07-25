@@ -14,6 +14,7 @@ import {
   maybeNotifyOwnerForWidgetChat,
   mirrorTurnToThread,
 } from "@/server/widget-thread-mirror.server";
+import { sendScenarioPostCallSms } from "@/server/scenario-sms.server";
 import { coerceFaqs, faqsToPromptText, faqAllowsSms } from "@/lib/faqs";
 import { coerceScenarios, fieldLabel, type StructuredScenario } from "@/lib/scenarios";
 
