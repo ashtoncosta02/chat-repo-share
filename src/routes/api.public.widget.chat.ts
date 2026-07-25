@@ -137,7 +137,15 @@ function buildSystemPrompt(agent: {
     );
   }
 
-  if (agent.booking_link) sections.push(`Booking link to share when relevant: ${agent.booking_link}`);
+  if (agent.booking_link) {
+    sections.push(
+      `Booking link: ${agent.booking_link}. Share this link when a visitor wants to book. You do NOT have live calendar access from this chat unless a booking tool is explicitly provided below — do NOT confirm a specific date/time yourself. If they want a specific time, collect their name, email, phone, and preferred time, and say a team member will confirm shortly.`,
+    );
+  } else {
+    sections.push(
+      `Bookings: You CANNOT book appointments and have NO calendar access. NEVER agree to a specific date or time proposed by the visitor. If they ask for an appointment, say: "I can't book appointments directly, but I can pass your details to the team and someone will reach out to confirm a time." Then collect name, email, phone number, and preferred day/time as a note.`,
+    );
+  }
   if (agent.emergency_number) sections.push(`For urgent issues, share this emergency number: ${agent.emergency_number}.`);
   if (agent.escalation_triggers) sections.push(`Escalate (suggest contacting a human) when: ${agent.escalation_triggers}.`);
 
