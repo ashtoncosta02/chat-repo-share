@@ -25,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Mic, MicOff, Send, Bot, ArrowLeft, Calendar, Clock, Volume2, VolumeX, Trash2, Play, Plus, X as XIcon, MessageSquare } from "lucide-react";
+import { Mic, MicOff, Send, Bot, ArrowLeft, Calendar, Clock, Volume2, VolumeX, Play, Plus, X as XIcon, MessageSquare } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { PhoneNumberSetup } from "@/components/dashboard/PhoneNumberSetup";
@@ -37,7 +37,7 @@ import { LiveVoicePreview } from "@/components/dashboard/LiveVoicePreview";
 import { VoicePickerCard } from "@/components/dashboard/VoicePickerCard";
 import { GreetingFarewellCard } from "@/components/dashboard/GreetingFarewellCard";
 
-import { syncReceptionistAgent, deleteReceptionistAgent } from "@/lib/elevenlabs-agent.functions";
+import { syncReceptionistAgent } from "@/lib/elevenlabs-agent.functions";
 import { VOICE_OPTIONS, DEFAULT_VOICE_ID, getVoiceById } from "@/lib/voices";
 import { coerceFaqs, newFaq, parseLegacyFaqs, type StructuredFaq } from "@/lib/faqs";
 
@@ -89,7 +89,6 @@ function AgentDetailPage() {
   const transcribe = useServerFn(transcribeAudio);
   const extractLead = useServerFn(extractLeadFromChat);
   const syncEl = useServerFn(syncReceptionistAgent);
-  const deleteEl = useServerFn(deleteReceptionistAgent);
 
   const [agent, setAgent] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(true);
@@ -104,9 +103,7 @@ function AgentDetailPage() {
   const [nameDraft, setNameDraft] = useState<string>("");
   const [nameSaving, setNameSaving] = useState(false);
 
-  const [deleteOpen, setDeleteOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [edit, setEdit] = useState({
     business_name: "",
     assistant_name: "",
