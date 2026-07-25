@@ -59,7 +59,7 @@ function BookingsPage() {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const [{ data: bks }, { data: ags }, { data: cals }] = await Promise.all([
+      const [{ data: bks }, { data: ags }, { data: cals }, { data: outs }] = await Promise.all([
         supabase
           .from("calendar_bookings")
           .select(
@@ -68,13 +68,17 @@ function BookingsPage() {
           .order("starts_at", { ascending: true }),
         supabase.from("agents").select("id, business_name"),
         supabase.from("agent_google_calendar").select("agent_id"),
+        supabase.from("agent_outlook_calendar").select("agent_id"),
       ]);
       if (cancelled) return;
       setBookings((bks ?? []) as BookingRow[]);
       const map: Record<string, string> = {};
       for (const a of (ags ?? []) as AgentMini[]) map[a.id] = a.business_name;
       setAgents(map);
-      setCalendarAgentIds(((cals ?? []) as { agent_id: string }[]).map((c) => c.agent_id));
+      const connected = new Set<string>();
+      for (const c of (cals ?? []) as { agent_id: string }[]) connected.add(c.agent_id);
+      for (const o of (outs ?? []) as { agent_id: string }[]) connected.add(o.agent_id);
+      setCalendarAgentIds(Array.from(connected));
       setLoading(false);
     })();
     return () => {
