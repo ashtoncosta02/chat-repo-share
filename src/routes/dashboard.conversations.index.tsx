@@ -344,7 +344,6 @@ function ConversationsPage() {
     { value: "all", label: "All Intents" },
     { value: "voice", label: "Voice Call" },
     { value: "widget", label: "Chat Widget" },
-    { value: "manual", label: "Manual" },
     { value: "sms", label: "SMS" },
   ];
 
@@ -900,7 +899,6 @@ function IntentTag({ source }: { source: string | null }) {
   const map: Record<string, { label: string; cls: string }> = {
     voice: { label: "Voice Call", cls: "bg-blue-100 text-blue-700" },
     widget: { label: "Chat Widget", cls: "bg-violet-100 text-violet-700" },
-    manual: { label: "Manual", cls: "bg-amber-100 text-amber-700" },
     sms: { label: "SMS", cls: "bg-emerald-100 text-emerald-700" },
   };
   const key = (source ?? "").toLowerCase();
