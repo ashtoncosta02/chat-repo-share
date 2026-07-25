@@ -140,6 +140,30 @@ function DashboardHome() {
           />
         </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <StatCard
+            icon={<MessageSquare className="h-5 w-5 text-foreground" />}
+            iconBg="bg-muted"
+            label="Total Conversations"
+            value={stats.voiceCalls}
+            valueColor="text-foreground"
+          />
+          <StatCard
+            icon={<BarChart3 className="h-5 w-5 text-[var(--gold)]" />}
+            iconBg="bg-[oklch(0.95_0.05_290)]"
+            label="Avg Messages"
+            value={stats.avgMessages}
+            valueColor="text-[var(--gold)]"
+          />
+          <StatCard
+            icon={<Clock className="h-5 w-5 text-emerald-600" />}
+            iconBg="bg-emerald-100"
+            label="Total Duration"
+            value={`${stats.totalDurationMin}m`}
+            valueColor="text-emerald-600"
+          />
+        </div>
+
         <Link
           to="/dashboard/agents/$agentId"
           params={{ agentId: agent.id }}
