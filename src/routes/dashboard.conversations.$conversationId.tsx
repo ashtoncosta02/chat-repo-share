@@ -418,7 +418,7 @@ function ConversationDetailPage() {
               No messages recorded for this conversation.
             </div>
           ) : (
-            <ol className="space-y-5">
+            <div className="space-y-5">
               {messages.map((m, idx) => {
                 const isUser = m.role === "user";
                 const d = new Date(m.created_at);
@@ -482,7 +482,7 @@ function ConversationDetailPage() {
                   </div>
                 );
               })}
-            </ol>
+            </div>
           )}
         </div>
 
