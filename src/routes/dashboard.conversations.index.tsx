@@ -951,23 +951,6 @@ function avatarBgFor(seed: string): string {
   return palette[h % palette.length];
 }
 
-function StatRow({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: number | string;
-  color: string;
-}) {
-  return (
-    <div className="rounded-xl border border-border bg-card p-5 flex items-center justify-between">
-      <span className="text-sm font-medium text-foreground">{label}</span>
-      <span className={`font-display text-3xl font-semibold ${color}`}>{value}</span>
-    </div>
-  );
-}
-
 function AutoDeleteCard() {
   const [hours, setHours] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
