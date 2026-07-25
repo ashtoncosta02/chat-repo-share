@@ -476,6 +476,30 @@ export const Route = createFileRoute("/api/public/widget/chat")({
           } catch (e) {
             console.error("lead capture error:", e);
           }
+
+          // Post-call (post-turn) SMS for triggered scenarios. Runs on the
+          // widget too: we look up the captured lead's phone and reuse the
+          // same scenario matcher used by voice calls. Deduped per-thread so
+          // an ongoing chat doesn't re-send the same message every turn.
+          try {
+            const { data: leadRow } = await supabaseAdmin
+              .from("leads")
+              .select("phone")
+              .eq("conversation_id", threadId)
+              .eq("user_id", agent.user_id)
+              .maybeSingle();
+            if (leadRow?.phone) {
+              await sendScenarioPostCallSms({
+                agentId,
+                userId: agent.user_id,
+                callerNumber: leadRow.phone,
+                turns: allMessages,
+                dedupeThreadId: threadId,
+              });
+            }
+          } catch (e) {
+            console.error("widget scenario sms error:", e);
+          }
         }
 
         if (threadId) {
