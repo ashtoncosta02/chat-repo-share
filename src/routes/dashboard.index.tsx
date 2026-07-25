@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, StatCard } from "@/components/dashboard/PageHeader";
-import { Calendar, CheckCircle2, MessageSquare, Phone, ChevronRight } from "lucide-react";
+import { Calendar, CheckCircle2, MessageSquare, Phone, ChevronRight, BarChart3, Clock } from "lucide-react";
 import { AnalyticsPage } from "./dashboard.analytics";
 import { VOICE_OPTIONS, DEFAULT_VOICE_ID } from "@/lib/voices";
 
