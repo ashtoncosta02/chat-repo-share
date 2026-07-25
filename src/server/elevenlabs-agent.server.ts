@@ -174,10 +174,12 @@ export function buildSystemPrompt(p: AgentBusinessProfile): string {
     lines.push(p.scenarios_prompt.trim());
   }
 
+  lines.push(``);
+  lines.push(`# Ending the call`);
+  lines.push(`Match the caller's energy when they wrap up. If they say "thanks" or "thank you", reply naturally with something like "You're welcome!" or "No problem, happy to help!". If they say "bye" or "goodbye", reply with a warm "Goodbye!" or "Take care!" — keep it short and human.`);
+  lines.push(`Never repeat the same closing line twice in a row. Vary your wording. Only say a full farewell once, right before the call actually ends — not after every "thanks" or "ok" the caller gives you mid-conversation.`);
   if (p.farewell_message && p.farewell_message.trim()) {
-    lines.push(``);
-    lines.push(`# Ending the call`);
-    lines.push(`When the conversation is wrapping up, say this exactly before hanging up: "${p.farewell_message.trim()}"`);
+    lines.push(`When you're truly ending the call (the caller has clearly said goodbye and there's nothing left to help with), use this as inspiration for your final sign-off — you can paraphrase it, shorten it, or match the caller's tone rather than reading it verbatim: "${p.farewell_message.trim()}". Say it ONCE, then end the call. Do not repeat it.`);
   }
 
   // Caller context (filled in via dynamic variables when known — e.g. on
