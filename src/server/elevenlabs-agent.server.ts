@@ -130,9 +130,15 @@ export function buildSystemPrompt(p: AgentBusinessProfile): string {
     lines.push(`- After a successful booking, repeat the date and time back to confirm, then move on.`);
   } else if (p.booking_link) {
     lines.push(``);
-    lines.push(`# Booking`);
+    lines.push(`# Booking (NO live calendar — do NOT confirm specific times)`);
     lines.push(`To book an appointment, direct callers to: ${p.booking_link.trim()}`);
-    lines.push(`If they want you to book for them, take their preferred date/time and contact info, and tell them someone will confirm shortly.`);
+    lines.push(`- You CANNOT see the calendar and CANNOT book appointments yourself. NEVER agree to a specific date or time (e.g. "Monday at 1pm works"). Doing so misleads the caller.`);
+    lines.push(`- If they want you to book for them, take their preferred date/time, full name, and callback number, and say: "I've noted that down — a team member will confirm the time with you shortly." Do NOT imply it's booked.`);
+  } else {
+    lines.push(``);
+    lines.push(`# Booking (NOT available — you cannot book appointments)`);
+    lines.push(`- You do NOT have a calendar connected and CANNOT book appointments. NEVER agree to a specific date or time, and NEVER say things like "no problem, I'll have someone there" for a specific time the caller proposed.`);
+    lines.push(`- If the caller asks for an appointment, respond: "I can't book appointments directly, but I can take your details and have a team member reach out to confirm a time that works." Then collect their full name, callback phone number, and their preferred day/time as a note.`);
   }
 
   if (p.emergency_number) {
