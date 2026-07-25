@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, StatCard } from "@/components/dashboard/PageHeader";
-import { Calendar, CheckCircle2, MessageSquare, Phone, ChevronRight } from "lucide-react";
+import { Calendar, CheckCircle2, MessageSquare, Phone, ChevronRight, BarChart3, Clock } from "lucide-react";
 import { AnalyticsPage } from "./dashboard.analytics";
 import { VOICE_OPTIONS, DEFAULT_VOICE_ID } from "@/lib/voices";
 
@@ -28,7 +28,13 @@ function DashboardHome() {
   const navigate = useNavigate();
   const [agent, setAgent] = useState<AgentRow | null>(null);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ conversations: 0, leads: 0, voiceCalls: 0 });
+  const [stats, setStats] = useState({
+    conversations: 0,
+    leads: 0,
+    voiceCalls: 0,
+    avgMessages: 0,
+    totalDurationMin: 0,
+  });
   const [calendarConnected, setCalendarConnected] = useState(false);
 
   useEffect(() => {
@@ -59,7 +65,7 @@ function DashboardHome() {
           .eq("agent_id", agentRow.id),
         supabase
           .from("conversations")
-          .select("id", { count: "exact", head: true })
+          .select("id, message_count, duration_seconds")
           .eq("agent_id", agentRow.id),
         supabase
           .from("agent_google_calendar")
@@ -72,10 +78,15 @@ function DashboardHome() {
       ]);
 
       if (cancelled) return;
+      const callRows = calls.data ?? [];
+      const totalMessages = callRows.reduce((s, c) => s + (c.message_count ?? 0), 0);
+      const totalDuration = callRows.reduce((s, c) => s + (c.duration_seconds ?? 0), 0);
       setStats({
         conversations: chats.count ?? 0,
         leads: leads.count ?? 0,
-        voiceCalls: calls.count ?? 0,
+        voiceCalls: callRows.length,
+        avgMessages: callRows.length ? Math.round(totalMessages / callRows.length) : 0,
+        totalDurationMin: Math.round(totalDuration / 60),
       });
       setCalendarConnected((cal.count ?? 0) + (outlook.count ?? 0) > 0);
       setLoading(false);
@@ -125,6 +136,30 @@ function DashboardHome() {
             iconBg="bg-emerald-100"
             label="Leads captured"
             value={stats.leads}
+            valueColor="text-emerald-600"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <StatCard
+            icon={<MessageSquare className="h-5 w-5 text-foreground" />}
+            iconBg="bg-muted"
+            label="Total Conversations"
+            value={stats.voiceCalls}
+            valueColor="text-foreground"
+          />
+          <StatCard
+            icon={<BarChart3 className="h-5 w-5 text-[var(--gold)]" />}
+            iconBg="bg-[oklch(0.95_0.05_290)]"
+            label="Avg Messages"
+            value={stats.avgMessages}
+            valueColor="text-[var(--gold)]"
+          />
+          <StatCard
+            icon={<Clock className="h-5 w-5 text-emerald-600" />}
+            iconBg="bg-emerald-100"
+            label="Total Duration"
+            value={`${stats.totalDurationMin}m`}
             valueColor="text-emerald-600"
           />
         </div>

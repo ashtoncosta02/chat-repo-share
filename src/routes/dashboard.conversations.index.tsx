@@ -310,11 +310,6 @@ function ConversationsPage() {
     }
   };
 
-  const totalMs = convs.reduce((s, c) => s + c.message_count, 0);
-  const avgMessages = convs.length ? Math.round(totalMs / convs.length) : 0;
-  const totalDuration = convs.reduce((s, c) => s + c.duration_seconds, 0);
-  const totalMin = Math.round(totalDuration / 60);
-
   const archivedCount = useMemo(() => convs.filter((c) => !!c.archived_at).length, [convs]);
 
   const filteredConvs = useMemo(() => {
@@ -468,12 +463,6 @@ function ConversationsPage() {
           )}
         </div>
         <AutoDeleteCard />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatRow label="Total Conversations" value={convs.length} color="text-foreground" />
-          <StatRow label="Avg Messages" value={avgMessages} color="text-[var(--gold)]" />
-          <StatRow label="Total Duration" value={`${totalMin}m`} color="text-emerald-600" />
-        </div>
-
         <div className="rounded-xl border border-border bg-card overflow-hidden">
           {loading ? (
             <div className="p-8 text-center text-muted-foreground">Loading…</div>
@@ -960,23 +949,6 @@ function avatarBgFor(seed: string): string {
   let h = 0;
   for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
   return palette[h % palette.length];
-}
-
-function StatRow({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: number | string;
-  color: string;
-}) {
-  return (
-    <div className="rounded-xl border border-border bg-card p-5 flex items-center justify-between">
-      <span className="text-sm font-medium text-foreground">{label}</span>
-      <span className={`font-display text-3xl font-semibold ${color}`}>{value}</span>
-    </div>
-  );
 }
 
 function AutoDeleteCard() {
