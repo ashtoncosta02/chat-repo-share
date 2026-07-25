@@ -82,6 +82,7 @@ export const Route = createFileRoute("/api/public/twilio/sms")({
               .insert({
                 user_id: agent.user_id,
                 agent_id: agent.id,
+                source: "sms",
               })
               .select("id")
               .single();
