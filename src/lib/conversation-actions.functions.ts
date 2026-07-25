@@ -170,6 +170,18 @@ export const sendSmsFromConversation = createServerFn({ method: "POST" })
       const result = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(result?.message || `Twilio SMS failed (${res.status}).`);
 
+      // Persist the outbound text so the full SMS thread is visible in the dashboard.
+      await supabaseAdmin.from("messages").insert({
+        user_id: auth.userId,
+        conversation_id: data.conversationId,
+        role: "assistant",
+        content: data.message,
+      });
+      await supabaseAdmin
+        .from("conversations")
+        .update({ message_count: 0, ended_at: new Date().toISOString() })
+        .eq("id", data.conversationId);
+
       await supabaseAdmin
         .from("leads")
         .update({ status: "contacted", last_message_at: new Date().toISOString() })
