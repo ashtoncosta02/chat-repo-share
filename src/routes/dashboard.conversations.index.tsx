@@ -310,11 +310,6 @@ function ConversationsPage() {
     }
   };
 
-  const totalMs = convs.reduce((s, c) => s + c.message_count, 0);
-  const avgMessages = convs.length ? Math.round(totalMs / convs.length) : 0;
-  const totalDuration = convs.reduce((s, c) => s + c.duration_seconds, 0);
-  const totalMin = Math.round(totalDuration / 60);
-
   const archivedCount = useMemo(() => convs.filter((c) => !!c.archived_at).length, [convs]);
 
   const filteredConvs = useMemo(() => {
