@@ -1000,61 +1000,6 @@ function AgentDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete confirmation */}
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete this receptionist?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently remove <strong>{agent.business_name}</strong> along with its
-              conversations, messages, and leads. This cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={deleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={async (e) => {
-                e.preventDefault();
-                if (!user) return;
-                setDeleting(true);
-                // Best-effort: remove the live ElevenLabs agent first.
-                try {
-                  const { data: session } = await supabase.auth.getSession();
-                  const token = session.session?.access_token;
-                  if (token) {
-                    await deleteEl({ data: { accessToken: token, agentId: agent.id } });
-                  }
-                } catch (e) {
-                  console.error("EL delete failed (non-blocking):", e);
-                }
-                // Clean up dependent rows first (no FK cascade defined).
-                const { data: convs } = await supabase
-                  .from("conversations")
-                  .select("id")
-                  .eq("agent_id", agent.id);
-                const convIds = (convs ?? []).map((c) => c.id);
-                if (convIds.length > 0) {
-                  await supabase.from("messages").delete().in("conversation_id", convIds);
-                  await supabase.from("conversations").delete().in("id", convIds);
-                }
-                await supabase.from("leads").delete().eq("agent_id", agent.id);
-                const { error } = await supabase.from("agents").delete().eq("id", agent.id);
-                setDeleting(false);
-                if (error) {
-                  toast.error("Couldn't delete agent", { description: error.message });
-                  return;
-                }
-                toast.success("Receptionist deleted");
-                navigate({ to: "/dashboard" });
-              }}
-            >
-              {deleting ? "Deleting…" : "Delete receptionist"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
