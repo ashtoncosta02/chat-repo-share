@@ -463,12 +463,6 @@ function ConversationsPage() {
           )}
         </div>
         <AutoDeleteCard />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatRow label="Total Conversations" value={convs.length} color="text-foreground" />
-          <StatRow label="Avg Messages" value={avgMessages} color="text-[var(--gold)]" />
-          <StatRow label="Total Duration" value={`${totalMin}m`} color="text-emerald-600" />
-        </div>
-
         <div className="rounded-xl border border-border bg-card overflow-hidden">
           {loading ? (
             <div className="p-8 text-center text-muted-foreground">Loading…</div>
