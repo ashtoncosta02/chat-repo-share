@@ -201,17 +201,38 @@ Rules:
           // only insert if there isn't already a lead for this phone+agent).
           const { data: existingLead } = await supabaseAdmin
             .from("leads")
-            .select("id")
+            .select("id, conversation_id")
             .eq("agent_id", agent.id)
             .eq("phone", from)
             .maybeSingle();
           if (!existingLead) {
-            await supabaseAdmin.from("leads").insert({
-              user_id: agent.user_id,
-              agent_id: agent.id,
-              phone: from,
-              notes: "Captured from inbound SMS",
-            });
+            const { data: newLead } = await supabaseAdmin
+              .from("leads")
+              .insert({
+                user_id: agent.user_id,
+                agent_id: agent.id,
+                phone: from,
+                source: "sms",
+                notes: "Captured from inbound SMS",
+                conversation_id: conversationId,
+              })
+              .select("id")
+              .single();
+            if (newLead) {
+              await supabaseAdmin
+                .from("conversations")
+                .update({ lead_id: newLead.id })
+                .eq("id", conversationId);
+            }
+          } else if (!existingLead.conversation_id) {
+            await supabaseAdmin
+              .from("leads")
+              .update({ conversation_id: conversationId, source: "sms" })
+              .eq("id", existingLead.id);
+            await supabaseAdmin
+              .from("conversations")
+              .update({ lead_id: existingLead.id })
+              .eq("id", conversationId);
           }
 
           return twiml(reply);
