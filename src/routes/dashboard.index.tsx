@@ -48,7 +48,7 @@ function DashboardHome() {
       }
       setAgent(agentRow as AgentRow);
 
-      const [chats, leads, calls, cal] = await Promise.all([
+      const [chats, leads, calls, cal, outlook] = await Promise.all([
         supabase
           .from("widget_conversations")
           .select("id", { count: "exact", head: true })
@@ -65,6 +65,10 @@ function DashboardHome() {
           .from("agent_google_calendar")
           .select("id", { head: true, count: "exact" })
           .eq("agent_id", agentRow.id),
+        supabase
+          .from("agent_outlook_calendar")
+          .select("id", { head: true, count: "exact" })
+          .eq("agent_id", agentRow.id),
       ]);
 
       if (cancelled) return;
@@ -73,7 +77,7 @@ function DashboardHome() {
         leads: leads.count ?? 0,
         voiceCalls: calls.count ?? 0,
       });
-      setCalendarConnected((cal.count ?? 0) > 0);
+      setCalendarConnected((cal.count ?? 0) + (outlook.count ?? 0) > 0);
       setLoading(false);
     })();
     return () => {
