@@ -179,7 +179,7 @@ export const sendSmsFromConversation = createServerFn({ method: "POST" })
       });
       await supabaseAdmin
         .from("conversations")
-        .update({ message_count: 0, ended_at: new Date().toISOString() })
+        .update({ ended_at: new Date().toISOString() })
         .eq("id", data.conversationId);
 
       await supabaseAdmin
