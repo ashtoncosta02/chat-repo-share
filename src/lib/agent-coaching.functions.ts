@@ -6,7 +6,7 @@ export const submitAgentFeedback = createServerFn({ method: "POST" })
   .inputValidator((data: {
     agentId: string;
     conversationId?: string | null;
-    rating: "up" | "down";
+    rating: "up" | "down" | "note";
     note?: string | null;
   }) => data)
   .handler(async ({ data, context }) => {

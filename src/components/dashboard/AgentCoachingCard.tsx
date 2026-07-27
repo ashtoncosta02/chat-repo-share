@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ThumbsUp, ThumbsDown, Sparkles, Trash2, Loader2, Link as LinkIcon } from "lucide-react";
+import { ThumbsUp, ThumbsDown, Sparkles, Trash2, Loader2, Link as LinkIcon, Plus } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
   listAgentFeedback,
   deleteAgentFeedback,
+  submitAgentFeedback,
 } from "@/lib/agent-coaching.functions";
 
 interface CoachingRow {
