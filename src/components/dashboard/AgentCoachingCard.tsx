@@ -22,12 +22,15 @@ interface CoachingRow {
 export function AgentCoachingCard({ agentId }: { agentId: string }) {
   const listFn = useServerFn(listAgentFeedback);
   const deleteFn = useServerFn(deleteAgentFeedback);
+  const submitFn = useServerFn(submitAgentFeedback);
   const [rows, setRows] = useState<CoachingRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"corrections" | "wins" | "all">(
+  const [filter, setFilter] = useState<"corrections" | "wins" | "all" | "notes">(
     "corrections"
   );
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [newNote, setNewNote] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   async function load() {
     setLoading(true);
