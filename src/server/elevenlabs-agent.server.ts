@@ -176,6 +176,16 @@ export function buildSystemPrompt(p: AgentBusinessProfile): string {
     lines.push(p.scenarios_prompt.trim());
   }
 
+  if (p.coaching_notes && p.coaching_notes.length > 0) {
+    lines.push(``);
+    lines.push(`# Agent Coaching (owner corrections — HIGH PRIORITY, follow these strictly)`);
+    lines.push(`The business owner has left the following corrections based on past calls. Apply them going forward:`);
+    for (const n of p.coaching_notes) {
+      const t = n.trim();
+      if (t) lines.push(`- ${t}`);
+    }
+  }
+
   lines.push(``);
   lines.push(`# Ending the call`);
   lines.push(`Match the caller's energy when they wrap up. If they say "thanks" or "thank you", reply naturally with something like "You're welcome!" or "No problem, happy to help!". If they say "bye" or "goodbye", reply with a warm "Goodbye!" or "Take care!" — keep it short and human.`);
