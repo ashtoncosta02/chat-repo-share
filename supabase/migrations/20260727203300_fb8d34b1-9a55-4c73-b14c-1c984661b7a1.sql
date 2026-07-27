@@ -1,0 +1,2 @@
+ALTER TABLE public.agent_feedback DROP CONSTRAINT IF EXISTS agent_feedback_rating_check;
+ALTER TABLE public.agent_feedback ADD CONSTRAINT agent_feedback_rating_check CHECK (rating IN ('up','down','note'));
