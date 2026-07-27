@@ -80,6 +80,51 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_feedback: {
+        Row: {
+          agent_id: string
+          conversation_id: string | null
+          created_at: string
+          id: string
+          note: string | null
+          rating: string
+          user_id: string
+        }
+        Insert: {
+          agent_id: string
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          rating: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          rating?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_feedback_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_feedback_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_google_calendar: {
         Row: {
           access_token: string
