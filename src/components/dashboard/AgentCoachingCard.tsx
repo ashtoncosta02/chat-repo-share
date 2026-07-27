@@ -13,7 +13,7 @@ import {
 
 interface CoachingRow {
   id: string;
-  rating: "up" | "down";
+  rating: "up" | "down" | "note";
   note: string | null;
   conversation_id: string | null;
   created_at: string;
