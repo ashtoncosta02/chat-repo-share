@@ -11,7 +11,7 @@ import {
 
 interface FeedbackRow {
   id: string;
-  rating: "up" | "down";
+  rating: "up" | "down" | "note";
   note: string | null;
   created_at: string;
 }
