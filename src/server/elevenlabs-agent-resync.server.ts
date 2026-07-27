@@ -80,7 +80,25 @@ function rowToProfile(row: AgentRow): AgentBusinessProfile {
     greeting_message: row.greeting_message,
     farewell_message: row.farewell_message,
     transfer_numbers: transferNumbers,
+    coaching_notes: null,
   };
+}
+
+async function loadCoachingNotes(agentId: string): Promise<string[]> {
+  const { data } = await supabaseAdmin
+    .from("agent_feedback")
+    .select("note, rating")
+    .eq("agent_id", agentId)
+    .not("note", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(40);
+  return (data ?? [])
+    .map((r) => {
+      const note = (r.note as string | null)?.trim();
+      if (!note) return "";
+      return r.rating === "up" ? `(what worked) ${note}` : note;
+    })
+    .filter(Boolean);
 }
 
 export async function resyncReceptionistById(
@@ -97,6 +115,7 @@ export async function resyncReceptionistById(
 
 
   const profile = rowToProfile(row as AgentRow);
+  profile.coaching_notes = await loadCoachingNotes(row.id).catch(() => []);
 
   try {
     const toolSync = await syncBookingToolsForAgent(row.id).catch((e: unknown) => {

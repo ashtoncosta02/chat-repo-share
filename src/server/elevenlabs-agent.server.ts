@@ -37,6 +37,8 @@ export interface AgentBusinessProfile {
   tool_ids?: string[];
   // Phone numbers the agent can warm-transfer callers to (built from scenarios).
   transfer_numbers?: Array<{ phone: string; condition: string }>;
+  // Owner-authored coaching notes (Agent Coaching feature) — persistent behavioral corrections.
+  coaching_notes?: string[] | null;
 }
 
 /** Normalize a user-typed phone to E.164. Assumes US/CA (+1) when 10 digits. */
@@ -172,6 +174,16 @@ export function buildSystemPrompt(p: AgentBusinessProfile): string {
     lines.push(``);
     lines.push(`# Scenarios (follow these when the caller's intent matches)`);
     lines.push(p.scenarios_prompt.trim());
+  }
+
+  if (p.coaching_notes && p.coaching_notes.length > 0) {
+    lines.push(``);
+    lines.push(`# Agent Coaching (owner corrections — HIGH PRIORITY, follow these strictly)`);
+    lines.push(`The business owner has left the following corrections based on past calls. Apply them going forward:`);
+    for (const n of p.coaching_notes) {
+      const t = n.trim();
+      if (t) lines.push(`- ${t}`);
+    }
   }
 
   lines.push(``);

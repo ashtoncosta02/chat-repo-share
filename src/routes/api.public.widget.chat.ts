@@ -341,6 +341,27 @@ export const Route = createFileRoute("/api/public/widget/chat")({
         // Build base system prompt
         let systemPrompt = buildSystemPrompt(agent);
 
+        // Owner-authored coaching notes (Agent Coaching)
+        const { data: coachingRows } = await supabaseAdmin
+          .from("agent_feedback")
+          .select("note, rating")
+          .eq("agent_id", agentId)
+          .not("note", "is", null)
+          .order("created_at", { ascending: false })
+          .limit(40);
+        const coachingLines = (coachingRows ?? [])
+          .map((r) => {
+            const note = (r.note as string | null)?.trim();
+            if (!note) return "";
+            return r.rating === "up" ? `- (what worked) ${note}` : `- ${note}`;
+          })
+          .filter(Boolean);
+        if (coachingLines.length > 0) {
+          systemPrompt +=
+            "\n\nAgent Coaching (owner corrections — HIGH PRIORITY, follow strictly):\n" +
+            coachingLines.join("\n");
+        }
+
         // If calendar is connected, enable booking tools
         const calendarOn = await isCalendarConnected(agentId);
         let tools: typeof BOOKING_TOOLS | undefined;
@@ -351,6 +372,7 @@ export const Route = createFileRoute("/api/public/widget/chat")({
             tools = BOOKING_TOOLS;
           }
         }
+
 
         const aiMessages: AIMessage[] = [
           { role: "system", content: systemPrompt },

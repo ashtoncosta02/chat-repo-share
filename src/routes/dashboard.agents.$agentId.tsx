@@ -36,6 +36,7 @@ import { OutlookCalendarCard } from "@/components/dashboard/OutlookCalendarCard"
 import { LiveVoicePreview } from "@/components/dashboard/LiveVoicePreview";
 import { VoicePickerCard } from "@/components/dashboard/VoicePickerCard";
 import { GreetingFarewellCard } from "@/components/dashboard/GreetingFarewellCard";
+import { AgentCoachingCard } from "@/components/dashboard/AgentCoachingCard";
 
 import { syncReceptionistAgent } from "@/lib/elevenlabs-agent.functions";
 import { VOICE_OPTIONS, DEFAULT_VOICE_ID, getVoiceById } from "@/lib/voices";
@@ -582,6 +583,7 @@ function AgentDetailPage() {
         />
         <GoogleCalendarCard agentId={agent.id} />
         <OutlookCalendarCard agentId={agent.id} />
+        <AgentCoachingCard agentId={agent.id} />
       </div>
 
       {/* Chat surface */}
