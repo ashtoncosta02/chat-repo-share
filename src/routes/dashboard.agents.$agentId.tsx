@@ -583,6 +583,7 @@ function AgentDetailPage() {
         />
         <GoogleCalendarCard agentId={agent.id} />
         <OutlookCalendarCard agentId={agent.id} />
+        <AgentCoachingCard agentId={agent.id} />
       </div>
 
       {/* Chat surface */}
