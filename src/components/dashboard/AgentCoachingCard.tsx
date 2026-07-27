@@ -101,9 +101,47 @@ export function AgentCoachingCard({ agentId }: { agentId: string }) {
         Agent Coaching
       </div>
       <p className="text-xs text-muted-foreground mb-3">
-        Every 👎 with a note becomes a persistent rule your receptionist follows
+        Every note here becomes a persistent instruction your receptionist follows
         on calls and chats. Delete a note to remove it from her instructions.
       </p>
+
+      <div className="space-y-2 mb-4">
+        <Textarea
+          value={newNote}
+          "text-sm text-muted-foreground"
+          placeholder="e.g. Always ask for the caller's email before ending the call."
+          className="min-h-[80px] text-sm px-2 py-1"
+          onChange={(e) => setNewNote(e.target.value)}
+        />
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            size="sm"
+            onClick={() => handleAddNote("down")}
+            disabled={submitting || !newNote.trim()}
+            className="bg-[var(--gold)] hover:bg-[var(--gold)]/90 text-white"
+          >
+            {submitting ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-1" />
+            ) : (
+              <ThumbsDown className="h-4 w-4 mr-1" />
+            )}
+            Add correction
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleAddNote("note")}
+            disabled={submitting || !newNote.trim()}
+          >
+            {submitting ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-1" />
+            ) : (
+              <Plus className="h-4 w-4 mr-1" />
+            )}
+            Add note
+          </Button>
+        </div>
+      </div>
 
       <div className="flex gap-2 mb-4 flex-wrap">
         <button
@@ -127,6 +165,17 @@ export function AgentCoachingCard({ agentId }: { agentId: string }) {
           }`}
         >
           What's working ({wins.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setFilter("notes")}
+          className={`text-xs px-3 py-1.5 rounded-full border ${
+            filter === "notes"
+              ? "bg-[var(--gold)] text-white border-transparent"
+              : "bg-background border-border text-foreground hover:bg-muted"
+          }`}
+        >
+          Notes ({genericNotes.length})
         </button>
         <button
           type="button"
