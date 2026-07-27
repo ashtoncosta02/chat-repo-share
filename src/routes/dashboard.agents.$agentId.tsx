@@ -558,6 +558,7 @@ function AgentDetailPage() {
             setAgent((prev) => (prev ? { ...prev, voice_id: voiceId } : prev))
           }
         />
+        <AgentCoachingCard agentId={agent.id} />
         <GreetingFarewellCard
           agentId={agent.id}
           businessName={agent.business_name}
@@ -583,7 +584,6 @@ function AgentDetailPage() {
         />
         <GoogleCalendarCard agentId={agent.id} />
         <OutlookCalendarCard agentId={agent.id} />
-        <AgentCoachingCard agentId={agent.id} />
       </div>
 
       {/* Chat surface */}
