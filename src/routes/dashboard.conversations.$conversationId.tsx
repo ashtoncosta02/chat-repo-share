@@ -12,6 +12,7 @@ import {
   sendSmsFromConversation,
 } from "@/lib/conversation-actions.functions";
 import { getCallRecordingUrl } from "@/lib/call-recording.functions";
+import { ThreadFeedbackCard } from "@/components/dashboard/ThreadFeedbackCard";
 
 export const Route = createFileRoute("/dashboard/conversations/$conversationId")({
   head: () => ({ meta: [{ title: "Transcript — Ask Janice" }] }),
