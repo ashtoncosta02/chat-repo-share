@@ -108,7 +108,6 @@ export function AgentCoachingCard({ agentId }: { agentId: string }) {
       <div className="space-y-2 mb-4">
         <Textarea
           value={newNote}
-          "text-sm text-muted-foreground"
           placeholder="e.g. Always ask for the caller's email before ending the call."
           className="min-h-[80px] text-sm px-2 py-1"
           onChange={(e) => setNewNote(e.target.value)}
