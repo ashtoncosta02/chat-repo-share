@@ -196,8 +196,8 @@ export function AgentCoachingCard({ agentId }: { agentId: string }) {
         </div>
       ) : shown.length === 0 ? (
         <div className="text-sm text-muted-foreground py-6 text-center">
-          No feedback yet. Open a thread and use the "How did your AI
-          receptionist do?" card to leave your first coaching note.
+          No coaching notes yet. Type a rule above and click "Add correction" or
+          "Add note" to teach your receptionist.
         </div>
       ) : (
         <ul className="space-y-2">
