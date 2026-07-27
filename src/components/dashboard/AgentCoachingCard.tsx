@@ -85,9 +85,14 @@ export function AgentCoachingCard({ agentId }: { agentId: string }) {
   const corrections = rows.filter((r) => r.rating === "down" && r.note?.trim());
   const wins = rows.filter((r) => r.rating === "up");
   const genericNotes = rows.filter((r) => r.rating === "note" && r.note?.trim());
-  const wins = rows.filter((r) => r.rating === "up");
   const shown =
-    filter === "corrections" ? corrections : filter === "wins" ? wins : rows;
+    filter === "corrections"
+      ? corrections
+      : filter === "wins"
+        ? wins
+        : filter === "notes"
+          ? genericNotes
+          : rows;
 
   return (
     <div className="rounded-xl border border-border bg-card p-5">
