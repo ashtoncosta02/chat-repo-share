@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ThumbsUp, ThumbsDown, Sparkles, Trash2, Loader2, Link as LinkIcon } from "lucide-react";
+import { ThumbsUp, ThumbsDown, Sparkles, Trash2, Loader2, Link as LinkIcon, Plus } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
   listAgentFeedback,
   deleteAgentFeedback,
+  submitAgentFeedback,
 } from "@/lib/agent-coaching.functions";
 
 interface CoachingRow {
   id: string;
-  rating: "up" | "down";
+  rating: "up" | "down" | "note";
   note: string | null;
   conversation_id: string | null;
   created_at: string;
@@ -20,12 +22,15 @@ interface CoachingRow {
 export function AgentCoachingCard({ agentId }: { agentId: string }) {
   const listFn = useServerFn(listAgentFeedback);
   const deleteFn = useServerFn(deleteAgentFeedback);
+  const submitFn = useServerFn(submitAgentFeedback);
   const [rows, setRows] = useState<CoachingRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"corrections" | "wins" | "all">(
+  const [filter, setFilter] = useState<"corrections" | "wins" | "all" | "notes">(
     "corrections"
   );
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [newNote, setNewNote] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -57,10 +62,37 @@ export function AgentCoachingCard({ agentId }: { agentId: string }) {
     }
   }
 
+  async function handleAddNote(rating: "down" | "up" | "note") {
+    const note = newNote.trim();
+    if (!note) return;
+    setSubmitting(true);
+    try {
+      const res = await submitFn({
+        data: { agentId, rating, note, conversationId: null },
+      });
+      if (!res.success) {
+        toast.error(res.error);
+        return;
+      }
+      setNewNote("");
+      toast.success("Coaching note added. Receptionist will use it going forward.");
+      await load();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   const corrections = rows.filter((r) => r.rating === "down" && r.note?.trim());
   const wins = rows.filter((r) => r.rating === "up");
+  const genericNotes = rows.filter((r) => r.rating === "note" && r.note?.trim());
   const shown =
-    filter === "corrections" ? corrections : filter === "wins" ? wins : rows;
+    filter === "corrections"
+      ? corrections
+      : filter === "wins"
+        ? wins
+        : filter === "notes"
+          ? genericNotes
+          : rows;
 
   return (
     <div className="rounded-xl border border-border bg-card p-5">
@@ -69,9 +101,46 @@ export function AgentCoachingCard({ agentId }: { agentId: string }) {
         Agent Coaching
       </div>
       <p className="text-xs text-muted-foreground mb-3">
-        Every 👎 with a note becomes a persistent rule your receptionist follows
+        Every note here becomes a persistent instruction your receptionist follows
         on calls and chats. Delete a note to remove it from her instructions.
       </p>
+
+      <div className="space-y-2 mb-4">
+        <Textarea
+          value={newNote}
+          placeholder="e.g. Always ask for the caller's email before ending the call."
+          className="min-h-[80px] text-sm px-2 py-1"
+          onChange={(e) => setNewNote(e.target.value)}
+        />
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            size="sm"
+            onClick={() => handleAddNote("down")}
+            disabled={submitting || !newNote.trim()}
+            className="bg-[var(--gold)] hover:bg-[var(--gold)]/90 text-white"
+          >
+            {submitting ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-1" />
+            ) : (
+              <ThumbsDown className="h-4 w-4 mr-1" />
+            )}
+            Add correction
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleAddNote("note")}
+            disabled={submitting || !newNote.trim()}
+          >
+            {submitting ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-1" />
+            ) : (
+              <Plus className="h-4 w-4 mr-1" />
+            )}
+            Add note
+          </Button>
+        </div>
+      </div>
 
       <div className="flex gap-2 mb-4 flex-wrap">
         <button
@@ -98,6 +167,17 @@ export function AgentCoachingCard({ agentId }: { agentId: string }) {
         </button>
         <button
           type="button"
+          onClick={() => setFilter("notes")}
+          className={`text-xs px-3 py-1.5 rounded-full border ${
+            filter === "notes"
+              ? "bg-[var(--gold)] text-white border-transparent"
+              : "bg-background border-border text-foreground hover:bg-muted"
+          }`}
+        >
+          Notes ({genericNotes.length})
+        </button>
+        <button
+          type="button"
           onClick={() => setFilter("all")}
           className={`text-xs px-3 py-1.5 rounded-full border ${
             filter === "all"
@@ -116,8 +196,8 @@ export function AgentCoachingCard({ agentId }: { agentId: string }) {
         </div>
       ) : shown.length === 0 ? (
         <div className="text-sm text-muted-foreground py-6 text-center">
-          No feedback yet. Open a thread and use the "How did your AI
-          receptionist do?" card to leave your first coaching note.
+          No coaching notes yet. Type a rule above and click "Add correction" or
+          "Add note" to teach your receptionist.
         </div>
       ) : (
         <ul className="space-y-2">
@@ -128,6 +208,8 @@ export function AgentCoachingCard({ agentId }: { agentId: string }) {
             >
               {r.rating === "up" ? (
                 <ThumbsUp className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
+              ) : r.rating === "note" ? (
+                <Sparkles className="h-4 w-4 text-[var(--gold)] shrink-0 mt-0.5" />
               ) : (
                 <ThumbsDown className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
               )}
