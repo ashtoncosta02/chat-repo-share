@@ -11,7 +11,7 @@ import {
 
 interface FeedbackRow {
   id: string;
-  rating: "up" | "down";
+  rating: "up" | "down" | "note";
   note: string | null;
   created_at: string;
 }
@@ -47,7 +47,11 @@ export function ThreadFeedbackCard({
     };
   }, [conversationId, listFn]);
 
-  async function handleSubmit(chosen: "up" | "down") {
+  async function handleSubmit(chosen: "up" | "down" | "note") {
+    if (chosen === "note" && !note.trim()) {
+      toast.error("Add a note or pick a rating first.");
+      return;
+    }
     setSaving(true);
     try {
       const res = await submit({
@@ -65,7 +69,9 @@ export function ThreadFeedbackCard({
       toast.success(
         chosen === "down" && note.trim()
           ? "Coaching saved — your receptionist will apply this on the next call."
-          : "Thanks for the feedback!"
+          : chosen === "note"
+            ? "Note saved — your receptionist will use it going forward."
+            : "Thanks for the feedback!"
       );
       setExisting((prev) => [
         {
@@ -134,8 +140,8 @@ export function ThreadFeedbackCard({
         {note.length}/2000
       </div>
       <Button
-        onClick={() => rating && handleSubmit(rating)}
-        disabled={!rating || saving}
+        onClick={() => handleSubmit(rating ?? "note")}
+        disabled={saving || (!rating && !note.trim())}
         className="w-full"
       >
         {saving ? (
@@ -146,6 +152,9 @@ export function ThreadFeedbackCard({
           "Save feedback"
         )}
       </Button>
+      <p className="text-xs text-muted-foreground mt-2 text-center">
+        Pick a rating, or just write a note and hit Save.
+      </p>
 
       {!loading && existing.length > 0 && (
         <div className="mt-4 pt-4 border-t border-border space-y-2">
@@ -159,6 +168,8 @@ export function ThreadFeedbackCard({
             >
               {f.rating === "up" ? (
                 <ThumbsUp className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
+              ) : f.rating === "note" ? (
+                <Sparkles className="h-4 w-4 text-[var(--gold)] shrink-0 mt-0.5" />
               ) : (
                 <ThumbsDown className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
               )}
