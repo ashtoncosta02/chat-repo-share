@@ -140,8 +140,8 @@ export function ThreadFeedbackCard({
         {note.length}/2000
       </div>
       <Button
-        onClick={() => rating && handleSubmit(rating)}
-        disabled={!rating || saving}
+        onClick={() => handleSubmit(rating ?? "note")}
+        disabled={saving || (!rating && !note.trim())}
         className="w-full"
       >
         {saving ? (
@@ -152,6 +152,9 @@ export function ThreadFeedbackCard({
           "Save feedback"
         )}
       </Button>
+      <p className="text-xs text-muted-foreground mt-2 text-center">
+        Pick a rating, or just write a note and hit Save.
+      </p>
 
       {!loading && existing.length > 0 && (
         <div className="mt-4 pt-4 border-t border-border space-y-2">
