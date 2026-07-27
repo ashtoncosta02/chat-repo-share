@@ -208,6 +208,8 @@ export function AgentCoachingCard({ agentId }: { agentId: string }) {
             >
               {r.rating === "up" ? (
                 <ThumbsUp className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
+              ) : r.rating === "note" ? (
+                <Sparkles className="h-4 w-4 text-[var(--gold)] shrink-0 mt-0.5" />
               ) : (
                 <ThumbsDown className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
               )}
