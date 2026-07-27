@@ -47,7 +47,11 @@ export function ThreadFeedbackCard({
     };
   }, [conversationId, listFn]);
 
-  async function handleSubmit(chosen: "up" | "down") {
+  async function handleSubmit(chosen: "up" | "down" | "note") {
+    if (chosen === "note" && !note.trim()) {
+      toast.error("Add a note or pick a rating first.");
+      return;
+    }
     setSaving(true);
     try {
       const res = await submit({
@@ -65,7 +69,9 @@ export function ThreadFeedbackCard({
       toast.success(
         chosen === "down" && note.trim()
           ? "Coaching saved — your receptionist will apply this on the next call."
-          : "Thanks for the feedback!"
+          : chosen === "note"
+            ? "Note saved — your receptionist will use it going forward."
+            : "Thanks for the feedback!"
       );
       setExisting((prev) => [
         {
