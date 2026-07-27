@@ -62,7 +62,29 @@ export function AgentCoachingCard({ agentId }: { agentId: string }) {
     }
   }
 
+  async function handleAddNote(rating: "down" | "up" | "note") {
+    const note = newNote.trim();
+    if (!note) return;
+    setSubmitting(true);
+    try {
+      const res = await submitFn({
+        data: { agentId, rating, note, conversationId: null },
+      });
+      if (!res.success) {
+        toast.error(res.error);
+        return;
+      }
+      setNewNote("");
+      toast.success("Coaching note added. Receptionist will use it going forward.");
+      await load();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   const corrections = rows.filter((r) => r.rating === "down" && r.note?.trim());
+  const wins = rows.filter((r) => r.rating === "up");
+  const genericNotes = rows.filter((r) => r.rating === "note" && r.note?.trim());
   const wins = rows.filter((r) => r.rating === "up");
   const shown =
     filter === "corrections" ? corrections : filter === "wins" ? wins : rows;
