@@ -115,6 +115,7 @@ export async function resyncReceptionistById(
 
 
   const profile = rowToProfile(row as AgentRow);
+  profile.coaching_notes = await loadCoachingNotes(row.id).catch(() => []);
 
   try {
     const toolSync = await syncBookingToolsForAgent(row.id).catch((e: unknown) => {
