@@ -567,6 +567,13 @@ function ConversationDetailPage() {
             </Button>
           </div>
         </div>
+
+        {conv.agent_id && (
+          <ThreadFeedbackCard
+            agentId={conv.agent_id}
+            conversationId={conv.id}
+          />
+        )}
       </div>
     </div>
   );
