@@ -106,8 +106,29 @@ function Hero() {
 
 function PricingCard() {
   const navigate = useNavigate();
-  const [businessName, setBusinessName] = useState("");
-  const [email, setEmail] = useState("");
+  const { user } = useAuth();
+  const { openCheckout, loading } = usePaddleCheckout();
+  const [busy, setBusy] = useState(false);
+
+  async function handleStart() {
+    if (!user) {
+      void navigate({ to: "/auth", search: { next: "/dashboard/account" } as never });
+      return;
+    }
+    setBusy(true);
+    try {
+      await openCheckout({
+        priceId: ELITE_PRICE_ID,
+        customerEmail: user.email ?? undefined,
+        customData: { userId: user.id },
+        successUrl: `${window.location.origin}/dashboard?checkout=success`,
+      });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't open checkout. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <section className="mt-6 rounded-3xl border border-border bg-card p-8 shadow-sm md:p-10">
@@ -122,16 +143,17 @@ function PricingCard() {
         </div>
       </div>
 
-      <div className="mt-8 rounded-xl border border-dashed border-border bg-secondary/40 p-6 text-center">
-        <p className="text-sm font-semibold text-foreground">Signups are temporarily closed</p>
-        <p className="mt-2 text-sm text-muted-foreground">
-          We're updating billing. To be notified when sign-ups reopen, email{" "}
-          <a href="mailto:hello@askjanice.net" className="font-medium text-gold hover:underline">
-            hello@askjanice.net
-          </a>
-          .
-        </p>
+      <div className="mt-8 text-center">
+        <button
+          type="button"
+          onClick={handleStart}
+          disabled={busy || loading}
+          className="w-full rounded-xl bg-[var(--gold)] px-6 py-3.5 text-base font-semibold text-[var(--gold-foreground)] shadow-sm transition hover:opacity-90 disabled:opacity-60 sm:w-auto sm:px-10"
+        >
+          {busy || loading ? "Opening checkout…" : "Get started — $197/mo"}
+        </button>
       </div>
+
 
       <p className="mt-5 flex items-center justify-center gap-2 text-center text-sm text-muted-foreground">
         <Lock className="h-3.5 w-3.5" />
