@@ -10,6 +10,7 @@ import { DialerPanel } from "@/components/dashboard/DialerPanel";
 import { CalendarHealthBanner } from "@/components/dashboard/CalendarHealthBanner";
 import { AccountMenu } from "@/components/dashboard/AccountMenu";
 import { ImpersonationBanner } from "@/components/dashboard/ImpersonationBanner";
+import { SubscriptionGate } from "@/components/dashboard/SubscriptionGate";
 import { ChatWidgetPage } from "./dashboard.chat-widget";
 
 export const Route = createFileRoute("/dashboard")({
