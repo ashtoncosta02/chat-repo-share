@@ -625,6 +625,8 @@ type RowActionsProps = {
   onAiCallback: (leadId: string) => void;
   onHumanCallback: (leadId: string, phone: string) => void;
   onStatusChange: (leadId: string, status: string) => void;
+  unread?: boolean;
+  onMarkRead?: (convId: string) => void;
 };
 
 function ConversationRow({
