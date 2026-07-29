@@ -904,6 +904,7 @@ function ConversationCard({
           <Link
             to="/dashboard/conversations/$conversationId"
             params={{ conversationId: c.id }}
+            onClick={handleOpen}
             className="p-2 text-muted-foreground hover:text-foreground"
             aria-label="Open transcript"
           >
