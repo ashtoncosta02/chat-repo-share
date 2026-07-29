@@ -59,6 +59,7 @@ const features = [
 function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <PaymentTestModeBanner />
       <Header />
       <main className="mx-auto max-w-3xl px-6 pb-24">
         <Hero />
