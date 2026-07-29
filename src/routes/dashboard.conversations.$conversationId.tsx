@@ -13,6 +13,7 @@ import {
 } from "@/lib/conversation-actions.functions";
 import { getCallRecordingUrl } from "@/lib/call-recording.functions";
 import { ThreadFeedbackCard } from "@/components/dashboard/ThreadFeedbackCard";
+import { markThreadRead } from "@/lib/thread-read-state";
 
 export const Route = createFileRoute("/dashboard/conversations/$conversationId")({
   head: () => ({ meta: [{ title: "Transcript — Ask Janice" }] }),
