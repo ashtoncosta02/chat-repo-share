@@ -90,6 +90,10 @@ function ConversationDetailPage() {
   const getRecordingUrlFn = useServerFn(getCallRecordingUrl);
 
   useEffect(() => {
+    if (user?.id) markThreadRead(user.id, conversationId);
+  }, [user?.id, conversationId]);
+
+  useEffect(() => {
     if (!conv?.recording_url) {
       setRecordingUrl(null);
       return;
