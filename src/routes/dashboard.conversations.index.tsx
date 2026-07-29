@@ -72,6 +72,7 @@ interface ConvRow {
 
 function ConversationsPage() {
   const { user } = useAuth();
+  const { isUnread, markRead } = useReadThreads(user?.id);
   const [convs, setConvs] = useState<ConvRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
