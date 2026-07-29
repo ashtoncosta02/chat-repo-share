@@ -1,24 +1,34 @@
-## Problem
+# Unread/Read indicator on Threads
 
-`NewVersionBanner` is mounted in `src/routes/__root.tsx`, so it renders on **every** route — including `/widget/$agentId`, which is what your customers see embedded on your website. When a new deploy shipped, your visitors saw a big lime "A new version is available — Refresh" bubble floating over the chat widget.
+Add a small pill badge (styled like the existing "Recording" chip, placed to its left) on each thread card in `src/routes/dashboard.conversations.index.tsx`:
 
-That banner is meant only for you/your team inside the dashboard, never for end customers.
+- **Unread** — filled purple accent (like `Recording` but solid), for threads never opened.
+- **Read** — muted gray outline, for threads already opened.
 
-## Fix
+Clicking into a thread flips its state to "Read".
 
-Scope the banner to dashboard routes only. Two small changes:
+## Storage approach
 
-1. **`src/components/NewVersionBanner.tsx`** — gate rendering on the current path. If it doesn't start with `/dashboard`, render nothing. Use `useRouterState` from `@tanstack/react-router` so it reacts to navigation.
+Track read state **per-user in `localStorage`** keyed by user id:
+- Key: `askjanice.threads.read.<userId>`
+- Value: JSON `{ [conversationId]: ISO timestamp }`
 
-2. **`src/routes/__root.tsx`** — no structural change needed; the banner stays mounted globally but self-hides everywhere except `/dashboard/*`.
+Rationale: no schema change, instant UI, and works across the mixed voice/chat/SMS thread list without touching the messages table. A thread is considered **unread** if its `started_at` (or last activity, when available on the row) is newer than the stored read timestamp, or if it has no stored timestamp at all.
 
-Result:
-- You + admins still get the refresh prompt inside the dashboard after a deploy.
-- The public chat widget (`/widget/$agentId`), auth pages, marketing/legal pages, and anything else outside `/dashboard` never show it.
-- Customers on your website see a clean widget — no refresh button, no version chatter.
+## Changes (frontend only)
 
-## Technical details
+1. **`src/routes/dashboard.conversations.index.tsx`**
+   - Add a small `useReadThreads(userId)` hook (inline in the file) that loads the map from `localStorage` on mount and exposes `isUnread(convId, activityAt)` and `markRead(convId)`.
+   - Render a new badge to the immediate **left** of the existing `Recording` chip on each card, matching its size/shape:
+     - Unread: solid gold/purple background + white text, dot icon.
+     - Read: muted border + muted-foreground text.
+   - Call `markRead(conv.id)` in the card's click/`Link` handler (also on "Call back" / open actions so the state updates without waiting for a route change).
+   - Keep sort order unchanged.
 
-- Use `useRouterState({ select: (s) => s.location.pathname })` inside `NewVersionBanner`; early-return `null` when the pathname doesn't start with `/dashboard`.
-- Keep the polling/visibility logic as-is so the banner appears immediately once an admin navigates into the dashboard after a deploy.
-- No changes to `getLoadedAssetHash` (still used by the Admin build-version card).
+2. **`src/routes/dashboard.conversations.$conversationId.tsx`**
+   - On mount, also call the same `localStorage` writer (small shared helper — either duplicated or extracted to `src/lib/thread-read-state.ts`) so opening the detail page directly (deep link) also marks it read.
+
+## Out of scope
+
+- No DB column, no server function, no notification changes.
+- No new "Unread" filter in the toolbar (can be added later if the customer asks).
