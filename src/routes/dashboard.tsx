@@ -272,11 +272,13 @@ function DashboardLayout() {
         </div>
         <ImpersonationBanner currentEmail={user.email} />
         {agentId && <CalendarHealthBanner agentId={agentId} />}
-        {location.pathname === "/dashboard/chat-widget" ? (
-          <ChatWidgetPage />
-        ) : (
-          <Outlet />
-        )}
+        <SubscriptionGate isAdmin={isAdmin}>
+          {location.pathname === "/dashboard/chat-widget" ? (
+            <ChatWidgetPage />
+          ) : (
+            <Outlet />
+          )}
+        </SubscriptionGate>
       </main>
 
       {/* Floating help chat */}
