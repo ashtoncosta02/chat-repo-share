@@ -295,6 +295,14 @@ export function GoogleCalendarCard({ agentId }: Props) {
         </div>
       </div>
 
+      {!conn && (
+        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800">
+          <span className="font-medium">Heads up:</span> Google is still finishing their review of
+          our calendar connection, so this one is taking a short break. We'll switch it back on the
+          moment they give us the green light — in the meantime, Outlook Calendar is ready to go.
+        </div>
+      )}
+
       {manualUrl && !conn && (
         <div className="mt-4 flex flex-col gap-2 rounded-xl border border-border bg-background/60 p-3">
           <p className="text-sm text-muted-foreground">
