@@ -493,6 +493,8 @@ function ConversationsPage() {
                   onAiCallback={triggerAiCallback}
                   onHumanCallback={triggerHumanCallback}
                   onStatusChange={updateLeadStatus}
+                  unread={isUnread(c.id, c.ended_at ?? c.started_at)}
+                  onMarkRead={markRead}
                 />
               ))}
             </ul>
