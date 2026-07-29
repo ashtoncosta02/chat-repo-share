@@ -10,6 +10,7 @@ import { DialerPanel } from "@/components/dashboard/DialerPanel";
 import { CalendarHealthBanner } from "@/components/dashboard/CalendarHealthBanner";
 import { AccountMenu } from "@/components/dashboard/AccountMenu";
 import { ImpersonationBanner } from "@/components/dashboard/ImpersonationBanner";
+import { SubscriptionGate } from "@/components/dashboard/SubscriptionGate";
 import { ChatWidgetPage } from "./dashboard.chat-widget";
 
 export const Route = createFileRoute("/dashboard")({
@@ -272,11 +273,13 @@ function DashboardLayout() {
         </div>
         <ImpersonationBanner currentEmail={user.email} />
         {agentId && <CalendarHealthBanner agentId={agentId} />}
-        {location.pathname === "/dashboard/chat-widget" ? (
-          <ChatWidgetPage />
-        ) : (
-          <Outlet />
-        )}
+        <SubscriptionGate isAdmin={isAdmin}>
+          {location.pathname === "/dashboard/chat-widget" ? (
+            <ChatWidgetPage />
+          ) : (
+            <Outlet />
+          )}
+        </SubscriptionGate>
       </main>
 
       {/* Floating help chat */}
