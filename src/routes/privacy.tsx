@@ -44,7 +44,7 @@ function PrivacyPage() {
           </p>
 
           <h2 className="font-display text-2xl font-semibold">2. What We Collect</h2>
-          <p><strong>From customers:</strong> name, email, business name, business details and FAQs you provide, payment information (processed by Stripe), and usage activity.</p>
+          <p><strong>From customers:</strong> name, email, business name, business details and FAQs you provide, payment information (processed by Paddle), and usage activity.</p>
           <p><strong>From callers / website visitors:</strong> phone number, name, email when provided, call audio recordings, transcripts, chat messages, IP address, and any information they share with the AI.</p>
 
           <h2 className="font-display text-2xl font-semibold">3. How We Use Data</h2>
@@ -70,7 +70,7 @@ function PrivacyPage() {
             <li><strong>ElevenLabs</strong> — AI voice generation and conversation.</li>
             <li><strong>Google</strong> — Calendar integration and (optional) OAuth sign-in.</li>
             <li><strong>Lovable Cloud / Supabase</strong> — database, authentication, storage.</li>
-            <li><strong>Stripe</strong> — payment processing (when billing is enabled).</li>
+            <li><strong>Paddle</strong> — payment processing, subscription management, tax compliance, and invoicing (when billing is enabled).</li>
           </ul>
           <p>We disclose data when required by law or to protect our rights.</p>
 
@@ -122,7 +122,8 @@ function PrivacyPage() {
         <div className="mx-auto max-w-3xl px-6 text-center text-sm text-muted-foreground">
           © {new Date().getFullYear()} Ask Janice ·{" "}
           <Link to="/privacy" className="hover:text-foreground">Privacy</Link> ·{" "}
-          <Link to="/terms" className="hover:text-foreground">Terms</Link>
+          <Link to="/terms" className="hover:text-foreground">Terms</Link> ·{" "}
+          <Link to="/refund-policy" className="hover:text-foreground">Refunds</Link>
         </div>
       </footer>
     </div>
