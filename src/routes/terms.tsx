@@ -85,6 +85,20 @@ function TermsPage() {
             Phone-number, SMS, and AI-usage fees from underlying providers are included in your
             plan unless stated otherwise.
           </p>
+          <p>
+            Our order process is conducted by our online reseller Paddle.com. Paddle.com is the
+            Merchant of Record for all our orders. Paddle provides all customer service inquiries
+            and handles returns. You can review Paddle's buyer terms at{" "}
+            <a
+              href="https://www.paddle.com/legal/checkout-buyer-terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gold hover:underline"
+            >
+              paddle.com/legal/checkout-buyer-terms
+            </a>
+            .
+          </p>
 
           <h2 className="font-display text-2xl font-semibold">7. Third-Party Services</h2>
           <p>
@@ -140,7 +154,8 @@ function TermsPage() {
         <div className="mx-auto max-w-3xl px-6 text-center text-sm text-muted-foreground">
           © {new Date().getFullYear()} Ask Janice ·{" "}
           <Link to="/privacy" className="hover:text-foreground">Privacy</Link> ·{" "}
-          <Link to="/terms" className="hover:text-foreground">Terms</Link>
+          <Link to="/terms" className="hover:text-foreground">Terms</Link> ·{" "}
+          <Link to="/refund-policy" className="hover:text-foreground">Refunds</Link>
         </div>
       </footer>
     </div>

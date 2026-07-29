@@ -729,7 +729,7 @@ function BillingOverrides({ profile, onSave }: { profile: any; onSave: (priceCen
     <div className="mt-4 pt-4 border-t border-border space-y-3">
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-medium text-foreground">Billing overrides</h4>
-        <span className="text-[11px] text-muted-foreground">Applied when Stripe is connected. Leave blank for standard.</span>
+        <span className="text-[11px] text-muted-foreground">Applied when Paddle billing is active. Leave blank for standard.</span>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>

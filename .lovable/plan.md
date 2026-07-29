@@ -1,34 +1,54 @@
-# Unread/Read indicator on Threads
+Plan: Prepare Ask Janice for real payments (Paddle go-live)
 
-Add a small pill badge (styled like the existing "Recording" chip, placed to its left) on each thread card in `src/routes/dashboard.conversations.index.tsx`:
+Context
+- The app currently runs in Paddle's test/sandbox environment. Real cards are declined until Paddle's go-live checklist is completed.
+- Required legal pages for Paddle: Terms & Conditions, Privacy Notice, and a dedicated Refund Policy.
+- Current gaps:
+  - Terms and Privacy pages still reference Stripe (switched to Paddle).
+  - Terms page is missing Paddle's required Merchant of Record disclosure.
+  - No dedicated /refund-policy route exists.
+  - Go-live status shows all steps as not started / action required.
 
-- **Unread** — filled purple accent (like `Recording` but solid), for threads never opened.
-- **Read** — muted gray outline, for threads already opened.
+Steps
 
-Clicking into a thread flips its state to "Read".
+1. Update Terms of Service (`src/routes/terms.tsx`)
+   - Replace Stripe references with Paddle.
+   - Add Paddle Merchant of Record disclosure in the billing section.
+   - Ensure seller name reads "Ask Janice" consistently.
+   - Keep the 30-day money-back guarantee language.
 
-## Storage approach
+2. Update Privacy Policy (`src/routes/privacy.tsx`)
+   - Replace Stripe with Paddle under data sharing/subprocessors.
+   - Add Paddle's role in payment processing, subscription management, tax compliance, and invoicing.
+   - Keep all other data-collection and retention language intact.
 
-Track read state **per-user in `localStorage`** keyed by user id:
-- Key: `askjanice.threads.read.<userId>`
-- Value: JSON `{ [conversationId]: ISO timestamp }`
+3. Create Refund Policy page (`src/routes/refund-policy.tsx`)
+   - New public route at `/refund-policy`.
+   - State a 30-day money-back guarantee.
+   - Explain how to request a refund through Paddle (paddle.net) or by contacting hello@askjanice.net.
+   - Avoid "no refunds" / "all sales final" language per Paddle requirements.
+   - Link from Terms and/or footer if a footer exists.
 
-Rationale: no schema change, instant UI, and works across the mixed voice/chat/SMS thread list without touching the messages table. A thread is considered **unread** if its `started_at` (or last activity, when available on the row) is newer than the stored read timestamp, or if it has no stored timestamp at all.
+4. Update landing page / billing copy
+   - Scan `src/routes/index.tsx` and `src/routes/dashboard.account.tsx` for any remaining Stripe references.
+   - Replace with Paddle copy where found.
 
-## Changes (frontend only)
+5. Publish the app
+   - Trigger a publish so the live site uses the production Paddle token.
+   - Paddle requires a published site for domain review.
 
-1. **`src/routes/dashboard.conversations.index.tsx`**
-   - Add a small `useReadThreads(userId)` hook (inline in the file) that loads the map from `localStorage` on mount and exposes `isUnread(convId, activityAt)` and `markRead(convId)`.
-   - Render a new badge to the immediate **left** of the existing `Recording` chip on each card, matching its size/shape:
-     - Unread: solid gold/purple background + white text, dot icon.
-     - Read: muted border + muted-foreground text.
-   - Call `markRead(conv.id)` in the card's click/`Link` handler (also on "Call back" / open actions so the state updates without waiting for a route change).
-   - Keep sort order unchanged.
+6. Complete Paddle verification
+   - Direct the user to the Payments tab to fill out the verification form.
+   - Steps: verification form → domain review → business identification → identity verification → final review.
+   - Note: live checkout will not accept real cards until all steps are approved.
 
-2. **`src/routes/dashboard.conversations.$conversationId.tsx`**
-   - On mount, also call the same `localStorage` writer (small shared helper — either duplicated or extracted to `src/lib/thread-read-state.ts`) so opening the detail page directly (deep link) also marks it read.
+Acceptance criteria
+- `/terms`, `/privacy`, and `/refund-policy` are public, accurate, and mention Paddle (not Stripe).
+- Terms includes the Paddle Merchant of Record disclosure.
+- Refund Policy offers 30 days and directs users to Paddle.
+- App is published and Paddle verification is in progress.
 
-## Out of scope
-
-- No DB column, no server function, no notification changes.
-- No new "Unread" filter in the toolbar (can be added later if the customer asks).
+Out of scope
+- Changing subscription pricing or product catalog.
+- Custom domain changes (already configured).
+- New features beyond go-live readiness.
