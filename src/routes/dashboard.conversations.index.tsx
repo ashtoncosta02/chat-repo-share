@@ -783,7 +783,10 @@ function ConversationCard({
   onAiCallback,
   onHumanCallback,
   onStatusChange,
+  unread,
+  onMarkRead,
 }: RowActionsProps) {
+  const handleOpen = () => onMarkRead?.(c.id);
   const displayName = c.lead_name ?? "Unknown Caller";
   const initials = c.lead_name
     ? c.lead_name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()
