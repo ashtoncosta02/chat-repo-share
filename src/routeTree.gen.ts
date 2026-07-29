@@ -58,6 +58,7 @@ import { Route as ApiPublicTwilioVoiceRouteImport } from './routes/api.public.tw
 import { Route as ApiPublicTwilioSmsRouteImport } from './routes/api.public.twilio.sms'
 import { Route as ApiPublicTwilioDialerBridgeRouteImport } from './routes/api.public.twilio.dialer-bridge'
 import { Route as ApiPublicTwilioCallbackRouteImport } from './routes/api.public.twilio.callback'
+import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api.public.payments.webhook'
 import { Route as ApiPublicOutlookCalendarCallbackRouteImport } from './routes/api.public.outlook-calendar.callback'
 import { Route as ApiPublicHooksAutoDeleteThreadsRouteImport } from './routes/api.public.hooks.auto-delete-threads'
 import { Route as ApiPublicGoogleCalendarCallbackRouteImport } from './routes/api.public.google-calendar.callback'
@@ -324,6 +325,12 @@ const ApiPublicTwilioCallbackRoute = ApiPublicTwilioCallbackRouteImport.update({
   path: '/api/public/twilio/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPaymentsWebhookRoute =
+  ApiPublicPaymentsWebhookRouteImport.update({
+    id: '/api/public/payments/webhook',
+    path: '/api/public/payments/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicOutlookCalendarCallbackRoute =
   ApiPublicOutlookCalendarCallbackRouteImport.update({
     id: '/api/public/outlook-calendar/callback',
@@ -393,6 +400,7 @@ export interface FileRoutesByFullPath {
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
   '/api/public/hooks/auto-delete-threads': typeof ApiPublicHooksAutoDeleteThreadsRoute
   '/api/public/outlook-calendar/callback': typeof ApiPublicOutlookCalendarCallbackRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/twilio/callback': typeof ApiPublicTwilioCallbackRoute
   '/api/public/twilio/dialer-bridge': typeof ApiPublicTwilioDialerBridgeRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
@@ -444,6 +452,7 @@ export interface FileRoutesByTo {
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
   '/api/public/hooks/auto-delete-threads': typeof ApiPublicHooksAutoDeleteThreadsRoute
   '/api/public/outlook-calendar/callback': typeof ApiPublicOutlookCalendarCallbackRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/twilio/callback': typeof ApiPublicTwilioCallbackRoute
   '/api/public/twilio/dialer-bridge': typeof ApiPublicTwilioDialerBridgeRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
@@ -501,6 +510,7 @@ export interface FileRoutesById {
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
   '/api/public/hooks/auto-delete-threads': typeof ApiPublicHooksAutoDeleteThreadsRoute
   '/api/public/outlook-calendar/callback': typeof ApiPublicOutlookCalendarCallbackRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/twilio/callback': typeof ApiPublicTwilioCallbackRoute
   '/api/public/twilio/dialer-bridge': typeof ApiPublicTwilioDialerBridgeRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
@@ -559,6 +569,7 @@ export interface FileRouteTypes {
     | '/api/public/google-calendar/callback'
     | '/api/public/hooks/auto-delete-threads'
     | '/api/public/outlook-calendar/callback'
+    | '/api/public/payments/webhook'
     | '/api/public/twilio/callback'
     | '/api/public/twilio/dialer-bridge'
     | '/api/public/twilio/sms'
@@ -610,6 +621,7 @@ export interface FileRouteTypes {
     | '/api/public/google-calendar/callback'
     | '/api/public/hooks/auto-delete-threads'
     | '/api/public/outlook-calendar/callback'
+    | '/api/public/payments/webhook'
     | '/api/public/twilio/callback'
     | '/api/public/twilio/dialer-bridge'
     | '/api/public/twilio/sms'
@@ -666,6 +678,7 @@ export interface FileRouteTypes {
     | '/api/public/google-calendar/callback'
     | '/api/public/hooks/auto-delete-threads'
     | '/api/public/outlook-calendar/callback'
+    | '/api/public/payments/webhook'
     | '/api/public/twilio/callback'
     | '/api/public/twilio/dialer-bridge'
     | '/api/public/twilio/sms'
@@ -700,6 +713,7 @@ export interface RootRouteChildren {
   ApiPublicGoogleCalendarCallbackRoute: typeof ApiPublicGoogleCalendarCallbackRoute
   ApiPublicHooksAutoDeleteThreadsRoute: typeof ApiPublicHooksAutoDeleteThreadsRoute
   ApiPublicOutlookCalendarCallbackRoute: typeof ApiPublicOutlookCalendarCallbackRoute
+  ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   ApiPublicTwilioCallbackRoute: typeof ApiPublicTwilioCallbackRoute
   ApiPublicTwilioDialerBridgeRoute: typeof ApiPublicTwilioDialerBridgeRoute
   ApiPublicTwilioSmsRoute: typeof ApiPublicTwilioSmsRoute
@@ -1060,6 +1074,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTwilioCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/payments/webhook': {
+      id: '/api/public/payments/webhook'
+      path: '/api/public/payments/webhook'
+      fullPath: '/api/public/payments/webhook'
+      preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/outlook-calendar/callback': {
       id: '/api/public/outlook-calendar/callback'
       path: '/api/public/outlook-calendar/callback'
@@ -1220,6 +1241,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicGoogleCalendarCallbackRoute: ApiPublicGoogleCalendarCallbackRoute,
   ApiPublicHooksAutoDeleteThreadsRoute: ApiPublicHooksAutoDeleteThreadsRoute,
   ApiPublicOutlookCalendarCallbackRoute: ApiPublicOutlookCalendarCallbackRoute,
+  ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   ApiPublicTwilioCallbackRoute: ApiPublicTwilioCallbackRoute,
   ApiPublicTwilioDialerBridgeRoute: ApiPublicTwilioDialerBridgeRoute,
   ApiPublicTwilioSmsRoute: ApiPublicTwilioSmsRoute,
