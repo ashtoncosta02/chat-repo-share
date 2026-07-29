@@ -13,6 +13,7 @@ import {
 } from "@/lib/conversation-actions.functions";
 import { getCallRecordingUrl } from "@/lib/call-recording.functions";
 import { ThreadFeedbackCard } from "@/components/dashboard/ThreadFeedbackCard";
+import { markThreadRead } from "@/lib/thread-read-state";
 
 export const Route = createFileRoute("/dashboard/conversations/$conversationId")({
   head: () => ({ meta: [{ title: "Transcript — Ask Janice" }] }),
@@ -87,6 +88,10 @@ function ConversationDetailPage() {
   const [relatedCalls, setRelatedCalls] = useState<RelatedCall[]>([]);
   const [recordingUrl, setRecordingUrl] = useState<string | null>(null);
   const getRecordingUrlFn = useServerFn(getCallRecordingUrl);
+
+  useEffect(() => {
+    if (user?.id) markThreadRead(user.id, conversationId);
+  }, [user?.id, conversationId]);
 
   useEffect(() => {
     if (!conv?.recording_url) {

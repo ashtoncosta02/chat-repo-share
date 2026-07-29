@@ -3,7 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/dashboard/PageHeader";
-import { MessageSquare, ChevronRight, Mic, Trash2, RefreshCw, Phone as PhoneIcon, Search, PhoneCall, Bot, Loader2, Mail, MoreVertical, Archive, ArchiveRestore, Ban } from "lucide-react";
+import { MessageSquare, ChevronRight, Mic, Trash2, RefreshCw, Phone as PhoneIcon, Search, PhoneCall, Bot, Loader2, Mail, MoreVertical, Archive, ArchiveRestore, Ban, MailOpen } from "lucide-react";
+import { useReadThreads } from "@/lib/thread-read-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -71,6 +72,7 @@ interface ConvRow {
 
 function ConversationsPage() {
   const { user } = useAuth();
+  const { isUnread, markRead } = useReadThreads(user?.id);
   const [convs, setConvs] = useState<ConvRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -492,6 +494,8 @@ function ConversationsPage() {
                   onAiCallback={triggerAiCallback}
                   onHumanCallback={triggerHumanCallback}
                   onStatusChange={updateLeadStatus}
+                  unread={isUnread(c.id, c.ended_at ?? c.started_at)}
+                  onMarkRead={markRead}
                 />
               ))}
             </ul>
@@ -621,6 +625,8 @@ type RowActionsProps = {
   onAiCallback: (leadId: string) => void;
   onHumanCallback: (leadId: string, phone: string) => void;
   onStatusChange: (leadId: string, status: string) => void;
+  unread?: boolean;
+  onMarkRead?: (convId: string) => void;
 };
 
 function ConversationRow({
@@ -777,7 +783,10 @@ function ConversationCard({
   onAiCallback,
   onHumanCallback,
   onStatusChange,
+  unread,
+  onMarkRead,
 }: RowActionsProps) {
+  const handleOpen = () => onMarkRead?.(c.id);
   const displayName = c.lead_name ?? "Unknown Caller";
   const initials = c.lead_name
     ? c.lead_name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()
@@ -797,13 +806,22 @@ function ConversationCard({
         <Link
           to="/dashboard/conversations/$conversationId"
           params={{ conversationId: c.id }}
+          onClick={handleOpen}
           className="flex min-w-0 items-center gap-3"
         >
           <div className={`h-10 w-10 shrink-0 rounded-full flex items-center justify-center text-sm font-semibold ${avatarColor}`}>
             {initials ?? <PhoneIcon className="h-4 w-4" />}
           </div>
           <div className="min-w-0">
-            <div className="font-medium text-foreground truncate">{displayName}</div>
+            <div className="font-medium text-foreground truncate flex items-center gap-2">
+              {unread && (
+                <span
+                  aria-label="Unread"
+                  className="h-2 w-2 shrink-0 rounded-full bg-[var(--gold)]"
+                />
+              )}
+              <span className="truncate">{displayName}</span>
+            </div>
             <div className="text-xs text-muted-foreground truncate">
                   {c.lead_phone ?? "No phone"} · {formatTime(c.ended_at ?? c.started_at)}
             </div>
@@ -816,16 +834,30 @@ function ConversationCard({
       <Link
         to="/dashboard/conversations/$conversationId"
         params={{ conversationId: c.id }}
+        onClick={handleOpen}
         className="block mt-3 text-sm text-foreground/80 whitespace-pre-wrap break-words leading-relaxed hover:underline"
       >
         {summary}
       </Link>
-      {c.recording_url && (
-        <span className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[oklch(0.95_0.05_290)] text-[var(--gold)]">
-          <Mic className="h-3 w-3" />
-          Recording
-        </span>
-      )}
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        {unread ? (
+          <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--gold)] text-white">
+            <Mail className="h-3 w-3" />
+            Unread
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full border border-border text-muted-foreground">
+            <MailOpen className="h-3 w-3" />
+            Read
+          </span>
+        )}
+        {c.recording_url && (
+          <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[oklch(0.95_0.05_290)] text-[var(--gold)]">
+            <Mic className="h-3 w-3" />
+            Recording
+          </span>
+        )}
+      </div>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
         {c.lead_id ? (
           <Select value={c.lead_status ?? "new"} onValueChange={(v) => onStatusChange(c.lead_id!, v)}>
@@ -872,6 +904,7 @@ function ConversationCard({
           <Link
             to="/dashboard/conversations/$conversationId"
             params={{ conversationId: c.id }}
+            onClick={handleOpen}
             className="p-2 text-muted-foreground hover:text-foreground"
             aria-label="Open transcript"
           >
