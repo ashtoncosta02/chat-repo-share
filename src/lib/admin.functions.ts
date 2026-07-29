@@ -763,7 +763,7 @@ export const adminSetUserPlan = createServerFn({ method: "POST" })
   });
 
 // Per-user billing overrides (price override + free-until date).
-// No charges happen yet — these fields will be honored when Stripe is wired up.
+// These fields are honored by the Paddle subscription gating logic.
 const billingSchema = z.object({
   accessToken: z.string().min(1),
   userId: z.string().uuid(),
