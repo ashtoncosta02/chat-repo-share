@@ -23,21 +23,34 @@ export const Route = createFileRoute("/api/public/elevenlabs/postcall")({
         const signature = request.headers.get("elevenlabs-signature");
         const rawBody = await request.text();
 
+        // Best-effort conversation id purely for logging, so a rejected call
+        // can be traced (and recovered) from the logs later.
+        let logConvId = "unknown";
+        try {
+          const peek = JSON.parse(rawBody) as PostCallPayload;
+          logConvId =
+            peek.data?.conversation_id ??
+            (peek as unknown as PostCallData).conversation_id ??
+            "unknown";
+        } catch {
+          /* handled below */
+        }
+
         let signatureTrusted = false;
         if (secret) {
           if (!signature) {
-            console.warn("postcall: missing signature; will verify via ElevenLabs API");
+            console.warn(`postcall: missing signature for ${logConvId}; will verify via ElevenLabs API`);
           } else {
             const headerParts = signature.split(",").map((p) => p.trim());
             const ts = headerParts.find((p) => p.startsWith("t="))?.slice(2);
             const sigPart = headerParts.find((p) => p.startsWith("v0="));
             const sig = sigPart?.slice(3);
             if (!ts || !sig) {
-              console.warn("postcall: bad signature parts; will verify via ElevenLabs API");
+              console.warn(`postcall: bad signature parts for ${logConvId}; will verify via ElevenLabs API`);
             } else {
               const ageSec = Math.abs(Date.now() / 1000 - Number(ts));
               if (!Number.isFinite(ageSec) || ageSec > 1800) {
-                console.warn("postcall: stale signature; will verify via ElevenLabs API", ageSec);
+                console.warn(`postcall: stale signature for ${logConvId}; will verify via ElevenLabs API`, ageSec);
               } else {
                 const expected = createHmac("sha256", secret)
                   .update(`${ts}.${rawBody}`)
@@ -46,7 +59,7 @@ export const Route = createFileRoute("/api/public/elevenlabs/postcall")({
                 const b = Buffer.from(expected, "hex");
                 signatureTrusted = a.length === b.length && timingSafeEqual(a, b);
                 if (!signatureTrusted) {
-                  console.warn("postcall: invalid signature; will verify via ElevenLabs API");
+                  console.warn(`postcall: invalid signature for ${logConvId}; will verify via ElevenLabs API`);
                 }
               }
             }

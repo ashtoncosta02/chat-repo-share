@@ -62,6 +62,7 @@ import { Route as ApiPublicTwilioDialerBridgeRouteImport } from './routes/api.pu
 import { Route as ApiPublicTwilioCallbackRouteImport } from './routes/api.public.twilio.callback'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api.public.payments.webhook'
 import { Route as ApiPublicOutlookCalendarCallbackRouteImport } from './routes/api.public.outlook-calendar.callback'
+import { Route as ApiPublicHooksBackfillCallsRouteImport } from './routes/api.public.hooks.backfill-calls'
 import { Route as ApiPublicHooksAutoDeleteThreadsRouteImport } from './routes/api.public.hooks.auto-delete-threads'
 import { Route as ApiPublicGoogleCalendarCallbackRouteImport } from './routes/api.public.google-calendar.callback'
 import { Route as ApiPublicElevenlabsPostcallRouteImport } from './routes/api.public.elevenlabs.postcall'
@@ -349,6 +350,12 @@ const ApiPublicOutlookCalendarCallbackRoute =
     path: '/api/public/outlook-calendar/callback',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksBackfillCallsRoute =
+  ApiPublicHooksBackfillCallsRouteImport.update({
+    id: '/api/public/hooks/backfill-calls',
+    path: '/api/public/hooks/backfill-calls',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksAutoDeleteThreadsRoute =
   ApiPublicHooksAutoDeleteThreadsRouteImport.update({
     id: '/api/public/hooks/auto-delete-threads',
@@ -413,6 +420,7 @@ export interface FileRoutesByFullPath {
   '/api/public/elevenlabs/postcall': typeof ApiPublicElevenlabsPostcallRoute
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
   '/api/public/hooks/auto-delete-threads': typeof ApiPublicHooksAutoDeleteThreadsRoute
+  '/api/public/hooks/backfill-calls': typeof ApiPublicHooksBackfillCallsRoute
   '/api/public/outlook-calendar/callback': typeof ApiPublicOutlookCalendarCallbackRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/twilio/callback': typeof ApiPublicTwilioCallbackRoute
@@ -467,6 +475,7 @@ export interface FileRoutesByTo {
   '/api/public/elevenlabs/postcall': typeof ApiPublicElevenlabsPostcallRoute
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
   '/api/public/hooks/auto-delete-threads': typeof ApiPublicHooksAutoDeleteThreadsRoute
+  '/api/public/hooks/backfill-calls': typeof ApiPublicHooksBackfillCallsRoute
   '/api/public/outlook-calendar/callback': typeof ApiPublicOutlookCalendarCallbackRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/twilio/callback': typeof ApiPublicTwilioCallbackRoute
@@ -527,6 +536,7 @@ export interface FileRoutesById {
   '/api/public/elevenlabs/postcall': typeof ApiPublicElevenlabsPostcallRoute
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
   '/api/public/hooks/auto-delete-threads': typeof ApiPublicHooksAutoDeleteThreadsRoute
+  '/api/public/hooks/backfill-calls': typeof ApiPublicHooksBackfillCallsRoute
   '/api/public/outlook-calendar/callback': typeof ApiPublicOutlookCalendarCallbackRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/twilio/callback': typeof ApiPublicTwilioCallbackRoute
@@ -588,6 +598,7 @@ export interface FileRouteTypes {
     | '/api/public/elevenlabs/postcall'
     | '/api/public/google-calendar/callback'
     | '/api/public/hooks/auto-delete-threads'
+    | '/api/public/hooks/backfill-calls'
     | '/api/public/outlook-calendar/callback'
     | '/api/public/payments/webhook'
     | '/api/public/twilio/callback'
@@ -642,6 +653,7 @@ export interface FileRouteTypes {
     | '/api/public/elevenlabs/postcall'
     | '/api/public/google-calendar/callback'
     | '/api/public/hooks/auto-delete-threads'
+    | '/api/public/hooks/backfill-calls'
     | '/api/public/outlook-calendar/callback'
     | '/api/public/payments/webhook'
     | '/api/public/twilio/callback'
@@ -701,6 +713,7 @@ export interface FileRouteTypes {
     | '/api/public/elevenlabs/postcall'
     | '/api/public/google-calendar/callback'
     | '/api/public/hooks/auto-delete-threads'
+    | '/api/public/hooks/backfill-calls'
     | '/api/public/outlook-calendar/callback'
     | '/api/public/payments/webhook'
     | '/api/public/twilio/callback'
@@ -738,6 +751,7 @@ export interface RootRouteChildren {
   ApiPublicElevenlabsPostcallRoute: typeof ApiPublicElevenlabsPostcallRoute
   ApiPublicGoogleCalendarCallbackRoute: typeof ApiPublicGoogleCalendarCallbackRoute
   ApiPublicHooksAutoDeleteThreadsRoute: typeof ApiPublicHooksAutoDeleteThreadsRoute
+  ApiPublicHooksBackfillCallsRoute: typeof ApiPublicHooksBackfillCallsRoute
   ApiPublicOutlookCalendarCallbackRoute: typeof ApiPublicOutlookCalendarCallbackRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   ApiPublicTwilioCallbackRoute: typeof ApiPublicTwilioCallbackRoute
@@ -1128,6 +1142,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicOutlookCalendarCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/backfill-calls': {
+      id: '/api/public/hooks/backfill-calls'
+      path: '/api/public/hooks/backfill-calls'
+      fullPath: '/api/public/hooks/backfill-calls'
+      preLoaderRoute: typeof ApiPublicHooksBackfillCallsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/auto-delete-threads': {
       id: '/api/public/hooks/auto-delete-threads'
       path: '/api/public/hooks/auto-delete-threads'
@@ -1282,6 +1303,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicElevenlabsPostcallRoute: ApiPublicElevenlabsPostcallRoute,
   ApiPublicGoogleCalendarCallbackRoute: ApiPublicGoogleCalendarCallbackRoute,
   ApiPublicHooksAutoDeleteThreadsRoute: ApiPublicHooksAutoDeleteThreadsRoute,
+  ApiPublicHooksBackfillCallsRoute: ApiPublicHooksBackfillCallsRoute,
   ApiPublicOutlookCalendarCallbackRoute: ApiPublicOutlookCalendarCallbackRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   ApiPublicTwilioCallbackRoute: ApiPublicTwilioCallbackRoute,
@@ -1302,13 +1324,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
