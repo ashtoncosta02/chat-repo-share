@@ -1,54 +1,30 @@
-Plan: Prepare Ask Janice for real payments (Paddle go-live)
+## What I found for Costa Caulking (info@costacaulking.com)
 
-Context
-- The app currently runs in Paddle's test/sandbox environment. Real cards are declined until Paddle's go-live checklist is completed.
-- Required legal pages for Paddle: Terms & Conditions, Privacy Notice, and a dedicated Refund Policy.
-- Current gaps:
-  - Terms and Privacy pages still reference Stripe (switched to Paddle).
-  - Terms page is missing Paddle's required Merchant of Record disclosure.
-  - No dedicated /refund-policy route exists.
-  - Go-live status shows all steps as not started / action required.
+There is **no backlog**. Comparing the voice provider's call history to your database:
 
-Steps
+- All calls through **10:44 AM EDT** are stored correctly, one-for-one.
+- After that, the provider recorded **exactly one call: 3:21 PM EDT** (14 seconds, 5 exchanges).
+- That one call was never saved — no thread, no lead, no transcript email.
+- No website-chat conversations exist for this account in the last 2 days.
 
-1. Update Terms of Service (`src/routes/terms.tsx`)
-   - Replace Stripe references with Paddle.
-   - Add Paddle Merchant of Record disclosure in the billing section.
-   - Ensure seller name reads "Ask Janice" consistently.
-   - Keep the 30-day money-back guarantee language.
+So a single post-call webhook was dropped. The real problem is that today this failure is silent and permanent: if the webhook request fails or fails signature verification, the call is lost until someone manually runs the backfill tool in Admin.
 
-2. Update Privacy Policy (`src/routes/privacy.tsx`)
-   - Replace Stripe with Paddle under data sharing/subprocessors.
-   - Add Paddle's role in payment processing, subscription management, tax compliance, and invoicing.
-   - Keep all other data-collection and retention language intact.
+## Plan
 
-3. Create Refund Policy page (`src/routes/refund-policy.tsx`)
-   - New public route at `/refund-policy`.
-   - State a 30-day money-back guarantee.
-   - Explain how to request a refund through Paddle (paddle.net) or by contacting hello@askjanice.net.
-   - Avoid "no refunds" / "all sales final" language per Paddle requirements.
-   - Link from Terms and/or footer if a footer exists.
+1. **Recover the missing call now** — run the existing backfill for Costa Caulking's receptionist so the 3:21 PM call appears in Threads with transcript and lead. It de-duplicates, so nothing else is affected.
 
-4. Update landing page / billing copy
-   - Scan `src/routes/index.tsx` and `src/routes/dashboard.account.tsx` for any remaining Stripe references.
-   - Replace with Paddle copy where found.
+2. **Add an automatic hourly sweep** so this self-heals for every customer:
+   - New endpoint `src/routes/api.public.hooks.backfill-calls.ts`, same shape and shared-secret guard as the existing `api.public.hooks.auto-delete-threads.ts`.
+   - Loops every receptionist with a linked voice agent, pulls the recent call list, and persists any call the app doesn't already have (reusing `backfillRecentCalls`).
+   - Scheduled hourly via the same cron mechanism as the existing hook.
 
-5. Publish the app
-   - Trigger a publish so the live site uses the production Paddle token.
-   - Paddle requires a published site for domain review.
+3. **Make webhook failures visible instead of silent**
+   - Log a clear warning whenever a call is rejected for signature/verification reasons, including the conversation id, so it's searchable.
+   - On the Admin health page, show a "calls recovered by backfill in last 24h" counter so a recurring problem becomes obvious.
 
-6. Complete Paddle verification
-   - Direct the user to the Payments tab to fill out the verification form.
-   - Steps: verification form → domain review → business identification → identity verification → final review.
-   - Note: live checkout will not accept real cards until all steps are approved.
+4. **Notifications for recovered calls** — recovered calls run through the same lead-capture and transcript-email path, marked as recovered so a late email isn't confusing.
 
-Acceptance criteria
-- `/terms`, `/privacy`, and `/refund-policy` are public, accurate, and mention Paddle (not Stripe).
-- Terms includes the Paddle Merchant of Record disclosure.
-- Refund Policy offers 30 days and directs users to Paddle.
-- App is published and Paddle verification is in progress.
-
-Out of scope
-- Changing subscription pricing or product catalog.
-- Custom domain changes (already configured).
-- New features beyond go-live readiness.
+### Technical notes
+- `backfillRecentCalls` filters to `status === "done"`; the missed call qualifies.
+- The sweep reuses `persistPostCall`, which de-duplicates on `elevenlabs_conversation_id`.
+- No schema changes; the counter derives from existing `conversations` rows.
