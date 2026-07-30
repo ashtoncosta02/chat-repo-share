@@ -33,7 +33,7 @@ function TermsPage() {
       </header>
       <main className="mx-auto max-w-3xl px-6 py-12 prose prose-invert prose-headings:font-display">
         <h1 className="font-display text-4xl font-bold tracking-tight">Terms of Service</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Last updated: June 10, 2026</p>
+        <p className="mt-2 text-sm text-muted-foreground">Last updated: July 30, 2026</p>
 
         <section className="mt-8 space-y-4 text-base leading-relaxed text-foreground/90">
           <h2 className="font-display text-2xl font-semibold">1. Acceptance of Terms</h2>
@@ -135,39 +135,39 @@ function TermsPage() {
             availability.
           </p>
 
-          <h2 className="font-display text-2xl font-semibold">8. Service Availability</h2>
+          <h2 className="font-display text-2xl font-semibold">9. Service Availability</h2>
           <p>
             We aim for high uptime but provide the Service "as is" without warranty of
             uninterrupted operation. We may modify or discontinue features with notice.
           </p>
 
-          <h2 className="font-display text-2xl font-semibold">9. Limitation of Liability</h2>
+          <h2 className="font-display text-2xl font-semibold">10. Limitation of Liability</h2>
           <p>
             To the maximum extent permitted by law, our total liability for any claim relating to
             the Service is limited to the amount you paid us in the 3 months before the claim. We
             are not liable for lost profits, lost business, or indirect damages.
           </p>
 
-          <h2 className="font-display text-2xl font-semibold">10. Termination</h2>
+          <h2 className="font-display text-2xl font-semibold">11. Termination</h2>
           <p>
             You may close your account anytime. We may suspend or terminate accounts for breach of
             these Terms or unlawful use. Upon termination, we may delete your data after a
             reasonable retention period.
           </p>
 
-          <h2 className="font-display text-2xl font-semibold">11. Changes</h2>
+          <h2 className="font-display text-2xl font-semibold">12. Changes</h2>
           <p>
             We may update these Terms. Material changes will be announced via email or in-app
             notice. Continued use after the effective date constitutes acceptance.
           </p>
 
-          <h2 className="font-display text-2xl font-semibold">12. Governing Law</h2>
+          <h2 className="font-display text-2xl font-semibold">13. Governing Law</h2>
           <p>
             These Terms are governed by the laws of the United States and the state in which Ask
             Janice operates, without regard to conflict-of-laws principles.
           </p>
 
-          <h2 className="font-display text-2xl font-semibold">13. Contact</h2>
+          <h2 className="font-display text-2xl font-semibold">14. Contact</h2>
           <p>
             Questions? Email{" "}
             <a href="mailto:hello@askjanice.net" className="text-gold hover:underline">
