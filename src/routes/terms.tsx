@@ -38,9 +38,15 @@ function TermsPage() {
         <section className="mt-8 space-y-4 text-base leading-relaxed text-foreground/90">
           <h2 className="font-display text-2xl font-semibold">1. Acceptance of Terms</h2>
           <p>
-            By creating an account or using Ask Janice ("Service"), you agree to these Terms of
-            Service. If you do not agree, do not use the Service. The Service is provided by
-            Ask Janice ("we", "us", "our"). Contact: hello@askjanice.net.
+            These Terms of Service are an agreement between you and <strong>Ask Janice</strong>,
+            the legal business name of the seller and operator of the Ask Janice service
+            ("Service", "we", "us", "our"). By creating an account, purchasing a subscription, or
+            otherwise continuing to use the Service, you agree to these Terms. If you do not
+            agree, do not use the Service. Contact:{" "}
+            <a href="mailto:hello@askjanice.net" className="text-gold hover:underline">
+              hello@askjanice.net
+            </a>
+            .
           </p>
 
           <h2 className="font-display text-2xl font-semibold">2. Description of Service</h2>
