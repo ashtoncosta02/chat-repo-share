@@ -87,6 +87,25 @@ export function AdminHealthPage() {
       />
 
       <div className="p-4 md:p-8 space-y-6 max-w-6xl">
+        {/* Missed-call recovery */}
+        <div className="rounded-xl border border-border bg-card p-5 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="text-sm font-semibold flex items-center gap-2"><Phone className="h-4 w-4" /> Missed-call recovery</div>
+            <div className="text-xs text-muted-foreground mt-1">
+              Runs automatically every hour. Pulls any phone call the post-call webhook failed to deliver and saves it to Threads.
+              {sweep ? ` Last run: recovered ${sweep.saved}, already stored ${sweep.skipped}, errors ${sweep.errors}.` : ""}
+            </div>
+          </div>
+          <button
+            onClick={runSweep}
+            disabled={sweeping}
+            className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-60"
+          >
+            {sweeping ? "Recovering…" : "Recover now"}
+          </button>
+        </div>
+
+
         {/* Alerts */}
         <div className="rounded-xl border border-border bg-card p-5 space-y-2">
           <div className="text-sm font-semibold flex items-center gap-2 mb-2"><AlertTriangle className="h-4 w-4" /> Alerts</div>
