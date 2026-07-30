@@ -38,9 +38,22 @@ function PrivacyPage() {
         <section className="mt-8 space-y-4 text-base leading-relaxed text-foreground/90">
           <h2 className="font-display text-2xl font-semibold">1. Who We Are</h2>
           <p>
-            Ask Janice ("we", "us") provides an AI virtual receptionist service. This policy
-            covers (a) account data from our customers ("you") and (b) caller data from end users
-            interacting with your AI receptionist.
+            Ask Janice is the legal business name of the seller and operator of this service
+            ("Ask Janice", "we", "us", "our"). Ask Janice provides an AI virtual receptionist
+            service. You can reach us at{" "}
+            <a href="mailto:hello@askjanice.net" className="text-gold hover:underline">
+              hello@askjanice.net
+            </a>
+            . This policy covers (a) account data from our customers ("you") and (b) caller data
+            from end users interacting with your AI receptionist.
+          </p>
+          <p>
+            <strong>Our role:</strong> Ask Janice is the <strong>data controller</strong> for
+            personal data relating to our customers and their accounts (for example, your name,
+            email, business details, billing records and usage data). For caller and website
+            visitor data processed by your AI receptionist, Ask Janice acts as a{" "}
+            <strong>data processor</strong> on your behalf, and you are the controller of that
+            data.
           </p>
 
           <h2 className="font-display text-2xl font-semibold">2. What We Collect</h2>
@@ -63,7 +76,23 @@ function PrivacyPage() {
             state in which your callers are located, including two-party-consent jurisdictions.
           </p>
 
-          <h2 className="font-display text-2xl font-semibold">5. Data Sharing</h2>
+          <h2 className="font-display text-2xl font-semibold">5. Legal Basis for Processing</h2>
+          <p>
+            Where the GDPR, UK GDPR or similar laws apply, we rely on the following legal bases
+            (Art. 6 GDPR):
+          </p>
+          <ul className="list-disc pl-6">
+            <li><strong>Performance of a contract</strong> — creating and managing your account, providing the AI receptionist, processing your subscription and providing support.</li>
+            <li><strong>Legitimate interests</strong> — securing the Service, preventing fraud and abuse, debugging and improving our product, and basic service analytics.</li>
+            <li><strong>Legal obligation</strong> — tax, accounting, and responding to lawful requests from authorities.</li>
+            <li><strong>Consent</strong> — optional marketing communications, non-essential cookies, and any optional integrations you choose to connect. You may withdraw consent at any time.</li>
+          </ul>
+          <p>
+            For caller and visitor data processed on your behalf, you are responsible for
+            establishing the appropriate legal basis (including call-recording consent).
+          </p>
+
+          <h2 className="font-display text-2xl font-semibold">6. Data Sharing</h2>
           <p>We share data only with the sub-processors required to run the Service:</p>
           <ul className="list-disc pl-6">
             <li><strong>Twilio</strong> — phone numbers, SMS, call audio transport.</li>
