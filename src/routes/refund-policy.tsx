@@ -37,8 +37,9 @@ function RefundPolicyPage() {
 
         <section className="mt-8 space-y-4 text-base leading-relaxed text-foreground/90">
           <p>
-            Ask Janice wants you to be happy with your AI receptionist. If you're not satisfied
-            with your first month, we offer a 30-day money-back guarantee.
+            This Refund Policy applies to purchases of the Ask Janice service, sold by{" "}
+            <strong>Ask Janice</strong>. We want you to be happy with your AI receptionist. If
+            you're not satisfied with your first month, we offer a 30-day money-back guarantee.
           </p>
 
           <h2 className="font-display text-2xl font-semibold">Refund eligibility</h2>
