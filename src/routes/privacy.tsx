@@ -33,7 +33,7 @@ function PrivacyPage() {
       </header>
       <main className="mx-auto max-w-3xl px-6 py-12">
         <h1 className="font-display text-4xl font-bold tracking-tight">Privacy Policy</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Last updated: June 10, 2026</p>
+        <p className="mt-2 text-sm text-muted-foreground">Last updated: July 30, 2026</p>
 
         <section className="mt-8 space-y-4 text-base leading-relaxed text-foreground/90">
           <h2 className="font-display text-2xl font-semibold">1. Who We Are</h2>
@@ -103,14 +103,14 @@ function PrivacyPage() {
           </ul>
           <p>We disclose data when required by law or to protect our rights.</p>
 
-          <h2 className="font-display text-2xl font-semibold">6. Data Retention</h2>
+          <h2 className="font-display text-2xl font-semibold">7. Data Retention</h2>
           <p>
             Account data is retained while your account is active. Non-lead conversations may be
             auto-deleted on a schedule you configure (24 hours or 1 week). Lead and booking
             records are retained until you delete them or close your account.
           </p>
 
-          <h2 className="font-display text-2xl font-semibold">7. Your Rights</h2>
+          <h2 className="font-display text-2xl font-semibold">8. Your Rights</h2>
           <p>
             Depending on your location (GDPR, CCPA, etc.), you may have rights to access, correct,
             delete, or export your data. Email{" "}
@@ -121,23 +121,23 @@ function PrivacyPage() {
             we act as a processor on the business's behalf.
           </p>
 
-          <h2 className="font-display text-2xl font-semibold">8. Security</h2>
+          <h2 className="font-display text-2xl font-semibold">9. Security</h2>
           <p>
             We use industry-standard measures including TLS in transit, encryption at rest,
             row-level security in the database, and least-privilege access controls. No system is
             perfectly secure; you use the Service at your own risk.
           </p>
 
-          <h2 className="font-display text-2xl font-semibold">9. Children</h2>
+          <h2 className="font-display text-2xl font-semibold">10. Children</h2>
           <p>The Service is not intended for users under 18.</p>
 
-          <h2 className="font-display text-2xl font-semibold">10. Changes</h2>
+          <h2 className="font-display text-2xl font-semibold">11. Changes</h2>
           <p>
             We will post updates here and update the "Last updated" date. Material changes will be
             announced via email or in-app notice.
           </p>
 
-          <h2 className="font-display text-2xl font-semibold">11. Contact</h2>
+          <h2 className="font-display text-2xl font-semibold">12. Contact</h2>
           <p>
             Email{" "}
             <a href="mailto:hello@askjanice.net" className="text-gold hover:underline">
