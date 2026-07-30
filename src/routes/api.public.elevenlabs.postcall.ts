@@ -59,7 +59,7 @@ export const Route = createFileRoute("/api/public/elevenlabs/postcall")({
                 const b = Buffer.from(expected, "hex");
                 signatureTrusted = a.length === b.length && timingSafeEqual(a, b);
                 if (!signatureTrusted) {
-                  console.warn("postcall: invalid signature; will verify via ElevenLabs API");
+                  console.warn(`postcall: invalid signature for ${logConvId}; will verify via ElevenLabs API`);
                 }
               }
             }
