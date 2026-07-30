@@ -21,6 +21,25 @@ export function AdminHealthPage() {
   const [data, setData] = useState<Health | null>(null);
   const [errorFeed, setErrorFeed] = useState<Errors | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sweeping, setSweeping] = useState(false);
+  const [sweep, setSweep] = useState<{ saved: number; skipped: number; errors: number } | null>(null);
+
+  const runSweep = async () => {
+    setSweeping(true);
+    try {
+      const res = await fetch("/api/public/hooks/backfill-calls", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      });
+      const json = (await res.json()) as { saved?: number; skipped?: number; errors?: number };
+      setSweep({ saved: json.saved ?? 0, skipped: json.skipped ?? 0, errors: json.errors ?? 0 });
+    } catch {
+      setSweep({ saved: 0, skipped: 0, errors: 1 });
+    } finally {
+      setSweeping(false);
+    }
+  };
 
   useEffect(() => {
     if (checked && !isAdmin) navigate({ to: "/dashboard" });
