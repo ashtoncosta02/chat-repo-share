@@ -106,7 +106,28 @@ function TermsPage() {
             .
           </p>
 
-          <h2 className="font-display text-2xl font-semibold">7. Third-Party Services</h2>
+          <h2 className="font-display text-2xl font-semibold">7. Intellectual Property</h2>
+          <p>
+            Ask Janice owns and retains all right, title, and interest in and to the Service,
+            including its software, source code, models, prompts, workflows, documentation,
+            designs, trademarks, logos, and the "Ask Janice" name and branding. No ownership
+            rights are transferred to you. Subject to these Terms and payment of applicable fees,
+            we grant you a limited, non-exclusive, non-transferable, revocable licence to use the
+            Service for your own business purposes during your subscription term.
+          </p>
+          <p>
+            You must not copy, modify, reverse-engineer, decompile, resell, sublicense, or create
+            derivative works from the Service, or remove or obscure any proprietary notices.
+          </p>
+          <p>
+            <strong>Your content.</strong> You retain ownership of the business information,
+            FAQs, recordings, transcripts, and other content you or your callers provide. You
+            grant us a limited licence to host, process, and transmit that content solely to
+            operate and support the Service. You are responsible for having the rights necessary
+            to provide that content. Any feedback you send us may be used without restriction.
+          </p>
+
+          <h2 className="font-display text-2xl font-semibold">8. Third-Party Services</h2>
           <p>
             The Service relies on third parties including Twilio (telephony), ElevenLabs (voice
             AI), Google (calendar &amp; auth), and Lovable Cloud (hosting). Their terms apply to
