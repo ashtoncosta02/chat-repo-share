@@ -375,7 +375,7 @@ export async function persistPostCall(
   }
 
   // SMS the transcript summary to the business owner if they've opted in.
-  if (agent.notify_sms_transcript && agent.notify_phone?.trim()) {
+  if (notify && agent.notify_sms_transcript && agent.notify_phone?.trim()) {
     try {
       const envUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
       const siteUrl =
