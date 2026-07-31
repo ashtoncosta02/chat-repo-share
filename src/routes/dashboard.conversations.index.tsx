@@ -167,6 +167,45 @@ function ConversationsPage() {
     loadConvs();
   }, [user]);
 
+  // Remember scroll position when leaving a thread and coming back.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const el = document.querySelector("main");
+    if (!el) return;
+    const KEY = "askjanice.threads.scroll";
+    const onScroll = () => {
+      try {
+        window.sessionStorage.setItem(KEY, String(el.scrollTop));
+      } catch {
+        /* ignore */
+      }
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    if (loading || typeof window === "undefined") return;
+    const el = document.querySelector("main");
+    if (!el) return;
+    let saved = 0;
+    try {
+      saved = Number(window.sessionStorage.getItem("askjanice.threads.scroll") ?? 0);
+    } catch {
+      saved = 0;
+    }
+    if (!saved) return;
+    const restore = () => el.scrollTo({ top: saved });
+    restore();
+    const raf = requestAnimationFrame(restore);
+    const t = window.setTimeout(restore, 120);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.clearTimeout(t);
+    };
+  }, [loading]);
+
+
   // Auto-generate AI summaries for conversations that don't have one yet.
   useEffect(() => {
     const missing = convs.filter((c) => !c.ai_summary && c.message_count > 0);

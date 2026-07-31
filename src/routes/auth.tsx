@@ -75,7 +75,7 @@ function AuthPage() {
   const defaultTab = search.mode === "signin" ? "signin" : search.mode === "signup" ? "signup" : "signin";
 
   useEffect(() => {
-    if (!loading && user) navigate({ to: "/dashboard" });
+    if (!loading && user) navigate({ to: "/dashboard/conversations" });
   }, [user, loading, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -84,7 +84,7 @@ function AuthPage() {
     const { error } = await signIn(email, password);
     setSubmitting(false);
     if (error) toast.error(error.message);
-    else navigate({ to: "/dashboard" });
+    else navigate({ to: "/dashboard/conversations" });
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
