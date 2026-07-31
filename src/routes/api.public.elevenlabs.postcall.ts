@@ -398,16 +398,18 @@ export async function persistPostCall(
   }
 
   // Scenario-driven post-call SMS to the caller (e.g. "text me the pricing sheet").
-  try {
-    const { sendScenarioPostCallSms } = await import("@/server/scenario-sms.server");
-    await sendScenarioPostCallSms({
-      agentId: agent.id,
-      userId: agent.user_id,
-      callerNumber: data.metadata?.phone_call?.external_number?.trim() || null,
-      turns: cleanedTurns as { role: "user" | "assistant"; content: string }[],
-    });
-  } catch (e) {
-    console.error("postcall: scenario SMS failed", e);
+  if (notify) {
+    try {
+      const { sendScenarioPostCallSms } = await import("@/server/scenario-sms.server");
+      await sendScenarioPostCallSms({
+        agentId: agent.id,
+        userId: agent.user_id,
+        callerNumber: data.metadata?.phone_call?.external_number?.trim() || null,
+        turns: cleanedTurns as { role: "user" | "assistant"; content: string }[],
+      });
+    } catch (e) {
+      console.error("postcall: scenario SMS failed", e);
+    }
   }
 
   console.log(
