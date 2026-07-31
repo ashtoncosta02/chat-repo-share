@@ -177,6 +177,7 @@ export async function persistPostCall(
   elAgentId: string,
   conversationId: string,
   data: PostCallData,
+  opts?: { silent?: boolean },
 ): Promise<PersistResult> {
   const { data: agent, error: agentErr } = await supabaseAdmin
     .from("agents")
@@ -216,6 +217,21 @@ export async function persistPostCall(
   const endedAt = new Date(
     new Date(startedAt).getTime() + durationSec * 1000,
   ).toISOString();
+
+  // Notifications (owner email/SMS + caller scenario SMS) must only fire for
+  // calls that just happened. Recovery sweeps and late webhook retries can
+  // persist calls from days ago — sending those now looks like a backlog of
+  // "new" alerts to the business owner and texts stale customers.
+  const callAgeMs = Date.now() - new Date(startedAt).getTime();
+  const isStaleCall = callAgeMs > 60 * 60 * 1000; // older than 1 hour
+  const notify = opts?.silent !== true && !isStaleCall;
+  if (!notify) {
+    console.log(
+      `postcall: notifications suppressed for ${conversationId} (silent=${opts?.silent === true}, ageMinutes=${Math.round(callAgeMs / 60000)})`,
+    );
+  }
+
+
 
   const transcriptArr = Array.isArray(data.transcript) ? data.transcript : [];
   const cleanedTurns = transcriptArr
@@ -311,7 +327,7 @@ export async function persistPostCall(
   }
 
   // Email the transcript to the business owner if they've opted in.
-  if (agent.notify_email_transcript !== false) {
+  if (notify && agent.notify_email_transcript !== false) {
     try {
       let ownerEmail = agent.notify_email?.trim() || null;
       if (!ownerEmail) {
@@ -359,7 +375,7 @@ export async function persistPostCall(
   }
 
   // SMS the transcript summary to the business owner if they've opted in.
-  if (agent.notify_sms_transcript && agent.notify_phone?.trim()) {
+  if (notify && agent.notify_sms_transcript && agent.notify_phone?.trim()) {
     try {
       const envUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
       const siteUrl =
@@ -382,16 +398,18 @@ export async function persistPostCall(
   }
 
   // Scenario-driven post-call SMS to the caller (e.g. "text me the pricing sheet").
-  try {
-    const { sendScenarioPostCallSms } = await import("@/server/scenario-sms.server");
-    await sendScenarioPostCallSms({
-      agentId: agent.id,
-      userId: agent.user_id,
-      callerNumber: data.metadata?.phone_call?.external_number?.trim() || null,
-      turns: cleanedTurns as { role: "user" | "assistant"; content: string }[],
-    });
-  } catch (e) {
-    console.error("postcall: scenario SMS failed", e);
+  if (notify) {
+    try {
+      const { sendScenarioPostCallSms } = await import("@/server/scenario-sms.server");
+      await sendScenarioPostCallSms({
+        agentId: agent.id,
+        userId: agent.user_id,
+        callerNumber: data.metadata?.phone_call?.external_number?.trim() || null,
+        turns: cleanedTurns as { role: "user" | "assistant"; content: string }[],
+      });
+    } catch (e) {
+      console.error("postcall: scenario SMS failed", e);
+    }
   }
 
   console.log(
