@@ -80,16 +80,23 @@ export async function backfillRecentCalls(opts: {
         continue;
       }
       const detail = (await detailRes.json()) as ConversationDetail;
-      const result = await persistPostCall(opts.elAgentId, item.conversation_id, {
-        agent_id: detail.agent_id ?? opts.elAgentId,
-        conversation_id: detail.conversation_id ?? item.conversation_id,
-        status: detail.status,
-        transcript: detail.transcript,
-        metadata: detail.metadata ?? {
-          start_time_unix_secs: item.start_time_unix_secs,
-          call_duration_secs: item.call_duration_secs,
+      const result = await persistPostCall(
+        opts.elAgentId,
+        item.conversation_id,
+        {
+          agent_id: detail.agent_id ?? opts.elAgentId,
+          conversation_id: detail.conversation_id ?? item.conversation_id,
+          status: detail.status,
+          transcript: detail.transcript,
+          metadata: detail.metadata ?? {
+            start_time_unix_secs: item.start_time_unix_secs,
+            call_duration_secs: item.call_duration_secs,
+          },
         },
-      });
+        // Recovery only backfills history — never re-send owner alerts or
+        // text the caller again for a call that already happened.
+        { silent: true },
+      );
       if (result.status === "ok") saved++;
       else if (result.status === "duplicate") skipped++;
       else errors++;
