@@ -327,7 +327,7 @@ export async function persistPostCall(
   }
 
   // Email the transcript to the business owner if they've opted in.
-  if (agent.notify_email_transcript !== false) {
+  if (notify && agent.notify_email_transcript !== false) {
     try {
       let ownerEmail = agent.notify_email?.trim() || null;
       if (!ownerEmail) {
