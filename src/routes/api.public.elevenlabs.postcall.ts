@@ -218,6 +218,21 @@ export async function persistPostCall(
     new Date(startedAt).getTime() + durationSec * 1000,
   ).toISOString();
 
+  // Notifications (owner email/SMS + caller scenario SMS) must only fire for
+  // calls that just happened. Recovery sweeps and late webhook retries can
+  // persist calls from days ago — sending those now looks like a backlog of
+  // "new" alerts to the business owner and texts stale customers.
+  const callAgeMs = Date.now() - new Date(startedAt).getTime();
+  const isStaleCall = callAgeMs > 60 * 60 * 1000; // older than 1 hour
+  const notify = opts?.silent !== true && !isStaleCall;
+  if (!notify) {
+    console.log(
+      `postcall: notifications suppressed for ${conversationId} (silent=${opts?.silent === true}, ageMinutes=${Math.round(callAgeMs / 60000)})`,
+    );
+  }
+
+
+
   const transcriptArr = Array.isArray(data.transcript) ? data.transcript : [];
   const cleanedTurns = transcriptArr
     .map((t) => ({
