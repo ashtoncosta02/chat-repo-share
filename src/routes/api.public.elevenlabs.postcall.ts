@@ -177,6 +177,7 @@ export async function persistPostCall(
   elAgentId: string,
   conversationId: string,
   data: PostCallData,
+  opts?: { silent?: boolean },
 ): Promise<PersistResult> {
   const { data: agent, error: agentErr } = await supabaseAdmin
     .from("agents")
