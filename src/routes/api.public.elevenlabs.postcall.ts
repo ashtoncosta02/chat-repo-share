@@ -406,6 +406,7 @@ export async function persistPostCall(
         userId: agent.user_id,
         callerNumber: data.metadata?.phone_call?.external_number?.trim() || null,
         turns: cleanedTurns as { role: "user" | "assistant"; content: string }[],
+        startedAt,
       });
     } catch (e) {
       console.error("postcall: scenario SMS failed", e);

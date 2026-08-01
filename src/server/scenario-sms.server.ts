@@ -11,6 +11,9 @@ interface Params {
    *  multiple turns (e.g. widget chat). If provided, we skip resending a body
    *  we've already logged into `messages` for this thread. */
   dedupeThreadId?: string | null;
+  /** When the call/chat happened. Anything older than an hour is never texted —
+   *  recovery sweeps and late webhook retries must not text stale customers. */
+  startedAt?: string | Date | null;
 }
 
 /**
@@ -21,6 +24,13 @@ interface Params {
  */
 export async function sendScenarioPostCallSms(p: Params): Promise<void> {
   if (!p.callerNumber || p.turns.length === 0) return;
+  if (p.startedAt) {
+    const ageMs = Date.now() - new Date(p.startedAt).getTime();
+    if (Number.isFinite(ageMs) && ageMs > 60 * 60 * 1000) {
+      console.log("scenario-sms: skipped — conversation is older than 1 hour");
+      return;
+    }
+  }
   const callerTurns = p.turns.filter((t) => t.role === "user" && t.content.trim());
   if (callerTurns.length === 0) return;
 
