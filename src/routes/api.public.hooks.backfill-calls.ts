@@ -15,11 +15,49 @@ export const Route = createFileRoute("/api/public/hooks/backfill-calls")({
       POST: async () => {
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { backfillRecentCalls } = await import("@/server/voice-call-backfill.server");
+        const { checkElevenLabsApiKey, replayWebhookFailures } = await import(
+          "@/server/webhook-health.server"
+        );
+        const { sendEmail } = await import("@/server/email.server");
+
+        // 1. Self-check the voice credentials before anything else. A rejected
+        // API key is the single failure that can silently stop calls from
+        // landing in Threads, so alert the owner (at most once per 6h).
+        const credential = await checkElevenLabsApiKey();
+        if (!credential.ok) {
+          const sixHoursAgo = new Date(Date.now() - 6 * 3600_000).toISOString();
+          const { count } = await supabaseAdmin
+            .from("email_send_log")
+            .select("id", { count: "exact", head: true })
+            .eq("template_name", "voice-credential-alert")
+            .gte("created_at", sixHoursAgo);
+          if ((count ?? 0) === 0) {
+            const messageId = await sendEmail({
+              to: "hello@askjanice.net",
+              subject: "Janice alert: voice credentials are not working",
+              html: `<p>The automated health check could not use the ElevenLabs credentials.</p>
+<p><strong>${credential.label}:</strong> ${credential.detail}</p>
+${credential.hint ? `<p>${credential.hint}</p>` : ""}
+<p>Calls are still being parked and can be replayed from Admin &rarr; System health once this is fixed.</p>`,
+            }).catch(() => null);
+            await supabaseAdmin.from("email_send_log").insert({
+              message_id: messageId,
+              template_name: "voice-credential-alert",
+              recipient_email: "hello@askjanice.net",
+              status: messageId ? "sent" : "failed",
+              metadata: { detail: credential.detail } as unknown as never,
+            });
+          }
+        }
+
+        // 2. Drain anything parked by a failed webhook verification.
+        const replay = await replayWebhookFailures();
 
         const { data: agents, error } = await supabaseAdmin
           .from("agents")
           .select("id, elevenlabs_agent_id")
           .not("elevenlabs_agent_id", "is", null);
+
 
         if (error) {
           console.error("backfill-sweep: could not load agents:", error.message);
