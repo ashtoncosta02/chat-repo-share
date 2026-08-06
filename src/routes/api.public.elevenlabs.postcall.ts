@@ -95,12 +95,24 @@ export const Route = createFileRoute("/api/public/elevenlabs/postcall")({
         if (secret && !signatureTrusted) {
           const verified = await fetchElevenLabsConversation(conversationId);
           if (!verified || !verified.agent_id || verified.agent_id !== elAgentId) {
-            console.warn("postcall: fallback verification failed", conversationId);
-            return new Response("Invalid signature", { status: 401 });
+            // Last resort: never throw a real call away. Park the raw payload
+            // so an admin can replay it once the credential is fixed, and ack
+            // with 200 so ElevenLabs does not discard it on retry exhaustion.
+            console.error(
+              `postcall: verification failed for ${conversationId} — parked for replay`,
+            );
+            await quarantinePayload({
+              reason: "signature-invalid-and-api-verify-failed",
+              conversationId,
+              agentId: elAgentId,
+              data,
+            });
+            return new Response("ok-quarantined", { status: 200 });
           }
           data = verified;
           elAgentId = verified.agent_id;
         }
+
 
         const result = await persistPostCall(elAgentId, conversationId, data);
         if (result.status === "agent-not-found") {
