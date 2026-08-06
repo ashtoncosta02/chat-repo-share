@@ -95,9 +95,19 @@ ${credential.hint ? `<p>${credential.hint}</p>` : ""}
         }
 
         return new Response(
-          JSON.stringify({ success: true, scanned, saved, skipped, errors, recovered }),
+          JSON.stringify({
+            success: true,
+            credentials: { ok: credential.ok, detail: credential.detail },
+            replay,
+            scanned,
+            saved,
+            skipped,
+            errors,
+            recovered,
+          }),
           { headers: { "Content-Type": "application/json" } },
         );
+
       },
     },
   },
