@@ -100,6 +100,11 @@ export function AdminHealthPage() {
   const phonesUnlinked = d.integrations.phonesTotal - d.integrations.phonesLinked;
 
   const alerts: { level: "warn" | "ok"; msg: string }[] = [];
+  if (creds?.success && !creds.apiKey.ok) alerts.push({ level: "warn", msg: `ElevenLabs API key is not working — ${creds.apiKey.detail}` });
+  if (creds?.success && !creds.webhookSecret.ok) alerts.push({ level: "warn", msg: `Webhook signing secret problem — ${creds.webhookSecret.detail}` });
+  const parked = creds?.success ? creds.failures.filter((f) => !f.replayedAt).length : 0;
+  if (parked > 0) alerts.push({ level: "warn", msg: `${parked} call(s) are parked and not in Threads yet. Use "Replay failed webhooks" once credentials are fixed.` });
+
   if (d.voice.missingTranscripts > 0) alerts.push({ level: "warn", msg: `${d.voice.missingTranscripts} voice call(s) in last 24h are missing transcripts (${missingPct}%). Webhook may be misconfigured.` });
   if (phonesUnlinked > 0) alerts.push({ level: "warn", msg: `${phonesUnlinked} phone number(s) are NOT connected to ElevenLabs.` });
   if (d.integrations.googleCalendarExpired > 0) alerts.push({ level: "warn", msg: `${d.integrations.googleCalendarExpired} user(s) have expired Google Calendar tokens.` });
