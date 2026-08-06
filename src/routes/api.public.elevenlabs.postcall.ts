@@ -148,6 +148,34 @@ async function fetchElevenLabsConversation(
   return json as PostCallData & { agent_id: string; conversation_id: string };
 }
 
+/**
+ * Park an unverifiable payload instead of rejecting it. Nothing a real caller
+ * said is ever thrown away — an admin can replay these from Admin → Health.
+ */
+async function quarantinePayload(opts: {
+  reason: string;
+  conversationId: string;
+  agentId: string;
+  data: PostCallData;
+}): Promise<void> {
+  try {
+    await supabaseAdmin.from("webhook_failures").upsert(
+      {
+        source: "elevenlabs_postcall",
+        reason: opts.reason,
+        elevenlabs_conversation_id: opts.conversationId,
+        elevenlabs_agent_id: opts.agentId,
+        payload: opts.data as unknown as Record<string, unknown>,
+      },
+      { onConflict: "source,elevenlabs_conversation_id", ignoreDuplicates: true },
+    );
+  } catch (e) {
+    console.error("postcall: could not quarantine payload", e);
+  }
+}
+
+
+
 export interface PostCallPayload {
   type?: string;
   event_timestamp?: number;
