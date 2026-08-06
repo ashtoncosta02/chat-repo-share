@@ -132,7 +132,70 @@ export function AdminHealthPage() {
       />
 
       <div className="p-4 md:p-8 space-y-6 max-w-6xl">
+        {/* Voice credential health */}
+        <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+          <div className="text-sm font-semibold flex items-center gap-2">
+            <KeyRound className="h-4 w-4" /> Voice credentials
+          </div>
+          {!creds ? (
+            <div className="text-xs text-muted-foreground">Checking…</div>
+          ) : !creds.success ? (
+            <div className="text-sm text-red-700">Could not check credentials: {creds.error}</div>
+          ) : (
+            <div className="space-y-3">
+              {[creds.apiKey, creds.webhookSecret].map((c) => (
+                <div key={c.label} className="flex items-start gap-2 text-sm">
+                  {c.ok ? (
+                    <CheckCircle2 className="h-4 w-4 mt-0.5 text-green-700 shrink-0" />
+                  ) : (
+                    <AlertTriangle className="h-4 w-4 mt-0.5 text-red-700 shrink-0" />
+                  )}
+                  <div className="min-w-0">
+                    <div className={`font-medium ${c.ok ? "text-green-700" : "text-red-700"}`}>{c.label}</div>
+                    <div className="text-xs text-muted-foreground break-words">{c.detail}</div>
+                    {c.hint && <div className="text-xs text-muted-foreground mt-0.5">{c.hint}</div>}
+                  </div>
+                </div>
+              ))}
+
+              <div className="border-t border-border pt-3 flex flex-wrap items-center justify-between gap-3">
+                <div className="text-xs text-muted-foreground">
+                  {creds.failures.filter((f) => !f.replayedAt).length} parked call(s) waiting to be replayed
+                  {creds.failures.length > 0
+                    ? ` · newest ${new Date(creds.failures[0]!.createdAt).toLocaleString()}`
+                    : " · nothing parked"}
+                  {replay ? ` · Last replay: saved ${replay.saved}, already stored ${replay.duplicate}, errors ${replay.errors}.` : ""}
+                </div>
+                <button
+                  onClick={runReplay}
+                  disabled={replaying}
+                  className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-60"
+                >
+                  <RefreshCcw className={`h-4 w-4 ${replaying ? "animate-spin" : ""}`} />
+                  {replaying ? "Replaying…" : "Replay failed webhooks"}
+                </button>
+              </div>
+
+              {creds.failures.length > 0 && (
+                <div className="max-h-56 overflow-y-auto space-y-1">
+                  {creds.failures.map((f) => (
+                    <div key={f.id} className="rounded-lg border border-border px-3 py-2 text-xs flex items-center justify-between gap-3">
+                      <span className="truncate">
+                        {f.conversationId ?? "unknown call"} · {f.reason}
+                      </span>
+                      <span className="whitespace-nowrap text-muted-foreground">
+                        {f.replayedAt ? `replayed (${f.replayResult})` : new Date(f.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Missed-call recovery */}
+
         <div className="rounded-xl border border-border bg-card p-5 flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="text-sm font-semibold flex items-center gap-2"><Phone className="h-4 w-4" /> Missed-call recovery</div>
