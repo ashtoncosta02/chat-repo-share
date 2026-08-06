@@ -3,8 +3,10 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { getSystemHealth, getGlobalErrorFeed } from "@/lib/admin.functions";
+import { getIntegrationCredentialHealth, replayFailedWebhooks } from "@/lib/webhook-health.functions";
 import { PageHeader } from "@/components/dashboard/PageHeader";
-import { ArrowLeft, Shield, Activity, Phone, MessageSquare, Calendar, AlertTriangle, CheckCircle2, ExternalLink } from "lucide-react";
+import { ArrowLeft, Shield, Activity, Phone, MessageSquare, Calendar, AlertTriangle, CheckCircle2, ExternalLink, KeyRound, RefreshCcw } from "lucide-react";
+
 
 export const Route = createFileRoute("/dashboard/admin/health")({
   head: () => ({ meta: [{ title: "Admin · System health" }] }),
@@ -13,6 +15,8 @@ export const Route = createFileRoute("/dashboard/admin/health")({
 
 type Health = Awaited<ReturnType<typeof getSystemHealth>>;
 type Errors = Awaited<ReturnType<typeof getGlobalErrorFeed>>;
+type Creds = Awaited<ReturnType<typeof getIntegrationCredentialHealth>>;
+
 
 export function AdminHealthPage() {
   const { session } = useAuth();
@@ -23,6 +27,9 @@ export function AdminHealthPage() {
   const [loading, setLoading] = useState(true);
   const [sweeping, setSweeping] = useState(false);
   const [sweep, setSweep] = useState<{ saved: number; skipped: number; errors: number } | null>(null);
+  const [creds, setCreds] = useState<Creds | null>(null);
+  const [replaying, setReplaying] = useState(false);
+  const [replay, setReplay] = useState<{ saved: number; duplicate: number; errors: number } | null>(null);
 
   const runSweep = async () => {
     setSweeping(true);
@@ -41,6 +48,23 @@ export function AdminHealthPage() {
     }
   };
 
+  const loadCreds = () => {
+    if (!session?.access_token) return;
+    getIntegrationCredentialHealth({ data: { accessToken: session.access_token } }).then(setCreds);
+  };
+
+  const runReplay = async () => {
+    if (!session?.access_token) return;
+    setReplaying(true);
+    try {
+      const r = await replayFailedWebhooks({ data: { accessToken: session.access_token } });
+      if (r.success) setReplay({ saved: r.saved, duplicate: r.duplicate, errors: r.errors });
+      loadCreds();
+    } finally {
+      setReplaying(false);
+    }
+  };
+
   useEffect(() => {
     if (checked && !isAdmin) navigate({ to: "/dashboard" });
   }, [checked, isAdmin, navigate]);
@@ -48,11 +72,13 @@ export function AdminHealthPage() {
   const load = () => {
     if (!session?.access_token) return;
     setLoading(true);
+    loadCreds();
     Promise.all([
       getSystemHealth({ data: { accessToken: session.access_token } }).then(setData),
       getGlobalErrorFeed({ data: { accessToken: session.access_token } }).then(setErrorFeed),
     ]).finally(() => setLoading(false));
   };
+
 
   useEffect(() => {
     if (isAdmin && session?.access_token) load();
@@ -74,6 +100,11 @@ export function AdminHealthPage() {
   const phonesUnlinked = d.integrations.phonesTotal - d.integrations.phonesLinked;
 
   const alerts: { level: "warn" | "ok"; msg: string }[] = [];
+  if (creds?.success && !creds.apiKey.ok) alerts.push({ level: "warn", msg: `ElevenLabs API key is not working — ${creds.apiKey.detail}` });
+  if (creds?.success && !creds.webhookSecret.ok) alerts.push({ level: "warn", msg: `Webhook signing secret problem — ${creds.webhookSecret.detail}` });
+  const parked = creds?.success ? creds.failures.filter((f) => !f.replayedAt).length : 0;
+  if (parked > 0) alerts.push({ level: "warn", msg: `${parked} call(s) are parked and not in Threads yet. Use "Replay failed webhooks" once credentials are fixed.` });
+
   if (d.voice.missingTranscripts > 0) alerts.push({ level: "warn", msg: `${d.voice.missingTranscripts} voice call(s) in last 24h are missing transcripts (${missingPct}%). Webhook may be misconfigured.` });
   if (phonesUnlinked > 0) alerts.push({ level: "warn", msg: `${phonesUnlinked} phone number(s) are NOT connected to ElevenLabs.` });
   if (d.integrations.googleCalendarExpired > 0) alerts.push({ level: "warn", msg: `${d.integrations.googleCalendarExpired} user(s) have expired Google Calendar tokens.` });
@@ -106,7 +137,70 @@ export function AdminHealthPage() {
       />
 
       <div className="p-4 md:p-8 space-y-6 max-w-6xl">
+        {/* Voice credential health */}
+        <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+          <div className="text-sm font-semibold flex items-center gap-2">
+            <KeyRound className="h-4 w-4" /> Voice credentials
+          </div>
+          {!creds ? (
+            <div className="text-xs text-muted-foreground">Checking…</div>
+          ) : !creds.success ? (
+            <div className="text-sm text-red-700">Could not check credentials: {creds.error}</div>
+          ) : (
+            <div className="space-y-3">
+              {[creds.apiKey, creds.webhookSecret].map((c) => (
+                <div key={c.label} className="flex items-start gap-2 text-sm">
+                  {c.ok ? (
+                    <CheckCircle2 className="h-4 w-4 mt-0.5 text-green-700 shrink-0" />
+                  ) : (
+                    <AlertTriangle className="h-4 w-4 mt-0.5 text-red-700 shrink-0" />
+                  )}
+                  <div className="min-w-0">
+                    <div className={`font-medium ${c.ok ? "text-green-700" : "text-red-700"}`}>{c.label}</div>
+                    <div className="text-xs text-muted-foreground break-words">{c.detail}</div>
+                    {c.hint && <div className="text-xs text-muted-foreground mt-0.5">{c.hint}</div>}
+                  </div>
+                </div>
+              ))}
+
+              <div className="border-t border-border pt-3 flex flex-wrap items-center justify-between gap-3">
+                <div className="text-xs text-muted-foreground">
+                  {creds.failures.filter((f) => !f.replayedAt).length} parked call(s) waiting to be replayed
+                  {creds.failures.length > 0
+                    ? ` · newest ${new Date(creds.failures[0]!.createdAt).toLocaleString()}`
+                    : " · nothing parked"}
+                  {replay ? ` · Last replay: saved ${replay.saved}, already stored ${replay.duplicate}, errors ${replay.errors}.` : ""}
+                </div>
+                <button
+                  onClick={runReplay}
+                  disabled={replaying}
+                  className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-60"
+                >
+                  <RefreshCcw className={`h-4 w-4 ${replaying ? "animate-spin" : ""}`} />
+                  {replaying ? "Replaying…" : "Replay failed webhooks"}
+                </button>
+              </div>
+
+              {creds.failures.length > 0 && (
+                <div className="max-h-56 overflow-y-auto space-y-1">
+                  {creds.failures.map((f) => (
+                    <div key={f.id} className="rounded-lg border border-border px-3 py-2 text-xs flex items-center justify-between gap-3">
+                      <span className="truncate">
+                        {f.conversationId ?? "unknown call"} · {f.reason}
+                      </span>
+                      <span className="whitespace-nowrap text-muted-foreground">
+                        {f.replayedAt ? `replayed (${f.replayResult})` : new Date(f.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Missed-call recovery */}
+
         <div className="rounded-xl border border-border bg-card p-5 flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="text-sm font-semibold flex items-center gap-2"><Phone className="h-4 w-4" /> Missed-call recovery</div>
