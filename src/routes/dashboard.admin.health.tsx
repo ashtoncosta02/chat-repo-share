@@ -3,8 +3,10 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { getSystemHealth, getGlobalErrorFeed } from "@/lib/admin.functions";
+import { getIntegrationCredentialHealth, replayFailedWebhooks } from "@/lib/webhook-health.functions";
 import { PageHeader } from "@/components/dashboard/PageHeader";
-import { ArrowLeft, Shield, Activity, Phone, MessageSquare, Calendar, AlertTriangle, CheckCircle2, ExternalLink } from "lucide-react";
+import { ArrowLeft, Shield, Activity, Phone, MessageSquare, Calendar, AlertTriangle, CheckCircle2, ExternalLink, KeyRound, RefreshCcw } from "lucide-react";
+
 
 export const Route = createFileRoute("/dashboard/admin/health")({
   head: () => ({ meta: [{ title: "Admin · System health" }] }),
