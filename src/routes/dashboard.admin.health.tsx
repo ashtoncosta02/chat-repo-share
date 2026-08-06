@@ -15,6 +15,8 @@ export const Route = createFileRoute("/dashboard/admin/health")({
 
 type Health = Awaited<ReturnType<typeof getSystemHealth>>;
 type Errors = Awaited<ReturnType<typeof getGlobalErrorFeed>>;
+type Creds = Awaited<ReturnType<typeof getIntegrationCredentialHealth>>;
+
 
 export function AdminHealthPage() {
   const { session } = useAuth();
