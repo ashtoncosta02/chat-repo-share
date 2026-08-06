@@ -161,14 +161,14 @@ async function quarantinePayload(opts: {
   try {
     await supabaseAdmin.from("webhook_failures").upsert(
       {
-        source: "elevenlabs_postcall",
         reason: opts.reason,
         elevenlabs_conversation_id: opts.conversationId,
         elevenlabs_agent_id: opts.agentId,
-        payload: opts.data as unknown as Record<string, unknown>,
+        payload: opts.data as unknown as never,
       },
       { onConflict: "source,elevenlabs_conversation_id", ignoreDuplicates: true },
     );
+
   } catch (e) {
     console.error("postcall: could not quarantine payload", e);
   }
