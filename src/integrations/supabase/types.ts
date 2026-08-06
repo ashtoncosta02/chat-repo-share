@@ -1068,6 +1068,42 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_failures: {
+        Row: {
+          created_at: string
+          elevenlabs_agent_id: string | null
+          elevenlabs_conversation_id: string | null
+          id: string
+          payload: Json
+          reason: string
+          replay_result: string | null
+          replayed_at: string | null
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          elevenlabs_agent_id?: string | null
+          elevenlabs_conversation_id?: string | null
+          id?: string
+          payload: Json
+          reason: string
+          replay_result?: string | null
+          replayed_at?: string | null
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          elevenlabs_agent_id?: string | null
+          elevenlabs_conversation_id?: string | null
+          id?: string
+          payload?: Json
+          reason?: string
+          replay_result?: string | null
+          replayed_at?: string | null
+          source?: string
+        }
+        Relationships: []
+      }
       widget_conversations: {
         Row: {
           agent_id: string
