@@ -169,10 +169,27 @@ async function quarantinePayload(opts: {
       { onConflict: "source,elevenlabs_conversation_id", ignoreDuplicates: true },
     );
 
+    // Alert the platform owner immediately — at most one email per hour so a
+    // burst of failures can't flood the inbox.
+    const oneHourAgo = new Date(Date.now() - 3600_000).toISOString();
+    const { count } = await supabaseAdmin
+      .from("webhook_failures")
+      .select("id", { count: "exact", head: true })
+      .gte("created_at", oneHourAgo);
+    if ((count ?? 0) <= 1) {
+      await sendEmail({
+        to: "hello@askjanice.net",
+        subject: "Janice alert: a call could not be verified",
+        html: `<p>A post-call transcript could not be verified and has been parked instead of dropped.</p>
+<p><strong>Conversation:</strong> ${opts.conversationId}<br/><strong>Agent:</strong> ${opts.agentId}<br/><strong>Reason:</strong> ${opts.reason}</p>
+<p>Open Admin &rarr; System health to check the ElevenLabs credentials and replay the parked call.</p>`,
+      }).catch((e) => console.error("postcall: alert email failed", e));
+    }
   } catch (e) {
     console.error("postcall: could not quarantine payload", e);
   }
 }
+
 
 
 
