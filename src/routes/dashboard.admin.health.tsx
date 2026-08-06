@@ -25,6 +25,9 @@ export function AdminHealthPage() {
   const [loading, setLoading] = useState(true);
   const [sweeping, setSweeping] = useState(false);
   const [sweep, setSweep] = useState<{ saved: number; skipped: number; errors: number } | null>(null);
+  const [creds, setCreds] = useState<Creds | null>(null);
+  const [replaying, setReplaying] = useState(false);
+  const [replay, setReplay] = useState<{ saved: number; duplicate: number; errors: number } | null>(null);
 
   const runSweep = async () => {
     setSweeping(true);
@@ -43,6 +46,23 @@ export function AdminHealthPage() {
     }
   };
 
+  const loadCreds = () => {
+    if (!session?.access_token) return;
+    getIntegrationCredentialHealth({ data: { accessToken: session.access_token } }).then(setCreds);
+  };
+
+  const runReplay = async () => {
+    if (!session?.access_token) return;
+    setReplaying(true);
+    try {
+      const r = await replayFailedWebhooks({ data: { accessToken: session.access_token } });
+      if (r.success) setReplay({ saved: r.saved, duplicate: r.duplicate, errors: r.errors });
+      loadCreds();
+    } finally {
+      setReplaying(false);
+    }
+  };
+
   useEffect(() => {
     if (checked && !isAdmin) navigate({ to: "/dashboard" });
   }, [checked, isAdmin, navigate]);
@@ -50,11 +70,13 @@ export function AdminHealthPage() {
   const load = () => {
     if (!session?.access_token) return;
     setLoading(true);
+    loadCreds();
     Promise.all([
       getSystemHealth({ data: { accessToken: session.access_token } }).then(setData),
       getGlobalErrorFeed({ data: { accessToken: session.access_token } }).then(setErrorFeed),
     ]).finally(() => setLoading(false));
   };
+
 
   useEffect(() => {
     if (isAdmin && session?.access_token) load();
