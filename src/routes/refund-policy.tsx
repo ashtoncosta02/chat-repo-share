@@ -51,22 +51,15 @@ function RefundPolicyPage() {
 
           <h2 className="font-display text-2xl font-semibold">How to request a refund</h2>
           <p>
-            Refunds are processed by our payment provider, Paddle. You can request a refund by
-            visiting{" "}
-            <a
-              href="https://paddle.net"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gold hover:underline"
-            >
-              paddle.net
-            </a>{" "}
-            or by emailing us at{" "}
+            Refunds are issued by Ask Janice through our payment processor, Stripe. You can request
+            a refund by emailing us at{" "}
             <a href="mailto:hello@askjanice.net" className="text-gold hover:underline">
               hello@askjanice.net
             </a>
-            . We aim to process refund requests within 3-5 business days.
+            , or by managing your plan in the billing portal from your dashboard. We aim to process
+            refund requests within 3-5 business days.
           </p>
+
 
           <h2 className="font-display text-2xl font-semibold">Cancellation</h2>
           <p>
