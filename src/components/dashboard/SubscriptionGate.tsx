@@ -26,7 +26,7 @@ export function SubscriptionGate({
 }) {
   const { user } = useAuth();
   const { subscription, isActive, loading: subLoading } = useSubscription();
-  const { openCheckout, loading: checkoutLoading } = usePaddleCheckout();
+  const { openCheckout, checkoutElement } = useStripeCheckout();
   const [profile, setProfile] = useState<{
     billing_status: string;
     trial_unlimited: boolean;
