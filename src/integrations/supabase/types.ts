@@ -882,11 +882,11 @@ export type Database = {
           current_period_start: string | null
           environment: string
           id: string
-          paddle_customer_id: string
-          paddle_subscription_id: string
           price_id: string
           product_id: string
           status: string
+          stripe_customer_id: string
+          stripe_subscription_id: string
           updated_at: string
           user_id: string
         }
@@ -897,11 +897,11 @@ export type Database = {
           current_period_start?: string | null
           environment?: string
           id?: string
-          paddle_customer_id: string
-          paddle_subscription_id: string
           price_id: string
           product_id: string
           status?: string
+          stripe_customer_id: string
+          stripe_subscription_id: string
           updated_at?: string
           user_id: string
         }
@@ -912,11 +912,11 @@ export type Database = {
           current_period_start?: string | null
           environment?: string
           id?: string
-          paddle_customer_id?: string
-          paddle_subscription_id?: string
           price_id?: string
           product_id?: string
           status?: string
+          stripe_customer_id?: string
+          stripe_subscription_id?: string
           updated_at?: string
           user_id?: string
         }

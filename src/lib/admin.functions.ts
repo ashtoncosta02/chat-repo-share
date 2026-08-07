@@ -763,7 +763,7 @@ export const adminSetUserPlan = createServerFn({ method: "POST" })
   });
 
 // Per-user billing overrides (price override + free-until date).
-// These fields are honored by the Paddle subscription gating logic.
+// These fields are honored by the subscription gating logic.
 const billingSchema = z.object({
   accessToken: z.string().min(1),
   userId: z.string().uuid(),

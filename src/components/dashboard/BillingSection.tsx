@@ -3,9 +3,10 @@ import { CreditCard, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { useSubscription } from "@/hooks/useSubscription";
-import { usePaddleCheckout } from "@/hooks/usePaddleCheckout";
-import { ELITE_PRICE_ID, getPaddleEnvironment } from "@/lib/paddle";
-import { createBillingPortalUrl } from "@/utils/payments.functions";
+import { useStripeCheckout } from "@/hooks/useStripeCheckout";
+import { ELITE_PRICE_ID, getStripeEnvironment } from "@/lib/stripe";
+import { createPortalSession } from "@/utils/payments.functions";
+
 
 function fmtDate(value: string | null) {
   if (!value) return "—";
@@ -27,30 +28,30 @@ const STATUS_LABEL: Record<string, string> = {
 export function BillingSection() {
   const { user } = useAuth();
   const { subscription, isActive, cancelAtPeriodEnd, loading, refetch } = useSubscription();
-  const { openCheckout, loading: checkoutLoading } = usePaddleCheckout();
+  const { openCheckout, checkoutElement } = useStripeCheckout();
   const [portalBusy, setPortalBusy] = useState(false);
 
-  async function startPlan() {
+  function startPlan() {
     if (!user) return;
-    try {
-      await openCheckout({
-        priceId: ELITE_PRICE_ID,
-        customerEmail: user.email ?? undefined,
-        customData: { userId: user.id },
-        successUrl: `${window.location.origin}/dashboard/account?checkout=success`,
-      });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Couldn't open checkout.");
-    }
+    openCheckout({
+      priceId: ELITE_PRICE_ID,
+      customerEmail: user.email ?? undefined,
+      userId: user.id,
+      returnUrl: `${window.location.origin}/dashboard/account?checkout=success`,
+    });
   }
 
   async function openPortal() {
     setPortalBusy(true);
     try {
-      const urls = await createBillingPortalUrl({
-        data: { environment: getPaddleEnvironment() },
+      const result = await createPortalSession({
+        data: {
+          environment: getStripeEnvironment(),
+          returnUrl: `${window.location.origin}/dashboard/account`,
+        },
       });
-      window.open(urls.overviewUrl, "_blank", "noopener");
+      if ("error" in result) throw new Error(result.error);
+      window.open(result.url, "_blank", "noopener");
       void refetch();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't open the billing portal.");
@@ -58,6 +59,7 @@ export function BillingSection() {
       setPortalBusy(false);
     }
   }
+
 
   return (
     <section id="billing" className="mt-6 scroll-mt-20 rounded-xl border border-border bg-card p-6">
@@ -111,10 +113,9 @@ export function BillingSection() {
             {!isActive ? (
               <button
                 onClick={startPlan}
-                disabled={checkoutLoading}
-                className="rounded-lg bg-[var(--gold)] px-4 py-2 text-sm font-medium text-[var(--gold-foreground)] hover:opacity-90 disabled:opacity-50"
+                className="rounded-lg bg-[var(--gold)] px-4 py-2 text-sm font-medium text-[var(--gold-foreground)] hover:opacity-90"
               >
-                {checkoutLoading ? "Opening…" : "Start Elite — $197/mo"}
+                Start Elite — $197/mo
               </button>
             ) : (
               <button
@@ -128,10 +129,13 @@ export function BillingSection() {
             )}
           </div>
 
+          {checkoutElement}
+
           <p className="mt-3 text-xs text-muted-foreground">
-            Payments are handled by Paddle, our secure payment partner. Cancel anytime from the
-            billing portal — you keep full access until the end of the period you've paid for.
+            Payments are handled securely by Stripe. Cancel anytime from the billing portal — you
+            keep full access until the end of the period you've paid for.
           </p>
+
         </>
       )}
     </section>
