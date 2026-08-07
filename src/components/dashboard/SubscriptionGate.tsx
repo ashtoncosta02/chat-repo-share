@@ -4,8 +4,9 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { useSubscription } from "@/hooks/useSubscription";
-import { usePaddleCheckout } from "@/hooks/usePaddleCheckout";
-import { ELITE_PRICE_ID } from "@/lib/paddle";
+import { useStripeCheckout } from "@/hooks/useStripeCheckout";
+import { ELITE_PRICE_ID } from "@/lib/stripe";
+
 
 /**
  * Locks the dashboard once an account is no longer entitled to access.
