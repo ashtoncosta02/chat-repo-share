@@ -28,30 +28,30 @@ const STATUS_LABEL: Record<string, string> = {
 export function BillingSection() {
   const { user } = useAuth();
   const { subscription, isActive, cancelAtPeriodEnd, loading, refetch } = useSubscription();
-  const { openCheckout, loading: checkoutLoading } = usePaddleCheckout();
+  const { openCheckout, checkoutElement } = useStripeCheckout();
   const [portalBusy, setPortalBusy] = useState(false);
 
-  async function startPlan() {
+  function startPlan() {
     if (!user) return;
-    try {
-      await openCheckout({
-        priceId: ELITE_PRICE_ID,
-        customerEmail: user.email ?? undefined,
-        customData: { userId: user.id },
-        successUrl: `${window.location.origin}/dashboard/account?checkout=success`,
-      });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Couldn't open checkout.");
-    }
+    openCheckout({
+      priceId: ELITE_PRICE_ID,
+      customerEmail: user.email ?? undefined,
+      userId: user.id,
+      returnUrl: `${window.location.origin}/dashboard/account?checkout=success`,
+    });
   }
 
   async function openPortal() {
     setPortalBusy(true);
     try {
-      const urls = await createBillingPortalUrl({
-        data: { environment: getPaddleEnvironment() },
+      const result = await createPortalSession({
+        data: {
+          environment: getStripeEnvironment(),
+          returnUrl: `${window.location.origin}/dashboard/account`,
+        },
       });
-      window.open(urls.overviewUrl, "_blank", "noopener");
+      if ("error" in result) throw new Error(result.error);
+      window.open(result.url, "_blank", "noopener");
       void refetch();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't open the billing portal.");
@@ -59,6 +59,7 @@ export function BillingSection() {
       setPortalBusy(false);
     }
   }
+
 
   return (
     <section id="billing" className="mt-6 scroll-mt-20 rounded-xl border border-border bg-card p-6">
