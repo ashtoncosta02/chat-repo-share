@@ -3,9 +3,10 @@ import { CreditCard, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { useSubscription } from "@/hooks/useSubscription";
-import { usePaddleCheckout } from "@/hooks/usePaddleCheckout";
-import { ELITE_PRICE_ID, getPaddleEnvironment } from "@/lib/paddle";
-import { createBillingPortalUrl } from "@/utils/payments.functions";
+import { useStripeCheckout } from "@/hooks/useStripeCheckout";
+import { ELITE_PRICE_ID, getStripeEnvironment } from "@/lib/stripe";
+import { createPortalSession } from "@/utils/payments.functions";
+
 
 function fmtDate(value: string | null) {
   if (!value) return "—";
