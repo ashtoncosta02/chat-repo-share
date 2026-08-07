@@ -66,18 +66,14 @@ export function SubscriptionGate({
 
   if (!locked) return <>{children}</>;
 
-  async function reactivate() {
+  function reactivate() {
     if (!user) return;
-    try {
-      await openCheckout({
-        priceId: ELITE_PRICE_ID,
-        customerEmail: user.email ?? undefined,
-        customData: { userId: user.id },
-        successUrl: `${window.location.origin}/dashboard?checkout=success`,
-      });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Couldn't open checkout.");
-    }
+    openCheckout({
+      priceId: ELITE_PRICE_ID,
+      customerEmail: user.email ?? undefined,
+      userId: user.id,
+      returnUrl: `${window.location.origin}/dashboard?checkout=success`,
+    });
   }
 
   return (
@@ -95,11 +91,12 @@ export function SubscriptionGate({
       </p>
       <button
         onClick={reactivate}
-        disabled={checkoutLoading}
-        className="mt-6 rounded-xl bg-[var(--gold)] px-6 py-3 text-sm font-semibold text-[var(--gold-foreground)] hover:opacity-90 disabled:opacity-60"
+        className="mt-6 rounded-xl bg-[var(--gold)] px-6 py-3 text-sm font-semibold text-[var(--gold-foreground)] hover:opacity-90"
       >
-        {checkoutLoading ? "Opening…" : "Restart Elite — $197/mo"}
+        Restart Elite — $197/mo
       </button>
+      {checkoutElement}
+
       <p className="mt-4 text-xs text-muted-foreground">
         Need a hand? Email{" "}
         <a href="mailto:hello@askjanice.net" className="font-medium text-gold hover:underline">
