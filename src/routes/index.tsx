@@ -17,8 +17,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
-import { usePaddleCheckout } from "@/hooks/usePaddleCheckout";
-import { ELITE_PRICE_ID } from "@/lib/paddle";
+import { useStripeCheckout } from "@/hooks/useStripeCheckout";
+import { ELITE_PRICE_ID } from "@/lib/stripe";
+
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 
 export const Route = createFileRoute("/")({
