@@ -78,12 +78,12 @@ function AdminOverviewPage() {
           <div className="text-muted-foreground">Loading stats…</div>
         ) : (
           <>
-            {/* Revenue row — placeholders until Paddle reporting is wired */}
+            {/* Revenue row — placeholders until Stripe reporting is wired */}
             <section>
               <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2"><DollarSign className="h-3.5 w-3.5" /> Revenue & growth</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <PlaceholderCard label="MRR" value="—" hint="Paddle reporting" />
-                <PlaceholderCard label="ARR" value="—" hint="Paddle reporting" />
+                <PlaceholderCard label="MRR" value="—" hint="Stripe reporting" />
+                <PlaceholderCard label="ARR" value="—" hint="Stripe reporting" />
                 <MetricCard
                   icon={<TrendingUp className="h-5 w-5 text-[var(--gold)]" />}
                   iconBg="bg-[oklch(0.96_0.04_290)]"
