@@ -92,19 +92,11 @@ function TermsPage() {
             plan unless stated otherwise.
           </p>
           <p>
-            Our order process is conducted by our online reseller Paddle.com. Paddle.com is the
-            Merchant of Record for all our orders. Paddle provides all customer service inquiries
-            and handles returns. You can review Paddle's buyer terms at{" "}
-            <a
-              href="https://www.paddle.com/legal/checkout-buyer-terms"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gold hover:underline"
-            >
-              paddle.com/legal/checkout-buyer-terms
-            </a>
-            .
+            Payments are processed by Stripe on our behalf. Ask Janice is the seller of record for
+            all orders and handles customer service inquiries, cancellations and refunds. By
+            purchasing, you also agree to Stripe's applicable terms as our payment processor.
           </p>
+
 
           <h2 className="font-display text-2xl font-semibold">7. Intellectual Property</h2>
           <p>
