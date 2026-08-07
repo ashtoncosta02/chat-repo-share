@@ -89,27 +89,19 @@ function Header() {
 function PricingCard() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { openCheckout, loading } = usePaddleCheckout();
-  const [busy, setBusy] = useState(false);
+  const { openCheckout, checkoutElement } = useStripeCheckout();
 
-  async function handleStart() {
+  function handleStart() {
     if (!user) {
       void navigate({ to: "/auth", search: { next: "/dashboard/account" } as never });
       return;
     }
-    setBusy(true);
-    try {
-      await openCheckout({
-        priceId: ELITE_PRICE_ID,
-        customerEmail: user.email ?? undefined,
-        customData: { userId: user.id },
-        successUrl: `${window.location.origin}/dashboard?checkout=success`,
-      });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Couldn't open checkout. Please try again.");
-    } finally {
-      setBusy(false);
-    }
+    openCheckout({
+      priceId: ELITE_PRICE_ID,
+      customerEmail: user.email ?? undefined,
+      userId: user.id,
+      returnUrl: `${window.location.origin}/dashboard?checkout=success`,
+    });
   }
 
   return (
@@ -129,12 +121,13 @@ function PricingCard() {
         <button
           type="button"
           onClick={handleStart}
-          disabled={busy || loading}
-          className="w-full rounded-xl bg-[var(--gold)] px-6 py-3.5 text-base font-semibold text-[var(--gold-foreground)] shadow-sm transition hover:opacity-90 disabled:opacity-60 sm:w-auto sm:px-10"
+          className="w-full rounded-xl bg-[var(--gold)] px-6 py-3.5 text-base font-semibold text-[var(--gold-foreground)] shadow-sm transition hover:opacity-90 sm:w-auto sm:px-10"
         >
-          {busy || loading ? "Opening checkout…" : "Get started — $197/mo"}
+          Get started — $197/mo
         </button>
       </div>
+      {checkoutElement}
+
 
       <p className="mt-5 flex items-center justify-center gap-2 text-center text-sm text-muted-foreground">
         <Lock className="h-3.5 w-3.5" />
