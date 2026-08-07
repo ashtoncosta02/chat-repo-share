@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { createClient } from '@supabase/supabase-js';
-import { verifyWebhook, EventName, type PaddleEnv } from '@/lib/paddle.server';
+import { verifyWebhook, type StripeEnv } from '@/lib/stripe.server';
 
 let _supabase: any = null;
 function getSupabase(): any {
@@ -49,46 +49,51 @@ async function sendWelcomeEmail(userId: string) {
   }
 }
 
-async function handleSubscriptionCreated(data: any, env: PaddleEnv) {
-  const { id, customerId, items, status, currentBillingPeriod, customData } = data;
+function isoFromUnix(seconds: number | null | undefined): string | null {
+  return seconds ? new Date(seconds * 1000).toISOString() : null;
+}
 
-  const userId = customData?.userId;
+function readItem(subscription: any) {
+  const item = subscription.items?.data?.[0];
+  const priceId =
+    item?.price?.lookup_key ||
+    item?.price?.metadata?.lovable_external_id ||
+    item?.price?.id;
+  const productId = item?.price?.product;
+  const periodStart = item?.current_period_start ?? subscription.current_period_start;
+  const periodEnd = item?.current_period_end ?? subscription.current_period_end;
+  return { priceId, productId, periodStart, periodEnd };
+}
+
+async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
+  const userId = subscription.metadata?.userId;
   if (!userId) {
-    console.error('No userId in customData');
+    console.error('No userId in subscription metadata');
     return;
   }
-
-  const item = items?.[0];
-  const priceId = item?.price?.importMeta?.externalId;
-  const productId = item?.product?.importMeta?.externalId;
-  if (!priceId || !productId) {
-    console.warn('Skipping subscription: missing importMeta.externalId', {
-      rawPriceId: item?.price?.id,
-      rawProductId: item?.product?.id,
-    });
-    return;
-  }
+  const { priceId, productId, periodStart, periodEnd } = readItem(subscription);
 
   const { data: existing } = await getSupabase()
     .from('subscriptions')
     .select('id')
-    .eq('paddle_subscription_id', id)
+    .eq('stripe_subscription_id', subscription.id)
     .maybeSingle();
 
   await getSupabase().from('subscriptions').upsert(
     {
       user_id: userId,
-      paddle_subscription_id: id,
-      paddle_customer_id: customerId,
+      stripe_subscription_id: subscription.id,
+      stripe_customer_id: subscription.customer,
       product_id: productId,
       price_id: priceId,
-      status,
-      current_period_start: currentBillingPeriod?.startsAt,
-      current_period_end: currentBillingPeriod?.endsAt,
+      status: subscription.status,
+      current_period_start: isoFromUnix(periodStart),
+      current_period_end: isoFromUnix(periodEnd),
+      cancel_at_period_end: subscription.cancel_at_period_end || false,
       environment: env,
       updated_at: new Date().toISOString(),
     },
-    { onConflict: 'paddle_subscription_id' },
+    { onConflict: 'stripe_subscription_id' },
   );
 
   // Unlock the account.
@@ -100,51 +105,48 @@ async function handleSubscriptionCreated(data: any, env: PaddleEnv) {
   if (!existing) await sendWelcomeEmail(userId);
 }
 
-async function handleSubscriptionUpdated(data: any, env: PaddleEnv) {
-  const { id, status, currentBillingPeriod, scheduledChange, items } = data;
-
-  const priceId = items?.[0]?.price?.importMeta?.externalId;
-  const productId = items?.[0]?.product?.importMeta?.externalId;
+async function handleSubscriptionUpdated(subscription: any, env: StripeEnv) {
+  const { priceId, productId, periodStart, periodEnd } = readItem(subscription);
 
   await getSupabase()
     .from('subscriptions')
     .update({
-      status,
-      current_period_start: currentBillingPeriod?.startsAt,
-      current_period_end: currentBillingPeriod?.endsAt,
-      cancel_at_period_end: scheduledChange?.action === 'cancel',
+      status: subscription.status,
       ...(priceId ? { price_id: priceId } : {}),
       ...(productId ? { product_id: productId } : {}),
+      current_period_start: isoFromUnix(periodStart),
+      current_period_end: isoFromUnix(periodEnd),
+      cancel_at_period_end: subscription.cancel_at_period_end || false,
       updated_at: new Date().toISOString(),
     })
-    .eq('paddle_subscription_id', id)
+    .eq('stripe_subscription_id', subscription.id)
     .eq('environment', env);
 }
 
-async function handleSubscriptionCanceled(data: any, env: PaddleEnv) {
+async function handleSubscriptionDeleted(subscription: any, env: StripeEnv) {
   // Access continues until current_period_end; has_active_subscription honours that.
   await getSupabase()
     .from('subscriptions')
     .update({ status: 'canceled', updated_at: new Date().toISOString() })
-    .eq('paddle_subscription_id', data.id)
+    .eq('stripe_subscription_id', subscription.id)
     .eq('environment', env);
 }
 
-async function handleWebhook(req: Request, env: PaddleEnv) {
+async function handleWebhook(req: Request, env: StripeEnv) {
   const event = await verifyWebhook(req, env);
 
-  switch (event.eventType) {
-    case EventName.SubscriptionCreated:
-      await handleSubscriptionCreated(event.data, env);
+  switch (event.type) {
+    case 'customer.subscription.created':
+      await handleSubscriptionCreated(event.data.object, env);
       break;
-    case EventName.SubscriptionUpdated:
-      await handleSubscriptionUpdated(event.data, env);
+    case 'customer.subscription.updated':
+      await handleSubscriptionUpdated(event.data.object, env);
       break;
-    case EventName.SubscriptionCanceled:
-      await handleSubscriptionCanceled(event.data, env);
+    case 'customer.subscription.deleted':
+      await handleSubscriptionDeleted(event.data.object, env);
       break;
     default:
-      console.log('Unhandled payment event:', event.eventType);
+      console.log('Unhandled payment event:', event.type);
   }
 }
 
@@ -152,10 +154,13 @@ export const Route = createFileRoute('/api/public/payments/webhook')({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const url = new URL(request.url);
-        const env = (url.searchParams.get('env') || 'sandbox') as PaddleEnv;
+        const rawEnv = new URL(request.url).searchParams.get('env');
+        if (rawEnv !== 'sandbox' && rawEnv !== 'live') {
+          console.error('Webhook received with invalid env:', rawEnv);
+          return Response.json({ received: true, ignored: 'invalid env' });
+        }
         try {
-          await handleWebhook(request, env);
+          await handleWebhook(request, rawEnv as StripeEnv);
           return Response.json({ received: true });
         } catch (e) {
           console.error('Webhook error:', e);
