@@ -113,10 +113,9 @@ export function BillingSection() {
             {!isActive ? (
               <button
                 onClick={startPlan}
-                disabled={checkoutLoading}
-                className="rounded-lg bg-[var(--gold)] px-4 py-2 text-sm font-medium text-[var(--gold-foreground)] hover:opacity-90 disabled:opacity-50"
+                className="rounded-lg bg-[var(--gold)] px-4 py-2 text-sm font-medium text-[var(--gold-foreground)] hover:opacity-90"
               >
-                {checkoutLoading ? "Opening…" : "Start Elite — $197/mo"}
+                Start Elite — $197/mo
               </button>
             ) : (
               <button
@@ -130,10 +129,13 @@ export function BillingSection() {
             )}
           </div>
 
+          {checkoutElement}
+
           <p className="mt-3 text-xs text-muted-foreground">
-            Payments are handled by Paddle, our secure payment partner. Cancel anytime from the
-            billing portal — you keep full access until the end of the period you've paid for.
+            Payments are handled securely by Stripe. Cancel anytime from the billing portal — you
+            keep full access until the end of the period you've paid for.
           </p>
+
         </>
       )}
     </section>
