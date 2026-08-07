@@ -1,48 +1,126 @@
 import { createServerFn } from "@tanstack/react-start";
-import { gatewayFetch, getPaddleClient, type PaddleEnv } from "@/lib/paddle.server";
+import type Stripe from "stripe";
+import {
+  type StripeEnv,
+  createStripeClient,
+  getStripeErrorMessage,
+} from "@/lib/stripe.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-export const resolvePaddlePrice = createServerFn({ method: "GET" })
-  .inputValidator((data: { priceId: string; environment: PaddleEnv }) => data)
-  .handler(async ({ data }) => {
-    const response = await gatewayFetch(
-      data.environment,
-      `/prices?external_id=${encodeURIComponent(data.priceId)}`,
-    );
-    const result = await response.json();
-    if (!result.data?.length) throw new Error("Price not found");
-    return result.data[0].id as string;
+type CheckoutSessionResult = { clientSecret: string } | { error: string };
+type PortalSessionResult = { url: string } | { error: string };
+
+async function resolveOrCreateCustomer(
+  stripe: ReturnType<typeof createStripeClient>,
+  options: { email?: string; userId?: string },
+): Promise<string> {
+  if (options.userId && !/^[a-zA-Z0-9_-]+$/.test(options.userId)) {
+    throw new Error("Invalid userId");
+  }
+  if (options.userId) {
+    const found = await stripe.customers.search({
+      query: `metadata['userId']:'${options.userId}'`,
+      limit: 1,
+    });
+    if (found.data.length) return found.data[0].id;
+  }
+  if (options.email) {
+    const existing = await stripe.customers.list({ email: options.email, limit: 1 });
+    if (existing.data.length) {
+      const customer = existing.data[0];
+      if (options.userId && customer.metadata?.userId !== options.userId) {
+        await stripe.customers.update(customer.id, {
+          metadata: { ...customer.metadata, userId: options.userId },
+        });
+      }
+      return customer.id;
+    }
+  }
+  const created = await stripe.customers.create({
+    ...(options.email && { email: options.email }),
+    ...(options.userId && { metadata: { userId: options.userId } }),
+  });
+  return created.id;
+}
+
+export const createCheckoutSession = createServerFn({ method: "POST" })
+  .inputValidator(
+    (data: {
+      priceId: string;
+      customerEmail?: string;
+      userId?: string;
+      returnUrl: string;
+      environment: StripeEnv;
+    }) => {
+      if (!/^[a-zA-Z0-9_-]+$/.test(data.priceId)) throw new Error("Invalid priceId");
+      return data;
+    },
+  )
+  .handler(async ({ data }): Promise<CheckoutSessionResult> => {
+    try {
+      const stripe = createStripeClient(data.environment);
+
+      const prices = await stripe.prices.list({ lookup_keys: [data.priceId] });
+      if (!prices.data.length) throw new Error("Price not found");
+      const stripePrice = prices.data[0];
+      const isRecurring = stripePrice.type === "recurring";
+
+      const customerId =
+        data.customerEmail || data.userId
+          ? await resolveOrCreateCustomer(stripe, {
+              email: data.customerEmail,
+              userId: data.userId,
+            })
+          : undefined;
+
+      const session = await stripe.checkout.sessions.create({
+        line_items: [{ price: stripePrice.id, quantity: 1 }],
+        mode: isRecurring ? "subscription" : "payment",
+        ui_mode: "embedded_page",
+        return_url: data.returnUrl,
+        ...(customerId && { customer: customerId }),
+        // Stripe handles tax compliance, fraud, disputes and transaction support.
+        managed_payments: { enabled: true },
+        ...(data.userId && {
+          metadata: { userId: data.userId, managed_payments: "true" },
+          ...(isRecurring && { subscription_data: { metadata: { userId: data.userId } } }),
+        }),
+      } as Stripe.Checkout.SessionCreateParams);
+
+      return { clientSecret: session.client_secret ?? "" };
+    } catch (error) {
+      return { error: getStripeErrorMessage(error) };
+    }
   });
 
-/** Creates a Paddle customer portal session so the user can manage/cancel their plan. */
-export const createBillingPortalUrl = createServerFn({ method: "POST" })
+/** Opens the Stripe billing portal so the user can manage or cancel their plan. */
+export const createPortalSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { environment: PaddleEnv }) => data)
-  .handler(async ({ data, context }) => {
+  .inputValidator((data: { returnUrl?: string; environment: StripeEnv }) => data)
+  .handler(async ({ data, context }): Promise<PortalSessionResult> => {
     const { supabase, userId } = context;
 
     const { data: sub } = await supabase
       .from("subscriptions")
-      .select("paddle_customer_id, paddle_subscription_id")
+      .select("stripe_customer_id")
       .eq("user_id", userId)
       .eq("environment", data.environment)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 
-    if (!sub?.paddle_customer_id) {
-      throw new Error("No subscription found for this account.");
+    if (!sub?.stripe_customer_id) {
+      return { error: "No subscription found for this account." };
     }
 
-    const paddle = getPaddleClient(data.environment);
-    const session = await paddle.customerPortalSessions.create(
-      sub.paddle_customer_id as string,
-      [sub.paddle_subscription_id as string],
-    );
-
-    return {
-      overviewUrl: session.urls.general.overview,
-      cancelUrl: session.urls.subscriptions?.[0]?.cancelSubscription ?? null,
-      updatePaymentUrl: session.urls.subscriptions?.[0]?.updateSubscriptionPaymentMethod ?? null,
-    };
+    try {
+      const stripe = createStripeClient(data.environment);
+      const portal = await stripe.billingPortal.sessions.create({
+        customer: sub.stripe_customer_id as string,
+        ...(data.returnUrl && { return_url: data.returnUrl }),
+      });
+      return { url: portal.url };
+    } catch (error) {
+      return { error: getStripeErrorMessage(error) };
+    }
   });
