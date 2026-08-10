@@ -37,25 +37,24 @@ export async function checkElevenLabsApiKey(): Promise<CredentialCheck> {
   const masked = maskSecret(key);
 
   try {
-    const res = await fetch(`${EL_BASE}/user`, { headers: { "xi-api-key": key } });
-    const bodyText = await res.text();
-    if (res.ok) {
-      let account = "";
-      try {
-        const json = JSON.parse(bodyText) as {
-          first_name?: string;
-          subscription?: { tier?: string };
-        };
-        account = [json.first_name, json.subscription?.tier].filter(Boolean).join(" · ");
-      } catch {
-        /* ignore body shape */
-      }
+    // Probe the actual Conversational AI endpoints we rely on, not /user,
+    // so missing user_read permission does not create a false alarm.
+    const [settingsRes, conversationsRes] = await Promise.all([
+      fetch(`${EL_BASE}/convai/settings`, { headers: { "xi-api-key": key } }),
+      fetch(`${EL_BASE}/convai/conversations?page_size=1`, { headers: { "xi-api-key": key } }),
+    ]);
+
+    if (settingsRes.ok || conversationsRes.ok) {
       return {
         ok: true,
         label: "ElevenLabs API key",
-        detail: `Connected${account ? ` — ${account}` : ""}. Key ${masked}.`,
+        detail: `Connected — Conversational AI accessible. Key ${masked}.`,
       };
     }
+
+    const settingsText = await settingsRes.text();
+    const conversationsText = await conversationsRes.text();
+    const bodyText = settingsText || conversationsText;
 
     let message = bodyText.slice(0, 300);
     try {
@@ -69,9 +68,9 @@ export async function checkElevenLabsApiKey(): Promise<CredentialCheck> {
     return {
       ok: false,
       label: "ElevenLabs API key",
-      detail: `Rejected (HTTP ${res.status}): ${message}. Key ${masked}.`,
+      detail: `Rejected (HTTP ${settingsRes.status} / ${conversationsRes.status}): ${message}. Key ${masked}.`,
       hint: key.startsWith("sk_")
-        ? "The key has the right shape but ElevenLabs is refusing it — it may have been revoked or belongs to a different workspace."
+        ? "The key has the right shape but ElevenLabs is refusing it. In ElevenLabs → API Keys, make sure it has permissions for Conversational AI (at least user_read, convai:read, and voices:read)."
         : "This key does not start with sk_, which is the current ElevenLabs API key format.",
     };
   } catch (e) {
