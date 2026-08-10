@@ -1,43 +1,41 @@
-# Complete Stripe go-live and checkout integration
+# Admin: Stripe billing health & transactions
 
-## Current state
+Add a **Billing** page in the admin area that shows how payments are actually performing, plus a compact Stripe status tile on the existing Admin Health page.
 
-Stripe sandbox is already claimed (account `acct_1U1ZeyAwpPGWs6dA`). The next step is Stripe's go-live form, which includes adding a bank account for payouts.
+## KPIs shown
 
-## Plan
+Top row of stat cards (live environment, with a test/live toggle):
 
-### 1. Finish Stripe account setup first
+- **MRR** — sum of active + trialing subscriptions
+- **Active subscribers** — active + trialing count
+- **Trialing** — count (early signal of upcoming revenue)
+- **Past due / unpaid** — count, highlighted red (money at risk right now)
+- **Canceled this month** — churn signal
+- **Revenue last 30 days** — sum of paid invoices/charges
+- **Failed payments last 7 days** — count of failed charges
 
-Yes — add the checking account now. Stripe will not let you accept live payments or send payouts until a bank account is linked. This happens inside Stripe's "Activate your account" flow, not in Lovable.
+## Transactions list
 
-You'll also complete in the same flow:
-- Business type and details
-- Public business info (statement descriptor, support phone/email)
-- Two-step authentication
-- Review and submit
+A recent-transactions table (last 50), each row showing: date, customer email, amount, status (paid / refunded / failed / pending), plan, and a link to the receipt/hosted invoice. Filterable by status so you can jump straight to failures and refunds.
 
-### 2. Install the Lovable app on the live Stripe account
+Below it: **Active subscriptions** list — customer, plan, status, current period end, cancel-at-period-end flag, and the linked app user when we can match it.
 
-After Stripe onboarding is submitted, the dashboard will show an "Install Lovable app" step. Clicking it authorizes Lovable to create checkout sessions and read subscription events from the live account.
+## Connection health checks
 
-### 3. Let Lovable provision live API keys
+A "Stripe connection" card that runs live checks and shows green/amber/red with a plain-language message:
 
-Once the app is installed, Lovable automatically creates live API keys and webhook endpoints. No manual copy/paste is needed.
+- Live API key configured and accepting requests
+- Webhook signing secret present
+- Last webhook event received (timestamp; amber if nothing in 7 days)
+- Elite price `elite_monthly` resolves in the current environment
+- Local `subscriptions` table vs Stripe drift — count of Stripe subscriptions with no matching row (means webhooks are missing events)
 
-### 4. Run the readiness check
+Any red/amber item gets a one-line "what this means / what to do" note, same style as the existing credential health card.
 
-The Payments tab will unlock a readiness check that validates products, prices, webhooks, and keys.
+## Technical notes
 
-### 5. Verify the app checkout flow
-
-Test the Elite plan checkout in preview with Stripe's test card (`4242 4242 4242 4242`), then confirm the live flow after go-live completes.
-
-### 6. Tax and compliance handling
-
-Ask Janice sells AI receptionist software (a digital/SaaS product). If the Stripe account is in a supported country, configure checkout to use Lovable's managed Stripe handling so tax, fraud, disputes, and transaction support are covered for buyers in supported countries. This adds +3.5% per transaction and shows `LINK.COM*` on bank statements.
-
-## What you need to do now
-
-Open the Payments tab and continue the in-progress "Complete the go-live form on Stripe" step. Add your checking account there.
-
-<presentation-actions><presentation-open-payments>Go to payments</presentation-open-payments></presentation-actions>
+- New server functions in `src/lib/admin-billing.functions.ts`, admin-gated (same `useIsAdmin` / access-token pattern used by `admin.functions.ts` and `webhook-health.functions.ts`).
+- Stripe reads go through `createStripeClient(env)` from `@/lib/stripe.server` — subscriptions list, invoices/charges list, prices lookup by `lookup_key`, and `webhookEndpoints`/event list for last-event time. All calls wrapped so a Stripe failure returns `{ error }` rather than a 500.
+- Drift check joins Stripe subscription ids against the existing `subscriptions` table filtered by `environment`.
+- New route `src/routes/dashboard.admin.billing.tsx` with its own `head()` meta; link added from the admin index and a summary tile linking to it from `dashboard.admin.health.tsx`.
+- Read-only: no refunds, cancels, or writes from this page.
