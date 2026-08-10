@@ -43,6 +43,7 @@ import { Route as DashboardAdminUsersRouteImport } from './routes/dashboard.admi
 import { Route as DashboardAdminTicketsRouteImport } from './routes/dashboard.admin.tickets'
 import { Route as DashboardAdminInvitationsRouteImport } from './routes/dashboard.admin.invitations'
 import { Route as DashboardAdminHealthRouteImport } from './routes/dashboard.admin.health'
+import { Route as DashboardAdminBillingRouteImport } from './routes/dashboard.admin.billing'
 import { Route as ApiPublicOwnerChatRouteImport } from './routes/api.public.owner-chat'
 import { Route as DashboardAdminUsersIndexRouteImport } from './routes/dashboard.admin.users.index'
 import { Route as DashboardAdminTicketsIndexRouteImport } from './routes/dashboard.admin.tickets.index'
@@ -242,6 +243,11 @@ const DashboardAdminHealthRoute = DashboardAdminHealthRouteImport.update({
   path: '/health',
   getParentRoute: () => DashboardAdminRoute,
 } as any)
+const DashboardAdminBillingRoute = DashboardAdminBillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
+  getParentRoute: () => DashboardAdminRoute,
+} as any)
 const ApiPublicOwnerChatRoute = ApiPublicOwnerChatRouteImport.update({
   id: '/api/public/owner-chat',
   path: '/api/public/owner-chat',
@@ -408,6 +414,7 @@ export interface FileRoutesByFullPath {
   '/widget/$agentId': typeof WidgetAgentIdRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/api/public/owner-chat': typeof ApiPublicOwnerChatRoute
+  '/dashboard/admin/billing': typeof DashboardAdminBillingRoute
   '/dashboard/admin/health': typeof DashboardAdminHealthRoute
   '/dashboard/admin/invitations': typeof DashboardAdminInvitationsRoute
   '/dashboard/admin/tickets': typeof DashboardAdminTicketsRouteWithChildren
@@ -465,6 +472,7 @@ export interface FileRoutesByTo {
   '/widget/$agentId': typeof WidgetAgentIdRoute
   '/dashboard': typeof DashboardIndexRoute
   '/api/public/owner-chat': typeof ApiPublicOwnerChatRoute
+  '/dashboard/admin/billing': typeof DashboardAdminBillingRoute
   '/dashboard/admin/health': typeof DashboardAdminHealthRoute
   '/dashboard/admin/invitations': typeof DashboardAdminInvitationsRoute
   '/dashboard/agents/$agentId': typeof DashboardAgentsAgentIdRoute
@@ -524,6 +532,7 @@ export interface FileRoutesById {
   '/widget/$agentId': typeof WidgetAgentIdRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/api/public/owner-chat': typeof ApiPublicOwnerChatRoute
+  '/dashboard/admin/billing': typeof DashboardAdminBillingRoute
   '/dashboard/admin/health': typeof DashboardAdminHealthRoute
   '/dashboard/admin/invitations': typeof DashboardAdminInvitationsRoute
   '/dashboard/admin/tickets': typeof DashboardAdminTicketsRouteWithChildren
@@ -586,6 +595,7 @@ export interface FileRouteTypes {
     | '/widget/$agentId'
     | '/dashboard/'
     | '/api/public/owner-chat'
+    | '/dashboard/admin/billing'
     | '/dashboard/admin/health'
     | '/dashboard/admin/invitations'
     | '/dashboard/admin/tickets'
@@ -643,6 +653,7 @@ export interface FileRouteTypes {
     | '/widget/$agentId'
     | '/dashboard'
     | '/api/public/owner-chat'
+    | '/dashboard/admin/billing'
     | '/dashboard/admin/health'
     | '/dashboard/admin/invitations'
     | '/dashboard/agents/$agentId'
@@ -701,6 +712,7 @@ export interface FileRouteTypes {
     | '/widget/$agentId'
     | '/dashboard/'
     | '/api/public/owner-chat'
+    | '/dashboard/admin/billing'
     | '/dashboard/admin/health'
     | '/dashboard/admin/invitations'
     | '/dashboard/admin/tickets'
@@ -1009,6 +1021,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAdminHealthRouteImport
       parentRoute: typeof DashboardAdminRoute
     }
+    '/dashboard/admin/billing': {
+      id: '/dashboard/admin/billing'
+      path: '/billing'
+      fullPath: '/dashboard/admin/billing'
+      preLoaderRoute: typeof DashboardAdminBillingRouteImport
+      parentRoute: typeof DashboardAdminRoute
+    }
     '/api/public/owner-chat': {
       id: '/api/public/owner-chat'
       path: '/api/public/owner-chat'
@@ -1209,6 +1228,7 @@ const DashboardAdminUsersRouteWithChildren =
   DashboardAdminUsersRoute._addFileChildren(DashboardAdminUsersRouteChildren)
 
 interface DashboardAdminRouteChildren {
+  DashboardAdminBillingRoute: typeof DashboardAdminBillingRoute
   DashboardAdminHealthRoute: typeof DashboardAdminHealthRoute
   DashboardAdminInvitationsRoute: typeof DashboardAdminInvitationsRoute
   DashboardAdminTicketsRoute: typeof DashboardAdminTicketsRouteWithChildren
@@ -1217,6 +1237,7 @@ interface DashboardAdminRouteChildren {
 }
 
 const DashboardAdminRouteChildren: DashboardAdminRouteChildren = {
+  DashboardAdminBillingRoute: DashboardAdminBillingRoute,
   DashboardAdminHealthRoute: DashboardAdminHealthRoute,
   DashboardAdminInvitationsRoute: DashboardAdminInvitationsRoute,
   DashboardAdminTicketsRoute: DashboardAdminTicketsRouteWithChildren,
@@ -1324,13 +1345,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
