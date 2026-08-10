@@ -137,6 +137,20 @@ export function AdminHealthPage() {
       />
 
       <div className="p-4 md:p-8 space-y-6 max-w-6xl">
+        {/* Billing health shortcut */}
+        <Link
+          to="/dashboard/admin/billing"
+          className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-5 hover:bg-muted/40 transition-colors"
+        >
+          <div>
+            <div className="text-sm font-semibold">Billing & Stripe connection</div>
+            <div className="text-xs text-muted-foreground">
+              Revenue, failed payments, subscriptions and webhook status.
+            </div>
+          </div>
+          <ExternalLink className="h-4 w-4 text-muted-foreground" />
+        </Link>
+
         {/* Voice credential health */}
         <div className="rounded-xl border border-border bg-card p-5 space-y-3">
           <div className="text-sm font-semibold flex items-center gap-2">

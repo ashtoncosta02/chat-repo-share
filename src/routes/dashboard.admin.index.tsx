@@ -66,6 +66,7 @@ function AdminOverviewPage() {
             <ResyncAllButton accessToken={session?.access_token} />
             <Link to="/dashboard/admin/invitations" className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-muted">Invitations</Link>
             <Link to="/dashboard/admin/tickets" className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-muted">Tickets</Link>
+            <Link to="/dashboard/admin/billing" className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-muted">Billing</Link>
             <Link to="/dashboard/admin/health" className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-muted">System health</Link>
             <Link to="/dashboard/admin/users" className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90">All users</Link>
           </div>
@@ -78,12 +79,20 @@ function AdminOverviewPage() {
           <div className="text-muted-foreground">Loading stats…</div>
         ) : (
           <>
-            {/* Revenue row — placeholders until Stripe reporting is wired */}
+            {/* Revenue row */}
             <section>
               <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2"><DollarSign className="h-3.5 w-3.5" /> Revenue & growth</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <PlaceholderCard label="MRR" value="—" hint="Stripe reporting" />
-                <PlaceholderCard label="ARR" value="—" hint="Stripe reporting" />
+                <Link to="/dashboard/admin/billing" className="block sm:col-span-2">
+                  <div className="rounded-xl border border-border bg-card p-5 hover:bg-muted/40 transition-colors h-full">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="rounded-lg p-2 bg-[oklch(0.96_0.04_290)]"><DollarSign className="h-5 w-5 text-[var(--gold)]" /></div>
+                    </div>
+                    <div className="mt-3 text-sm text-muted-foreground">Billing health</div>
+                    <div className="font-display text-2xl font-semibold mt-1">MRR, transactions & Stripe status</div>
+                    <div className="text-xs text-muted-foreground mt-1">Open the billing dashboard →</div>
+                  </div>
+                </Link>
                 <MetricCard
                   icon={<TrendingUp className="h-5 w-5 text-[var(--gold)]" />}
                   iconBg="bg-[oklch(0.96_0.04_290)]"
