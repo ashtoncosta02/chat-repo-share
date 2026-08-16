@@ -12,7 +12,11 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/api/public/hooks/backfill-calls")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
+        const { authorizeCronRequest } = await import("@/server/cron-auth.server");
+        const denied = await authorizeCronRequest(request);
+        if (denied) return denied;
+
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { backfillRecentCalls } = await import("@/server/voice-call-backfill.server");
         const { checkElevenLabsApiKey, replayWebhookFailures } = await import(

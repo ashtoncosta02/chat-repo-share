@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
 const ExtractInput = z.object({
@@ -31,6 +32,7 @@ export type ExtractedLead = z.infer<typeof ExtractedSchema>;
  * Returns { success: true, lead: null } when no contact info is present.
  */
 export const extractLeadFromChat = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => ExtractInput.parse(input))
   .handler(async ({ data }) => {
     const apiKey = process.env.LOVABLE_API_KEY;

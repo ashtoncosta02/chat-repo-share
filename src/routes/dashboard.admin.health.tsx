@@ -32,11 +32,15 @@ export function AdminHealthPage() {
   const [replay, setReplay] = useState<{ saved: number; duplicate: number; errors: number } | null>(null);
 
   const runSweep = async () => {
+    if (!session?.access_token) return;
     setSweeping(true);
     try {
       const res = await fetch("/api/public/hooks/backfill-calls", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: "{}",
       });
       const json = (await res.json()) as { saved?: number; skipped?: number; errors?: number };
