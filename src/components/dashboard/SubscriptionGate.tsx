@@ -93,7 +93,7 @@ export function SubscriptionGate({
         onClick={reactivate}
         className="mt-6 rounded-xl bg-[var(--gold)] px-6 py-3 text-sm font-semibold text-[var(--gold-foreground)] hover:opacity-90"
       >
-        Restart Elite — $197/mo
+        Restart Elite — $97/mo
       </button>
       {checkoutElement}
 
