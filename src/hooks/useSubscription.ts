@@ -53,8 +53,10 @@ export function useSubscription() {
 
   useEffect(() => {
     if (!user?.id) return;
+    // Unique per mount: reusing a channel name returns the cached channel, and
+    // calling .on() on an already-subscribed channel throws.
     const channel = supabase
-      .channel(`subscriptions-${user.id}`)
+      .channel(`subscriptions-${user.id}-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "subscriptions", filter: `user_id=eq.${user.id}` },
