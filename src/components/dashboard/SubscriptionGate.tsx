@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Lock } from "lucide-react";
+import { Lock, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
+import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 import { ELITE_PRICE_ID } from "@/lib/stripe";
 
 
@@ -56,6 +57,39 @@ export function SubscriptionGate({
   if (subLoading || profileLoading || !profile) return <>{children}</>;
   if (isActive) return <>{children}</>;
 
+  // Brand-new self-signup: card on file required before the 7-day trial starts.
+  if (
+    !subscription &&
+    !profile.trial_unlimited &&
+    profile.billing_status === "pending_trial"
+  ) {
+    return (
+      <div className="mx-auto max-w-2xl px-6 py-12">
+        <div className="text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-accent">
+            <Sparkles className="h-5 w-5 text-gold-foreground" />
+          </div>
+          <h1 className="mt-5 font-display text-2xl font-bold text-foreground">
+            Start your 7-day free trial
+          </h1>
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            Add a card to switch your receptionist on. You won't be charged today — your first
+            payment of $97/mo happens 7 days from now, and you can cancel any time before then.
+          </p>
+        </div>
+        <div className="mt-8">
+          <StripeEmbeddedCheckout
+            priceId={ELITE_PRICE_ID}
+            customerEmail={user?.email ?? undefined}
+            userId={user?.id}
+            trialDays={7}
+            returnUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/dashboard?checkout=success`}
+          />
+        </div>
+      </div>
+    );
+  }
+
   const trialOk =
     profile.trial_unlimited ||
     (profile.billing_status === "trial" &&
@@ -65,6 +99,7 @@ export function SubscriptionGate({
   const locked = subscriptionLapsed || profile.billing_status === "trial_expired" || !trialOk;
 
   if (!locked) return <>{children}</>;
+
 
   function reactivate() {
     if (!user) return;

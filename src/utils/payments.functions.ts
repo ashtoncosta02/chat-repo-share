@@ -51,8 +51,15 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       userId?: string;
       returnUrl: string;
       environment: StripeEnv;
+      /** When set, Stripe collects the card but charges $0 for this many days. */
+      trialDays?: number;
     }) => {
       if (!/^[a-zA-Z0-9_-]+$/.test(data.priceId)) throw new Error("Invalid priceId");
+      if (data.trialDays !== undefined) {
+        if (!Number.isInteger(data.trialDays) || data.trialDays < 1 || data.trialDays > 90) {
+          throw new Error("Invalid trial length");
+        }
+      }
       return data;
     },
   )
@@ -73,6 +80,15 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
             })
           : undefined;
 
+      const withTrial = isRecurring && Boolean(data.trialDays);
+
+      // Card-on-file free trial: Stripe stores the payment method now, charges
+      // $0 today, and automatically bills at the end of the trial period.
+      const subscriptionData = {
+        ...(data.userId && { metadata: { userId: data.userId } }),
+        ...(withTrial && { trial_period_days: data.trialDays }),
+      };
+
       const session = await stripe.checkout.sessions.create({
         line_items: [{ price: stripePrice.id, quantity: 1 }],
         mode: isRecurring ? "subscription" : "payment",
@@ -81,10 +97,10 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
         ...(customerId && { customer: customerId }),
         // Stripe handles tax compliance, fraud, disputes and transaction support.
         managed_payments: { enabled: true },
-        ...(data.userId && {
-          metadata: { userId: data.userId, managed_payments: "true" },
-          ...(isRecurring && { subscription_data: { metadata: { userId: data.userId } } }),
-        }),
+        ...(withTrial && { payment_method_collection: "always" }),
+        ...(data.userId && { metadata: { userId: data.userId, managed_payments: "true" } }),
+        ...(isRecurring &&
+          Object.keys(subscriptionData).length > 0 && { subscription_data: subscriptionData }),
       } as Stripe.Checkout.SessionCreateParams);
 
       return { clientSecret: session.client_secret ?? "" };
@@ -92,6 +108,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       return { error: getStripeErrorMessage(error) };
     }
   });
+
 
 /** Opens the Stripe billing portal so the user can manage or cancel their plan. */
 export const createPortalSession = createServerFn({ method: "POST" })
