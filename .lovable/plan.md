@@ -2,6 +2,17 @@
 
 You're right — the standard SaaS pattern is: collect the card up front, give 7 free days, then charge automatically unless they cancel. That's what this plan does.
 
+## Nobody's existing account is touched
+
+There are 4 accounts today: 2 on dated trials (ending Aug 23 and Oct 5, 2026), 1 unlimited/comped, 1 marked active. None of them are modified, downgraded, or erased.
+
+- No data is deleted anywhere — no agents, threads, leads, calendars, or phone numbers.
+- Existing accounts keep their current billing status and trial end dates exactly as they are.
+- The card-up-front screen only applies to accounts created **after** this change.
+- Existing accounts see the countdown banner with an Upgrade button when their trial nears its end, and lock only when their existing `trial_ends_at` actually passes — which is the behavior you already want for getting them to upgrade.
+- The unlimited/comped account and admins are never gated at all.
+
+
 ## Why your own account shows no upgrade prompt
 
 1. The David Costa account (info@costacaulking.com) is on a comped trial that runs until **Oct 5, 2026**, so nothing prompts for payment.
