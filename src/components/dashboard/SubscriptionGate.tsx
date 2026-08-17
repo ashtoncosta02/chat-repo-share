@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Lock } from "lucide-react";
+import { Lock, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
+import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 import { ELITE_PRICE_ID } from "@/lib/stripe";
 
 
