@@ -11,6 +11,7 @@ import { CalendarHealthBanner } from "@/components/dashboard/CalendarHealthBanne
 import { AccountMenu } from "@/components/dashboard/AccountMenu";
 import { ImpersonationBanner } from "@/components/dashboard/ImpersonationBanner";
 import { SubscriptionGate } from "@/components/dashboard/SubscriptionGate";
+import { TrialBanner } from "@/components/dashboard/TrialBanner";
 import { ChatWidgetPage } from "./dashboard.chat-widget";
 
 export const Route = createFileRoute("/dashboard")({
@@ -273,6 +274,7 @@ function DashboardLayout() {
         </div>
         <ImpersonationBanner currentEmail={user.email} />
         {agentId && <CalendarHealthBanner agentId={agentId} />}
+        <TrialBanner isAdmin={isAdmin} />
         <SubscriptionGate isAdmin={isAdmin}>
           {location.pathname === "/dashboard/chat-widget" ? (
             <ChatWidgetPage />
