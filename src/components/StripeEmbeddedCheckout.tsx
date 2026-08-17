@@ -7,6 +7,7 @@ interface StripeEmbeddedCheckoutProps {
   customerEmail?: string;
   userId?: string;
   returnUrl?: string;
+  trialDays?: number;
 }
 
 export function StripeEmbeddedCheckout({
@@ -14,6 +15,7 @@ export function StripeEmbeddedCheckout({
   customerEmail,
   userId,
   returnUrl,
+  trialDays,
 }: StripeEmbeddedCheckoutProps) {
   const fetchClientSecret = async (): Promise<string> => {
     const result = await createCheckoutSession({
@@ -23,6 +25,7 @@ export function StripeEmbeddedCheckout({
         userId,
         returnUrl: returnUrl || window.location.href,
         environment: getStripeEnvironment(),
+        ...(trialDays ? { trialDays } : {}),
       },
     });
     if ("error" in result) throw new Error(result.error);
