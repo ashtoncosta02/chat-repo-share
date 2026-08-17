@@ -1,38 +1,40 @@
-# 7-day free trial, then upgrade wall
+# Card-on-file 7-day free trial, then auto-billing
+
+You're right — the standard SaaS pattern is: collect the card up front, give 7 free days, then charge automatically unless they cancel. That's what this plan does.
 
 ## Why your own account shows no upgrade prompt
 
-Two reasons, both real gaps rather than bugs in Stripe:
+1. The David Costa account (info@costacaulking.com) is on a comped trial that runs until **Oct 5, 2026**, so nothing prompts for payment.
+2. The only upgrade button today lives in **My Account → Subscription & billing** — no countdown or CTA anywhere else.
+3. Brand-new self-signups are created with billing status `active`, so a new customer today would never hit a deadline and never be asked to pay.
 
-1. The David Costa account (info@costacaulking.com) is on a comped trial that runs until **Oct 5, 2026**, so nothing prompts for payment yet.
-2. The only place an upgrade button exists today is **My Account → Subscription & billing**. There is no trial countdown or upgrade call-to-action anywhere else in the dashboard.
+## How the new flow works
 
-There is also a bigger gap: brand-new self-signups are created with billing status `active`, not `trial`. That means a new customer today would never hit a trial deadline and would never be asked to pay.
+**Signup → card → trial**
+- After the onboarding wizard, a new account lands on a "Start your 7-day free trial" screen with embedded Stripe checkout.
+- Stripe collects the card but charges **$0 today**; the subscription starts in `trialing` for 7 days, then bills $97/mo automatically.
+- Until the card is on file, the dashboard stays behind that screen (same gate already used for expired plans).
+- Cancel any time inside the 7 days and nothing is charged.
 
-## What will change
+**Trial countdown banner**
+- Slim bar at the top of every dashboard page: "6 days left in your free trial — you'll be charged $97/mo on Aug 24. Manage billing".
+- Turns amber in the last 2 days.
+- Disappears once the subscription is fully active/paid; never shows for unlimited/comped accounts or admins.
+- "Manage billing" opens the Stripe customer portal so they can cancel or swap cards themselves.
 
-**New signups get a real 7-day trial**
-- On signup, the account is stamped as a trial ending 7 days later.
-- Existing accounts are untouched (your comped and unlimited accounts stay as they are).
-
-**Trial countdown banner with upgrade button**
-- A slim bar at the top of every dashboard page: "6 days left in your free trial — Upgrade to Elite $97/mo".
-- The button opens Stripe checkout right there; no digging through the account page.
-- Turns amber/urgent in the last 2 days.
-- Disappears the moment a paid subscription is active, and never shows for unlimited/comped accounts or admins.
-
-**When the trial ends**
-- The dashboard locks to the existing "Your plan has ended" upgrade screen (this already works, it just was never reachable because nobody was on a real trial).
-- Copy is updated to "Your free trial has ended" when the account never had a paid plan.
-- Paying restores access immediately via the Stripe webhook already in place.
+**When the trial converts or fails**
+- Stripe charges on day 7 and the webhook flips the account to active — no user action needed.
+- If the card fails, the account goes past due: a red banner with "Update payment method" appears, and access locks after Stripe's retries are exhausted.
 
 **Admin control stays**
-- Your existing admin trial controls (extend N days, unlimited, mark expired) keep working and now visibly drive the customer-facing banner.
-- Your own admin account is unaffected — admins are never gated.
+- Your existing admin trial controls (extend N days, unlimited, mark expired) keep working, and comped accounts skip the card screen entirely.
+- Admin accounts are never gated.
 
 ## Technical notes
 
-- Add `TrialBanner` component reading `profiles.billing_status / trial_ends_at / trial_unlimited` plus `useSubscription`, rendered inside the dashboard layout above the outlet.
-- Reuse `useStripeCheckout` + `ELITE_PRICE_ID` for the banner CTA (same flow as `BillingSection`).
-- Set the trial at account creation: update the profile-creation path so new rows get `billing_status='trial'`, `trial_ends_at = now() + 7 days`, `trial_unlimited=false` (DB default for `billing_status` also changed from `active` to `trial` so nothing slips through).
-- No changes to Stripe products, prices, keys, or the live go-live configuration.
+- `createCheckoutSession` gains `subscription_data.trial_period_days: 7` plus always-collect payment method for the trial flow, so Stripe holds the card and auto-charges at trial end. No new product or price — still `elite_monthly` at $9700.
+- Webhook already handles `customer.subscription.created/updated`; `trialing` counts as entitled, `past_due` shows the dunning banner, `canceled`/`unpaid` locks.
+- New `TrialBanner` component reads `useSubscription` (status + trial end) plus `profiles.trial_unlimited`, rendered in the dashboard layout above the outlet.
+- New "Start free trial" gate screen reuses `StripeEmbeddedCheckout`; shown when the account has no Stripe subscription and isn't comped/unlimited/admin.
+- Profile defaults change from `billing_status='active'` to a pending-trial state for new signups so nobody slips through; existing rows untouched.
+- No changes to Stripe keys, products, or the completed go-live configuration.
