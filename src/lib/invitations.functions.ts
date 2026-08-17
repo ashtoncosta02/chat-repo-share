@@ -46,7 +46,7 @@ export const adminListInvitations = createServerFn({ method: "POST" })
       supabaseAdmin
         .from("profiles")
         .select("user_id, email, display_name, trial_ends_at, trial_unlimited, billing_status, created_at")
-        .in("billing_status", ["trial", "trial_expired"])
+        .in("billing_status", ["trial", "trial_expired", "pending_trial"])
         .order("created_at", { ascending: false }),
     ]);
 
