@@ -111,8 +111,9 @@ function AuthPage() {
         </Link>
         <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
           <Tabs defaultValue={defaultTab}>
-            <TabsList className="grid w-full grid-cols-1">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign in</TabsTrigger>
+              <TabsTrigger value="signup">Sign up</TabsTrigger>
             </TabsList>
             <TabsContent value="signin" className="mt-6">
               <form onSubmit={handleSignIn} className="space-y-4">

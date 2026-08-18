@@ -93,7 +93,7 @@ function PricingCard() {
 
   function handleStart() {
     if (!user) {
-      void navigate({ to: "/auth", search: { next: "/dashboard/account" } as never });
+      void navigate({ to: "/auth", search: { mode: "signup", next: "/dashboard/account" } as never });
       return;
     }
     openCheckout({
