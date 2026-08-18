@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { getAdminOverview, adminResyncAllReceptionists } from "@/lib/admin.functions";
 import { PageHeader } from "@/components/dashboard/PageHeader";
-import { Users, Bot, MessageSquare, Phone, Calendar, User as UserIcon, Shield, DollarSign, AlertCircle, TrendingUp, Clock, LifeBuoy } from "lucide-react";
+import { Users, Bot, MessageSquare, Phone, Calendar, User as UserIcon, Shield, DollarSign, TrendingUp, Clock, LifeBuoy } from "lucide-react";
 import { getLoadedAssetHash } from "@/components/NewVersionBanner";
 
 export const Route = createFileRoute("/dashboard/admin/")({
@@ -117,7 +117,7 @@ function AdminOverviewPage() {
                 <MetricCard icon={<Phone className="h-5 w-5 text-[var(--gold)]" />} iconBg="bg-[oklch(0.96_0.04_290)]" label="Calls today" value={stats.voiceConversations.today} sublabel={`${stats.voiceConversations.last7d} in 7d`} />
                 <MetricCard icon={<MessageSquare className="h-5 w-5 text-[var(--gold)]" />} iconBg="bg-[oklch(0.96_0.04_290)]" label="Chats today" value={stats.widgetConversations.today} sublabel={`${stats.widgetConversations.last7d} in 7d`} />
                 <MetricCard icon={<Calendar className="h-5 w-5 text-[var(--gold)]" />} iconBg="bg-[oklch(0.96_0.04_290)]" label="Bookings (7d)" value={stats.bookings.last7d} sublabel={`${stats.bookings.upcoming} upcoming`} />
-                <MetricCard icon={<AlertCircle className="h-5 w-5 text-red-600" />} iconBg="bg-red-50" label="Failed calls (24h)" value={stats.voiceConversations.failed24h} sublabel={stats.voiceConversations.failed24h > 0 ? "Investigate" : "All good"} />
+                <MetricCard icon={<Phone className="h-5 w-5 text-[var(--gold)]" />} iconBg="bg-[oklch(0.96_0.04_290)]" label="Voice calls (24h)" value={stats.voiceConversations.voice24h} sublabel={`${stats.voiceConversations.last7d} in 7d`} />
               </div>
             </section>
 
