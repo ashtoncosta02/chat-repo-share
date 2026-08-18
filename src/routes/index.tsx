@@ -44,6 +44,7 @@ function LandingPage() {
         <Hero />
         <StatBand />
         <HowItWorks />
+        <Showcase />
         <Features />
         <UseCases />
         <PricingSection />
