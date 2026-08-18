@@ -31,9 +31,9 @@ export function SiteHeader() {
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link to="/" className="flex items-center gap-2">
-          <AgentFactoryLogo imgClassName="h-8 w-auto" />
-          <span className="font-display text-xl font-bold tracking-tight">
-            Ask <span className="text-gold">Janice</span>
+          <AgentFactoryLogo imgClassName="h-12 w-auto" />
+          <span className="font-display text-3xl font-bold tracking-tight text-gold">
+            Janice
           </span>
         </Link>
 
