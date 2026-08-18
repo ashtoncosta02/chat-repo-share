@@ -7,7 +7,7 @@ All seven reference sites loaded fine — I pulled them directly, no videos need
 - Elite Plan, $97/mo, "Unlimited calls · Setup included · No contracts"
 - Full feature list (all 11 items)
 - Get started CTA → `/auth?mode=signup`, Sign In in the header
-- Contact email hello@askjanice.net, "need more agents" note
+- Contact email [hello@askjanice.net](mailto:hello@askjanice.net), "need more agents" note
 - Footer with Privacy / Terms / Refunds
 - Current brand colours: lavender-white background, deep slate-violet ink, purple accent (`--gold` token). No palette change.
 
@@ -46,4 +46,5 @@ Long-form marketing page instead of the current three stacked cards. Section ord
 
 ## One thing I need from you
 
-You asked to include a contact phone number, but there isn't one anywhere in the site today. Reply with the number you want shown (and whether it should also be a "call Janice live to hear her" demo line) and I'll wire it into the header CTA area, final CTA band, and footer. If you'd rather not publish one, I'll leave email only.
+You asked to include a contact phone number, but there isn't one anywhere in the site today. Reply with the number you want shown (and whether it should also be a "call Janice live to hear her" demo line) and I'll wire it into the header CTA area, final CTA band, and footer. If you'd rather not publish one, I'll leave email only.  
+The contact phone you want to add is **(289) 907-1201**
