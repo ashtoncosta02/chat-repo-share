@@ -103,6 +103,15 @@
   --sidebar-accent-foreground: var(--ink);
   --sidebar-border: oklch(0.92 0.02 290);
   --sidebar-ring: var(--gold);
+
+  /* Landing page accents */
+  --shadow-glow: 0 10px 30px -12px color-mix(in oklab, var(--gold) 55%, transparent);
+  --gradient-brand: linear-gradient(
+    160deg,
+    color-mix(in oklab, var(--gold) 12%, var(--card)),
+    var(--card) 55%,
+    color-mix(in oklab, var(--gold) 8%, var(--card))
+  );
 }
 
 .dark {

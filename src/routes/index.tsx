@@ -1,220 +1,55 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import {
-  Bot,
-  Phone,
-  UserPlus,
-  FileText,
-  BarChart3,
-  MessageSquare,
-  MessageCircle,
-  Sparkles,
-  PhoneForwarded,
-  CalendarCheck,
-  PhoneCall,
-  Rocket,
-  Lock,
-} from "lucide-react";
-import { toast } from "sonner";
-import { useAuth } from "@/lib/auth-context";
-import { useStripeCheckout } from "@/hooks/useStripeCheckout";
-import { ELITE_PRICE_ID } from "@/lib/stripe";
+import { createFileRoute } from "@tanstack/react-router";
 
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
+import { SiteHeader } from "@/components/landing/SiteHeader";
+import { Hero } from "@/components/landing/Hero";
+import { StatBand } from "@/components/landing/StatBand";
+import { HowItWorks } from "@/components/landing/HowItWorks";
+import { Features } from "@/components/landing/Features";
+import { UseCases } from "@/components/landing/UseCases";
+import { PricingSection } from "@/components/landing/PricingSection";
+import { FAQSection } from "@/components/landing/FAQSection";
+import { CTABand } from "@/components/landing/CTABand";
+import { SiteFooter } from "@/components/landing/SiteFooter";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Ask Janice — AI Voice Agents for Your Business" },
+      { title: "Ask Janice — The AI Receptionist That Never Sleeps" },
       {
         name: "description",
         content:
-          "A custom AI voice agent trained on your business. Answers calls, captures leads, books appointments, and follows up automatically. 24/7.",
+          "Janice answers your business calls 24/7, captures every lead, and books appointments into your calendar. Unlimited calls, $97/mo, setup in minutes.",
       },
-      { property: "og:title", content: "Ask Janice — AI Voice Agents for Your Business" },
+      { property: "og:title", content: "Ask Janice — The AI Receptionist That Never Sleeps" },
       {
         property: "og:description",
         content:
-          "Your business deserves a receptionist that never sleeps. Unlimited calls, lead capture, booking, 24/7.",
+          "Answers your calls 24/7, captures leads, and books appointments straight into your calendar. Unlimited calls · $97/mo · No contracts.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: LandingPage,
 });
 
-const features = [
-  { icon: Bot, label: "1 AI voice agent trained on your business" },
-  { icon: Phone, label: "Unlimited calls, 24/7" },
-  { icon: UserPlus, label: "Lead capture — name, phone & email saved automatically" },
-  { icon: FileText, label: "Full conversation transcripts" },
-  { icon: BarChart3, label: "Analytics dashboard — call volume, peak hours, leads" },
-  { icon: MessageSquare, label: "SMS follow-up after every call (optional)" },
-  { icon: MessageCircle, label: "Live chat widget for your website" },
-  
-  { icon: PhoneForwarded, label: "Instant human transfer for emergencies" },
-  { icon: CalendarCheck, label: "Google Calendar booking integration" },
-  { icon: PhoneCall, label: "One-click callback from your leads dashboard" },
-  { icon: Rocket, label: "Full setup included — ready in minutes" },
-];
-
 function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <PaymentTestModeBanner />
-      <Header />
-      <main className="mx-auto max-w-3xl px-6 pb-24">
+      <SiteHeader />
+      <main>
         <Hero />
-        <PricingCard />
-        <FeatureList />
-        <ExtraNote />
+        <StatBand />
+        <HowItWorks />
+        <Features />
+        <UseCases />
+        <PricingSection />
+        <FAQSection />
+        <CTABand />
       </main>
-      <Footer />
+      <SiteFooter />
     </div>
-  );
-}
-
-function Header() {
-  return (
-    <header className="border-b border-border/60">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-        <Link to="/" className="font-display text-2xl font-bold tracking-tight">
-          Ask <span className="text-gold">Janice</span>
-        </Link>
-        <Link
-          to="/auth"
-          className="inline-flex items-center justify-center rounded-md border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
-        >
-          Sign In
-        </Link>
-      </div>
-    </header>
-  );
-}
-
-function Hero() {
-  return (
-    <section className="pt-16 pb-12 text-center">
-      <div className="inline-flex items-center justify-center rounded-full bg-accent px-5 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-gold-foreground">
-        AI Voice Agents for Your Business
-      </div>
-      <h1 className="mt-8 font-display text-6xl font-bold leading-[1.02] tracking-tight md:text-7xl">
-        Ask <span className="italic text-gold">Janice</span>
-      </h1>
-      <p className="mx-auto mt-6 font-display text-2xl font-medium leading-snug text-foreground md:text-3xl">
-        The AI receptionist that <span className="italic text-gold">never sleeps</span>.
-      </p>
-      <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">
-        Ask Janice answers your business calls 24/7, captures leads, and books appointments
-        straight into your calendar — so you never miss a customer again.
-      </p>
-    </section>
-  );
-}
-
-function PricingCard() {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const { openCheckout, checkoutElement } = useStripeCheckout();
-
-  function handleStart() {
-    if (!user) {
-      void navigate({ to: "/auth", search: { mode: "signup", next: "/dashboard/account" } as never });
-      return;
-    }
-    openCheckout({
-      priceId: ELITE_PRICE_ID,
-      customerEmail: user.email ?? undefined,
-      userId: user.id,
-      returnUrl: `${window.location.origin}/dashboard?checkout=success`,
-    });
-  }
-
-  return (
-    <section className="mt-6 rounded-3xl border border-border bg-card p-8 shadow-sm md:p-10">
-      <div className="text-center">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold">
-          Elite Plan
-        </p>
-        <p className="mt-4 font-display text-7xl font-bold text-gold">$97</p>
-        <p className="mt-2 text-sm text-muted-foreground">per month</p>
-        <div className="mt-6 inline-flex items-center justify-center rounded-full bg-accent px-5 py-2 text-sm text-gold-foreground">
-          Unlimited calls · Setup included · No contracts
-        </div>
-      </div>
-
-      <div className="mt-8 text-center">
-        <button
-          type="button"
-          onClick={handleStart}
-          className="w-full rounded-xl bg-[var(--gold)] px-6 py-3.5 text-base font-semibold text-[var(--gold-foreground)] shadow-sm transition hover:opacity-90 sm:w-auto sm:px-10"
-        >
-          Get started — $97/mo
-        </button>
-      </div>
-      {checkoutElement}
-
-
-
-      <p className="mt-5 flex items-center justify-center gap-2 text-center text-sm text-muted-foreground">
-        <Lock className="h-3.5 w-3.5" />
-        Secure checkout · Cancel anytime · 30-day money back
-      </p>
-      <p className="mt-2 text-center text-sm text-muted-foreground">
-        Questions? Email{" "}
-        <a
-          href="mailto:hello@askjanice.net"
-          className="font-medium text-gold hover:underline"
-        >
-          hello@askjanice.net
-        </a>
-      </p>
-    </section>
-  );
-}
-
-function FeatureList() {
-  return (
-    <section className="mt-8 rounded-3xl border border-border bg-card p-8 shadow-sm md:p-10">
-      <h2 className="font-display text-2xl font-bold tracking-tight">Everything included</h2>
-      <ul className="mt-6 space-y-4">
-        {features.map(({ icon: Icon, label }) => (
-          <li key={label} className="flex items-center gap-4">
-            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-accent text-gold-foreground">
-              <Icon className="h-5 w-5" />
-            </span>
-            <span className="text-base text-foreground">{label}</span>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-function ExtraNote() {
-  return (
-    <section className="mt-6 rounded-3xl border border-dashed border-border bg-secondary/40 p-6 text-center md:p-8">
-      <p className="text-sm leading-relaxed text-muted-foreground">
-        <span className="font-semibold text-foreground">Need more agents?</span>{" "}
-        Additional agents for multiple locations or departments are available.{" "}
-        <a
-          href="mailto:hello@askjanice.net"
-          className="font-medium text-gold hover:underline"
-        >
-          Contact us for custom pricing.
-        </a>
-      </p>
-    </section>
-  );
-}
-
-function Footer() {
-  return (
-    <footer className="border-t border-border/60 py-8">
-      <div className="mx-auto max-w-6xl px-6 text-center text-sm text-muted-foreground">
-        © {new Date().getFullYear()} Ask Janice. All rights reserved. ·{" "}
-        <Link to="/privacy" className="hover:text-foreground">Privacy</Link> ·{" "}
-        <Link to="/terms" className="hover:text-foreground">Terms</Link>
-      </div>
-    </footer>
   );
 }
