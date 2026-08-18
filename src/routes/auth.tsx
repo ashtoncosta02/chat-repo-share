@@ -22,7 +22,7 @@ export const Route = createFileRoute("/auth")({
   validateSearch: authSearchSchema,
   head: () => ({
     meta: [
-      { title: "Sign in — Ask Janice" },
+      { title: "Sign in or sign up — Ask Janice" },
       { name: "description", content: "Sign in or create an Ask Janice account." },
     ],
   }),
