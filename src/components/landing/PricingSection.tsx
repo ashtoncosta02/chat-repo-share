@@ -12,11 +12,10 @@ const included = [
   "Full conversation transcripts",
   "Analytics dashboard — call volume, peak hours, leads",
   "SMS follow-up after every call (optional)",
-  "Live chat widget for your website",
+  "Live chat bot for your website",
   "Instant human transfer for emergencies",
   "Google Calendar & Outlook booking",
   "One-click callback from your leads dashboard",
-  "Full setup included — ready in minutes",
 ];
 
 export function PricingSection() {
@@ -65,7 +64,7 @@ export function PricingSection() {
             <p className="mt-3 font-display text-7xl font-bold text-gold">$97</p>
             <p className="mt-2 text-sm text-muted-foreground">per month</p>
             <div className="mt-6 inline-flex items-center justify-center rounded-full bg-accent px-5 py-2 text-sm text-gold-foreground">
-              Unlimited calls · Setup included · No contracts
+              Unlimited calls · No contracts
             </div>
           </div>
 
