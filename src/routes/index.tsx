@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/landing/SiteHeader";
 import { Hero } from "@/components/landing/Hero";
 import { StatBand } from "@/components/landing/StatBand";
 import { HowItWorks } from "@/components/landing/HowItWorks";
+import { Showcase } from "@/components/landing/Showcase";
 import { Features } from "@/components/landing/Features";
 import { UseCases } from "@/components/landing/UseCases";
 import { PricingSection } from "@/components/landing/PricingSection";
