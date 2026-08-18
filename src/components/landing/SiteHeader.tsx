@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
+import { AgentFactoryLogo } from "@/components/AgentFactoryLogo";
 
 const navLinks = [
   { href: "#how-it-works", label: "How it works" },
@@ -29,8 +30,11 @@ export function SiteHeader() {
       }`}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link to="/" className="font-display text-xl font-bold tracking-tight">
-          Ask <span className="text-gold">Janice</span>
+        <Link to="/" className="flex items-center gap-2">
+          <AgentFactoryLogo imgClassName="h-8 w-auto" />
+          <span className="font-display text-xl font-bold tracking-tight">
+            Ask <span className="text-gold">Janice</span>
+          </span>
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">

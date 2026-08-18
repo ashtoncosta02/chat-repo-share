@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { ArrowRight, Clock, Phone, PhoneCall, ShieldCheck, Sparkles } from "lucide-react";
 
 const script: { who: "caller" | "janice"; text: string }[] = [
-  { who: "janice", text: "Thanks for calling Costa Caulking — this is Janice. How can I help?" },
+  { who: "janice", text: "Thanks for calling Janice — this is Janice. How can I help?" },
   { who: "caller", text: "Hi, I need a quote for exterior caulking." },
   { who: "janice", text: "Happy to help. Can I grab your name and best phone number?" },
   { who: "caller", text: "Dave Miller — 289-555-0134." },
