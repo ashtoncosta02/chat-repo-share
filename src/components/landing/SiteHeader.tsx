@@ -31,7 +31,7 @@ export function SiteHeader() {
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link to="/" className="flex items-center">
-          <AgentFactoryLogo imgClassName="h-16 w-auto md:h-20" />
+          <AgentFactoryLogo imgClassName="h-20 w-auto md:h-28" />
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
