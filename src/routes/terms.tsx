@@ -13,7 +13,9 @@ export const Route = createFileRoute("/terms")({
         property: "og:description",
         content: "Terms of Service for Ask Janice.",
       },
+      { property: "og:url", content: "https://askjanice.net/terms" },
     ],
+    links: [{ rel: "canonical", href: "https://askjanice.net/terms" }],
   }),
   component: TermsPage,
 });
