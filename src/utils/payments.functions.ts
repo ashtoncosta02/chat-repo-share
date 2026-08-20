@@ -96,13 +96,12 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
         mode: isRecurring ? "subscription" : "payment",
         ui_mode: "embedded_page",
         return_url: data.returnUrl,
-        ...(customerId && { customer: customerId }),
+        customer: customerId,
         // Stripe handles tax compliance, fraud, disputes and transaction support.
         managed_payments: { enabled: true },
         ...(withTrial && { payment_method_collection: "always" }),
-        ...(data.userId && { metadata: { userId: data.userId, managed_payments: "true" } }),
-        ...(isRecurring &&
-          Object.keys(subscriptionData).length > 0 && { subscription_data: subscriptionData }),
+        metadata: { userId, managed_payments: "true" },
+        ...(isRecurring && { subscription_data: subscriptionData }),
       } as Stripe.Checkout.SessionCreateParams);
 
       return { clientSecret: session.client_secret ?? "" };
