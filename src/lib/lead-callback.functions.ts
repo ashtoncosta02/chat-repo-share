@@ -35,6 +35,10 @@ export const aiCallbackLead = createServerFn({ method: "POST" })
     const auth = await authUser(data.accessToken);
     if ("error" in auth) return { success: false as const, error: auth.error };
 
+    const { requireEntitlement } = await import("@/server/entitlement.server");
+    const gate = await requireEntitlement(auth.userId);
+    if (gate) return { success: false as const, error: gate.error };
+
     const { data: lead } = await supabaseAdmin
       .from("leads")
       .select("id, user_id, agent_id, name, phone, notes")

@@ -44,9 +44,11 @@ async function resolveOrCreateCustomer(
 }
 
 export const createCheckoutSession = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator(
     (data: {
       priceId: string;
+      /** Ignored: the account is always taken from the authenticated session. */
       customerEmail?: string;
       userId?: string;
       returnUrl: string;
@@ -63,29 +65,29 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       return data;
     },
   )
-  .handler(async ({ data }): Promise<CheckoutSessionResult> => {
+  .handler(async ({ data, context }): Promise<CheckoutSessionResult> => {
     try {
       const stripe = createStripeClient(data.environment);
+
+      // Never trust a client-supplied account: the checkout is always bound to
+      // the authenticated caller.
+      const userId = context.userId;
+      const email =
+        typeof context.claims?.email === "string" ? (context.claims.email as string) : undefined;
 
       const prices = await stripe.prices.list({ lookup_keys: [data.priceId] });
       if (!prices.data.length) throw new Error("Price not found");
       const stripePrice = prices.data[0];
       const isRecurring = stripePrice.type === "recurring";
 
-      const customerId =
-        data.customerEmail || data.userId
-          ? await resolveOrCreateCustomer(stripe, {
-              email: data.customerEmail,
-              userId: data.userId,
-            })
-          : undefined;
+      const customerId = await resolveOrCreateCustomer(stripe, { email, userId });
 
       const withTrial = isRecurring && Boolean(data.trialDays);
 
       // Card-on-file free trial: Stripe stores the payment method now, charges
       // $0 today, and automatically bills at the end of the trial period.
       const subscriptionData = {
-        ...(data.userId && { metadata: { userId: data.userId } }),
+        metadata: { userId },
         ...(withTrial && { trial_period_days: data.trialDays }),
       };
 
@@ -94,13 +96,12 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
         mode: isRecurring ? "subscription" : "payment",
         ui_mode: "embedded_page",
         return_url: data.returnUrl,
-        ...(customerId && { customer: customerId }),
+        customer: customerId,
         // Stripe handles tax compliance, fraud, disputes and transaction support.
         managed_payments: { enabled: true },
         ...(withTrial && { payment_method_collection: "always" }),
-        ...(data.userId && { metadata: { userId: data.userId, managed_payments: "true" } }),
-        ...(isRecurring &&
-          Object.keys(subscriptionData).length > 0 && { subscription_data: subscriptionData }),
+        metadata: { userId, managed_payments: "true" },
+        ...(isRecurring && { subscription_data: subscriptionData }),
       } as Stripe.Checkout.SessionCreateParams);
 
       return { clientSecret: session.client_secret ?? "" };

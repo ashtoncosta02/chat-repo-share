@@ -58,6 +58,10 @@ export const startOutboundCall = createServerFn({ method: "POST" })
     const auth = await authUser(data.accessToken);
     if ("error" in auth) return { success: false as const, error: auth.error };
 
+    const { requireEntitlement } = await import("@/server/entitlement.server");
+    const gate = await requireEntitlement(auth.userId);
+    if (gate) return { success: false as const, error: gate.error };
+
     const toE164 = normalizeE164(data.to);
     const myE164 = normalizeE164(data.myPhone);
     if (!toE164) return { success: false as const, error: "Enter a valid number to dial." };
