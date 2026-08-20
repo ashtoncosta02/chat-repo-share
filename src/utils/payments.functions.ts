@@ -44,9 +44,11 @@ async function resolveOrCreateCustomer(
 }
 
 export const createCheckoutSession = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator(
     (data: {
       priceId: string;
+      /** Ignored: the account is always taken from the authenticated session. */
       customerEmail?: string;
       userId?: string;
       returnUrl: string;
