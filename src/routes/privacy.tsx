@@ -13,7 +13,9 @@ export const Route = createFileRoute("/privacy")({
         property: "og:description",
         content: "How Ask Janice collects, uses, and protects your data.",
       },
+      { property: "og:url", content: "https://askjanice.net/privacy" },
     ],
+    links: [{ rel: "canonical", href: "https://askjanice.net/privacy" }],
   }),
   component: PrivacyPage,
 });
