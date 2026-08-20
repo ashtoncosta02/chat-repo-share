@@ -35,7 +35,9 @@ export const Route = createFileRoute("/pricing")({
         content:
           "Ask Janice Elite Plan: $97/mo for unlimited calls, 24/7 AI receptionist, lead capture, booking, and setup included.",
       },
+      { property: "og:url", content: "https://askjanice.net/pricing" },
     ],
+    links: [{ rel: "canonical", href: "https://askjanice.net/pricing" }],
   }),
   component: PricingPage,
 });

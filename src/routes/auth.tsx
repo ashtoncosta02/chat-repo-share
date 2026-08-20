@@ -109,6 +109,7 @@ function AuthPage() {
         <Link to="/" className="mb-8 flex justify-center">
           <AgentFactoryLogo imgClassName="h-28 w-auto object-contain" />
         </Link>
+        <h1 className="sr-only">Sign in to Ask Janice</h1>
         <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
           <Tabs defaultValue={defaultTab}>
             <TabsList className="grid w-full grid-cols-2">

@@ -13,7 +13,9 @@ export const Route = createFileRoute("/refund-policy")({
         property: "og:description",
         content: "Ask Janice refund policy and money-back guarantee.",
       },
+      { property: "og:url", content: "https://askjanice.net/refund-policy" },
     ],
+    links: [{ rel: "canonical", href: "https://askjanice.net/refund-policy" }],
   }),
   component: RefundPolicyPage,
 });
