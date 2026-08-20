@@ -24,6 +24,10 @@ export const syncReceptionistAgent = createServerFn({ method: "POST" })
     const auth = await authUser(data.accessToken);
     if ("error" in auth) return { success: false as const, error: auth.error };
 
+    const { requireEntitlement } = await import("@/server/entitlement.server");
+    const gate = await requireEntitlement(auth.userId);
+    if (gate) return { success: false as const, error: gate.error };
+
     // Verify ownership before touching EL.
     const { data: owned } = await supabaseAdmin
       .from("agents")

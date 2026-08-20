@@ -180,6 +180,11 @@ export const purchasePhoneNumber = createServerFn({ method: "POST" })
     }
     const { userId } = auth;
 
+    const { requireEntitlement } = await import("@/server/entitlement.server");
+    const gate = await requireEntitlement(userId);
+    if (gate) return { success: false as const, error: gate.error };
+
+
     const { data: agent, error: agentErr } = await supabaseAdmin
       .from("agents")
       .select("id, business_name")
