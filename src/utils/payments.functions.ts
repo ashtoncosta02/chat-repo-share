@@ -65,29 +65,29 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       return data;
     },
   )
-  .handler(async ({ data }): Promise<CheckoutSessionResult> => {
+  .handler(async ({ data, context }): Promise<CheckoutSessionResult> => {
     try {
       const stripe = createStripeClient(data.environment);
+
+      // Never trust a client-supplied account: the checkout is always bound to
+      // the authenticated caller.
+      const userId = context.userId;
+      const email =
+        typeof context.claims?.email === "string" ? (context.claims.email as string) : undefined;
 
       const prices = await stripe.prices.list({ lookup_keys: [data.priceId] });
       if (!prices.data.length) throw new Error("Price not found");
       const stripePrice = prices.data[0];
       const isRecurring = stripePrice.type === "recurring";
 
-      const customerId =
-        data.customerEmail || data.userId
-          ? await resolveOrCreateCustomer(stripe, {
-              email: data.customerEmail,
-              userId: data.userId,
-            })
-          : undefined;
+      const customerId = await resolveOrCreateCustomer(stripe, { email, userId });
 
       const withTrial = isRecurring && Boolean(data.trialDays);
 
       // Card-on-file free trial: Stripe stores the payment method now, charges
       // $0 today, and automatically bills at the end of the trial period.
       const subscriptionData = {
-        ...(data.userId && { metadata: { userId: data.userId } }),
+        metadata: { userId },
         ...(withTrial && { trial_period_days: data.trialDays }),
       };
 
