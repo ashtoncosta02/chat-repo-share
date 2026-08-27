@@ -18,7 +18,7 @@ export function Hero() {
         className="pointer-events-none absolute -top-40 left-1/2 h-[520px] w-[820px] -translate-x-1/2 rounded-full bg-[var(--gold)] opacity-[0.13] blur-[130px]"
       />
       <div className="relative mx-auto grid max-w-6xl items-center gap-14 px-6 pb-20 pt-16 md:pb-28 md:pt-24 lg:grid-cols-[1.05fr_0.95fr]">
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-700">
           <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-gold-foreground">
             <Sparkles className="h-3.5 w-3.5 text-gold" />
             AI receptionist for local business
@@ -91,7 +91,7 @@ function CallMock() {
   }, []);
 
   return (
-    <div className="relative">
+    <div className="relative min-w-0">
       <div
         aria-hidden
         className="absolute -inset-6 rounded-[2.5rem] bg-[var(--gold)] opacity-[0.08] blur-3xl"
