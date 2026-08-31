@@ -74,7 +74,7 @@ export function SubscriptionGate({
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
             Add a card to switch your receptionist on. You won't be charged today — your first
-            payment of $97/mo happens 7 days from now, and you can cancel any time before then.
+            payment of $49/mo happens 7 days from now, and you can cancel any time before then.
           </p>
         </div>
         <div className="mt-8">
@@ -128,7 +128,7 @@ export function SubscriptionGate({
         onClick={reactivate}
         className="mt-6 rounded-xl bg-[var(--gold)] px-6 py-3 text-sm font-semibold text-[var(--gold-foreground)] hover:opacity-90"
       >
-        Restart Elite — $97/mo
+        Restart Elite — $49/mo
       </button>
       {checkoutElement}
 

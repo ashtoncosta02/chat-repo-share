@@ -76,7 +76,7 @@ export function BillingSection() {
             <div className="flex justify-between border-b border-border py-2">
               <dt className="text-muted-foreground">Current plan</dt>
               <dd className="font-medium text-foreground">
-                {subscription ? "Elite — $97/mo" : "No paid plan"}
+                {subscription ? "Elite — $49/mo" : "No paid plan"}
               </dd>
             </div>
             <div className="flex justify-between border-b border-border py-2">
@@ -115,7 +115,7 @@ export function BillingSection() {
                 onClick={startPlan}
                 className="rounded-lg bg-[var(--gold)] px-4 py-2 text-sm font-medium text-[var(--gold-foreground)] hover:opacity-90"
               >
-                Start Elite — $97/mo
+                Start Elite — $49/mo
               </button>
             ) : (
               <button

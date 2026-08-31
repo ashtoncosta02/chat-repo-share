@@ -27,13 +27,13 @@ export const Route = createFileRoute("/pricing")({
       {
         name: "description",
         content:
-          "Ask Janice Elite Plan: $97/mo for unlimited calls, 24/7 AI receptionist, lead capture, booking, and setup included.",
+          "Ask Janice Elite Plan: $49/mo for unlimited calls, 24/7 AI receptionist, lead capture, booking, and setup included.",
       },
       { property: "og:title", content: "Pricing — Ask Janice" },
       {
         property: "og:description",
         content:
-          "Ask Janice Elite Plan: $97/mo for unlimited calls, 24/7 AI receptionist, lead capture, booking, and setup included.",
+          "Ask Janice Elite Plan: $49/mo for unlimited calls, 24/7 AI receptionist, lead capture, booking, and setup included.",
       },
       { property: "og:url", content: "https://askjanice.net/pricing" },
     ],
@@ -112,7 +112,7 @@ function PricingCard() {
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold">
           Elite Plan
         </p>
-        <p className="mt-4 font-display text-7xl font-bold text-gold">$97</p>
+        <p className="mt-4 font-display text-7xl font-bold text-gold">$49</p>
         <p className="mt-2 text-sm text-muted-foreground">per month</p>
         <div className="mt-6 inline-flex items-center justify-center rounded-full bg-accent px-5 py-2 text-sm text-gold-foreground">
           Unlimited calls · Setup included · No contracts
@@ -125,7 +125,7 @@ function PricingCard() {
           onClick={handleStart}
           className="w-full rounded-xl bg-[var(--gold)] px-6 py-3.5 text-base font-semibold text-[var(--gold-foreground)] shadow-sm transition hover:opacity-90 sm:w-auto sm:px-10"
         >
-          Get started — $97/mo
+          Get started — $49/mo
         </button>
       </div>
       {checkoutElement}
