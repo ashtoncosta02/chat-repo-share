@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.set_ticket_message_sender_role() FROM PUBLIC, anon, authenticated;
