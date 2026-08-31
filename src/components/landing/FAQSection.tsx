@@ -25,7 +25,7 @@ const faqs = [
   },
   {
     q: "Is there a contract?",
-    a: "No contracts. It's $97 per month, cancel any time from your account page. Unlimited calls are included — no per-minute charges.",
+    a: "No contracts. It's $49 per month, cancel any time from your account page. Unlimited calls are included — no per-minute charges.",
   },
   {
     q: "What's your refund policy?",

@@ -119,7 +119,7 @@ export function TrialBanner({ isAdmin }: { isAdmin: boolean }) {
             ? "Your free trial ends today"
             : `${left} day${left === 1 ? "" : "s"} left in your free trial`}
           {subscription.current_period_end
-            ? ` — you'll be charged $97/mo on ${fmtDate(subscription.current_period_end)}.`
+            ? ` — you'll be charged $49/mo on ${fmtDate(subscription.current_period_end)}.`
             : "."}
         </span>
         <button
@@ -160,7 +160,7 @@ export function TrialBanner({ isAdmin }: { isAdmin: boolean }) {
             onClick={upgrade}
             className="rounded-lg bg-[var(--gold)] px-3 py-1 text-xs font-semibold text-[var(--gold-foreground)] hover:opacity-90"
           >
-            Upgrade to Elite — $97/mo
+            Upgrade to Elite — $49/mo
           </button>
         </div>
         {checkoutElement}

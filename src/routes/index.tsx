@@ -23,13 +23,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Janice answers your business calls 24/7, captures every lead, and books appointments into your calendar. Unlimited calls, $97/mo, setup in minutes.",
+          "Janice answers your business calls 24/7, captures every lead, and books appointments into your calendar. Unlimited calls, $49/mo, setup in minutes.",
       },
       { property: "og:title", content: "Ask Janice — The AI Receptionist That Never Sleeps" },
       {
         property: "og:description",
         content:
-          "Answers your calls 24/7, captures leads, and books appointments straight into your calendar. Unlimited calls · $97/mo · No contracts.",
+          "Answers your calls 24/7, captures leads, and books appointments straight into your calendar. Unlimited calls · $49/mo · No contracts.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://askjanice.net/" },

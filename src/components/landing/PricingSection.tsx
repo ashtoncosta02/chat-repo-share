@@ -61,7 +61,7 @@ export function PricingSection() {
             <p className="mt-6 text-xs font-semibold uppercase tracking-[0.22em] text-gold">
               Elite Plan
             </p>
-            <p className="mt-3 font-display text-7xl font-bold text-gold">$97</p>
+            <p className="mt-3 font-display text-7xl font-bold text-gold">$49</p>
             <p className="mt-2 text-sm text-muted-foreground">per month</p>
             <div className="mt-6 inline-flex items-center justify-center rounded-full bg-accent px-5 py-2 text-sm text-gold-foreground">
               Unlimited calls · No contracts
@@ -83,7 +83,7 @@ export function PricingSection() {
               onClick={handleStart}
               className="w-full rounded-full bg-[var(--gold)] px-8 py-4 text-base font-semibold text-[var(--gold-foreground)] shadow-[var(--shadow-glow)] transition hover:-translate-y-0.5 hover:opacity-95 sm:w-auto sm:px-12"
             >
-              Get started — $97/mo
+              Get started — $49/mo
             </button>
           </div>
           {checkoutElement}
