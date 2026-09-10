@@ -28,15 +28,16 @@ export function Hero() {
             <span className="block text-sm font-semibold uppercase tracking-[0.2em] text-gold">
               Ask Janice
             </span>
-            Never miss another
+            Your AI receptionist
             <br />
-            <span className="italic text-gold">customer call</span>.
+            <span className="italic text-gold">never misses a call</span>.
           </h1>
 
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
-            Janice answers your business phone 24/7, sounds like a real receptionist,
-            captures every lead, and books appointments straight into your calendar —
-            so you can keep working.
+            Ask Janice is an AI phone receptionist for local businesses. It answers your
+            business phone 24/7, sounds like a real person, captures every lead, and books
+            appointments straight into your Google Calendar or Outlook — so you can keep
+            working while new customers keep booking.
           </p>
 
           <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
