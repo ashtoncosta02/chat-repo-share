@@ -25,12 +25,14 @@ export function Hero() {
           </span>
 
           <h1 className="mt-6 font-display text-5xl font-bold leading-[1.03] tracking-tight md:text-6xl lg:text-[4.2rem]">
-            <span className="block text-sm font-semibold uppercase tracking-[0.2em] text-gold">
+            <span className="mb-3 inline-block rounded-full border border-gold/30 bg-gold/10 px-4 py-1.5 text-sm font-semibold uppercase tracking-[0.16em] text-gold">
               Ask Janice
             </span>
-            Your AI receptionist
-            <br />
-            <span className="italic text-gold">never misses a call</span>.
+            <span className="block">
+              Your AI receptionist
+              <br />
+              <span className="italic text-gold">never misses a call</span>.
+            </span>
           </h1>
 
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
