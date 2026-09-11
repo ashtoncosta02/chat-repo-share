@@ -21,7 +21,7 @@ export function Hero() {
         <div className="min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-700">
           <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-gold-foreground">
             <Sparkles className="h-3.5 w-3.5 text-gold" />
-            AI receptionist for local business
+            Ask Janice · AI receptionist for local business
           </span>
 
           <h1 className="mt-6 font-display text-5xl font-bold leading-[1.03] tracking-tight md:text-6xl lg:text-[4.2rem]">
