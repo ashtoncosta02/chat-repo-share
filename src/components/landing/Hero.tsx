@@ -19,8 +19,8 @@ export function Hero() {
       />
       <div className="relative mx-auto grid max-w-6xl items-center gap-14 px-6 pb-20 pt-16 md:pb-28 md:pt-24 lg:grid-cols-[1.05fr_0.95fr]">
         <div className="min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-gold-foreground">
-            <Sparkles className="h-3.5 w-3.5 text-gold" />
+          <span className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-5 py-2 text-sm font-bold uppercase tracking-[0.14em] text-gold">
+            <Sparkles className="h-4 w-4 text-gold" />
             Ask Janice · AI receptionist for local business
           </span>
 
