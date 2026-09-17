@@ -245,7 +245,8 @@ export async function maybeNotifyOwnerForWidgetChat(args: NotifyArgs): Promise<v
           userId: args.userId,
           to: agent.notify_phone.trim(),
           businessName: agent.business_name || "Your business",
-          callerNumber: callerLabel,
+          callerNumber: callerLabel ?? "Website visitor",
+
           durationSeconds: 0,
           summary,
           dashboardUrl,
