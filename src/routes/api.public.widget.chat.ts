@@ -11,7 +11,7 @@ import {
 import { captureLeadFromWidget } from "@/server/widget-lead-capture";
 import {
   ensureThreadForWidgetConversation,
-  maybeNotifyOwnerForWidgetChat,
+  
   mirrorTurnToThread,
 } from "@/server/widget-thread-mirror.server";
 import { sendScenarioPostCallSms } from "@/server/scenario-sms.server";
@@ -524,22 +524,11 @@ export const Route = createFileRoute("/api/public/widget/chat")({
           }
         }
 
-        if (threadId) {
-          try {
-            await maybeNotifyOwnerForWidgetChat({
-              widgetConversationId: conversationId,
-              threadId,
-              agentId,
-              userId: agent.user_id,
-              pageUrl: pageUrl ?? null,
-              visitorName: body.visitorName ?? null,
-              visitorEmail: body.visitorEmail ?? null,
-              userTurnCount: userMsgCount,
-            });
-          } catch (e) {
-            console.error("widget notify error:", e);
-          }
-        }
+        // NOTE: the owner transcript email/SMS is intentionally NOT sent here.
+        // Sending mid-chat produced half-finished transcripts. The
+        // /api/public/hooks/widget-chat-digest cron sweep sends the full
+        // transcript once the chat has been idle for a few minutes.
+
 
         return sseFromText(finalText, conversationId);
       },

@@ -191,8 +191,12 @@ export async function maybeNotifyOwnerForWidgetChat(args: NotifyArgs): Promise<v
       .filter((t) => t.role === "user" || t.role === "assistant")
       .map((t) => ({ role: t.role as "user" | "assistant", content: t.content }));
 
-    const callerLabel =
-      lead?.name || args.visitorName || args.visitorEmail || args.pageUrl || "Website visitor";
+    // For website chats the "Phone" row must be an actual phone number the
+    // owner can call back — never the page URL. The page the visitor was on
+    // is shown as the address line instead.
+    const leadPhone = lead?.phone?.trim() || null;
+    const callerLabel = leadPhone;
+    const addressLine = lead?.address?.trim() || args.pageUrl || null;
 
     // Email
     if (wantsEmail && ownerEmail) {
@@ -206,21 +210,15 @@ export async function maybeNotifyOwnerForWidgetChat(args: NotifyArgs): Promise<v
         summary: thread?.ai_summary ?? null,
         turns: cleanedTurns,
         conversationDashboardUrl: dashboardUrl,
-        lead: lead
-          ? {
-              name: lead.name,
-              email: lead.email,
-              phone: lead.phone,
-              address: lead.address,
-            }
-          : {
-              name: args.visitorName,
-              email: args.visitorEmail,
-              phone: null,
-              address: null,
-            },
+        lead: {
+          name: lead?.name || args.visitorName,
+          email: lead?.email || args.visitorEmail,
+          phone: leadPhone,
+          address: addressLine,
+        },
       });
-      const wsSubject = subject.replace(/^New call/i, "New website chat");
+      const wsSubject = subject.replace(/^Call transcript/i, "Website chat transcript");
+
       const id = await sendEmail({ to: ownerEmail, subject: wsSubject, html });
       if (id) {
         anySendSucceeded = true;
@@ -247,7 +245,8 @@ export async function maybeNotifyOwnerForWidgetChat(args: NotifyArgs): Promise<v
           userId: args.userId,
           to: agent.notify_phone.trim(),
           businessName: agent.business_name || "Your business",
-          callerNumber: callerLabel,
+          callerNumber: callerLabel ?? "Website visitor",
+
           durationSeconds: 0,
           summary,
           dashboardUrl,
