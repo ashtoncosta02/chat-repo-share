@@ -64,6 +64,7 @@ import { Route as ApiPublicTwilioDialerBridgeRouteImport } from './routes/api.pu
 import { Route as ApiPublicTwilioCallbackRouteImport } from './routes/api.public.twilio.callback'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api.public.payments.webhook'
 import { Route as ApiPublicOutlookCalendarCallbackRouteImport } from './routes/api.public.outlook-calendar.callback'
+import { Route as ApiPublicHooksWidgetChatDigestRouteImport } from './routes/api.public.hooks.widget-chat-digest'
 import { Route as ApiPublicHooksBackfillCallsRouteImport } from './routes/api.public.hooks.backfill-calls'
 import { Route as ApiPublicHooksAutoDeleteThreadsRouteImport } from './routes/api.public.hooks.auto-delete-threads'
 import { Route as ApiPublicGoogleCalendarCallbackRouteImport } from './routes/api.public.google-calendar.callback'
@@ -362,6 +363,12 @@ const ApiPublicOutlookCalendarCallbackRoute =
     path: '/api/public/outlook-calendar/callback',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksWidgetChatDigestRoute =
+  ApiPublicHooksWidgetChatDigestRouteImport.update({
+    id: '/api/public/hooks/widget-chat-digest',
+    path: '/api/public/hooks/widget-chat-digest',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksBackfillCallsRoute =
   ApiPublicHooksBackfillCallsRouteImport.update({
     id: '/api/public/hooks/backfill-calls',
@@ -435,6 +442,7 @@ export interface FileRoutesByFullPath {
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
   '/api/public/hooks/auto-delete-threads': typeof ApiPublicHooksAutoDeleteThreadsRoute
   '/api/public/hooks/backfill-calls': typeof ApiPublicHooksBackfillCallsRoute
+  '/api/public/hooks/widget-chat-digest': typeof ApiPublicHooksWidgetChatDigestRoute
   '/api/public/outlook-calendar/callback': typeof ApiPublicOutlookCalendarCallbackRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/twilio/callback': typeof ApiPublicTwilioCallbackRoute
@@ -492,6 +500,7 @@ export interface FileRoutesByTo {
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
   '/api/public/hooks/auto-delete-threads': typeof ApiPublicHooksAutoDeleteThreadsRoute
   '/api/public/hooks/backfill-calls': typeof ApiPublicHooksBackfillCallsRoute
+  '/api/public/hooks/widget-chat-digest': typeof ApiPublicHooksWidgetChatDigestRoute
   '/api/public/outlook-calendar/callback': typeof ApiPublicOutlookCalendarCallbackRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/twilio/callback': typeof ApiPublicTwilioCallbackRoute
@@ -555,6 +564,7 @@ export interface FileRoutesById {
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
   '/api/public/hooks/auto-delete-threads': typeof ApiPublicHooksAutoDeleteThreadsRoute
   '/api/public/hooks/backfill-calls': typeof ApiPublicHooksBackfillCallsRoute
+  '/api/public/hooks/widget-chat-digest': typeof ApiPublicHooksWidgetChatDigestRoute
   '/api/public/outlook-calendar/callback': typeof ApiPublicOutlookCalendarCallbackRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/twilio/callback': typeof ApiPublicTwilioCallbackRoute
@@ -619,6 +629,7 @@ export interface FileRouteTypes {
     | '/api/public/google-calendar/callback'
     | '/api/public/hooks/auto-delete-threads'
     | '/api/public/hooks/backfill-calls'
+    | '/api/public/hooks/widget-chat-digest'
     | '/api/public/outlook-calendar/callback'
     | '/api/public/payments/webhook'
     | '/api/public/twilio/callback'
@@ -676,6 +687,7 @@ export interface FileRouteTypes {
     | '/api/public/google-calendar/callback'
     | '/api/public/hooks/auto-delete-threads'
     | '/api/public/hooks/backfill-calls'
+    | '/api/public/hooks/widget-chat-digest'
     | '/api/public/outlook-calendar/callback'
     | '/api/public/payments/webhook'
     | '/api/public/twilio/callback'
@@ -738,6 +750,7 @@ export interface FileRouteTypes {
     | '/api/public/google-calendar/callback'
     | '/api/public/hooks/auto-delete-threads'
     | '/api/public/hooks/backfill-calls'
+    | '/api/public/hooks/widget-chat-digest'
     | '/api/public/outlook-calendar/callback'
     | '/api/public/payments/webhook'
     | '/api/public/twilio/callback'
@@ -777,6 +790,7 @@ export interface RootRouteChildren {
   ApiPublicGoogleCalendarCallbackRoute: typeof ApiPublicGoogleCalendarCallbackRoute
   ApiPublicHooksAutoDeleteThreadsRoute: typeof ApiPublicHooksAutoDeleteThreadsRoute
   ApiPublicHooksBackfillCallsRoute: typeof ApiPublicHooksBackfillCallsRoute
+  ApiPublicHooksWidgetChatDigestRoute: typeof ApiPublicHooksWidgetChatDigestRoute
   ApiPublicOutlookCalendarCallbackRoute: typeof ApiPublicOutlookCalendarCallbackRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   ApiPublicTwilioCallbackRoute: typeof ApiPublicTwilioCallbackRoute
@@ -1181,6 +1195,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicOutlookCalendarCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/widget-chat-digest': {
+      id: '/api/public/hooks/widget-chat-digest'
+      path: '/api/public/hooks/widget-chat-digest'
+      fullPath: '/api/public/hooks/widget-chat-digest'
+      preLoaderRoute: typeof ApiPublicHooksWidgetChatDigestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/backfill-calls': {
       id: '/api/public/hooks/backfill-calls'
       path: '/api/public/hooks/backfill-calls'
@@ -1346,6 +1367,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicGoogleCalendarCallbackRoute: ApiPublicGoogleCalendarCallbackRoute,
   ApiPublicHooksAutoDeleteThreadsRoute: ApiPublicHooksAutoDeleteThreadsRoute,
   ApiPublicHooksBackfillCallsRoute: ApiPublicHooksBackfillCallsRoute,
+  ApiPublicHooksWidgetChatDigestRoute: ApiPublicHooksWidgetChatDigestRoute,
   ApiPublicOutlookCalendarCallbackRoute: ApiPublicOutlookCalendarCallbackRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   ApiPublicTwilioCallbackRoute: ApiPublicTwilioCallbackRoute,
