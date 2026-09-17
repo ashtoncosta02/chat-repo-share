@@ -11,7 +11,7 @@ import {
 import { captureLeadFromWidget } from "@/server/widget-lead-capture";
 import {
   ensureThreadForWidgetConversation,
-  maybeNotifyOwnerForWidgetChat,
+  
   mirrorTurnToThread,
 } from "@/server/widget-thread-mirror.server";
 import { sendScenarioPostCallSms } from "@/server/scenario-sms.server";
