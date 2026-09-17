@@ -98,6 +98,15 @@ ${credential.hint ? `<p>${credential.hint}</p>` : ""}
           }
         }
 
+        // Backstop for website-chat transcripts: the last chat of a quiet
+        // period has no follow-up traffic to piggyback on, so flush it here
+        // rather than running a separate recurring job.
+        const { sweepIdleWidgetChats } = await import("@/server/widget-chat-digest.server");
+        const widgetDigest = await sweepIdleWidgetChats().catch((e) => {
+          console.error("backfill-sweep: widget chat digest failed", e);
+          return { notified: 0 };
+        });
+
         return new Response(
           JSON.stringify({
             success: true,
@@ -108,9 +117,11 @@ ${credential.hint ? `<p>${credential.hint}</p>` : ""}
             skipped,
             errors,
             recovered,
+            widgetChatsNotified: widgetDigest.notified,
           }),
           { headers: { "Content-Type": "application/json" } },
         );
+
 
       },
     },

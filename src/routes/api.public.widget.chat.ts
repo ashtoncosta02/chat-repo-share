@@ -524,10 +524,17 @@ export const Route = createFileRoute("/api/public/widget/chat")({
           }
         }
 
-        // NOTE: the owner transcript email/SMS is intentionally NOT sent here.
-        // Sending mid-chat produced half-finished transcripts. The
-        // /api/public/hooks/widget-chat-digest cron sweep sends the full
-        // transcript once the chat has been idle for a few minutes.
+        // NOTE: the owner transcript email/SMS is intentionally NOT sent for
+        // this chat here. Sending mid-chat produced half-finished transcripts.
+        // Instead we piggyback on this request to flush any OTHER chat that has
+        // already gone quiet, so transcripts go out without a dedicated job.
+        try {
+          const { sweepIdleWidgetChats } = await import("@/server/widget-chat-digest.server");
+          await sweepIdleWidgetChats();
+        } catch (e) {
+          console.error("widget chat digest sweep error:", e);
+        }
+
 
 
         return sseFromText(finalText, conversationId);
