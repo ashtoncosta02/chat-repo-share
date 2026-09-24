@@ -201,7 +201,8 @@ export const purchasePhoneNumber = createServerFn({ method: "POST" })
     const { count: ownedCount } = await supabaseAdmin
       .from("phone_numbers")
       .select("id", { count: "exact", head: true })
-      .eq("user_id", userId);
+      .eq("user_id", userId)
+      .eq("status", "active");
     if ((ownedCount ?? 0) >= 1) {
       return { success: false as const, error: "You already have a phone number." };
     }
