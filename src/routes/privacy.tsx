@@ -35,7 +35,7 @@ function PrivacyPage() {
       </header>
       <main className="mx-auto max-w-3xl px-6 py-12">
         <h1 className="font-display text-4xl font-bold tracking-tight">Privacy Policy</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Last updated: July 30, 2026</p>
+        <p className="mt-2 text-sm text-muted-foreground">Last updated: September 24, 2026</p>
 
         <section className="mt-8 space-y-4 text-base leading-relaxed text-foreground/90">
           <h2 className="font-display text-2xl font-semibold">1. Who We Are</h2>
