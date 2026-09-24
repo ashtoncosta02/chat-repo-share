@@ -110,6 +110,9 @@ export function NotificationsCard({
     }
     setSendingTest(true);
     try {
+      if (target !== (email ?? "") && target !== (accountEmail ?? "")) {
+        await persist({ notify_email: target });
+      }
       await sendTestFn({ data: { to: target } });
       toast.success(`Test email sent to ${target}. Check your inbox (and spam).`);
     } catch (e) {
@@ -128,6 +131,7 @@ export function NotificationsCard({
     }
     setSendingTestSms(true);
     try {
+      if (target !== (phone ?? "")) await persist({ notify_phone: target });
       await sendTestSmsFn({ data: { to: target } });
       toast.success(`Test text sent to ${target}.`);
     } catch (e) {

@@ -33,7 +33,7 @@ export const requestPasswordReset = createServerFn({ method: "POST" })
       const { data: profile } = await supabaseAdmin
         .from("profiles")
         .select("user_id")
-        .ilike("email", email)
+        .ilike("email", email.replace(/[\\%_]/g, (c) => "\\" + c))
         .maybeSingle();
       if (profile?.user_id) userId = profile.user_id as string;
     } catch (e) {

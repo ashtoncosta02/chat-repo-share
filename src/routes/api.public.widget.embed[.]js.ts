@@ -74,6 +74,7 @@ function buildScript(origin: string): string {
       bubble.onclick = function(){ toggle(); };
 
       window.addEventListener('message', function(ev){
+        if (ev.origin !== ORIGIN) return;
         if (!ev.data || typeof ev.data !== 'object') return;
         if (ev.data.type === 'af-widget:close') toggle(false);
       });

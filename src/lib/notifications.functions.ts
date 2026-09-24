@@ -68,9 +68,20 @@ export const sendTestTranscriptEmail = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: agent } = await supabase
       .from("agents")
-      .select("business_name")
+      .select("business_name, notify_email")
       .eq("user_id", userId)
       .maybeSingle();
+    const { data: prof } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("user_id", userId)
+      .maybeSingle();
+    const allowed = [agent?.notify_email, prof?.email]
+      .filter((e): e is string => !!e)
+      .map((e) => e.trim().toLowerCase());
+    if (!allowed.includes(data.to.trim().toLowerCase())) {
+      throw new Error("Test emails can only be sent to your saved notification or account email.");
+    }
     const { sendEmail } = await import("@/server/email.server");
     const { renderTranscriptEmail } = await import("@/server/email-templates.server");
     const envUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
@@ -116,9 +127,13 @@ export const sendTestTranscriptSms = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: agent } = await supabase
       .from("agents")
-      .select("business_name")
+      .select("business_name, notify_phone")
       .eq("user_id", userId)
       .maybeSingle();
+    const digits = (v: string) => v.replace(/\D/g, "");
+    if (!agent?.notify_phone || digits(agent.notify_phone) !== digits(data.to)) {
+      throw new Error("Test texts can only be sent to your saved notification phone number.");
+    }
     const { sendTranscriptSms } = await import("@/server/sms.server");
     const sid = await sendTranscriptSms({
       userId,

@@ -36,7 +36,19 @@ const ChatInput = z.object({
 export const chatWithAgent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => ChatInput.parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    // Only allow calendar tools / stored config for an agent the caller owns.
+    if (data.agent.id) {
+      const { data: owned } = await context.supabase
+        .from("agents")
+        .select("id")
+        .eq("id", data.agent.id)
+        .eq("user_id", context.userId)
+        .maybeSingle();
+      if (!owned) return { success: false as const, error: "Agent not found." };
+    } else {
+      return { success: false as const, error: "Agent not found." };
+    }
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       return { success: false as const, error: "AI service is not configured." };

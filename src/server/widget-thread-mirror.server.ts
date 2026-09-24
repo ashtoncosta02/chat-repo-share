@@ -222,9 +222,9 @@ export async function maybeNotifyOwnerForWidgetChat(args: NotifyArgs): Promise<v
       const id = await sendEmail({ to: ownerEmail, subject: wsSubject, html });
       if (id) {
         anySendSucceeded = true;
-        console.log("widget notify: email sent", { to: ownerEmail, id });
+        console.log("widget notify: email sent", { id });
       } else {
-        console.error("widget notify: email send returned null", { to: ownerEmail });
+        console.error("widget notify: email send returned null");
       }
     }
 
@@ -253,7 +253,7 @@ export async function maybeNotifyOwnerForWidgetChat(args: NotifyArgs): Promise<v
         });
         if (sid) {
           anySendSucceeded = true;
-          console.log("widget notify: sms sent", { to: agent.notify_phone, sid });
+          console.log("widget notify: sms sent", { sid });
         } else {
           console.error("widget notify: sms send returned null");
         }

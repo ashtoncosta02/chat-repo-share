@@ -114,7 +114,7 @@ export const Route = createFileRoute("/api/public/owner-chat")({
               messages: [
                 { role: "system", content: SYSTEM_PROMPT },
                 ...messages.slice(-20).map((m) => ({
-                  role: m.role,
+                  role: m.role === "assistant" ? "assistant" : "user",
                   content: m.content.slice(0, 4000),
                 })),
               ],
