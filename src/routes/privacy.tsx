@@ -131,34 +131,62 @@ function PrivacyPage() {
             records are retained until you delete them or close your account.
           </p>
 
-          <h2 className="font-display text-2xl font-semibold">8. Your Rights</h2>
+          <h2 className="font-display text-2xl font-semibold">9. Your Rights</h2>
           <p>
-            Depending on your location (GDPR, CCPA, etc.), you may have rights to access, correct,
-            delete, or export your data. Email{" "}
+            Depending on your location, you may have the following rights over your personal
+            data:
+          </p>
+          <ul className="list-disc pl-6">
+            <li><strong>Access &amp; portability</strong> — request a copy of the data we hold about you.</li>
+            <li><strong>Correction</strong> — ask us to fix data that is inaccurate or incomplete.</li>
+            <li><strong>Deletion</strong> — ask us to delete your account and personal data.</li>
+            <li><strong>Objection &amp; restriction</strong> — object to or ask us to limit certain processing.</li>
+            <li><strong>Withdraw consent</strong> — for processing based on consent, at any time.</li>
+          </ul>
+          <p>
+            For California residents (CCPA/CPRA): you have the right to know what personal
+            information we collect, the right to delete it, the right to correct it, and the
+            right to opt out of its sale or sharing — we do not sell or share personal information
+            as those terms are defined, and we treat all users equally when rights are exercised.
+            We do not knowingly sell data of users under 16.
+          </p>
+          <p>
+            Email{" "}
             <a href="mailto:hello@askjanice.net" className="text-gold hover:underline">
               hello@askjanice.net
             </a>{" "}
-            to exercise them. End-user callers should direct requests to the business they called;
-            we act as a processor on the business's behalf.
+            to exercise any of these rights. We respond to verified requests within 30 days. You
+            will not be discriminated against for exercising your rights. End-user callers should
+            direct requests to the business they called; we act as a processor on the business's
+            behalf.
           </p>
 
-          <h2 className="font-display text-2xl font-semibold">9. Security</h2>
+          <h2 className="font-display text-2xl font-semibold">10. International Data Transfers</h2>
+          <p>
+            We operate from the United States and Canada, and our sub-processors (listed in
+            Section 6) process data in the US and other countries. Where personal data is
+            transferred out of the EEA or UK, we rely on the European Commission's Standard
+            Contractual Clauses (or the UK equivalent) with our sub-processors, together with
+            additional safeguards such as encryption in transit and at rest.
+          </p>
+
+          <h2 className="font-display text-2xl font-semibold">11. Security</h2>
           <p>
             We use industry-standard measures including TLS in transit, encryption at rest,
             row-level security in the database, and least-privilege access controls. No system is
             perfectly secure; you use the Service at your own risk.
           </p>
 
-          <h2 className="font-display text-2xl font-semibold">10. Children</h2>
+          <h2 className="font-display text-2xl font-semibold">12. Children</h2>
           <p>The Service is not intended for users under 18.</p>
 
-          <h2 className="font-display text-2xl font-semibold">11. Changes</h2>
+          <h2 className="font-display text-2xl font-semibold">13. Changes</h2>
           <p>
             We will post updates here and update the "Last updated" date. Material changes will be
             announced via email or in-app notice.
           </p>
 
-          <h2 className="font-display text-2xl font-semibold">12. Contact</h2>
+          <h2 className="font-display text-2xl font-semibold">14. Contact</h2>
           <p>
             Email{" "}
             <a href="mailto:hello@askjanice.net" className="text-gold hover:underline">
