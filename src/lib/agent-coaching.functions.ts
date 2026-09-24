@@ -12,6 +12,13 @@ export const submitAgentFeedback = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const note = (data.note ?? "").trim().slice(0, 2000) || null;
+    const { data: owned } = await supabase
+      .from("agents")
+      .select("id")
+      .eq("id", data.agentId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!owned) return { success: false as const, error: "Agent not found" };
     const { data: row, error } = await supabase
       .from("agent_feedback")
       .insert({
@@ -73,12 +80,16 @@ export const deleteAgentFeedback = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { id: string; agentId: string }) => data)
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
-    const { error } = await supabase
+    const { supabase, userId } = context;
+    const { data: deleted, error } = await supabase
       .from("agent_feedback")
       .delete()
-      .eq("id", data.id);
+      .eq("id", data.id)
+      .eq("user_id", userId)
+      .eq("agent_id", data.agentId)
+      .select("id");
     if (error) return { success: false as const, error: error.message };
+    if (!deleted || deleted.length === 0) return { success: true as const };
     try {
       const { resyncReceptionistById } = await import(
         "@/server/elevenlabs-agent-resync.server"

@@ -143,6 +143,10 @@ export const createManualBooking = createServerFn({ method: "POST" })
       return { success: false as const, error: "Agent not found" };
     }
 
+    const { requireEntitlement } = await import("@/server/entitlement.server");
+    const gate = await requireEntitlement(auth.userId);
+    if (gate) return { success: false as const, error: gate.error };
+
     const result = await bookAppointment({
       agentId: data.agent_id,
       userId: auth.userId,

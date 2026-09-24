@@ -406,7 +406,8 @@ export async function bookAppointment(params: {
         customerName: args.customer_name,
         startsAt: start,
         endsAt: end,
-        reason: args.reason ?? null,
+        // Manual bookings: don't forward owner-typed free text to arbitrary recipients.
+        reason: source === "manual" ? null : (args.reason ?? null),
         eventLink: ev.htmlLink || null,
       });
       await sendEmail({
