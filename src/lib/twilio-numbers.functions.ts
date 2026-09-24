@@ -165,7 +165,8 @@ export const searchNumbersByPostalCode = createServerFn({ method: "POST" })
 
 const PurchaseInput = z.object({
   accessToken: z.string().min(1),
-  phoneNumber: z.string().min(8).max(20).regex(/^\+[0-9]+$/),
+  // US/Canada local numbers only (+1 followed by 10 digits).
+  phoneNumber: z.string().regex(/^\+1[2-9][0-9]{9}$/),
   agentId: z.string().uuid(),
   postalCode: z.string().min(3).max(10).optional(),
 });
@@ -193,6 +194,36 @@ export const purchasePhoneNumber = createServerFn({ method: "POST" })
       .maybeSingle();
     if (agentErr || !agent) {
       return { success: false as const, error: "Agent not found." };
+    }
+
+    // Server-side check: the number must currently be an available local
+    // US/CA number with voice capability, and the user may only hold one.
+    const { count: ownedCount } = await supabaseAdmin
+      .from("phone_numbers")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId);
+    if ((ownedCount ?? 0) >= 1) {
+      return { success: false as const, error: "You already have a phone number." };
+    }
+    {
+      const local = data.phoneNumber.slice(2);
+      let available = false;
+      for (const country of ["US", "CA"]) {
+        const params = new URLSearchParams({ Contains: local, VoiceEnabled: "true", PageSize: "5" });
+        const r = await fetch(
+          `${GATEWAY_URL}/AvailablePhoneNumbers/${country}/Local.json?${params.toString()}`,
+          { method: "GET", headers: gatewayHeaders() },
+        );
+        if (!r.ok) continue;
+        const j = await r.json().catch(() => ({}));
+        if ((j.available_phone_numbers || []).some((n: Record<string, unknown>) => n.phone_number === data.phoneNumber)) {
+          available = true;
+          break;
+        }
+      }
+      if (!available) {
+        return { success: false as const, error: "That number is no longer available. Please search again." };
+      }
     }
 
     try {
