@@ -49,12 +49,14 @@ export const disconnectGoogleCalendar = createServerFn({ method: "POST" })
     const auth = await getAuthenticatedUserId(data.accessToken);
     if ("error" in auth) return { success: false as const, error: auth.error };
 
-    const { error } = await supabaseAdmin
+    const { data: deleted, error } = await supabaseAdmin
       .from("agent_google_calendar")
       .delete()
       .eq("agent_id", data.agent_id)
-      .eq("user_id", auth.userId);
+      .eq("user_id", auth.userId)
+      .select("agent_id");
     if (error) return { success: false as const, error: error.message };
+    if (!deleted || deleted.length === 0) return { success: true as const };
 
     // Tear down voice booking tools + refresh prompt now that calendar is gone.
     const { resyncReceptionistById } = await import("@/server/elevenlabs-agent-resync.server");

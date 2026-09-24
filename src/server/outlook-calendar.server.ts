@@ -34,7 +34,9 @@ export function getClientCreds() {
 }
 
 function stateSecret() {
-  return process.env.SUPABASE_SERVICE_ROLE_KEY || "fallback-state-secret";
+  const s = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!s) throw new Error("OAuth state secret is not configured");
+  return s;
 }
 
 export function signState(payload: {

@@ -15,6 +15,12 @@ const EL_BASE = "https://api.elevenlabs.io/v1";
  * Persists every completed phone call as a `conversations` row + `messages`
  * rows, then runs lead extraction so the call shows up under Leads too.
  */
+function escHtml(v: unknown): string {
+  return String(v ?? "").replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
+  );
+}
+
 export const Route = createFileRoute("/api/public/elevenlabs/postcall")({
   server: {
     handlers: {
@@ -92,7 +98,7 @@ export const Route = createFileRoute("/api/public/elevenlabs/postcall")({
         // conversation exists in ElevenLabs with our API key, then persist the
         // canonical transcript returned by ElevenLabs. This keeps the endpoint
         // authenticated without burning more customer call credits.
-        if (secret && !signatureTrusted) {
+        if (!signatureTrusted) {
           const verified = await fetchElevenLabsConversation(conversationId);
           if (!verified || !verified.agent_id || verified.agent_id !== elAgentId) {
             // Last resort: never throw a real call away. Park the raw payload
@@ -181,7 +187,7 @@ async function quarantinePayload(opts: {
         to: "hello@askjanice.net",
         subject: "Janice alert: a call could not be verified",
         html: `<p>A post-call transcript could not be verified and has been parked instead of dropped.</p>
-<p><strong>Conversation:</strong> ${opts.conversationId}<br/><strong>Agent:</strong> ${opts.agentId}<br/><strong>Reason:</strong> ${opts.reason}</p>
+<p><strong>Conversation:</strong> ${escHtml(opts.conversationId)}<br/><strong>Agent:</strong> ${escHtml(opts.agentId)}<br/><strong>Reason:</strong> ${escHtml(opts.reason)}</p>
 <p>Open Admin &rarr; System health to check the ElevenLabs credentials and replay the parked call.</p>`,
       }).catch((e) => console.error("postcall: alert email failed", e));
     }
