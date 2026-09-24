@@ -101,11 +101,30 @@ function PrivacyPage() {
             <li><strong>ElevenLabs</strong> — AI voice generation and conversation.</li>
             <li><strong>Google</strong> — Calendar integration and (optional) OAuth sign-in.</li>
             <li><strong>Lovable Cloud / Supabase</strong> — database, authentication, storage.</li>
+            <li><strong>Resend</strong> — transactional email delivery (transcript and notification emails).</li>
             <li><strong>Stripe</strong> — payment processing, subscription management, tax calculation, and invoicing (when billing is enabled).</li>
           </ul>
-          <p>We disclose data when required by law or to protect our rights.</p>
+          <p>
+            These providers process data only on our instructions and under their own
+            data-protection agreements. We do not sell or rent personal data, and we do not share
+            personal data for cross-context behavioral advertising. We disclose data when required
+            by law or to protect our rights.
+          </p>
 
-          <h2 className="font-display text-2xl font-semibold">7. Data Retention</h2>
+          <h2 className="font-display text-2xl font-semibold">7. Cookies &amp; Tracking</h2>
+          <p>
+            The Ask Janice website and dashboard use a small number of strictly necessary cookies
+            and equivalent local storage: an authentication session cookie that keeps you signed
+            in, and security tokens used to protect the Service against abuse. These are essential
+            to providing the Service and are set without additional consent.
+          </p>
+          <p>
+            We do not use advertising cookies, cross-site tracking pixels, or third-party
+            analytics that build behavioral profiles of visitors. If we ever add optional
+            analytics, we will request consent before setting them and update this section.
+          </p>
+
+          <h2 className="font-display text-2xl font-semibold">8. Data Retention</h2>
           <p>
             Account data is retained while your account is active. Non-lead conversations may be
             auto-deleted on a schedule you configure (24 hours or 1 week). Lead and booking
