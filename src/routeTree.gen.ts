@@ -9,106 +9,71 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TermsRouteImport } from './routes/terms'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as RefundPolicyRouteImport } from './routes/refund-policy'
-import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as PricingRouteImport } from './routes/pricing'
-import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
-import { Route as WidgetAgentIdRouteImport } from './routes/widget.$agentId'
-import { Route as DashboardPhoneNumbersRouteImport } from './routes/dashboard.phone-numbers'
-import { Route as DashboardOnboardingRouteImport } from './routes/dashboard.onboarding'
-import { Route as DashboardNotificationsRouteImport } from './routes/dashboard.notifications'
-import { Route as DashboardLeadsRouteImport } from './routes/dashboard.leads'
-import { Route as DashboardKnowledgeRouteImport } from './routes/dashboard.knowledge'
-import { Route as DashboardHelpRouteImport } from './routes/dashboard.help'
-import { Route as DashboardConversationsRouteImport } from './routes/dashboard.conversations'
-import { Route as DashboardChatWidgetRouteImport } from './routes/dashboard.chat-widget'
-import { Route as DashboardBookingsRouteImport } from './routes/dashboard.bookings'
-import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard.analytics'
-import { Route as DashboardAgentRouteImport } from './routes/dashboard.agent'
-import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
-import { Route as DashboardAccountRouteImport } from './routes/dashboard.account'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as RefundPolicyRouteImport } from './routes/refund-policy'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthInviteRouteImport } from './routes/auth_.invite'
-import { Route as DashboardConversationsIndexRouteImport } from './routes/dashboard.conversations.index'
-import { Route as DashboardAdminIndexRouteImport } from './routes/dashboard.admin.index'
-import { Route as DashboardConversationsBlockedRouteImport } from './routes/dashboard.conversations.blocked'
-import { Route as DashboardConversationsConversationIdRouteImport } from './routes/dashboard.conversations.$conversationId'
-import { Route as DashboardAgentsAgentIdRouteImport } from './routes/dashboard.agents.$agentId'
-import { Route as DashboardAdminUsersRouteImport } from './routes/dashboard.admin.users'
-import { Route as DashboardAdminTicketsRouteImport } from './routes/dashboard.admin.tickets'
-import { Route as DashboardAdminInvitationsRouteImport } from './routes/dashboard.admin.invitations'
-import { Route as DashboardAdminHealthRouteImport } from './routes/dashboard.admin.health'
-import { Route as DashboardAdminBillingRouteImport } from './routes/dashboard.admin.billing'
+import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as DashboardAccountRouteImport } from './routes/dashboard.account'
+import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
+import { Route as DashboardAgentRouteImport } from './routes/dashboard.agent'
+import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard.analytics'
+import { Route as DashboardBookingsRouteImport } from './routes/dashboard.bookings'
+import { Route as DashboardChatWidgetRouteImport } from './routes/dashboard.chat-widget'
+import { Route as DashboardConversationsRouteImport } from './routes/dashboard.conversations'
+import { Route as DashboardHelpRouteImport } from './routes/dashboard.help'
+import { Route as DashboardKnowledgeRouteImport } from './routes/dashboard.knowledge'
+import { Route as DashboardLeadsRouteImport } from './routes/dashboard.leads'
+import { Route as DashboardNotificationsRouteImport } from './routes/dashboard.notifications'
+import { Route as DashboardOnboardingRouteImport } from './routes/dashboard.onboarding'
+import { Route as DashboardPhoneNumbersRouteImport } from './routes/dashboard.phone-numbers'
+import { Route as WidgetAgentIdRouteImport } from './routes/widget.$agentId'
 import { Route as ApiPublicOwnerChatRouteImport } from './routes/api.public.owner-chat'
-import { Route as DashboardAdminUsersIndexRouteImport } from './routes/dashboard.admin.users.index'
-import { Route as DashboardAdminTicketsIndexRouteImport } from './routes/dashboard.admin.tickets.index'
-import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
-import { Route as DashboardAdminUsersUserIdRouteImport } from './routes/dashboard.admin.users.$userId'
-import { Route as DashboardAdminTicketsTicketIdRouteImport } from './routes/dashboard.admin.tickets.$ticketId'
-import { Route as ApiPublicWidgetEmbedDotjsRouteImport } from './routes/api.public.widget.embed[.]js'
-import { Route as ApiPublicWidgetChatRouteImport } from './routes/api.public.widget.chat'
-import { Route as ApiPublicVoicemailAudioRouteImport } from './routes/api.public.voicemail.audio'
-import { Route as ApiPublicVoiceToolsFindSlotsRouteImport } from './routes/api.public.voice-tools.find-slots'
-import { Route as ApiPublicVoiceToolsBookAppointmentRouteImport } from './routes/api.public.voice-tools.book-appointment'
-import { Route as ApiPublicTwilioVoiceWhisperRouteImport } from './routes/api.public.twilio.voice-whisper'
-import { Route as ApiPublicTwilioVoiceFallbackRouteImport } from './routes/api.public.twilio.voice-fallback'
-import { Route as ApiPublicTwilioVoiceRouteImport } from './routes/api.public.twilio.voice'
-import { Route as ApiPublicTwilioSmsRouteImport } from './routes/api.public.twilio.sms'
-import { Route as ApiPublicTwilioDialerBridgeRouteImport } from './routes/api.public.twilio.dialer-bridge'
-import { Route as ApiPublicTwilioCallbackRouteImport } from './routes/api.public.twilio.callback'
-import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api.public.payments.webhook'
-import { Route as ApiPublicOutlookCalendarCallbackRouteImport } from './routes/api.public.outlook-calendar.callback'
-import { Route as ApiPublicHooksWidgetChatDigestRouteImport } from './routes/api.public.hooks.widget-chat-digest'
-import { Route as ApiPublicHooksBackfillCallsRouteImport } from './routes/api.public.hooks.backfill-calls'
-import { Route as ApiPublicHooksAutoDeleteThreadsRouteImport } from './routes/api.public.hooks.auto-delete-threads'
-import { Route as ApiPublicGoogleCalendarCallbackRouteImport } from './routes/api.public.google-calendar.callback'
+import { Route as DashboardAdminIndexRouteImport } from './routes/dashboard.admin.index'
+import { Route as DashboardAdminBillingRouteImport } from './routes/dashboard.admin.billing'
+import { Route as DashboardAdminHealthRouteImport } from './routes/dashboard.admin.health'
+import { Route as DashboardAdminInvitationsRouteImport } from './routes/dashboard.admin.invitations'
+import { Route as DashboardAdminTicketsRouteImport } from './routes/dashboard.admin.tickets'
+import { Route as DashboardAdminUsersRouteImport } from './routes/dashboard.admin.users'
+import { Route as DashboardAgentsAgentIdRouteImport } from './routes/dashboard.agents.$agentId'
+import { Route as DashboardConversationsIndexRouteImport } from './routes/dashboard.conversations.index'
+import { Route as DashboardConversationsConversationIdRouteImport } from './routes/dashboard.conversations.$conversationId'
+import { Route as DashboardConversationsBlockedRouteImport } from './routes/dashboard.conversations.blocked'
 import { Route as ApiPublicElevenlabsPostcallRouteImport } from './routes/api.public.elevenlabs.postcall'
+import { Route as ApiPublicGoogleCalendarCallbackRouteImport } from './routes/api.public.google-calendar.callback'
+import { Route as ApiPublicHooksAutoDeleteThreadsRouteImport } from './routes/api.public.hooks.auto-delete-threads'
+import { Route as ApiPublicHooksBackfillCallsRouteImport } from './routes/api.public.hooks.backfill-calls'
+import { Route as ApiPublicHooksWidgetChatDigestRouteImport } from './routes/api.public.hooks.widget-chat-digest'
+import { Route as ApiPublicOutlookCalendarCallbackRouteImport } from './routes/api.public.outlook-calendar.callback'
+import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api.public.payments.webhook'
+import { Route as ApiPublicTwilioCallbackRouteImport } from './routes/api.public.twilio.callback'
+import { Route as ApiPublicTwilioDialerBridgeRouteImport } from './routes/api.public.twilio.dialer-bridge'
+import { Route as ApiPublicTwilioSmsRouteImport } from './routes/api.public.twilio.sms'
+import { Route as ApiPublicTwilioVoiceRouteImport } from './routes/api.public.twilio.voice'
+import { Route as ApiPublicTwilioVoiceFallbackRouteImport } from './routes/api.public.twilio.voice-fallback'
+import { Route as ApiPublicTwilioVoiceWhisperRouteImport } from './routes/api.public.twilio.voice-whisper'
+import { Route as ApiPublicVoiceToolsBookAppointmentRouteImport } from './routes/api.public.voice-tools.book-appointment'
+import { Route as ApiPublicVoiceToolsFindSlotsRouteImport } from './routes/api.public.voice-tools.find-slots'
+import { Route as ApiPublicVoicemailAudioRouteImport } from './routes/api.public.voicemail.audio'
+import { Route as ApiPublicWidgetChatRouteImport } from './routes/api.public.widget.chat'
+import { Route as ApiPublicWidgetEmbedDotjsRouteImport } from './routes/api.public.widget.embed[.]js'
+import { Route as DashboardAdminTicketsIndexRouteImport } from './routes/dashboard.admin.tickets.index'
+import { Route as DashboardAdminTicketsTicketIdRouteImport } from './routes/dashboard.admin.tickets.$ticketId'
+import { Route as DashboardAdminUsersIndexRouteImport } from './routes/dashboard.admin.users.index'
+import { Route as DashboardAdminUsersUserIdRouteImport } from './routes/dashboard.admin.users.$userId'
+import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicWidgetConfigAgentIdRouteImport } from './routes/api.public.widget.config.$agentId'
 
-const TermsRoute = TermsRouteImport.update({
-  id: '/terms',
-  path: '/terms',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RefundPolicyRoute = RefundPolicyRouteImport.update({
-  id: '/refund-policy',
-  path: '/refund-policy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PricingRoute = PricingRouteImport.update({
-  id: '/pricing',
-  path: '/pricing',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
-  id: '/forgot-password',
-  path: '/forgot-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -116,9 +81,49 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RefundPolicyRoute = RefundPolicyRouteImport.update({
+  id: '/refund-policy',
+  path: '/refund-policy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthInviteRoute = AuthInviteRouteImport.update({
+  id: '/auth_/invite',
+  path: '/auth/invite',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
@@ -126,64 +131,9 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardRoute,
 } as any)
-const WidgetAgentIdRoute = WidgetAgentIdRouteImport.update({
-  id: '/widget/$agentId',
-  path: '/widget/$agentId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardPhoneNumbersRoute = DashboardPhoneNumbersRouteImport.update({
-  id: '/phone-numbers',
-  path: '/phone-numbers',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardOnboardingRoute = DashboardOnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardNotificationsRoute = DashboardNotificationsRouteImport.update({
-  id: '/notifications',
-  path: '/notifications',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardLeadsRoute = DashboardLeadsRouteImport.update({
-  id: '/leads',
-  path: '/leads',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardKnowledgeRoute = DashboardKnowledgeRouteImport.update({
-  id: '/knowledge',
-  path: '/knowledge',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardHelpRoute = DashboardHelpRouteImport.update({
-  id: '/help',
-  path: '/help',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardConversationsRoute = DashboardConversationsRouteImport.update({
-  id: '/conversations',
-  path: '/conversations',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardChatWidgetRoute = DashboardChatWidgetRouteImport.update({
-  id: '/chat-widget',
-  path: '/chat-widget',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardBookingsRoute = DashboardBookingsRouteImport.update({
-  id: '/bookings',
-  path: '/bookings',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardAnalyticsRoute = DashboardAnalyticsRouteImport.update({
-  id: '/analytics',
-  path: '/analytics',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardAgentRoute = DashboardAgentRouteImport.update({
-  id: '/agent',
-  path: '/agent',
+const DashboardAccountRoute = DashboardAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardAdminRoute = DashboardAdminRouteImport.update({
@@ -191,52 +141,84 @@ const DashboardAdminRoute = DashboardAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => DashboardRoute,
 } as any)
-const DashboardAccountRoute = DashboardAccountRouteImport.update({
-  id: '/account',
-  path: '/account',
+const DashboardAgentRoute = DashboardAgentRouteImport.update({
+  id: '/agent',
+  path: '/agent',
   getParentRoute: () => DashboardRoute,
 } as any)
-const AuthInviteRoute = AuthInviteRouteImport.update({
-  id: '/auth_/invite',
-  path: '/auth/invite',
+const DashboardAnalyticsRoute = DashboardAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardBookingsRoute = DashboardBookingsRouteImport.update({
+  id: '/bookings',
+  path: '/bookings',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardChatWidgetRoute = DashboardChatWidgetRouteImport.update({
+  id: '/chat-widget',
+  path: '/chat-widget',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardConversationsRoute = DashboardConversationsRouteImport.update({
+  id: '/conversations',
+  path: '/conversations',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardHelpRoute = DashboardHelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardKnowledgeRoute = DashboardKnowledgeRouteImport.update({
+  id: '/knowledge',
+  path: '/knowledge',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardLeadsRoute = DashboardLeadsRouteImport.update({
+  id: '/leads',
+  path: '/leads',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardNotificationsRoute = DashboardNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardOnboardingRoute = DashboardOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardPhoneNumbersRoute = DashboardPhoneNumbersRouteImport.update({
+  id: '/phone-numbers',
+  path: '/phone-numbers',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const WidgetAgentIdRoute = WidgetAgentIdRouteImport.update({
+  id: '/widget/$agentId',
+  path: '/widget/$agentId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardConversationsIndexRoute =
-  DashboardConversationsIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => DashboardConversationsRoute,
-  } as any)
+const ApiPublicOwnerChatRoute = ApiPublicOwnerChatRouteImport.update({
+  id: '/api/public/owner-chat',
+  path: '/api/public/owner-chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardAdminIndexRoute = DashboardAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => DashboardAdminRoute,
 } as any)
-const DashboardConversationsBlockedRoute =
-  DashboardConversationsBlockedRouteImport.update({
-    id: '/blocked',
-    path: '/blocked',
-    getParentRoute: () => DashboardConversationsRoute,
-  } as any)
-const DashboardConversationsConversationIdRoute =
-  DashboardConversationsConversationIdRouteImport.update({
-    id: '/$conversationId',
-    path: '/$conversationId',
-    getParentRoute: () => DashboardConversationsRoute,
-  } as any)
-const DashboardAgentsAgentIdRoute = DashboardAgentsAgentIdRouteImport.update({
-  id: '/agents/$agentId',
-  path: '/agents/$agentId',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardAdminUsersRoute = DashboardAdminUsersRouteImport.update({
-  id: '/users',
-  path: '/users',
+const DashboardAdminBillingRoute = DashboardAdminBillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
   getParentRoute: () => DashboardAdminRoute,
 } as any)
-const DashboardAdminTicketsRoute = DashboardAdminTicketsRouteImport.update({
-  id: '/tickets',
-  path: '/tickets',
+const DashboardAdminHealthRoute = DashboardAdminHealthRouteImport.update({
+  id: '/health',
+  path: '/health',
   getParentRoute: () => DashboardAdminRoute,
 } as any)
 const DashboardAdminInvitationsRoute =
@@ -245,140 +227,43 @@ const DashboardAdminInvitationsRoute =
     path: '/invitations',
     getParentRoute: () => DashboardAdminRoute,
   } as any)
-const DashboardAdminHealthRoute = DashboardAdminHealthRouteImport.update({
-  id: '/health',
-  path: '/health',
+const DashboardAdminTicketsRoute = DashboardAdminTicketsRouteImport.update({
+  id: '/tickets',
+  path: '/tickets',
   getParentRoute: () => DashboardAdminRoute,
 } as any)
-const DashboardAdminBillingRoute = DashboardAdminBillingRouteImport.update({
-  id: '/billing',
-  path: '/billing',
+const DashboardAdminUsersRoute = DashboardAdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
   getParentRoute: () => DashboardAdminRoute,
 } as any)
-const ApiPublicOwnerChatRoute = ApiPublicOwnerChatRouteImport.update({
-  id: '/api/public/owner-chat',
-  path: '/api/public/owner-chat',
-  getParentRoute: () => rootRouteImport,
+const DashboardAgentsAgentIdRoute = DashboardAgentsAgentIdRouteImport.update({
+  id: '/agents/$agentId',
+  path: '/agents/$agentId',
+  getParentRoute: () => DashboardRoute,
 } as any)
-const DashboardAdminUsersIndexRoute =
-  DashboardAdminUsersIndexRouteImport.update({
+const DashboardConversationsIndexRoute =
+  DashboardConversationsIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => DashboardAdminUsersRoute,
+    getParentRoute: () => DashboardConversationsRoute,
   } as any)
-const DashboardAdminTicketsIndexRoute =
-  DashboardAdminTicketsIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => DashboardAdminTicketsRoute,
+const DashboardConversationsConversationIdRoute =
+  DashboardConversationsConversationIdRouteImport.update({
+    id: '/$conversationId',
+    path: '/$conversationId',
+    getParentRoute: () => DashboardConversationsRoute,
   } as any)
-const LovableEmailQueueProcessRoute =
-  LovableEmailQueueProcessRouteImport.update({
-    id: '/lovable/email/queue/process',
-    path: '/lovable/email/queue/process',
-    getParentRoute: () => rootRouteImport,
+const DashboardConversationsBlockedRoute =
+  DashboardConversationsBlockedRouteImport.update({
+    id: '/blocked',
+    path: '/blocked',
+    getParentRoute: () => DashboardConversationsRoute,
   } as any)
-const DashboardAdminUsersUserIdRoute =
-  DashboardAdminUsersUserIdRouteImport.update({
-    id: '/$userId',
-    path: '/$userId',
-    getParentRoute: () => DashboardAdminUsersRoute,
-  } as any)
-const DashboardAdminTicketsTicketIdRoute =
-  DashboardAdminTicketsTicketIdRouteImport.update({
-    id: '/$ticketId',
-    path: '/$ticketId',
-    getParentRoute: () => DashboardAdminTicketsRoute,
-  } as any)
-const ApiPublicWidgetEmbedDotjsRoute =
-  ApiPublicWidgetEmbedDotjsRouteImport.update({
-    id: '/api/public/widget/embed.js',
-    path: '/api/public/widget/embed.js',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicWidgetChatRoute = ApiPublicWidgetChatRouteImport.update({
-  id: '/api/public/widget/chat',
-  path: '/api/public/widget/chat',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicVoicemailAudioRoute = ApiPublicVoicemailAudioRouteImport.update({
-  id: '/api/public/voicemail/audio',
-  path: '/api/public/voicemail/audio',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicVoiceToolsFindSlotsRoute =
-  ApiPublicVoiceToolsFindSlotsRouteImport.update({
-    id: '/api/public/voice-tools/find-slots',
-    path: '/api/public/voice-tools/find-slots',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicVoiceToolsBookAppointmentRoute =
-  ApiPublicVoiceToolsBookAppointmentRouteImport.update({
-    id: '/api/public/voice-tools/book-appointment',
-    path: '/api/public/voice-tools/book-appointment',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicTwilioVoiceWhisperRoute =
-  ApiPublicTwilioVoiceWhisperRouteImport.update({
-    id: '/api/public/twilio/voice-whisper',
-    path: '/api/public/twilio/voice-whisper',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicTwilioVoiceFallbackRoute =
-  ApiPublicTwilioVoiceFallbackRouteImport.update({
-    id: '/api/public/twilio/voice-fallback',
-    path: '/api/public/twilio/voice-fallback',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicTwilioVoiceRoute = ApiPublicTwilioVoiceRouteImport.update({
-  id: '/api/public/twilio/voice',
-  path: '/api/public/twilio/voice',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicTwilioSmsRoute = ApiPublicTwilioSmsRouteImport.update({
-  id: '/api/public/twilio/sms',
-  path: '/api/public/twilio/sms',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicTwilioDialerBridgeRoute =
-  ApiPublicTwilioDialerBridgeRouteImport.update({
-    id: '/api/public/twilio/dialer-bridge',
-    path: '/api/public/twilio/dialer-bridge',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicTwilioCallbackRoute = ApiPublicTwilioCallbackRouteImport.update({
-  id: '/api/public/twilio/callback',
-  path: '/api/public/twilio/callback',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicPaymentsWebhookRoute =
-  ApiPublicPaymentsWebhookRouteImport.update({
-    id: '/api/public/payments/webhook',
-    path: '/api/public/payments/webhook',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicOutlookCalendarCallbackRoute =
-  ApiPublicOutlookCalendarCallbackRouteImport.update({
-    id: '/api/public/outlook-calendar/callback',
-    path: '/api/public/outlook-calendar/callback',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksWidgetChatDigestRoute =
-  ApiPublicHooksWidgetChatDigestRouteImport.update({
-    id: '/api/public/hooks/widget-chat-digest',
-    path: '/api/public/hooks/widget-chat-digest',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksBackfillCallsRoute =
-  ApiPublicHooksBackfillCallsRouteImport.update({
-    id: '/api/public/hooks/backfill-calls',
-    path: '/api/public/hooks/backfill-calls',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksAutoDeleteThreadsRoute =
-  ApiPublicHooksAutoDeleteThreadsRouteImport.update({
-    id: '/api/public/hooks/auto-delete-threads',
-    path: '/api/public/hooks/auto-delete-threads',
+const ApiPublicElevenlabsPostcallRoute =
+  ApiPublicElevenlabsPostcallRouteImport.update({
+    id: '/api/public/elevenlabs/postcall',
+    path: '/api/public/elevenlabs/postcall',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicGoogleCalendarCallbackRoute =
@@ -387,10 +272,125 @@ const ApiPublicGoogleCalendarCallbackRoute =
     path: '/api/public/google-calendar/callback',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicElevenlabsPostcallRoute =
-  ApiPublicElevenlabsPostcallRouteImport.update({
-    id: '/api/public/elevenlabs/postcall',
-    path: '/api/public/elevenlabs/postcall',
+const ApiPublicHooksAutoDeleteThreadsRoute =
+  ApiPublicHooksAutoDeleteThreadsRouteImport.update({
+    id: '/api/public/hooks/auto-delete-threads',
+    path: '/api/public/hooks/auto-delete-threads',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksBackfillCallsRoute =
+  ApiPublicHooksBackfillCallsRouteImport.update({
+    id: '/api/public/hooks/backfill-calls',
+    path: '/api/public/hooks/backfill-calls',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksWidgetChatDigestRoute =
+  ApiPublicHooksWidgetChatDigestRouteImport.update({
+    id: '/api/public/hooks/widget-chat-digest',
+    path: '/api/public/hooks/widget-chat-digest',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicOutlookCalendarCallbackRoute =
+  ApiPublicOutlookCalendarCallbackRouteImport.update({
+    id: '/api/public/outlook-calendar/callback',
+    path: '/api/public/outlook-calendar/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicPaymentsWebhookRoute =
+  ApiPublicPaymentsWebhookRouteImport.update({
+    id: '/api/public/payments/webhook',
+    path: '/api/public/payments/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicTwilioCallbackRoute = ApiPublicTwilioCallbackRouteImport.update({
+  id: '/api/public/twilio/callback',
+  path: '/api/public/twilio/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicTwilioDialerBridgeRoute =
+  ApiPublicTwilioDialerBridgeRouteImport.update({
+    id: '/api/public/twilio/dialer-bridge',
+    path: '/api/public/twilio/dialer-bridge',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicTwilioSmsRoute = ApiPublicTwilioSmsRouteImport.update({
+  id: '/api/public/twilio/sms',
+  path: '/api/public/twilio/sms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicTwilioVoiceRoute = ApiPublicTwilioVoiceRouteImport.update({
+  id: '/api/public/twilio/voice',
+  path: '/api/public/twilio/voice',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicTwilioVoiceFallbackRoute =
+  ApiPublicTwilioVoiceFallbackRouteImport.update({
+    id: '/api/public/twilio/voice-fallback',
+    path: '/api/public/twilio/voice-fallback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicTwilioVoiceWhisperRoute =
+  ApiPublicTwilioVoiceWhisperRouteImport.update({
+    id: '/api/public/twilio/voice-whisper',
+    path: '/api/public/twilio/voice-whisper',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicVoiceToolsBookAppointmentRoute =
+  ApiPublicVoiceToolsBookAppointmentRouteImport.update({
+    id: '/api/public/voice-tools/book-appointment',
+    path: '/api/public/voice-tools/book-appointment',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicVoiceToolsFindSlotsRoute =
+  ApiPublicVoiceToolsFindSlotsRouteImport.update({
+    id: '/api/public/voice-tools/find-slots',
+    path: '/api/public/voice-tools/find-slots',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicVoicemailAudioRoute = ApiPublicVoicemailAudioRouteImport.update({
+  id: '/api/public/voicemail/audio',
+  path: '/api/public/voicemail/audio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicWidgetChatRoute = ApiPublicWidgetChatRouteImport.update({
+  id: '/api/public/widget/chat',
+  path: '/api/public/widget/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicWidgetEmbedDotjsRoute =
+  ApiPublicWidgetEmbedDotjsRouteImport.update({
+    id: '/api/public/widget/embed.js',
+    path: '/api/public/widget/embed.js',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DashboardAdminTicketsIndexRoute =
+  DashboardAdminTicketsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => DashboardAdminTicketsRoute,
+  } as any)
+const DashboardAdminTicketsTicketIdRoute =
+  DashboardAdminTicketsTicketIdRouteImport.update({
+    id: '/$ticketId',
+    path: '/$ticketId',
+    getParentRoute: () => DashboardAdminTicketsRoute,
+  } as any)
+const DashboardAdminUsersIndexRoute =
+  DashboardAdminUsersIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => DashboardAdminUsersRoute,
+  } as any)
+const DashboardAdminUsersUserIdRoute =
+  DashboardAdminUsersUserIdRouteImport.update({
+    id: '/$userId',
+    path: '/$userId',
+    getParentRoute: () => DashboardAdminUsersRoute,
+  } as any)
+const LovableEmailQueueProcessRoute =
+  LovableEmailQueueProcessRouteImport.update({
+    id: '/lovable/email/queue/process',
+    path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicWidgetConfigAgentIdRoute =
@@ -810,60 +810,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/refund-policy': {
-      id: '/refund-policy'
-      path: '/refund-policy'
-      fullPath: '/refund-policy'
-      preLoaderRoute: typeof RefundPolicyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/pricing': {
-      id: '/pricing'
-      path: '/pricing'
-      fullPath: '/pricing'
-      preLoaderRoute: typeof PricingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/forgot-password': {
-      id: '/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/forgot-password'
-      preLoaderRoute: typeof ForgotPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -873,11 +824,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/refund-policy': {
+      id: '/refund-policy'
+      path: '/refund-policy'
+      fullPath: '/refund-policy'
+      preLoaderRoute: typeof RefundPolicyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth_/invite': {
+      id: '/auth_/invite'
+      path: '/auth/invite'
+      fullPath: '/auth/invite'
+      preLoaderRoute: typeof AuthInviteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard/': {
@@ -887,88 +894,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
-    '/widget/$agentId': {
-      id: '/widget/$agentId'
-      path: '/widget/$agentId'
-      fullPath: '/widget/$agentId'
-      preLoaderRoute: typeof WidgetAgentIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard/phone-numbers': {
-      id: '/dashboard/phone-numbers'
-      path: '/phone-numbers'
-      fullPath: '/dashboard/phone-numbers'
-      preLoaderRoute: typeof DashboardPhoneNumbersRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/onboarding': {
-      id: '/dashboard/onboarding'
-      path: '/onboarding'
-      fullPath: '/dashboard/onboarding'
-      preLoaderRoute: typeof DashboardOnboardingRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/notifications': {
-      id: '/dashboard/notifications'
-      path: '/notifications'
-      fullPath: '/dashboard/notifications'
-      preLoaderRoute: typeof DashboardNotificationsRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/leads': {
-      id: '/dashboard/leads'
-      path: '/leads'
-      fullPath: '/dashboard/leads'
-      preLoaderRoute: typeof DashboardLeadsRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/knowledge': {
-      id: '/dashboard/knowledge'
-      path: '/knowledge'
-      fullPath: '/dashboard/knowledge'
-      preLoaderRoute: typeof DashboardKnowledgeRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/help': {
-      id: '/dashboard/help'
-      path: '/help'
-      fullPath: '/dashboard/help'
-      preLoaderRoute: typeof DashboardHelpRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/conversations': {
-      id: '/dashboard/conversations'
-      path: '/conversations'
-      fullPath: '/dashboard/conversations'
-      preLoaderRoute: typeof DashboardConversationsRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/chat-widget': {
-      id: '/dashboard/chat-widget'
-      path: '/chat-widget'
-      fullPath: '/dashboard/chat-widget'
-      preLoaderRoute: typeof DashboardChatWidgetRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/bookings': {
-      id: '/dashboard/bookings'
-      path: '/bookings'
-      fullPath: '/dashboard/bookings'
-      preLoaderRoute: typeof DashboardBookingsRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/analytics': {
-      id: '/dashboard/analytics'
-      path: '/analytics'
-      fullPath: '/dashboard/analytics'
-      preLoaderRoute: typeof DashboardAnalyticsRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/agent': {
-      id: '/dashboard/agent'
-      path: '/agent'
-      fullPath: '/dashboard/agent'
-      preLoaderRoute: typeof DashboardAgentRouteImport
+    '/dashboard/account': {
+      id: '/dashboard/account'
+      path: '/account'
+      fullPath: '/dashboard/account'
+      preLoaderRoute: typeof DashboardAccountRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/admin': {
@@ -978,81 +908,102 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAdminRouteImport
       parentRoute: typeof DashboardRoute
     }
-    '/dashboard/account': {
-      id: '/dashboard/account'
-      path: '/account'
-      fullPath: '/dashboard/account'
-      preLoaderRoute: typeof DashboardAccountRouteImport
+    '/dashboard/agent': {
+      id: '/dashboard/agent'
+      path: '/agent'
+      fullPath: '/dashboard/agent'
+      preLoaderRoute: typeof DashboardAgentRouteImport
       parentRoute: typeof DashboardRoute
     }
-    '/auth_/invite': {
-      id: '/auth_/invite'
-      path: '/auth/invite'
-      fullPath: '/auth/invite'
-      preLoaderRoute: typeof AuthInviteRouteImport
+    '/dashboard/analytics': {
+      id: '/dashboard/analytics'
+      path: '/analytics'
+      fullPath: '/dashboard/analytics'
+      preLoaderRoute: typeof DashboardAnalyticsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/bookings': {
+      id: '/dashboard/bookings'
+      path: '/bookings'
+      fullPath: '/dashboard/bookings'
+      preLoaderRoute: typeof DashboardBookingsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/chat-widget': {
+      id: '/dashboard/chat-widget'
+      path: '/chat-widget'
+      fullPath: '/dashboard/chat-widget'
+      preLoaderRoute: typeof DashboardChatWidgetRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/conversations': {
+      id: '/dashboard/conversations'
+      path: '/conversations'
+      fullPath: '/dashboard/conversations'
+      preLoaderRoute: typeof DashboardConversationsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/help': {
+      id: '/dashboard/help'
+      path: '/help'
+      fullPath: '/dashboard/help'
+      preLoaderRoute: typeof DashboardHelpRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/knowledge': {
+      id: '/dashboard/knowledge'
+      path: '/knowledge'
+      fullPath: '/dashboard/knowledge'
+      preLoaderRoute: typeof DashboardKnowledgeRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/leads': {
+      id: '/dashboard/leads'
+      path: '/leads'
+      fullPath: '/dashboard/leads'
+      preLoaderRoute: typeof DashboardLeadsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/notifications': {
+      id: '/dashboard/notifications'
+      path: '/notifications'
+      fullPath: '/dashboard/notifications'
+      preLoaderRoute: typeof DashboardNotificationsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/onboarding': {
+      id: '/dashboard/onboarding'
+      path: '/onboarding'
+      fullPath: '/dashboard/onboarding'
+      preLoaderRoute: typeof DashboardOnboardingRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/phone-numbers': {
+      id: '/dashboard/phone-numbers'
+      path: '/phone-numbers'
+      fullPath: '/dashboard/phone-numbers'
+      preLoaderRoute: typeof DashboardPhoneNumbersRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/widget/$agentId': {
+      id: '/widget/$agentId'
+      path: '/widget/$agentId'
+      fullPath: '/widget/$agentId'
+      preLoaderRoute: typeof WidgetAgentIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard/conversations/': {
-      id: '/dashboard/conversations/'
-      path: '/'
-      fullPath: '/dashboard/conversations/'
-      preLoaderRoute: typeof DashboardConversationsIndexRouteImport
-      parentRoute: typeof DashboardConversationsRoute
+    '/api/public/owner-chat': {
+      id: '/api/public/owner-chat'
+      path: '/api/public/owner-chat'
+      fullPath: '/api/public/owner-chat'
+      preLoaderRoute: typeof ApiPublicOwnerChatRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/dashboard/admin/': {
       id: '/dashboard/admin/'
       path: '/'
       fullPath: '/dashboard/admin/'
       preLoaderRoute: typeof DashboardAdminIndexRouteImport
-      parentRoute: typeof DashboardAdminRoute
-    }
-    '/dashboard/conversations/blocked': {
-      id: '/dashboard/conversations/blocked'
-      path: '/blocked'
-      fullPath: '/dashboard/conversations/blocked'
-      preLoaderRoute: typeof DashboardConversationsBlockedRouteImport
-      parentRoute: typeof DashboardConversationsRoute
-    }
-    '/dashboard/conversations/$conversationId': {
-      id: '/dashboard/conversations/$conversationId'
-      path: '/$conversationId'
-      fullPath: '/dashboard/conversations/$conversationId'
-      preLoaderRoute: typeof DashboardConversationsConversationIdRouteImport
-      parentRoute: typeof DashboardConversationsRoute
-    }
-    '/dashboard/agents/$agentId': {
-      id: '/dashboard/agents/$agentId'
-      path: '/agents/$agentId'
-      fullPath: '/dashboard/agents/$agentId'
-      preLoaderRoute: typeof DashboardAgentsAgentIdRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/admin/users': {
-      id: '/dashboard/admin/users'
-      path: '/users'
-      fullPath: '/dashboard/admin/users'
-      preLoaderRoute: typeof DashboardAdminUsersRouteImport
-      parentRoute: typeof DashboardAdminRoute
-    }
-    '/dashboard/admin/tickets': {
-      id: '/dashboard/admin/tickets'
-      path: '/tickets'
-      fullPath: '/dashboard/admin/tickets'
-      preLoaderRoute: typeof DashboardAdminTicketsRouteImport
-      parentRoute: typeof DashboardAdminRoute
-    }
-    '/dashboard/admin/invitations': {
-      id: '/dashboard/admin/invitations'
-      path: '/invitations'
-      fullPath: '/dashboard/admin/invitations'
-      preLoaderRoute: typeof DashboardAdminInvitationsRouteImport
-      parentRoute: typeof DashboardAdminRoute
-    }
-    '/dashboard/admin/health': {
-      id: '/dashboard/admin/health'
-      path: '/health'
-      fullPath: '/dashboard/admin/health'
-      preLoaderRoute: typeof DashboardAdminHealthRouteImport
       parentRoute: typeof DashboardAdminRoute
     }
     '/dashboard/admin/billing': {
@@ -1062,158 +1013,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAdminBillingRouteImport
       parentRoute: typeof DashboardAdminRoute
     }
-    '/api/public/owner-chat': {
-      id: '/api/public/owner-chat'
-      path: '/api/public/owner-chat'
-      fullPath: '/api/public/owner-chat'
-      preLoaderRoute: typeof ApiPublicOwnerChatRouteImport
-      parentRoute: typeof rootRouteImport
+    '/dashboard/admin/health': {
+      id: '/dashboard/admin/health'
+      path: '/health'
+      fullPath: '/dashboard/admin/health'
+      preLoaderRoute: typeof DashboardAdminHealthRouteImport
+      parentRoute: typeof DashboardAdminRoute
     }
-    '/dashboard/admin/users/': {
-      id: '/dashboard/admin/users/'
+    '/dashboard/admin/invitations': {
+      id: '/dashboard/admin/invitations'
+      path: '/invitations'
+      fullPath: '/dashboard/admin/invitations'
+      preLoaderRoute: typeof DashboardAdminInvitationsRouteImport
+      parentRoute: typeof DashboardAdminRoute
+    }
+    '/dashboard/admin/tickets': {
+      id: '/dashboard/admin/tickets'
+      path: '/tickets'
+      fullPath: '/dashboard/admin/tickets'
+      preLoaderRoute: typeof DashboardAdminTicketsRouteImport
+      parentRoute: typeof DashboardAdminRoute
+    }
+    '/dashboard/admin/users': {
+      id: '/dashboard/admin/users'
+      path: '/users'
+      fullPath: '/dashboard/admin/users'
+      preLoaderRoute: typeof DashboardAdminUsersRouteImport
+      parentRoute: typeof DashboardAdminRoute
+    }
+    '/dashboard/agents/$agentId': {
+      id: '/dashboard/agents/$agentId'
+      path: '/agents/$agentId'
+      fullPath: '/dashboard/agents/$agentId'
+      preLoaderRoute: typeof DashboardAgentsAgentIdRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/conversations/': {
+      id: '/dashboard/conversations/'
       path: '/'
-      fullPath: '/dashboard/admin/users/'
-      preLoaderRoute: typeof DashboardAdminUsersIndexRouteImport
-      parentRoute: typeof DashboardAdminUsersRoute
+      fullPath: '/dashboard/conversations/'
+      preLoaderRoute: typeof DashboardConversationsIndexRouteImport
+      parentRoute: typeof DashboardConversationsRoute
     }
-    '/dashboard/admin/tickets/': {
-      id: '/dashboard/admin/tickets/'
-      path: '/'
-      fullPath: '/dashboard/admin/tickets/'
-      preLoaderRoute: typeof DashboardAdminTicketsIndexRouteImport
-      parentRoute: typeof DashboardAdminTicketsRoute
+    '/dashboard/conversations/$conversationId': {
+      id: '/dashboard/conversations/$conversationId'
+      path: '/$conversationId'
+      fullPath: '/dashboard/conversations/$conversationId'
+      preLoaderRoute: typeof DashboardConversationsConversationIdRouteImport
+      parentRoute: typeof DashboardConversationsRoute
     }
-    '/lovable/email/queue/process': {
-      id: '/lovable/email/queue/process'
-      path: '/lovable/email/queue/process'
-      fullPath: '/lovable/email/queue/process'
-      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
-      parentRoute: typeof rootRouteImport
+    '/dashboard/conversations/blocked': {
+      id: '/dashboard/conversations/blocked'
+      path: '/blocked'
+      fullPath: '/dashboard/conversations/blocked'
+      preLoaderRoute: typeof DashboardConversationsBlockedRouteImport
+      parentRoute: typeof DashboardConversationsRoute
     }
-    '/dashboard/admin/users/$userId': {
-      id: '/dashboard/admin/users/$userId'
-      path: '/$userId'
-      fullPath: '/dashboard/admin/users/$userId'
-      preLoaderRoute: typeof DashboardAdminUsersUserIdRouteImport
-      parentRoute: typeof DashboardAdminUsersRoute
-    }
-    '/dashboard/admin/tickets/$ticketId': {
-      id: '/dashboard/admin/tickets/$ticketId'
-      path: '/$ticketId'
-      fullPath: '/dashboard/admin/tickets/$ticketId'
-      preLoaderRoute: typeof DashboardAdminTicketsTicketIdRouteImport
-      parentRoute: typeof DashboardAdminTicketsRoute
-    }
-    '/api/public/widget/embed.js': {
-      id: '/api/public/widget/embed.js'
-      path: '/api/public/widget/embed.js'
-      fullPath: '/api/public/widget/embed.js'
-      preLoaderRoute: typeof ApiPublicWidgetEmbedDotjsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/widget/chat': {
-      id: '/api/public/widget/chat'
-      path: '/api/public/widget/chat'
-      fullPath: '/api/public/widget/chat'
-      preLoaderRoute: typeof ApiPublicWidgetChatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/voicemail/audio': {
-      id: '/api/public/voicemail/audio'
-      path: '/api/public/voicemail/audio'
-      fullPath: '/api/public/voicemail/audio'
-      preLoaderRoute: typeof ApiPublicVoicemailAudioRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/voice-tools/find-slots': {
-      id: '/api/public/voice-tools/find-slots'
-      path: '/api/public/voice-tools/find-slots'
-      fullPath: '/api/public/voice-tools/find-slots'
-      preLoaderRoute: typeof ApiPublicVoiceToolsFindSlotsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/voice-tools/book-appointment': {
-      id: '/api/public/voice-tools/book-appointment'
-      path: '/api/public/voice-tools/book-appointment'
-      fullPath: '/api/public/voice-tools/book-appointment'
-      preLoaderRoute: typeof ApiPublicVoiceToolsBookAppointmentRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/twilio/voice-whisper': {
-      id: '/api/public/twilio/voice-whisper'
-      path: '/api/public/twilio/voice-whisper'
-      fullPath: '/api/public/twilio/voice-whisper'
-      preLoaderRoute: typeof ApiPublicTwilioVoiceWhisperRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/twilio/voice-fallback': {
-      id: '/api/public/twilio/voice-fallback'
-      path: '/api/public/twilio/voice-fallback'
-      fullPath: '/api/public/twilio/voice-fallback'
-      preLoaderRoute: typeof ApiPublicTwilioVoiceFallbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/twilio/voice': {
-      id: '/api/public/twilio/voice'
-      path: '/api/public/twilio/voice'
-      fullPath: '/api/public/twilio/voice'
-      preLoaderRoute: typeof ApiPublicTwilioVoiceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/twilio/sms': {
-      id: '/api/public/twilio/sms'
-      path: '/api/public/twilio/sms'
-      fullPath: '/api/public/twilio/sms'
-      preLoaderRoute: typeof ApiPublicTwilioSmsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/twilio/dialer-bridge': {
-      id: '/api/public/twilio/dialer-bridge'
-      path: '/api/public/twilio/dialer-bridge'
-      fullPath: '/api/public/twilio/dialer-bridge'
-      preLoaderRoute: typeof ApiPublicTwilioDialerBridgeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/twilio/callback': {
-      id: '/api/public/twilio/callback'
-      path: '/api/public/twilio/callback'
-      fullPath: '/api/public/twilio/callback'
-      preLoaderRoute: typeof ApiPublicTwilioCallbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/payments/webhook': {
-      id: '/api/public/payments/webhook'
-      path: '/api/public/payments/webhook'
-      fullPath: '/api/public/payments/webhook'
-      preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/outlook-calendar/callback': {
-      id: '/api/public/outlook-calendar/callback'
-      path: '/api/public/outlook-calendar/callback'
-      fullPath: '/api/public/outlook-calendar/callback'
-      preLoaderRoute: typeof ApiPublicOutlookCalendarCallbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/widget-chat-digest': {
-      id: '/api/public/hooks/widget-chat-digest'
-      path: '/api/public/hooks/widget-chat-digest'
-      fullPath: '/api/public/hooks/widget-chat-digest'
-      preLoaderRoute: typeof ApiPublicHooksWidgetChatDigestRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/backfill-calls': {
-      id: '/api/public/hooks/backfill-calls'
-      path: '/api/public/hooks/backfill-calls'
-      fullPath: '/api/public/hooks/backfill-calls'
-      preLoaderRoute: typeof ApiPublicHooksBackfillCallsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/auto-delete-threads': {
-      id: '/api/public/hooks/auto-delete-threads'
-      path: '/api/public/hooks/auto-delete-threads'
-      fullPath: '/api/public/hooks/auto-delete-threads'
-      preLoaderRoute: typeof ApiPublicHooksAutoDeleteThreadsRouteImport
+    '/api/public/elevenlabs/postcall': {
+      id: '/api/public/elevenlabs/postcall'
+      path: '/api/public/elevenlabs/postcall'
+      fullPath: '/api/public/elevenlabs/postcall'
+      preLoaderRoute: typeof ApiPublicElevenlabsPostcallRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/google-calendar/callback': {
@@ -1223,11 +1083,151 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicGoogleCalendarCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/elevenlabs/postcall': {
-      id: '/api/public/elevenlabs/postcall'
-      path: '/api/public/elevenlabs/postcall'
-      fullPath: '/api/public/elevenlabs/postcall'
-      preLoaderRoute: typeof ApiPublicElevenlabsPostcallRouteImport
+    '/api/public/hooks/auto-delete-threads': {
+      id: '/api/public/hooks/auto-delete-threads'
+      path: '/api/public/hooks/auto-delete-threads'
+      fullPath: '/api/public/hooks/auto-delete-threads'
+      preLoaderRoute: typeof ApiPublicHooksAutoDeleteThreadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/backfill-calls': {
+      id: '/api/public/hooks/backfill-calls'
+      path: '/api/public/hooks/backfill-calls'
+      fullPath: '/api/public/hooks/backfill-calls'
+      preLoaderRoute: typeof ApiPublicHooksBackfillCallsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/widget-chat-digest': {
+      id: '/api/public/hooks/widget-chat-digest'
+      path: '/api/public/hooks/widget-chat-digest'
+      fullPath: '/api/public/hooks/widget-chat-digest'
+      preLoaderRoute: typeof ApiPublicHooksWidgetChatDigestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/outlook-calendar/callback': {
+      id: '/api/public/outlook-calendar/callback'
+      path: '/api/public/outlook-calendar/callback'
+      fullPath: '/api/public/outlook-calendar/callback'
+      preLoaderRoute: typeof ApiPublicOutlookCalendarCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/payments/webhook': {
+      id: '/api/public/payments/webhook'
+      path: '/api/public/payments/webhook'
+      fullPath: '/api/public/payments/webhook'
+      preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/twilio/callback': {
+      id: '/api/public/twilio/callback'
+      path: '/api/public/twilio/callback'
+      fullPath: '/api/public/twilio/callback'
+      preLoaderRoute: typeof ApiPublicTwilioCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/twilio/dialer-bridge': {
+      id: '/api/public/twilio/dialer-bridge'
+      path: '/api/public/twilio/dialer-bridge'
+      fullPath: '/api/public/twilio/dialer-bridge'
+      preLoaderRoute: typeof ApiPublicTwilioDialerBridgeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/twilio/sms': {
+      id: '/api/public/twilio/sms'
+      path: '/api/public/twilio/sms'
+      fullPath: '/api/public/twilio/sms'
+      preLoaderRoute: typeof ApiPublicTwilioSmsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/twilio/voice': {
+      id: '/api/public/twilio/voice'
+      path: '/api/public/twilio/voice'
+      fullPath: '/api/public/twilio/voice'
+      preLoaderRoute: typeof ApiPublicTwilioVoiceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/twilio/voice-fallback': {
+      id: '/api/public/twilio/voice-fallback'
+      path: '/api/public/twilio/voice-fallback'
+      fullPath: '/api/public/twilio/voice-fallback'
+      preLoaderRoute: typeof ApiPublicTwilioVoiceFallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/twilio/voice-whisper': {
+      id: '/api/public/twilio/voice-whisper'
+      path: '/api/public/twilio/voice-whisper'
+      fullPath: '/api/public/twilio/voice-whisper'
+      preLoaderRoute: typeof ApiPublicTwilioVoiceWhisperRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/voice-tools/book-appointment': {
+      id: '/api/public/voice-tools/book-appointment'
+      path: '/api/public/voice-tools/book-appointment'
+      fullPath: '/api/public/voice-tools/book-appointment'
+      preLoaderRoute: typeof ApiPublicVoiceToolsBookAppointmentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/voice-tools/find-slots': {
+      id: '/api/public/voice-tools/find-slots'
+      path: '/api/public/voice-tools/find-slots'
+      fullPath: '/api/public/voice-tools/find-slots'
+      preLoaderRoute: typeof ApiPublicVoiceToolsFindSlotsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/voicemail/audio': {
+      id: '/api/public/voicemail/audio'
+      path: '/api/public/voicemail/audio'
+      fullPath: '/api/public/voicemail/audio'
+      preLoaderRoute: typeof ApiPublicVoicemailAudioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/widget/chat': {
+      id: '/api/public/widget/chat'
+      path: '/api/public/widget/chat'
+      fullPath: '/api/public/widget/chat'
+      preLoaderRoute: typeof ApiPublicWidgetChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/widget/embed.js': {
+      id: '/api/public/widget/embed.js'
+      path: '/api/public/widget/embed.js'
+      fullPath: '/api/public/widget/embed.js'
+      preLoaderRoute: typeof ApiPublicWidgetEmbedDotjsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/admin/tickets/': {
+      id: '/dashboard/admin/tickets/'
+      path: '/'
+      fullPath: '/dashboard/admin/tickets/'
+      preLoaderRoute: typeof DashboardAdminTicketsIndexRouteImport
+      parentRoute: typeof DashboardAdminTicketsRoute
+    }
+    '/dashboard/admin/tickets/$ticketId': {
+      id: '/dashboard/admin/tickets/$ticketId'
+      path: '/$ticketId'
+      fullPath: '/dashboard/admin/tickets/$ticketId'
+      preLoaderRoute: typeof DashboardAdminTicketsTicketIdRouteImport
+      parentRoute: typeof DashboardAdminTicketsRoute
+    }
+    '/dashboard/admin/users/': {
+      id: '/dashboard/admin/users/'
+      path: '/'
+      fullPath: '/dashboard/admin/users/'
+      preLoaderRoute: typeof DashboardAdminUsersIndexRouteImport
+      parentRoute: typeof DashboardAdminUsersRoute
+    }
+    '/dashboard/admin/users/$userId': {
+      id: '/dashboard/admin/users/$userId'
+      path: '/$userId'
+      fullPath: '/dashboard/admin/users/$userId'
+      preLoaderRoute: typeof DashboardAdminUsersUserIdRouteImport
+      parentRoute: typeof DashboardAdminUsersRoute
+    }
+    '/lovable/email/queue/process': {
+      id: '/lovable/email/queue/process'
+      path: '/lovable/email/queue/process'
+      fullPath: '/lovable/email/queue/process'
+      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/widget/config/$agentId': {
