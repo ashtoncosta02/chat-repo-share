@@ -1,4 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { useAuth } from "@/lib/auth-context";
 
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { SiteHeader } from "@/components/landing/SiteHeader";
@@ -65,6 +67,11 @@ export const Route = createFileRoute("/")({
 });
 
 function LandingPage() {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!loading && user) navigate({ to: "/dashboard/conversations", replace: true });
+  }, [user, loading, navigate]);
   return (
     <div className="min-h-screen bg-background text-foreground">
       <PaymentTestModeBanner />
