@@ -4,11 +4,14 @@ import { registerTwilioCall } from "@/server/elevenlabs-agent.server";
 import { verifyTwilioSignature, formDataToRecord } from "@/server/twilio-signature.server";
 
 const PROJECT_ID = "d1e796ad-671c-47e1-843b-cdecc02fe11f";
+// ~2 North American ring cycles (2s ring + 4s pause, second ring starts ~6s).
+const RING_DELAY_MS = 7000;
 
 export const Route = createFileRoute("/api/public/twilio/voice")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const startedAt = Date.now();
         try {
           const form = await request.formData();
           const params = formDataToRecord(form);
@@ -104,17 +107,22 @@ export const Route = createFileRoute("/api/public/twilio/voice")({
           const lead = (leadRows || []).find((row) => samePhone(fromDigits, String(row.phone || "")));
 
           const firstName = (lead?.name ?? "").trim().split(/\s+/)[0] ?? "";
-          const twiml = await registerTwilioCall({
-            agentId: agent.elevenlabs_agent_id,
-            fromNumber: from,
-            toNumber: to,
-            direction: "inbound",
-            dynamicVariables: {
-              call_direction: "inbound",
-              lead_name: firstName,
-              lead_notes: (lead?.notes ?? "").slice(0, 500),
-            },
-          });
+          // Let the caller hear ~2 rings before the AI picks up so it feels
+          // natural. Twilio keeps playing ringback until we return TwiML.
+          const [twiml] = await Promise.all([
+            registerTwilioCall({
+              agentId: agent.elevenlabs_agent_id,
+              fromNumber: from,
+              toNumber: to,
+              direction: "inbound",
+              dynamicVariables: {
+                call_direction: "inbound",
+                lead_name: firstName,
+                lead_notes: (lead?.notes ?? "").slice(0, 500),
+              },
+            }),
+            new Promise((r) => setTimeout(r, Math.max(0, RING_DELAY_MS - (Date.now() - startedAt)))),
+          ]);
 
           return new Response(twiml, { headers: { "Content-Type": "application/xml" } });
         } catch (e) {
