@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/dashboard/PageHeader";
@@ -168,40 +168,58 @@ function ConversationsPage() {
   }, [user]);
 
   // Remember scroll position when leaving a thread and coming back.
+  // The page may scroll inside <main> (desktop) or the window (mobile), so track both.
+  const restoredRef = useRef(false);
   useEffect(() => {
     if (typeof window === "undefined") return;
     const el = document.querySelector("main");
-    if (!el) return;
     const KEY = "askjanice.threads.scroll";
     const onScroll = () => {
+      if (!restoredRef.current) return; // don't overwrite before we've restored
+      const top = Math.max(el?.scrollTop ?? 0, window.scrollY || 0);
       try {
-        window.sessionStorage.setItem(KEY, String(el.scrollTop));
+        window.sessionStorage.setItem(KEY, String(top));
       } catch {
         /* ignore */
       }
     };
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
+    el?.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      el?.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scroll", onScroll);
+    };
   }, []);
 
   useEffect(() => {
     if (loading || typeof window === "undefined") return;
     const el = document.querySelector("main");
-    if (!el) return;
     let saved = 0;
     try {
       saved = Number(window.sessionStorage.getItem("askjanice.threads.scroll") ?? 0);
     } catch {
       saved = 0;
     }
-    if (!saved) return;
-    const restore = () => el.scrollTo({ top: saved });
+    if (!saved) {
+      restoredRef.current = true;
+      return;
+    }
+    const restore = () => {
+      el?.scrollTo({ top: saved });
+      window.scrollTo({ top: saved });
+    };
     restore();
     const raf = requestAnimationFrame(restore);
-    const t = window.setTimeout(restore, 120);
+    const t1 = window.setTimeout(restore, 120);
+    const t2 = window.setTimeout(() => {
+      restore();
+      restoredRef.current = true;
+    }, 400);
     return () => {
       cancelAnimationFrame(raf);
-      window.clearTimeout(t);
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      restoredRef.current = true;
     };
   }, [loading]);
 

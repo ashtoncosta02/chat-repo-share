@@ -99,7 +99,7 @@ function AuthPage() {
     if (error) toast.error(error.message);
     else {
       toast.success("Account created! You're signed in.");
-      navigate({ to: "/dashboard" });
+      navigate({ to: "/dashboard/conversations" });
     }
   };
 

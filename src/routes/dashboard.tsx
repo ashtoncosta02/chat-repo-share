@@ -66,6 +66,18 @@ function DashboardLayout() {
     if (!loading && !user) navigate({ to: "/auth" });
   }, [user, loading, navigate]);
 
+  // When the app is first opened (new tab / home-screen launch) on the
+  // Dashboard page, start on Threads instead. Clicking "Dashboard" later still works.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const KEY = "askjanice.session-started";
+    if (window.sessionStorage.getItem(KEY)) return;
+    window.sessionStorage.setItem(KEY, "1");
+    if (window.location.pathname === "/dashboard" || window.location.pathname === "/dashboard/") {
+      navigate({ to: "/dashboard/conversations", replace: true });
+    }
+  }, [navigate]);
+
   // Gate: if a signed-in user has no completed receptionist, send them to onboarding.
   // The onboarding route itself is excluded so the wizard can render.
   useEffect(() => {
