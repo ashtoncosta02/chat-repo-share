@@ -91,6 +91,8 @@ interface NotifyArgs {
   visitorName: string | null;
   visitorEmail: string | null;
   userTurnCount: number;
+  /** Sweep already verified new activity since the last alert. */
+  ignoreCooldown?: boolean;
 }
 
 const WIDGET_NOTIFICATION_COOLDOWN_MS = 15 * 60 * 1000;
@@ -116,7 +118,7 @@ export async function maybeNotifyOwnerForWidgetChat(args: NotifyArgs): Promise<v
     .select("notified_at")
     .eq("id", args.widgetConversationId)
     .maybeSingle();
-  if (!convo || isNotificationRecent(convo.notified_at)) return;
+  if (!convo || (!args.ignoreCooldown && isNotificationRecent(convo.notified_at))) return;
 
   const { data: agent } = await supabaseAdmin
     .from("agents")
