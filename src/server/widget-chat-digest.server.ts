@@ -22,7 +22,7 @@ export async function sweepIdleWidgetChats(): Promise<{ notified: number; error?
   const { data: convos, error } = await supabaseAdmin
     .from("widget_conversations")
     .select("id, agent_id, user_id, page_url, updated_at, notified_at")
-    .is("notified_at", null)
+    .or(`notified_at.is.null,notified_at.lt.${cutoff}`)
     .lt("updated_at", cutoff)
     .gt("updated_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
     .limit(50);
@@ -31,7 +31,13 @@ export async function sweepIdleWidgetChats(): Promise<{ notified: number; error?
 
   let notified = 0;
 
-  for (const convo of convos ?? []) {
+  // Include chats that resumed after their last transcript was sent, so the
+  // owner gets the full follow-up conversation too.
+  const pending = (convos ?? []).filter(
+    (c) => !c.notified_at || new Date(c.updated_at).getTime() > new Date(c.notified_at).getTime(),
+  );
+
+  for (const convo of pending) {
     const { data: thread } = await supabaseAdmin
       .from("conversations")
       .select("id")
@@ -57,6 +63,7 @@ export async function sweepIdleWidgetChats(): Promise<{ notified: number; error?
         visitorName: null,
         visitorEmail: null,
         userTurnCount: userTurns,
+        ignoreCooldown: true,
       });
       notified += 1;
     } catch (e) {
