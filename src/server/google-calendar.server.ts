@@ -16,8 +16,8 @@ const LOVABLE_DEV_ORIGIN = "https://project--d1e796ad-671c-47e1-843b-cdecc02fe11
 export const SCOPES = [
   "openid",
   "email",
+  "profile",
   "https://www.googleapis.com/auth/calendar.events",
-  "https://www.googleapis.com/auth/calendar.readonly",
 ].join(" ");
 
 function isLocalOrigin(origin: string): boolean {
