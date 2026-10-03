@@ -232,22 +232,35 @@ export async function checkFreeBusy(
   const conn = await getValidAccessToken(agentId);
   if (!conn) return { error: "Calendar not connected" };
 
-  const res = await fetch(`${CALENDAR_API}/freeBusy`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${conn.token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
+  // Uses events.list (covered by the calendar.events scope) instead of
+  // freeBusy, which needs a read-only calendar scope we don't request.
+  const busy: Array<{ start: string; end: string }> = [];
+  let pageToken: string | undefined;
+  for (let page = 0; page < 5; page++) {
+    const params = new URLSearchParams({
       timeMin,
       timeMax,
+      singleEvents: "true",
+      orderBy: "startTime",
+      maxResults: "250",
       timeZone: conn.timezone,
-      items: [{ id: conn.calendar_id }],
-    }),
-  });
-  if (!res.ok) return { error: `freeBusy ${res.status}` };
-  const json = await res.json();
-  const busy = json.calendars?.[conn.calendar_id]?.busy ?? [];
+    });
+    if (pageToken) params.set("pageToken", pageToken);
+    const res = await fetch(
+      `${CALENDAR_API}/calendars/${encodeURIComponent(conn.calendar_id)}/events?${params}`,
+      { headers: { Authorization: `Bearer ${conn.token}` } },
+    );
+    if (!res.ok) return { error: `Calendar events ${res.status}` };
+    const json = await res.json();
+    for (const ev of json.items ?? []) {
+      if (ev.status === "cancelled" || ev.transparency === "transparent") continue;
+      const s = ev.start?.dateTime ?? (ev.start?.date ? `${ev.start.date}T00:00:00Z` : null);
+      const e = ev.end?.dateTime ?? (ev.end?.date ? `${ev.end.date}T00:00:00Z` : null);
+      if (s && e) busy.push({ start: new Date(s).toISOString(), end: new Date(e).toISOString() });
+    }
+    pageToken = json.nextPageToken;
+    if (!pageToken) break;
+  }
   return { busy };
 }
 
