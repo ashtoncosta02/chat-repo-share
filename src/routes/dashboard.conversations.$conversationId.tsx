@@ -16,7 +16,14 @@ import { ThreadFeedbackCard } from "@/components/dashboard/ThreadFeedbackCard";
 import { markThreadRead } from "@/lib/thread-read-state";
 
 export const Route = createFileRoute("/dashboard/conversations/$conversationId")({
-  head: () => ({ meta: [{ title: "Transcript — Ask Janice" }] }),
+  head: () => ({ meta: [
+    { title: "Call Transcript — Ask Janice" },
+    { name: "description", content: "Review your caller's transcript, recording, and previous interactions in Ask Janice." },
+    { property: "og:title", content: "Call Transcript — Ask Janice" },
+    { property: "og:description", content: "Review caller transcripts, recordings, and interaction history." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: ConversationDetailPage,
 });
 
@@ -75,6 +82,10 @@ interface AgentLite {
 
 function ConversationDetailPage() {
   const { conversationId } = useParams({ from: "/dashboard/conversations/$conversationId" });
+  return <ConversationDetailContent key={conversationId} conversationId={conversationId} />;
+}
+
+function ConversationDetailContent({ conversationId }: { conversationId: string }) {
   const { user } = useAuth();
   const [conv, setConv] = useState<Conversation | null>(null);
   const [agent, setAgent] = useState<AgentLite | null>(null);
@@ -322,7 +333,7 @@ function ConversationDetailPage() {
                   ai_summary: null as string | null,
                   isCurrent: true,
                 },
-                ...relatedCalls.map((rc) => ({ ...rc, isCurrent: false })),
+                 ...relatedCalls.filter((rc) => rc.id !== conv.id).map((rc) => ({ ...rc, isCurrent: false })),
               ].sort(
                 (a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime()
               );
@@ -337,7 +348,7 @@ function ConversationDetailPage() {
                   year: "numeric",
                 });
                 if (!groups.has(key)) groups.set(key, []);
-                groups.get(key)!.push(item);
+                groups.get(key)?.push(item);
               });
 
               return (
