@@ -58,7 +58,7 @@ export function AudienceSection() {
   const [active, setActive] = useState(0);
   return (
     <section aria-labelledby="who-h" className="relative">
-      <div className="mx-auto max-w-[1200px] px-5 py-24 sm:px-8 md:py-32">
+      <div className="mx-auto max-w-[1200px] px-5 py-16 sm:px-8 md:py-32">
         <Reveal className="max-w-[44rem]">
           <Heading id="who-h" lead="Built for busy" payoff="local businesses." />
           <p className="mt-5 max-w-[34rem] text-[17.5px] leading-[1.65] text-aj-slate">

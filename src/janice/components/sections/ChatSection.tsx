@@ -156,7 +156,7 @@ export function ChatWidget() {
 export function ChatSection() {
   return (
     <section id="chat" aria-labelledby="chat-h" className="relative scroll-mt-20 overflow-x-clip">
-      <div className="mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-14 px-5 py-24 sm:px-8 md:py-32 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
+      <div className="mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-14 px-5 py-16 sm:px-8 md:py-32 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
         <div>
           <Heading id="chat-h" lead="Janice works on your website." payoff="No added cost." size="md" />
           <p className="mt-6 max-w-[34rem] text-[17.5px] leading-[1.65] text-aj-slate">

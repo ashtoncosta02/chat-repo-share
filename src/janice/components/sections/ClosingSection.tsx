@@ -10,7 +10,7 @@ export function ClosingSection() {
   // Rings a few times each time it comes into view, then goes quiet.
   const ringing = useInView(ringRef, { amount: 0.6 });
   return (
-    <section aria-labelledby="close-h" className="relative px-5 pb-24 pt-8 sm:px-8 md:pb-32">
+    <section aria-labelledby="close-h" className="relative px-5 pb-16 pt-4 sm:px-8 md:pb-32">
       <Reveal variant="scale" className="relative mx-auto max-w-[1200px]">
         <div className="relative overflow-hidden rounded-[36px] bg-[linear-gradient(160deg,#f1eeff_0%,#ffffff_48%,#efeaff_100%)] px-6 py-20 text-center shadow-[inset_0_0_0_1px_var(--color-aj-line),var(--shadow-aj-lift)] sm:px-12 md:py-28">
           <div aria-hidden className="aj-glow left-1/2 top-[62%] h-[420px] w-[720px] -translate-x-1/2 bg-[radial-gradient(closest-side,#ddd3ff,transparent)]" />

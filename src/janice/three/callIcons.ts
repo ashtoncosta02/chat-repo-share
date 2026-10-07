@@ -81,6 +81,9 @@ export class CallIcons {
   private toCam = new THREE.Vector3();
   private spin = new THREE.Quaternion();
   private axis = new THREE.Vector3(0, 0, 1);
+  private look = new THREE.Matrix4();
+  private up = new THREE.Vector3();
+  private faceOrb = new THREE.Quaternion();
 
   constructor(
     parent: THREE.Object3D,
@@ -130,9 +133,9 @@ export class CallIcons {
       // Sit on the front of the orb, facing the camera.
       this.toCam.copy(camPosLocal).sub(o.pos).normalize();
       const lift = o.r * 0.18 * pick;
-      it.phone.position.copy(o.pos).addScaledVector(this.toCam, o.r * 1.01);
+      it.phone.position.copy(o.pos).addScaledVector(this.toCam, o.r * 1.03);
       it.phone.position.y += lift;
-      it.check.position.copy(o.pos).addScaledVector(this.toCam, o.r * (1.01 - 0.5 * sink));
+      it.check.position.copy(o.pos).addScaledVector(this.toCam, o.r * (1.03 - 0.5 * sink));
 
       // Ringing handsets wiggle in the phone cadence until they are picked up.
       let wiggle = 0;
@@ -141,10 +144,15 @@ export class CallIcons {
         const on = (c < 0.4 ? 1 : 0) + (c > 0.6 && c < 1.0 ? 1 : 0);
         wiggle = on * Math.sin(time * 48) * 0.22 * (1 - pick);
       }
-      this.q.copy(faceQ);
+      // Face the camera position, not just its direction: off-centre orbs would otherwise tilt the
+      // sticker into the sphere and clip one side of the glyph.
+      this.up.set(0, 1, 0).applyQuaternion(faceQ);
+      this.look.lookAt(camPosLocal, o.pos, this.up);
+      this.faceOrb.setFromRotationMatrix(this.look);
+      this.q.copy(this.faceOrb);
       this.spin.setFromAxisAngle(this.axis, wiggle - 0.75 * pick);
       it.phone.quaternion.copy(this.q).multiply(this.spin);
-      it.check.quaternion.copy(faceQ);
+      it.check.quaternion.copy(this.faceOrb);
 
       const ps = o.r * 1.0 * (1 + 0.12 * pick);
       it.phone.scale.set(ps, ps, 1);
@@ -158,7 +166,7 @@ export class CallIcons {
 
       const f = seg(raw, 0.1, 0.36);
       it.flash.position.copy(o.pos).addScaledVector(this.toCam, o.r * 0.2);
-      it.flash.quaternion.copy(faceQ);
+      it.flash.quaternion.copy(this.faceOrb);
       const fsz = o.r * 2 * (1.05 + 0.95 * (1 - Math.pow(1 - f, 3)));
       it.flash.scale.set(fsz, fsz, 1);
       it.fm.opacity = f > 0 && f < 1 ? 0.85 * Math.pow(1 - f, 1.4) : 0;

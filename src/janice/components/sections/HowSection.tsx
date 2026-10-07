@@ -114,7 +114,7 @@ export function HowSection() {
   const reduce = useReducedMotion();
   return (
     <section id="how-it-works" aria-labelledby="how-h" className="relative scroll-mt-20 bg-[linear-gradient(180deg,transparent,rgb(243_242_253/0.65)_18%,rgb(243_242_253/0.65)_82%,transparent)]">
-      <div className="mx-auto max-w-[1200px] px-5 py-24 sm:px-8 md:py-32">
+      <div className="mx-auto max-w-[1200px] px-5 py-16 sm:px-8 md:py-32">
         <Reveal className="mx-auto max-w-[44rem] text-center">
           <Heading id="how-h" lead="Live in minutes," payoff="not weeks." />
           <p className="mx-auto mt-5 max-w-[34rem] text-[17.5px] leading-[1.65] text-aj-slate">

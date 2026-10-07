@@ -313,9 +313,9 @@ export class JaniceScene {
       this.layout = {
         mobile,
         dist,
-        cloud: new THREE.Vector3(0, -visH * 0.3, 0),
+        cloud: new THREE.Vector3(0, -visH * 0.28, 0),
         cloudR: new THREE.Vector3(visW * 0.42, visH * 0.13, 1.1),
-        conv: new THREE.Vector3(0, -visH * 0.2, 0),
+        conv: new THREE.Vector3(0, -visH * 0.1, 0),
         final: new THREE.Vector3(0, visH * 0.03, 0),
       };
     }

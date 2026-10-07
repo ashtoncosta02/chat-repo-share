@@ -54,7 +54,7 @@ function InboxVisual() {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-[14.5px] font-semibold text-aj-ink">{name}</p>
-                <p className="truncate text-[13px] text-aj-slate">{status}</p>
+                <p className="text-[13px] leading-[1.4] text-aj-slate sm:truncate">{status}</p>
               </div>
               {callback ? (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-aj-violet px-3 py-1.5 text-[12.5px] font-semibold text-aj-plum">
@@ -80,7 +80,7 @@ export function InboxSection() {
   return (
     <section id="inbox" aria-labelledby="inbox-h" className="relative scroll-mt-20 overflow-x-clip">
       <div aria-hidden className="aj-glow right-[-12%] top-[20%] h-[520px] w-[640px] bg-[radial-gradient(closest-side,#ece7ff,transparent)]" />
-      <div className="relative mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-14 px-5 py-24 sm:px-8 md:py-32 lg:grid-cols-[1.05fr_0.95fr] lg:gap-20">
+      <div className="relative mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-14 px-5 py-16 sm:px-8 md:py-32 lg:grid-cols-[1.05fr_0.95fr] lg:gap-20">
         <div className="order-2 lg:order-1">
           <InboxVisual />
           <p className="mt-4 text-center text-[13px] text-aj-slate">Example leads. Names are illustrative.</p>

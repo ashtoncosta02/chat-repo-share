@@ -103,11 +103,18 @@ export function HeroScroll() {
       return { p, onScreen: r.bottom > 0 && r.top < vh };
     };
 
+    let narrow = window.innerWidth < 768;
+    const onResize = () => {
+      narrow = window.innerWidth < 768;
+      lastP = -1;
+    };
+    window.addEventListener("resize", onResize, { passive: true });
+
     const updateDom = (p: number) => {
       const copy = copyRef.current!;
       const o = 1 - smooth(seg(p, T.copyOut[0], T.copyOut[1]));
       copy.style.opacity = String(o);
-      copy.style.transform = `translate3d(0, ${(-48 * (1 - o)).toFixed(2)}px, 0)`;
+      copy.style.transform = `translate3d(0, ${((narrow ? -10 : -48) * (1 - o)).toFixed(2)}px, 0)`;
       copy.style.filter = o < 0.999 ? `blur(${((1 - o) * 8).toFixed(2)}px)` : "";
       copy.style.visibility = o <= 0.001 ? "hidden" : "visible";
 
@@ -117,7 +124,9 @@ export function HeroScroll() {
         const w = windowed(p, a, b);
         const dir = p < (a + b) / 2 ? 1 : -1;
         el.style.opacity = String(w);
-        el.style.transform = `translate3d(0, ${(dir * (1 - w) * 32).toFixed(2)}px, 0)`;
+        // Phones: arrive from below, leave by fading in place, so nothing slides under the nav.
+        const travel = narrow ? (dir > 0 ? 18 : 0) : 32;
+        el.style.transform = `translate3d(0, ${(dir * (1 - w) * travel).toFixed(2)}px, 0)`;
         el.style.visibility = w <= 0.001 ? "hidden" : "visible";
       });
 
@@ -199,6 +208,7 @@ export function HeroScroll() {
       stills.forEach(clearTimeout);
       ro.disconnect();
       window.removeEventListener("pointermove", onPointer);
+      window.removeEventListener("resize", onResize);
       scene?.dispose();
       delete root.dataset.ajHeroDone;
     };
@@ -226,7 +236,7 @@ export function HeroScroll() {
           {/* Hero copy */}
           <div
             ref={copyRef}
-            className="absolute inset-x-5 top-[92px] will-change-transform sm:inset-x-8 md:top-1/2 md:max-w-[660px] md:-translate-y-[46%]"
+            className="absolute inset-x-5 top-[calc(var(--aj-nav-h,72px)+20px)] will-change-transform sm:inset-x-8 md:top-1/2 md:max-w-[660px] md:-translate-y-[46%]"
           >
             <h1 className="aj-display text-[42px] leading-[1.04] text-aj-ink sm:text-[54px] lg:text-[62px]">
               <span className="lg:block lg:whitespace-nowrap">Your AI receptionist</span>{" "}
@@ -253,7 +263,7 @@ export function HeroScroll() {
               ref={(el) => {
                 capRefs.current[i] = el;
               }}
-              className="aj-caption invisible absolute inset-x-5 top-[96px] opacity-0 sm:inset-x-8 md:top-1/2 md:max-w-[440px] md:-translate-y-1/2"
+              className="aj-caption invisible absolute inset-x-5 top-[calc(var(--aj-nav-h,72px)+28px)] opacity-0 sm:inset-x-8 md:top-1/2 md:max-w-[440px] md:-translate-y-1/2"
             >
               <h2 className="aj-display text-[32px] leading-[1.06] text-aj-ink sm:text-[44px] lg:text-[52px]">{c.title}</h2>
               <p className="mt-4 max-w-[26rem] text-[16.5px] leading-[1.6] text-aj-slate sm:text-[18px]">{c.body}</p>
