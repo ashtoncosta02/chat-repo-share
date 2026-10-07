@@ -99,9 +99,12 @@ function CallCard() {
           )}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[15px] font-semibold text-aj-ink">Incoming call: (289) 555-0134</p>
+          <p className="truncate text-[15px] font-semibold text-aj-ink">
+            Incoming call<span className="hidden sm:inline">: (289) 555-0134</span>
+          </p>
           <p className="mt-0.5 flex items-center gap-2 text-[13px] text-aj-slate">
-            Janice answered <VoiceBars active={speaking} />
+            <span className="aj-num sm:hidden">(289) 555-0134</span>
+            <span className="hidden sm:inline">Janice answered</span> <VoiceBars active={speaking} />
           </p>
         </div>
         <div className="flex flex-col items-end gap-1">
@@ -177,7 +180,7 @@ export function CallSection() {
   return (
     <section id="calls" aria-labelledby="calls-h" className="relative scroll-mt-20 overflow-x-clip">
       <div aria-hidden className="aj-glow left-[-10%] top-[10%] h-[520px] w-[620px] bg-[radial-gradient(closest-side,#ebe5ff,transparent)]" />
-      <div className="relative mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-14 px-5 pb-24 pt-10 sm:px-8 md:pb-32 md:pt-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-20">
+      <div className="relative mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-14 px-5 pb-16 pt-8 sm:px-8 md:pb-32 md:pt-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-20">
         <div className="order-2 lg:order-1">
           <CallCard />
           <p className="mt-4 text-center text-[13px] text-aj-slate">Example call. Business, names and numbers are illustrative.</p>

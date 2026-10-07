@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ListIcon, XIcon } from "@phosphor-icons/react";
 import { JaniceMark, Wordmark } from "@/janice/components/Logo";
 import { NAV, SIGNIN_HREF, SIGNUP_HREF } from "@/janice/lib/site";
@@ -9,6 +9,23 @@ import { NAV, SIGNIN_HREF, SIGNUP_HREF } from "@/janice/lib/site";
  */
 export function Nav({ banner }: { banner?: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+
+  // Content under the fixed header (hero copy, captions) is positioned from its real height.
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const root = document.documentElement;
+    const bar = el.querySelector("nav");
+    const set = () => root.style.setProperty("--aj-nav-h", `${Math.round((bar?.getBoundingClientRect().bottom ?? 72))}px`);
+    set();
+    const ro = new ResizeObserver(set);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      root.style.removeProperty("--aj-nav-h");
+    };
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -22,7 +39,7 @@ export function Nav({ banner }: { banner?: ReactNode }) {
   }, [open]);
 
   return (
-    <header className="aj-site-nav fixed inset-x-0 top-0 z-50">
+    <header ref={headerRef} className="aj-site-nav fixed inset-x-0 top-0 z-50">
       {banner}
       <div className="aj-nav-surface absolute inset-0" aria-hidden />
       <nav aria-label="Main" className="aj-safe-x relative mx-auto flex h-[72px] max-w-[1200px] items-center justify-between px-5 sm:px-8">

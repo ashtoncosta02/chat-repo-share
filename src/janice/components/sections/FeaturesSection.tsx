@@ -129,7 +129,7 @@ const GROUPS = [
 export function FeaturesSection() {
   return (
     <section id="features" aria-labelledby="features-h" className="relative scroll-mt-20">
-      <div className="mx-auto max-w-[1200px] px-5 py-24 sm:px-8 md:py-32">
+      <div className="mx-auto max-w-[1200px] px-5 py-16 sm:px-8 md:py-32">
         <Reveal className="max-w-[40rem]">
           <Heading id="features-h" lead="Everything included." payoff="No add-ons." />
           <p className="mt-5 text-[17.5px] leading-[1.65] text-aj-slate">One plan, one price, every feature switched on from day one.</p>

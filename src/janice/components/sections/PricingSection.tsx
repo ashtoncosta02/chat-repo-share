@@ -43,7 +43,7 @@ export function PricingSection() {
   return (
     <section id="pricing" aria-labelledby="pricing-h" className="relative scroll-mt-20 overflow-x-clip">
       <div aria-hidden className="aj-glow left-[45%] top-[18%] h-[600px] w-[700px] bg-[radial-gradient(closest-side,#e9e3ff,transparent)]" />
-      <div className="relative mx-auto grid max-w-[1200px] grid-cols-1 gap-10 px-5 py-24 sm:px-8 md:py-32 lg:grid-cols-[0.85fr_1.15fr] lg:grid-rows-[auto_1fr] lg:gap-x-20 lg:gap-y-10">
+      <div className="relative mx-auto grid max-w-[1200px] grid-cols-1 gap-10 px-5 py-16 sm:px-8 md:py-32 lg:grid-cols-[0.85fr_1.15fr] lg:grid-rows-[auto_1fr] lg:gap-x-20 lg:gap-y-10">
         {/* Order: heading, then the price card, then the reassurance (mobile reads price before guarantee). */}
         <Reveal className="lg:col-start-1 lg:row-start-1 lg:self-start lg:pt-10">
           <Heading id="pricing-h" lead="One simple" payoff="plan." />

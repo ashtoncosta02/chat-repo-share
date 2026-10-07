@@ -70,7 +70,7 @@ export function FaqSection() {
   const [open, setOpen] = useState(0);
   return (
     <section id="faq" aria-labelledby="faq-h" className="relative scroll-mt-20 bg-[linear-gradient(180deg,transparent,rgb(243_242_253/0.7)_15%,rgb(243_242_253/0.7)_85%,transparent)]">
-      <div className="mx-auto grid max-w-[1200px] grid-cols-1 gap-12 px-5 py-24 sm:px-8 md:py-32 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
+      <div className="mx-auto grid max-w-[1200px] grid-cols-1 gap-12 px-5 py-16 sm:px-8 md:py-32 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
         <div className="lg:sticky lg:top-28 lg:self-start">
           <Heading id="faq-h" lead="Questions," payoff="answered." />
           <p className="mt-6 max-w-[24rem] text-[16px] leading-[1.65] text-aj-slate">
