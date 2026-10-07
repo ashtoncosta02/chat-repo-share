@@ -3,17 +3,7 @@ import { useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
-import { SiteHeader } from "@/components/landing/SiteHeader";
-import { Hero } from "@/components/landing/Hero";
-import { StatBand } from "@/components/landing/StatBand";
-import { HowItWorks } from "@/components/landing/HowItWorks";
-import { Showcase } from "@/components/landing/Showcase";
-import { Features } from "@/components/landing/Features";
-import { UseCases } from "@/components/landing/UseCases";
-import { PricingSection } from "@/components/landing/PricingSection";
-import { FAQSection } from "@/components/landing/FAQSection";
-import { CTABand } from "@/components/landing/CTABand";
-import { SiteFooter } from "@/components/landing/SiteFooter";
+import { JaniceLanding } from "@/janice/LandingPage";
 
 const OG_IMAGE =
   "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/bdf233e4-c52b-4b09-802c-6f9c4dad8519/id-preview-970c1d47--d1e796ad-671c-47e1-843b-cdecc02fe11f.lovable.app-1782442129187.png";
@@ -72,22 +62,5 @@ function LandingPage() {
   useEffect(() => {
     if (!loading && user) navigate({ to: "/dashboard/conversations", replace: true });
   }, [user, loading, navigate]);
-  return (
-    <div className="min-h-screen bg-background text-foreground">
-      <PaymentTestModeBanner />
-      <SiteHeader />
-      <main>
-        <Hero />
-        <StatBand />
-        <HowItWorks />
-        <Showcase />
-        <Features />
-        <UseCases />
-        <PricingSection />
-        <FAQSection />
-        <CTABand />
-      </main>
-      <SiteFooter />
-    </div>
-  );
+  return <JaniceLanding banner={<PaymentTestModeBanner />} />;
 }
