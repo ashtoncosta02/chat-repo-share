@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1791472836205,
+      "tag": "0000_deleted_voice_calls_tombstone",
+      "breakpoints": true
+    }
+  ]
+}
