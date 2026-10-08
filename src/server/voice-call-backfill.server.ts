@@ -60,6 +60,14 @@ export async function backfillRecentCalls(opts: {
     for (const row of existing ?? []) {
       if (row.elevenlabs_conversation_id) existingSet.add(row.elevenlabs_conversation_id);
     }
+    // Calls the owner deleted must never be re-imported.
+    const { data: deleted } = await supabaseAdmin
+      .from("deleted_voice_calls")
+      .select("elevenlabs_conversation_id")
+      .in("elevenlabs_conversation_id", ids);
+    for (const row of deleted ?? []) {
+      existingSet.add(row.elevenlabs_conversation_id);
+    }
   }
 
   for (const item of items) {
