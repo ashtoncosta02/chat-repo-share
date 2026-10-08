@@ -210,9 +210,10 @@
 .aj-hero-scroll {
   height: 460vh;
 }
+/* Phones: a static hero, no pinned scroll story. */
 @media (max-width: 767px) {
   .aj-hero-scroll {
-    height: 400vh;
+    height: auto;
   }
 }
 .aj-hero-scroll[data-static="1"] {

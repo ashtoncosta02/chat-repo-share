@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import { ArrowRightIcon } from "@phosphor-icons/react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowRightIcon, PhoneIcon } from "@phosphor-icons/react";
 import { JaniceMark } from "@/janice/components/Logo";
 import { SIGNUP_HREF } from "@/janice/lib/site";
 import { T, clamp01, easeInOut, lerp, seg, smooth, windowed } from "@/janice/three/timeline";
@@ -21,6 +21,42 @@ const CAPTIONS = [
 ];
 
 const OVERLAY_BASE = 256;
+const PHONE_QUERY = "(max-width: 767px)";
+
+// Phone hero art: the mark with quiet call rings and three incoming calls resting on them (static).
+const CALL_DOTS = [
+  { ring: 172, angle: -38, size: 40 },
+  { ring: 137, angle: 208, size: 32 },
+  { ring: 172, angle: 128, size: 36 },
+];
+
+function PhoneHeroArt() {
+  return (
+    <div aria-hidden className="relative mx-auto mb-16 mt-14 grid size-[200px] place-items-center md:hidden">
+      <span className="absolute -inset-[72px] rounded-full border border-aj-lilac/50" />
+      <span className="absolute -inset-[37px] rounded-full border border-aj-lilac/80" />
+      <span className="absolute -inset-10 rounded-full bg-[radial-gradient(closest-side,#e4dcff,transparent)]" />
+      <JaniceMark size={136} className="relative drop-shadow-[0_22px_40px_rgba(158,76,255,0.4)]" />
+      {CALL_DOTS.map(({ ring, angle, size }) => {
+        const a = (angle * Math.PI) / 180;
+        return (
+          <span
+            key={angle}
+            className="absolute grid place-items-center rounded-full bg-[radial-gradient(circle_at_35%_30%,#c9b8ff,#9e4cff_72%)] text-white shadow-[0_10px_22px_-8px_rgba(158,76,255,0.8)]"
+            style={{
+              width: size,
+              height: size,
+              left: `calc(50% + ${(Math.cos(a) * ring).toFixed(1)}px - ${size / 2}px)`,
+              top: `calc(50% + ${(Math.sin(a) * ring).toFixed(1)}px - ${size / 2}px)`,
+            }}
+          >
+            <PhoneIcon size={Math.round(size * 0.44)} weight="fill" />
+          </span>
+        );
+      })}
+    </div>
+  );
+}
 
 /**
  * Pinned scroll scene: glossy "calls" ring, swirl in, merge into one violet core, press into the
@@ -35,11 +71,32 @@ export function HeroScroll() {
   const meetRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const fallbackRef = useRef<HTMLDivElement>(null);
+  // null until mounted (server render has no viewport); CSS already lays out both versions.
+  const [phone, setPhone] = useState<boolean | null>(null);
 
   useEffect(() => {
+    const mq = window.matchMedia(PHONE_QUERY);
+    const sync = () => setPhone(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
+  useEffect(() => {
+    if (phone === null) return;
+    const root = document.documentElement;
+    if (phone) {
+      // Phones get the static hero: no pinned scroll, no WebGL. The mark simply sits in the nav.
+      const m = document.getElementById("aj-nav-mark");
+      if (m) m.style.opacity = "1";
+      root.dataset.ajHeroDone = "1";
+      return () => {
+        if (m) m.style.opacity = "";
+        delete root.dataset.ajHeroDone;
+      };
+    }
     const section = sectionRef.current!;
     const canvas = canvasRef.current!;
-    const root = document.documentElement;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const navMark = () => document.getElementById("aj-nav-mark");
     let scene: JaniceScene | null = null;
@@ -212,11 +269,11 @@ export function HeroScroll() {
       scene?.dispose();
       delete root.dataset.ajHeroDone;
     };
-  }, []);
+  }, [phone]);
 
   return (
     <section ref={sectionRef} id="top" aria-label="Ask Janice" className="aj-hero-scroll relative">
-      <div className="sticky top-0 h-[100dvh] overflow-hidden">
+      <div className="relative overflow-hidden md:sticky md:top-0 md:h-[100dvh]">
         <div aria-hidden className="pointer-events-none absolute inset-0">
           <div className="aj-glow left-[42%] top-[8%] h-[60vh] w-[60vw] bg-[radial-gradient(closest-side,#e7e1ff,transparent)]" />
           <div className="aj-glow -left-[10%] bottom-[-10%] h-[50vh] w-[50vw] bg-[radial-gradient(closest-side,#efeaff,transparent)]" />
@@ -225,18 +282,18 @@ export function HeroScroll() {
         <canvas
           ref={canvasRef}
           aria-hidden
-          className="absolute inset-0 h-full w-full opacity-0 transition-opacity duration-700 data-[ready=1]:opacity-100"
+          className="absolute inset-0 h-full w-full opacity-0 transition-opacity duration-700 data-[ready=1]:opacity-100 max-md:hidden"
         />
 
-        <div ref={fallbackRef} hidden aria-hidden className="absolute right-[8%] top-1/2 -translate-y-1/2 max-md:right-1/2 max-md:top-[72%] max-md:translate-x-1/2">
+        <div ref={fallbackRef} hidden aria-hidden className="absolute right-[8%] top-1/2 -translate-y-1/2 max-md:!hidden">
           <JaniceMark className="size-[min(34vh,60vw)] drop-shadow-[0_30px_60px_rgba(158,76,255,0.35)]" />
         </div>
 
-        <div className="relative mx-auto h-full max-w-[1200px] px-5 sm:px-8">
+        <div className="relative mx-auto max-w-[1200px] px-5 sm:px-8 md:h-full">
           {/* Hero copy */}
           <div
             ref={copyRef}
-            className="absolute inset-x-5 top-[calc(var(--aj-nav-h,72px)+20px)] will-change-transform sm:inset-x-8 md:top-1/2 md:max-w-[660px] md:-translate-y-[46%]"
+            className="relative pt-[calc(var(--aj-nav-h,72px)+32px)] md:absolute md:inset-x-8 md:top-1/2 md:max-w-[660px] md:-translate-y-[46%] md:pt-0 md:will-change-transform"
           >
             <h1 className="aj-display text-[42px] leading-[1.04] text-aj-ink sm:text-[54px] lg:text-[62px]">
               <span className="lg:block lg:whitespace-nowrap">Your AI receptionist</span>{" "}
@@ -256,14 +313,16 @@ export function HeroScroll() {
             </div>
           </div>
 
-          {/* Story captions */}
+          <PhoneHeroArt />
+
+          {/* Story captions (desktop scroll story only) */}
           {CAPTIONS.map((c, i) => (
             <div
               key={c.title}
               ref={(el) => {
                 capRefs.current[i] = el;
               }}
-              className="aj-caption invisible absolute inset-x-5 top-[calc(var(--aj-nav-h,72px)+28px)] opacity-0 sm:inset-x-8 md:top-1/2 md:max-w-[440px] md:-translate-y-1/2"
+              className="aj-caption invisible absolute inset-x-5 top-[calc(var(--aj-nav-h,72px)+28px)] opacity-0 max-md:hidden sm:inset-x-8 md:top-1/2 md:max-w-[440px] md:-translate-y-1/2"
             >
               <h2 className="aj-display text-[32px] leading-[1.06] text-aj-ink sm:text-[44px] lg:text-[52px]">{c.title}</h2>
               <p className="mt-4 max-w-[26rem] text-[16.5px] leading-[1.6] text-aj-slate sm:text-[18px]">{c.body}</p>
@@ -273,7 +332,7 @@ export function HeroScroll() {
 
         <div
           ref={meetRef}
-          className="invisible absolute left-1/2 top-[70%] w-full max-w-[640px] px-5 text-center opacity-0"
+          className="invisible absolute left-1/2 top-[70%] w-full max-w-[640px] px-5 text-center opacity-0 max-md:hidden"
         >
           <p className="aj-display text-[40px] text-aj-ink sm:text-[60px]">
             Hi, I’m <span className="aj-payoff">Janice.</span>

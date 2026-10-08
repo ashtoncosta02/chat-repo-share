@@ -40,7 +40,7 @@ export function Nav({ banner }: { banner?: ReactNode }) {
 
   return (
     <header ref={headerRef} className="aj-site-nav fixed inset-x-0 top-0 z-50">
-      {banner}
+      {banner ? <div className="relative z-[1]">{banner}</div> : null}
       <div className="aj-nav-surface absolute inset-0" aria-hidden />
       <nav aria-label="Main" className="aj-safe-x relative mx-auto flex h-[72px] max-w-[1200px] items-center justify-between px-5 sm:px-8">
         <a href="#top" className="flex items-center gap-[5px] rounded-full" aria-label="Ask Janice, back to top">
