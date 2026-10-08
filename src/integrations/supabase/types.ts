@@ -559,6 +559,24 @@ export type Database = {
         }
         Relationships: []
       }
+      deleted_voice_calls: {
+        Row: {
+          deleted_at: string
+          elevenlabs_conversation_id: string
+          user_id: string
+        }
+        Insert: {
+          deleted_at?: string
+          elevenlabs_conversation_id: string
+          user_id: string
+        }
+        Update: {
+          deleted_at?: string
+          elevenlabs_conversation_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
