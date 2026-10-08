@@ -32,10 +32,25 @@ export async function sweepIdleWidgetChats(): Promise<{ notified: number; error?
   let notified = 0;
 
   // Include chats that resumed after their last transcript was sent, so the
-  // owner gets the full follow-up conversation too.
-  const pending = (convos ?? []).filter(
-    (c) => !c.notified_at || new Date(c.updated_at).getTime() > new Date(c.notified_at).getTime(),
-  );
+  // owner gets the full follow-up conversation too. "Resumed" is decided from
+  // actual message times — NOT updated_at, because stamping notified_at fires
+  // the updated_at trigger and would make every chat look resumed forever.
+  const cutoffMs = Date.now() - IDLE_MINUTES * 60 * 1000;
+  const pending: NonNullable<typeof convos> = [];
+  for (const c of convos ?? []) {
+    const { data: last } = await supabaseAdmin
+      .from("widget_messages")
+      .select("created_at")
+      .eq("conversation_id", c.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!last) continue;
+    const lastMs = new Date(last.created_at).getTime();
+    if (lastMs > cutoffMs) continue; // still active
+    if (c.notified_at && lastMs <= new Date(c.notified_at).getTime() + 2000) continue;
+    pending.push(c);
+  }
 
   for (const convo of pending) {
     const { data: thread } = await supabaseAdmin
