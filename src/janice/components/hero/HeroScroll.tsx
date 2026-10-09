@@ -295,12 +295,13 @@ export function HeroScroll() {
             ref={copyRef}
             className="relative pt-[calc(var(--aj-nav-h,72px)+32px)] md:absolute md:inset-x-8 md:top-1/2 md:max-w-[660px] md:-translate-y-[46%] md:pt-0 md:will-change-transform"
           >
+            <p className="mb-4 text-[16px] font-semibold text-aj-violet-ink">Ask Janice</p>
             <h1 className="aj-display text-[42px] leading-[1.04] text-aj-ink sm:text-[54px] lg:text-[62px]">
               <span className="lg:block lg:whitespace-nowrap">Your AI receptionist</span>{" "}
               <span className="aj-payoff inline-block pb-1 lg:whitespace-nowrap">never misses a call.</span>
             </h1>
             <p className="mt-5 max-w-[30rem] text-[17px] leading-[1.6] text-aj-slate sm:text-[18.5px]">
-              Janice answers your business phone 24/7, captures every lead and books the job into your calendar.
+              Ask Janice is an AI Receptionist for service businesses. It answers your business phone and website chat 24/7, answers customer questions, captures leads and books appointments into your connected calendar.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <a href={SIGNUP_HREF} className="aj-btn aj-btn-primary h-[52px] px-6 text-[15.5px]">
