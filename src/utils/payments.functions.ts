@@ -7,6 +7,34 @@ import {
 } from "@/lib/stripe.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+const ALLOWED_RETURN_HOSTS = new Set([
+  "askjanice.net",
+  "www.askjanice.net",
+  "chat-repo-share.lovable.app",
+]);
+
+/** Only allow return destinations on this app's own domains. */
+function safeReturnUrl(raw: string | undefined): string | undefined {
+  if (!raw) return undefined;
+  let u: URL;
+  try {
+    u = new URL(raw);
+  } catch {
+    throw new Error("Invalid return URL");
+  }
+  const host = u.hostname.toLowerCase();
+  const ok =
+    (u.protocol === "https:" &&
+      (ALLOWED_RETURN_HOSTS.has(host) ||
+        host.endsWith(".lovable.app") ||
+        host.endsWith(".lovableproject.com"))) ||
+    (u.protocol === "http:" && (host === "localhost" || host === "127.0.0.1"));
+  if (!ok) throw new Error("Invalid return URL");
+  return u.toString();
+}
+
+const TRIAL_DAYS = 7;
+
 type CheckoutSessionResult = { clientSecret: string } | { error: string };
 type PortalSessionResult = { url: string } | { error: string };
 
@@ -58,11 +86,11 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     }) => {
       if (!/^[a-zA-Z0-9_-]+$/.test(data.priceId)) throw new Error("Invalid priceId");
       if (data.trialDays !== undefined) {
-        if (!Number.isInteger(data.trialDays) || data.trialDays < 1 || data.trialDays > 90) {
+        if (data.trialDays !== TRIAL_DAYS) {
           throw new Error("Invalid trial length");
         }
       }
-      return data;
+      return { ...data, returnUrl: safeReturnUrl(data.returnUrl) as string };
     },
   )
   .handler(async ({ data, context }): Promise<CheckoutSessionResult> => {
@@ -82,13 +110,23 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
 
       const customerId = await resolveOrCreateCustomer(stripe, { email, userId });
 
-      const withTrial = isRecurring && Boolean(data.trialDays);
+      // Trial length is fixed server-side and only offered to accounts that
+      // have never had a subscription before.
+      let trialEligible = false;
+      if (isRecurring && data.trialDays) {
+        const { count } = await context.supabase
+          .from("subscriptions")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId);
+        trialEligible = (count ?? 0) === 0;
+      }
+      const withTrial = trialEligible;
 
       // Card-on-file free trial: Stripe stores the payment method now, charges
       // $0 today, and automatically bills at the end of the trial period.
       const subscriptionData = {
         metadata: { userId },
-        ...(withTrial && { trial_period_days: data.trialDays }),
+        ...(withTrial && { trial_period_days: TRIAL_DAYS }),
       };
 
       const session = await stripe.checkout.sessions.create({
@@ -114,7 +152,10 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
 /** Opens the Stripe billing portal so the user can manage or cancel their plan. */
 export const createPortalSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { returnUrl?: string; environment: StripeEnv }) => data)
+  .inputValidator((data: { returnUrl?: string; environment: StripeEnv }) => ({
+    ...data,
+    returnUrl: safeReturnUrl(data.returnUrl),
+  }))
   .handler(async ({ data, context }): Promise<PortalSessionResult> => {
     const { supabase, userId } = context;
 

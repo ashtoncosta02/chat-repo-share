@@ -37,18 +37,18 @@ export const chatWithAgent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => ChatInput.parse(input))
   .handler(async ({ data, context }) => {
-    // Only allow calendar tools / stored config for an agent the caller owns.
-    if (data.agent.id) {
-      const { data: owned } = await context.supabase
-        .from("agents")
-        .select("id")
-        .eq("id", data.agent.id)
-        .eq("user_id", context.userId)
-        .maybeSingle();
-      if (!owned) return { success: false as const, error: "Agent not found." };
-    } else {
-      return { success: false as const, error: "Agent not found." };
-    }
+    // Build the prompt only from the caller's stored receptionist config —
+    // never from client-supplied fields.
+    if (!data.agent.id) return { success: false as const, error: "Agent not found." };
+    const { data: owned } = await context.supabase
+      .from("agents")
+      .select(
+        "id, business_name, industry, tone, primary_goal, services, booking_link, emergency_number, faqs, faqs_structured, sms_followup_enabled, pricing_notes, escalation_triggers, assistant_name",
+      )
+      .eq("id", data.agent.id)
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (!owned) return { success: false as const, error: "Agent not found." };
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       return { success: false as const, error: "AI service is not configured." };
@@ -58,7 +58,7 @@ export const chatWithAgent = createServerFn({ method: "POST" })
       "@/lib/agent-chat.server"
     );
 
-    const a = data.agent;
+    const a = owned;
     const name = a.assistant_name || "Janice";
 
     // Check if this agent has a connected calendar

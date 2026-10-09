@@ -11,6 +11,8 @@ function isPublicHttpUrl(raw: string): boolean {
     return false;
   }
   if (u.protocol !== "http:" && u.protocol !== "https:") return false;
+  if (u.port && u.port !== "80" && u.port !== "443") return false;
+  if (u.username || u.password) return false;
 
   const host = u.hostname.toLowerCase().replace(/^\[|\]$/g, "");
   if (
@@ -72,13 +74,28 @@ export const scrapeBusinessFromUrl = createServerFn({ method: "POST" })
       // Fetch the URL content
       let pageText = "";
       try {
-        const pageRes = await fetch(data.url, {
-          headers: {
-            "User-Agent": "Mozilla/5.0 (compatible; AskJaniceBot/1.0)",
-          },
-          signal: AbortSignal.timeout(15000),
-        });
-        if (pageRes.ok) {
+        // Follow redirects manually so every hop is re-checked as public.
+        let target = data.url;
+        let pageRes: Response | null = null;
+        for (let hop = 0; hop < 4; hop++) {
+          if (!isPublicHttpUrl(target)) break;
+          const res = await fetch(target, {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (compatible; AskJaniceBot/1.0)",
+            },
+            redirect: "manual",
+            signal: AbortSignal.timeout(15000),
+          });
+          const loc = res.headers.get("location");
+          if (res.status >= 300 && res.status < 400 && loc) {
+            target = new URL(loc, target).toString();
+            continue;
+          }
+          pageRes = res;
+          break;
+        }
+        const ctype = pageRes?.headers.get("content-type") ?? "";
+        if (pageRes && pageRes.ok && (ctype === "" || /text\/|html|xml/i.test(ctype))) {
           const html = await pageRes.text();
           // Strip scripts/styles, then tags, collapse whitespace
           pageText = html

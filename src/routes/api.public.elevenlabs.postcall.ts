@@ -101,19 +101,13 @@ export const Route = createFileRoute("/api/public/elevenlabs/postcall")({
         if (!signatureTrusted) {
           const verified = await fetchElevenLabsConversation(conversationId);
           if (!verified || !verified.agent_id || verified.agent_id !== elAgentId) {
-            // Last resort: never throw a real call away. Park the raw payload
-            // so an admin can replay it once the credential is fixed, and ack
-            // with 200 so ElevenLabs does not discard it on retry exhaustion.
+            // Unverifiable payloads are never stored: they could be forged by
+            // anyone. Real calls are recovered by the scheduled backfill, which
+            // pulls canonical transcripts straight from ElevenLabs.
             console.error(
-              `postcall: verification failed for ${conversationId} — parked for replay`,
+              `postcall: verification failed for ${conversationId} — rejected (backfill will recover real calls)`,
             );
-            await quarantinePayload({
-              reason: "signature-invalid-and-api-verify-failed",
-              conversationId,
-              agentId: elAgentId,
-              data,
-            });
-            return new Response("ok-quarantined", { status: 200 });
+            return new Response("Unauthorized", { status: 401 });
           }
           data = verified;
           elAgentId = verified.agent_id;

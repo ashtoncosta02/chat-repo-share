@@ -114,18 +114,19 @@ export const deleteReceptionistAgent = createServerFn({ method: "POST" })
     const auth = await authUser(data.accessToken);
     if ("error" in auth) return { success: false as const, error: auth.error };
 
-    // Always try to clean up booking tools first (independent of agent existence).
-    await deleteBookingToolsForAgent(data.agentId).catch((e: unknown) => {
-      console.error("deleteBookingToolsForAgent error:", e);
-    });
-
     const { data: row } = await supabaseAdmin
       .from("agents")
-      .select("elevenlabs_agent_id")
+      .select("id, elevenlabs_agent_id")
       .eq("id", data.agentId)
       .eq("user_id", auth.userId)
       .maybeSingle();
-    if (!row?.elevenlabs_agent_id) return { success: true as const };
+    // Only touch booking tools / voice agent for a receptionist the caller owns.
+    if (!row) return { success: true as const };
+
+    await deleteBookingToolsForAgent(row.id).catch((e: unknown) => {
+      console.error("deleteBookingToolsForAgent error:", e);
+    });
+    if (!row.elevenlabs_agent_id) return { success: true as const };
     try {
       await deleteElevenLabsAgent(row.elevenlabs_agent_id);
       return { success: true as const };

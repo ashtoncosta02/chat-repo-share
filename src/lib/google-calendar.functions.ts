@@ -23,6 +23,14 @@ export const startGoogleCalendarConnect = createServerFn({ method: "POST" })
       const auth = await getAuthenticatedUserId(data.accessToken);
       if ("error" in auth) return { success: false as const, error: auth.error };
 
+      const { data: ownedAgent } = await supabaseAdmin
+        .from("agents")
+        .select("id")
+        .eq("id", data.agent_id)
+        .eq("user_id", auth.userId)
+        .maybeSingle();
+      if (!ownedAgent) return { success: false as const, error: "Receptionist not found." };
+
       const request = getRequest();
       const redirectUri = getRedirectUri(request);
       const state = signState({
