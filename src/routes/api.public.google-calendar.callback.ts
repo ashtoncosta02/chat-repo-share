@@ -46,6 +46,16 @@ export const Route = createFileRoute("/api/public/google-calendar/callback")({
           return htmlResponse("Error", `<h1>Invalid or expired state</h1>`, 400);
         }
 
+        const { data: ownedAgent } = await supabaseAdmin
+          .from("agents")
+          .select("id")
+          .eq("id", verified.agent_id)
+          .eq("user_id", verified.user_id)
+          .maybeSingle();
+        if (!ownedAgent) {
+          return htmlResponse("Error", `<h1>Receptionist not found</h1>`, 403);
+        }
+
         try {
           const redirectUri = verified.redirect_uri || getRedirectUri(request);
           const tokens = await exchangeCode(code, redirectUri);
