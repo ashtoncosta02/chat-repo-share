@@ -105,7 +105,7 @@ const STEPS = [
   {
     n: "3",
     title: "She answers, books, follows up",
-    body: "Every call is answered, transcribed, saved as a lead, booked into your calendar and texted a follow-up.",
+    body: "Janice answers customer questions and saves call transcripts and leads. With a calendar connected, she checks availability and books appointments when requested. Follow-up texts are sent when enabled.",
     Visual: FollowVisual,
   },
 ];
@@ -118,7 +118,7 @@ export function HowSection() {
         <Reveal className="mx-auto max-w-[44rem] text-center">
           <Heading id="how-h" lead="Live in minutes," payoff="not weeks." />
           <p className="mx-auto mt-5 max-w-[34rem] text-[17.5px] leading-[1.65] text-aj-slate">
-            No installers, no phone system to rip out. Three steps and your phone stops ringing out.
+            Set up your AI Receptionist, connect your phone and choose a calendar. When you connect Google Calendar, Ask Janice uses your permission to read events for availability and create appointment events for your customers.
           </p>
         </Reveal>
 
