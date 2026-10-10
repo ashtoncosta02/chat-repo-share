@@ -6,6 +6,7 @@ import { PageHeader, EmptyState } from "@/components/dashboard/PageHeader";
 import { Calendar, Mail, Phone, User as UserIcon, Clock, Plus, X } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { createManualBooking } from "@/lib/google-calendar.functions";
+import { syncBookingsWithCalendar } from "@/lib/booking-sync.functions";
 
 export const Route = createFileRoute("/dashboard/bookings")({
   head: () => ({ meta: [{ title: "Bookings — Ask Janice" }] }),
@@ -80,6 +81,13 @@ function BookingsPage() {
       for (const o of (outs ?? []) as { agent_id: string }[]) connected.add(o.agent_id);
       setCalendarAgentIds(Array.from(connected));
       setLoading(false);
+      // Drop bookings that were deleted directly in Google / Outlook.
+      try {
+        const r = await syncBookingsWithCalendar();
+        if (!cancelled && r.removed > 0) await refresh();
+      } catch (e) {
+        console.error("booking sync failed", e);
+      }
     })();
     return () => {
       cancelled = true;
