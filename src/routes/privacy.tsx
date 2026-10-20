@@ -35,7 +35,7 @@ function PrivacyPage() {
       </header>
       <main className="mx-auto max-w-3xl px-6 py-12">
         <h1 className="font-display text-4xl font-bold tracking-tight">Privacy Policy</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Last updated: September 24, 2026</p>
+        <p className="mt-2 text-sm text-muted-foreground">Last updated: October 20, 2026</p>
 
         <section className="mt-8 space-y-4 text-base leading-relaxed text-foreground/90">
           <h2 className="font-display text-2xl font-semibold">1. Who We Are</h2>
@@ -110,6 +110,55 @@ function PrivacyPage() {
             personal data for cross-context behavioral advertising. We disclose data when required
             by law or to protect our rights.
           </p>
+
+          <h2 id="google-user-data" className="font-display text-2xl font-semibold">6A. Google User Data</h2>
+          <p>
+            Ask Janice lets a business owner connect their own Google Calendar so the AI
+            Receptionist can book appointments for their customers. When you connect Google, we
+            request only these permissions:
+          </p>
+          <ul className="list-disc pl-6">
+            <li><strong>openid, email and profile</strong> — to identify which Google account you connected, so bookings go to the correct calendar.</li>
+            <li><strong>Google Calendar events (calendar.events)</strong> — to read existing events on your calendar to find open time slots, and to create appointment events when your customers book by phone or website chat.</li>
+          </ul>
+          <p>
+            We use Google user data only to provide these user-facing features. We do not sell
+            Google user data, use it for advertising, use it to build user profiles, or allow
+            humans to read it except with your explicit consent, for security purposes, or to
+            comply with the law. We do not use Google user data to develop, improve or train
+            generalized AI or machine-learning models.
+          </p>
+          <p>
+            Ask Janice does not generate, edit or process images. We never use Google APIs or
+            Google user data to create AI-generated imagery of any kind, including non-consensual
+            intimate imagery (NCII).
+          </p>
+          <p>
+            Ask Janice's use and transfer of information received from Google APIs to any other
+            app will adhere to the{" "}
+            <a
+              href="https://developers.google.com/terms/api-services-user-data-policy"
+              className="underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Google API Services User Data Policy
+            </a>
+            , including the Limited Use requirements. Google tokens are stored encrypted in transit
+            and at rest and are deleted when you disconnect your calendar or delete your account.
+            You can also revoke access at any time at{" "}
+            <a
+              href="https://myaccount.google.com/permissions"
+              className="underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              myaccount.google.com/permissions
+            </a>
+            .
+          </p>
+
+
 
           <h2 className="font-display text-2xl font-semibold">7. Cookies &amp; Tracking</h2>
           <p>
