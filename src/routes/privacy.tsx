@@ -144,8 +144,8 @@ function PrivacyPage() {
             >
               Google API Services User Data Policy
             </a>
-            , including the Limited Use requirements. Google tokens are stored encrypted in transit
-            and at rest and are deleted when you disconnect your calendar or delete your account.
+            , including the Limited Use requirements. Google access tokens are sent only over encrypted
+            connections and are deleted when you disconnect your calendar in Ask Janice.
             You can also revoke access at any time at{" "}
             <a
               href="https://myaccount.google.com/permissions"
