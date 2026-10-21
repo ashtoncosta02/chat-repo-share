@@ -8,6 +8,13 @@
       "when": 1791472836205,
       "tag": "0000_deleted_voice_calls_tombstone",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792541278211,
+      "tag": "0001_dialer_call_log",
+      "breakpoints": true
     }
   ]
 }
