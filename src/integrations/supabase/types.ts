@@ -577,6 +577,27 @@ export type Database = {
         }
         Relationships: []
       }
+      dialer_calls: {
+        Row: {
+          created_at: string
+          id: string
+          to_number: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          to_number: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          to_number?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
