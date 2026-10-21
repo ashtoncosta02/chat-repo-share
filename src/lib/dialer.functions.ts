@@ -42,6 +42,21 @@ function normalizeE164(raw: string): string | null {
   return null;
 }
 
+const DAILY_CALL_CAP = 50;
+
+// US/Canada (NANP) only; blocks premium/pay-per-call area codes and
+// Caribbean NANP regions that bill at international rates.
+const BLOCKED_AREA_CODES = new Set([
+  "900", "976", "242", "246", "264", "268", "284", "340", "345", "441", "473",
+  "649", "658", "664", "670", "671", "684", "721", "758", "767", "784", "787",
+  "809", "829", "849", "868", "869", "876", "939",
+]);
+function isAllowedNanp(e164: string): boolean {
+  const m = /^\+1([2-9]\d{2})([2-9]\d{6})$/.exec(e164);
+  if (!m) return false;
+  return !BLOCKED_AREA_CODES.has(m[1]);
+}
+
 export async function signDialerToken(to: string, from: string, expiresAt: number): Promise<string> {
   const { createHmac } = await import("crypto");
   const secret = process.env.LOVABLE_API_KEY;
@@ -66,6 +81,19 @@ export const startOutboundCall = createServerFn({ method: "POST" })
     const myE164 = normalizeE164(data.myPhone);
     if (!toE164) return { success: false as const, error: "Enter a valid number to dial." };
     if (!myE164) return { success: false as const, error: "Enter a valid callback number for yourself." };
+    if (!isAllowedNanp(toE164) || !isAllowedNanp(myE164)) {
+      return { success: false as const, error: "Only US and Canada numbers can be dialed (no premium or international numbers)." };
+    }
+
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { count } = await supabaseAdmin
+      .from("dialer_calls")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", auth.userId)
+      .gte("created_at", since);
+    if ((count ?? 0) >= DAILY_CALL_CAP) {
+      return { success: false as const, error: `Daily limit of ${DAILY_CALL_CAP} outbound calls reached. Try again tomorrow.` };
+    }
 
     const { data: phone } = await supabaseAdmin
       .from("phone_numbers")
@@ -80,6 +108,8 @@ export const startOutboundCall = createServerFn({ method: "POST" })
       };
     }
     const fromNumber = phone.phone_number;
+
+    await supabaseAdmin.from("dialer_calls").insert({ user_id: auth.userId, to_number: toE164 });
 
     const expiresAt = Date.now() + 5 * 60 * 1000;
     const sig = await signDialerToken(toE164, fromNumber, expiresAt);
