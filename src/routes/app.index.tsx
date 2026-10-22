@@ -1,4 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { PhoneCall, CalendarCheck, UserPlus, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AgentFactoryLogo } from "@/components/AgentFactoryLogo";
@@ -37,6 +39,12 @@ const HIGHLIGHTS = [
 ];
 
 function MeetJanice() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) navigate({ to: "/dashboard/conversations", replace: true });
+    });
+  }, [navigate]);
   return (
     <div className="flex-1 flex flex-col">
       <AgentFactoryLogo imgClassName="h-20 w-auto object-contain" />

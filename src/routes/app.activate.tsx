@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Check, PartyPopper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFunnel } from "@/components/app-funnel/funnel-context";
@@ -24,6 +25,10 @@ const INCLUDED = [
 function ActivateStep() {
   const { data } = useFunnel();
   const [activated, setActivated] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: s }) => setSignedIn(!!s.session));
+  }, []);
   const business = data.businessName.trim() || "your business";
 
   if (activated) {
@@ -40,6 +45,13 @@ function ActivateStep() {
           free trial begins. This screen is a design preview, so nothing has
           been activated or charged.
         </p>
+        <Button asChild size="lg" className="mt-8 w-full">
+          {signedIn ? (
+            <Link to="/dashboard/conversations">Go to my dashboard</Link>
+          ) : (
+            <Link to="/auth">Sign in to my dashboard</Link>
+          )}
+        </Button>
       </div>
     );
   }
