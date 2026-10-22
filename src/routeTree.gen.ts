@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppRouteImport } from './routes/app'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
@@ -19,6 +20,12 @@ import { Route as RefundPolicyRouteImport } from './routes/refund-policy'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppActivateRouteImport } from './routes/app.activate'
+import { Route as AppBusinessRouteImport } from './routes/app.business'
+import { Route as AppConnectRouteImport } from './routes/app.connect'
+import { Route as AppPersonalizeRouteImport } from './routes/app.personalize'
+import { Route as AppTryRouteImport } from './routes/app.try'
 import { Route as AuthInviteRouteImport } from './routes/auth_.invite'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as DashboardAccountRouteImport } from './routes/dashboard.account'
@@ -76,6 +83,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -120,6 +132,36 @@ const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppActivateRoute = AppActivateRouteImport.update({
+  id: '/activate',
+  path: '/activate',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBusinessRoute = AppBusinessRouteImport.update({
+  id: '/business',
+  path: '/business',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppConnectRoute = AppConnectRouteImport.update({
+  id: '/connect',
+  path: '/connect',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPersonalizeRoute = AppPersonalizeRouteImport.update({
+  id: '/personalize',
+  path: '/personalize',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTryRoute = AppTryRouteImport.update({
+  id: '/try',
+  path: '/try',
+  getParentRoute: () => AppRoute,
 } as any)
 const AuthInviteRoute = AuthInviteRouteImport.update({
   id: '/auth_/invite',
@@ -402,6 +444,7 @@ const ApiPublicWidgetConfigAgentIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
@@ -411,6 +454,11 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/app/activate': typeof AppActivateRoute
+  '/app/business': typeof AppBusinessRoute
+  '/app/connect': typeof AppConnectRoute
+  '/app/personalize': typeof AppPersonalizeRoute
+  '/app/try': typeof AppTryRoute
   '/auth/invite': typeof AuthInviteRoute
   '/dashboard/account': typeof DashboardAccountRoute
   '/dashboard/admin': typeof DashboardAdminRouteWithChildren
@@ -426,6 +474,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/onboarding': typeof DashboardOnboardingRoute
   '/dashboard/phone-numbers': typeof DashboardPhoneNumbersRoute
   '/widget/$agentId': typeof WidgetAgentIdRoute
+  '/app/': typeof AppIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/api/public/owner-chat': typeof ApiPublicOwnerChatRoute
   '/dashboard/admin/billing': typeof DashboardAdminBillingRoute
@@ -473,6 +522,11 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/app/activate': typeof AppActivateRoute
+  '/app/business': typeof AppBusinessRoute
+  '/app/connect': typeof AppConnectRoute
+  '/app/personalize': typeof AppPersonalizeRoute
+  '/app/try': typeof AppTryRoute
   '/auth/invite': typeof AuthInviteRoute
   '/dashboard/account': typeof DashboardAccountRoute
   '/dashboard/agent': typeof DashboardAgentRoute
@@ -486,6 +540,7 @@ export interface FileRoutesByTo {
   '/dashboard/onboarding': typeof DashboardOnboardingRoute
   '/dashboard/phone-numbers': typeof DashboardPhoneNumbersRoute
   '/widget/$agentId': typeof WidgetAgentIdRoute
+  '/app': typeof AppIndexRoute
   '/dashboard': typeof DashboardIndexRoute
   '/api/public/owner-chat': typeof ApiPublicOwnerChatRoute
   '/dashboard/admin/billing': typeof DashboardAdminBillingRoute
@@ -524,6 +579,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
@@ -533,6 +589,11 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/app/activate': typeof AppActivateRoute
+  '/app/business': typeof AppBusinessRoute
+  '/app/connect': typeof AppConnectRoute
+  '/app/personalize': typeof AppPersonalizeRoute
+  '/app/try': typeof AppTryRoute
   '/auth_/invite': typeof AuthInviteRoute
   '/dashboard/account': typeof DashboardAccountRoute
   '/dashboard/admin': typeof DashboardAdminRouteWithChildren
@@ -548,6 +609,7 @@ export interface FileRoutesById {
   '/dashboard/onboarding': typeof DashboardOnboardingRoute
   '/dashboard/phone-numbers': typeof DashboardPhoneNumbersRoute
   '/widget/$agentId': typeof WidgetAgentIdRoute
+  '/app/': typeof AppIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/api/public/owner-chat': typeof ApiPublicOwnerChatRoute
   '/dashboard/admin/billing': typeof DashboardAdminBillingRoute
@@ -589,6 +651,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/app'
     | '/auth'
     | '/dashboard'
     | '/forgot-password'
@@ -598,6 +661,11 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sitemap.xml'
     | '/terms'
+    | '/app/activate'
+    | '/app/business'
+    | '/app/connect'
+    | '/app/personalize'
+    | '/app/try'
     | '/auth/invite'
     | '/dashboard/account'
     | '/dashboard/admin'
@@ -613,6 +681,7 @@ export interface FileRouteTypes {
     | '/dashboard/onboarding'
     | '/dashboard/phone-numbers'
     | '/widget/$agentId'
+    | '/app/'
     | '/dashboard/'
     | '/api/public/owner-chat'
     | '/dashboard/admin/billing'
@@ -660,6 +729,11 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sitemap.xml'
     | '/terms'
+    | '/app/activate'
+    | '/app/business'
+    | '/app/connect'
+    | '/app/personalize'
+    | '/app/try'
     | '/auth/invite'
     | '/dashboard/account'
     | '/dashboard/agent'
@@ -673,6 +747,7 @@ export interface FileRouteTypes {
     | '/dashboard/onboarding'
     | '/dashboard/phone-numbers'
     | '/widget/$agentId'
+    | '/app'
     | '/dashboard'
     | '/api/public/owner-chat'
     | '/dashboard/admin/billing'
@@ -710,6 +785,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/app'
     | '/auth'
     | '/dashboard'
     | '/forgot-password'
@@ -719,6 +795,11 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sitemap.xml'
     | '/terms'
+    | '/app/activate'
+    | '/app/business'
+    | '/app/connect'
+    | '/app/personalize'
+    | '/app/try'
     | '/auth_/invite'
     | '/dashboard/account'
     | '/dashboard/admin'
@@ -734,6 +815,7 @@ export interface FileRouteTypes {
     | '/dashboard/onboarding'
     | '/dashboard/phone-numbers'
     | '/widget/$agentId'
+    | '/app/'
     | '/dashboard/'
     | '/api/public/owner-chat'
     | '/dashboard/admin/billing'
@@ -774,6 +856,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
@@ -815,6 +898,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -879,6 +969,48 @@ declare module '@tanstack/react-router' {
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/activate': {
+      id: '/app/activate'
+      path: '/activate'
+      fullPath: '/app/activate'
+      preLoaderRoute: typeof AppActivateRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/business': {
+      id: '/app/business'
+      path: '/business'
+      fullPath: '/app/business'
+      preLoaderRoute: typeof AppBusinessRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/connect': {
+      id: '/app/connect'
+      path: '/connect'
+      fullPath: '/app/connect'
+      preLoaderRoute: typeof AppConnectRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/personalize': {
+      id: '/app/personalize'
+      path: '/personalize'
+      fullPath: '/app/personalize'
+      preLoaderRoute: typeof AppPersonalizeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/try': {
+      id: '/app/try'
+      path: '/try'
+      fullPath: '/app/try'
+      preLoaderRoute: typeof AppTryRouteImport
+      parentRoute: typeof AppRoute
     }
     '/auth_/invite': {
       id: '/auth_/invite'
@@ -1240,6 +1372,26 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AppRouteChildren {
+  AppActivateRoute: typeof AppActivateRoute
+  AppBusinessRoute: typeof AppBusinessRoute
+  AppConnectRoute: typeof AppConnectRoute
+  AppPersonalizeRoute: typeof AppPersonalizeRoute
+  AppTryRoute: typeof AppTryRoute
+  AppIndexRoute: typeof AppIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppActivateRoute: AppActivateRoute,
+  AppBusinessRoute: AppBusinessRoute,
+  AppConnectRoute: AppConnectRoute,
+  AppPersonalizeRoute: AppPersonalizeRoute,
+  AppTryRoute: AppTryRoute,
+  AppIndexRoute: AppIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 interface DashboardAdminTicketsRouteChildren {
   DashboardAdminTicketsTicketIdRoute: typeof DashboardAdminTicketsTicketIdRoute
   DashboardAdminTicketsIndexRoute: typeof DashboardAdminTicketsIndexRoute
@@ -1351,6 +1503,7 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
