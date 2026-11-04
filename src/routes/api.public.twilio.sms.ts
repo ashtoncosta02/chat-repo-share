@@ -1,6 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { verifyTwilioSignature, formDataToRecord } from "@/server/twilio-signature.server";
+import { allowRequest, sha256Hex } from "@/server/rate-limit.server";
+
+const CARRIER_KEYWORDS = new Set([
+  "STOP",
+  "STOPALL",
+  "UNSUBSCRIBE",
+  "CANCEL",
+  "END",
+  "QUIT",
+  "START",
+  "HELP",
+]);
+
+function emptyTwiml() {
+  return new Response(`<?xml version="1.0" encoding="UTF-8"?><Response/>`, {
+    status: 200,
+    headers: { "Content-Type": "text/xml; charset=utf-8" },
+  });
+}
 
 /**
  * Twilio inbound SMS webhook.
@@ -9,12 +28,8 @@ import { verifyTwilioSignature, formDataToRecord } from "@/server/twilio-signatu
  * numbers receives a text. We look up the agent that owns the destination
  * number, run the same chat logic the in-app chat uses, and reply with TwiML.
  *
- * Public route (no auth) — Twilio cannot send a Lovable JWT. We don't trust
- * the payload blindly: the only side effects are (a) creating a conversation/
- * messages owned by the agent's user, and (b) writing a lead row, both keyed
- * to the user that owns the destination number. There is no privilege
- * escalation surface here, but in production you should also verify the
- * `X-Twilio-Signature` header against your Twilio auth token.
+ * Public route (no auth) — Twilio cannot send a Lovable JWT, so every request
+ * is authenticated with the X-Twilio-Signature header before anything else.
  */
 export const Route = createFileRoute("/api/public/twilio/sms")({
   server: {
@@ -61,15 +76,68 @@ export const Route = createFileRoute("/api/public/twilio/sms")({
             return twiml("Sorry, this AI agent is unavailable right now.");
           }
 
-          // Get or create a conversation for this (agent, from) pair.
-          // We reuse the most recent conversation in the last 24h so that
-          // texts feel like a continuing thread.
+          // Guards that must run before any AI call.
+          if (CARRIER_KEYWORDS.has(body.toUpperCase())) return emptyTwiml();
+
+          const { data: blocked } = await supabaseAdmin
+            .from("blocked_callers")
+            .select("id")
+            .eq("user_id", agent.user_id)
+            .eq("phone", from)
+            .limit(1)
+            .maybeSingle();
+          if (blocked) return emptyTwiml();
+
+          const { isEntitled } = await import("@/server/entitlement.server");
+          if (!(await isEntitled(agent.user_id))) return emptyTwiml();
+
+          if (!(await allowRequest(`sms-inbound:${sha256Hex(from)}`, 30, 3600))) {
+            console.warn("SMS: rate limit reached for sender");
+            return emptyTwiml();
+          }
+
+          // Find or create the lead for this (agent, From) pair, then reuse
+          // only that texter's SMS conversation from the last 24h.
+          let leadId: string;
+          {
+            const { data: existingLead } = await supabaseAdmin
+              .from("leads")
+              .select("id")
+              .eq("agent_id", agent.id)
+              .eq("phone", from)
+              .order("created_at", { ascending: true })
+              .limit(1)
+              .maybeSingle();
+            if (existingLead) {
+              leadId = existingLead.id;
+            } else {
+              const { data: newLead, error: leadErr } = await supabaseAdmin
+                .from("leads")
+                .insert({
+                  user_id: agent.user_id,
+                  agent_id: agent.id,
+                  phone: from,
+                  source: "sms",
+                  notes: "Captured from inbound SMS",
+                })
+                .select("id")
+                .single();
+              if (leadErr || !newLead) {
+                console.error("SMS: lead insert failed", leadErr);
+                return twiml("Sorry, something went wrong. Please try again.");
+              }
+              leadId = newLead.id;
+            }
+          }
+
           const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
           const { data: existingConv } = await supabaseAdmin
             .from("conversations")
             .select("id")
             .eq("agent_id", agent.id)
             .eq("user_id", agent.user_id)
+            .eq("lead_id", leadId)
+            .eq("source", "sms")
             .gte("started_at", dayAgo)
             .order("started_at", { ascending: false })
             .limit(1)
@@ -83,6 +151,7 @@ export const Route = createFileRoute("/api/public/twilio/sms")({
                 user_id: agent.user_id,
                 agent_id: agent.id,
                 source: "sms",
+                lead_id: leadId,
               })
               .select("id")
               .single();
@@ -91,17 +160,22 @@ export const Route = createFileRoute("/api/public/twilio/sms")({
               return twiml("Sorry, something went wrong. Please try again.");
             }
             conversationId = newConv.id;
+            await supabaseAdmin
+              .from("leads")
+              .update({ conversation_id: conversationId })
+              .eq("id", leadId)
+              .is("conversation_id", null);
           }
 
-          // Pull recent message history for context (last 10)
+          // Most recent 10 messages, in chronological order.
           const { data: history } = await supabaseAdmin
             .from("messages")
             .select("role, content")
             .eq("conversation_id", conversationId)
-            .order("created_at", { ascending: true })
+            .order("created_at", { ascending: false })
             .limit(10);
 
-          const priorMessages = (history || []).map((m) => ({
+          const priorMessages = (history || []).reverse().map((m) => ({
             role: m.role as "user" | "assistant",
             content: m.content,
           }));
@@ -196,44 +270,6 @@ Rules:
               ended_at: new Date().toISOString(),
             })
             .eq("id", conversationId);
-
-          // Capture the texter's phone number as a lead (idempotent-ish:
-          // only insert if there isn't already a lead for this phone+agent).
-          const { data: existingLead } = await supabaseAdmin
-            .from("leads")
-            .select("id, conversation_id")
-            .eq("agent_id", agent.id)
-            .eq("phone", from)
-            .maybeSingle();
-          if (!existingLead) {
-            const { data: newLead } = await supabaseAdmin
-              .from("leads")
-              .insert({
-                user_id: agent.user_id,
-                agent_id: agent.id,
-                phone: from,
-                source: "sms",
-                notes: "Captured from inbound SMS",
-                conversation_id: conversationId,
-              })
-              .select("id")
-              .single();
-            if (newLead) {
-              await supabaseAdmin
-                .from("conversations")
-                .update({ lead_id: newLead.id })
-                .eq("id", conversationId);
-            }
-          } else if (!existingLead.conversation_id) {
-            await supabaseAdmin
-              .from("leads")
-              .update({ conversation_id: conversationId, source: "sms" })
-              .eq("id", existingLead.id);
-            await supabaseAdmin
-              .from("conversations")
-              .update({ lead_id: existingLead.id })
-              .eq("id", conversationId);
-          }
 
           return twiml(reply);
         } catch (e) {
