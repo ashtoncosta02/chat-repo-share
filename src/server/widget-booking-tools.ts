@@ -225,6 +225,28 @@ export async function findAvailableSlots(
   };
 }
 
+/** Returns an error message when [start, end) is not inside that weekday's enabled hours. */
+export function outsideBusinessHours(cfg: CalendarConfig, start: Date, end: Date): string | null {
+  const s = partsInTz(start, cfg.timezone);
+  const e = partsInTz(end, cfg.timezone);
+  const dayKey = WEEKDAY_TO_KEY[s.weekday];
+  const hours = dayKey ? cfg.business_hours?.[dayKey] : null;
+  const label = dayKey ? dayKey[0].toUpperCase() + dayKey.slice(1) : "That day";
+  if (!hours || !hours.enabled) {
+    return `The business is closed on ${label}s. Please choose another day.`;
+  }
+  const open = parseHHmm(hours.start);
+  const close = parseHHmm(hours.end);
+  if (!open || !close) return "Invalid business hours configuration";
+  const startMin = s.hour * 60 + s.minute;
+  const sameDay = s.year === e.year && s.month === e.month && s.day === e.day;
+  const endMin = sameDay ? e.hour * 60 + e.minute : 24 * 60 + e.hour * 60 + e.minute;
+  if (startMin < open.h * 60 + open.m || endMin > close.h * 60 + close.m) {
+    return `That time is outside business hours (${label} ${hours.start}–${hours.end}, ${cfg.timezone}). Please choose a time within business hours.`;
+  }
+  return null;
+}
+
 interface BookArgs {
   start_iso: string; // ISO timestamp (UTC or with offset)
   duration_minutes?: number;
@@ -261,6 +283,15 @@ export async function bookAppointment(params: {
   const end = new Date(start.getTime() + duration * 60_000);
 
   if (!args.customer_name?.trim()) return { error: "customer_name required" };
+  if (args.customer_name.length > 200) return { error: "customer_name must be 200 characters or fewer" };
+  if ((args.customer_email ?? "").length > 254) return { error: "customer_email must be 254 characters or fewer" };
+  if ((args.customer_phone ?? "").length > 40) return { error: "customer_phone must be 40 characters or fewer" };
+  if ((args.reason ?? "").length > 500) return { error: "reason must be 500 characters or fewer" };
+
+  if (source !== "manual") {
+    const hoursError = outsideBusinessHours(cfg, start, end);
+    if (hoursError) return { error: hoursError };
+  }
   // Voice callers usually can't dictate an email easily — phone is enough.
   // Widget/manual bookings still require a valid email so we can send invites.
   const hasEmail = args.customer_email && args.customer_email.trim().length > 0;
