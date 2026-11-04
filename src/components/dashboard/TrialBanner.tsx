@@ -6,6 +6,8 @@ import { useAuth } from "@/lib/auth-context";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { ELITE_PRICE_ID, getStripeEnvironment } from "@/lib/stripe";
+import { Link } from "@tanstack/react-router";
+import { planForPrice } from "@/lib/plans";
 import { createPortalSession } from "@/utils/payments.functions";
 
 function daysLeft(iso: string | null): number | null {
@@ -119,7 +121,7 @@ export function TrialBanner({ isAdmin }: { isAdmin: boolean }) {
             ? "Your free trial ends today"
             : `${left} day${left === 1 ? "" : "s"} left in your free trial`}
           {subscription.current_period_end
-            ? ` — you'll be charged $49/mo on ${fmtDate(subscription.current_period_end)}.`
+            ? ` — ${planForPrice(subscription.price_id)?.name ?? 'your plan'} renews on ${fmtDate(subscription.current_period_end)}; see billing for your charge.`
             : "."}
         </span>
         <button
@@ -156,12 +158,7 @@ export function TrialBanner({ isAdmin }: { isAdmin: boolean }) {
               : `${left} day${left === 1 ? "" : "s"} left in your free trial`}
             {` (ends ${fmtDate(profile.trial_ends_at)}).`}
           </span>
-          <button
-            onClick={upgrade}
-            className="rounded-lg bg-[var(--gold)] px-3 py-1 text-xs font-semibold text-[var(--gold-foreground)] hover:opacity-90"
-          >
-            Upgrade to Elite — $49/mo
-          </button>
+          <Link to="/pricing" className="font-semibold underline">Choose Essential or Elite</Link>
         </div>
         {checkoutElement}
       </>

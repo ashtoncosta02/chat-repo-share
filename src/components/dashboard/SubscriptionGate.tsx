@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
+import { PlanOptions } from "@/components/PlanOptions";
 import { ELITE_PRICE_ID } from "@/lib/stripe";
 
 
@@ -74,17 +75,11 @@ export function SubscriptionGate({
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
             Add a card to switch your receptionist on. You won't be charged today — your first
-            payment of $49/mo happens 7 days from now, and you can cancel any time before then.
+            payment happens after 7 days: $79/mo for Essential or $139/mo for Elite, and you can cancel any time before then.
           </p>
         </div>
         <div className="mt-8">
-          <StripeEmbeddedCheckout
-            priceId={ELITE_PRICE_ID}
-            customerEmail={user?.email ?? undefined}
-            userId={user?.id}
-            trialDays={7}
-            returnUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/dashboard?checkout=success`}
-          />
+          <PlanOptions />
         </div>
       </div>
     );
@@ -124,12 +119,7 @@ export function SubscriptionGate({
         your settings, FAQs, threads and leads are all still here. Restart your plan to switch
         everything back on instantly.
       </p>
-      <button
-        onClick={reactivate}
-        className="mt-6 rounded-xl bg-[var(--gold)] px-6 py-3 text-sm font-semibold text-[var(--gold-foreground)] hover:opacity-90"
-      >
-        Restart Elite — $49/mo
-      </button>
+      <PlanOptions />
       {checkoutElement}
 
       <p className="mt-4 text-xs text-muted-foreground">

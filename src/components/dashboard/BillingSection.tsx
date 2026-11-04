@@ -5,6 +5,8 @@ import { useAuth } from "@/lib/auth-context";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { ELITE_PRICE_ID, getStripeEnvironment } from "@/lib/stripe";
+import { PlanOptions } from "@/components/PlanOptions";
+import { planForPrice } from "@/lib/plans";
 import { createPortalSession } from "@/utils/payments.functions";
 
 
@@ -76,7 +78,7 @@ export function BillingSection() {
             <div className="flex justify-between border-b border-border py-2">
               <dt className="text-muted-foreground">Current plan</dt>
               <dd className="font-medium text-foreground">
-                {subscription ? "Elite — $49/mo" : "No paid plan"}
+                {subscription ? (planForPrice(subscription.price_id)?.name ?? "Existing subscription") : "No paid plan"}
               </dd>
             </div>
             <div className="flex justify-between border-b border-border py-2">
@@ -111,12 +113,7 @@ export function BillingSection() {
 
           <div className="mt-4 flex flex-wrap gap-2">
             {!isActive ? (
-              <button
-                onClick={startPlan}
-                className="rounded-lg bg-[var(--gold)] px-4 py-2 text-sm font-medium text-[var(--gold-foreground)] hover:opacity-90"
-              >
-                Start Elite — $49/mo
-              </button>
+              <PlanOptions />
             ) : (
               <button
                 onClick={openPortal}
