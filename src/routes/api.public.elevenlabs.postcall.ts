@@ -263,7 +263,9 @@ export async function persistPostCall(
       .eq("elevenlabs_conversation_id", conversationId)
       .maybeSingle();
     if (isDashboardTestFlag || testMarker) {
-      await finishAgentCall(agent.user_id, conversationId, 0, reservationId);
+      await finishAgentCall(agent.user_id, conversationId, 0, reservationId).catch((e: unknown) =>
+        console.error("postcall: could not release test reservation", e),
+      );
       return { status: "duplicate" };
     }
   }
