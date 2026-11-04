@@ -16,6 +16,11 @@ export async function finishAgentCall(userId: string, conversationId: string, se
   if (error) throw new Error(error.message);
 }
 
+export async function releaseFailedReservation(reservationId: string) {
+  const { error } = await supabaseAdmin.from("call_allowance_ledger").update({ actual_seconds:0,finalized_at:new Date().toISOString() }).eq("id",reservationId).is("finalized_at",null);
+  if (error) throw new Error(error.message);
+}
+
 // Agent-scoped credential; never send the application key to the provider.
 export async function callAllowanceCredential(agentId: string) {
   const secret = process.env.LOVABLE_API_KEY;

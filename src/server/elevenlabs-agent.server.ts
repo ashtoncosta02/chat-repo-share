@@ -739,6 +739,8 @@ export async function registerTwilioCall(opts: {
   });
   const text = await res.text();
   if (!res.ok) {
+    const { releaseFailedReservation } = await import("@/server/call-usage.server");
+    await releaseFailedReservation(reservation.reservationId);
     throw new Error(`ElevenLabs register call failed (${res.status}): ${text}`);
   }
   return text;
@@ -783,6 +785,8 @@ export async function placeOutboundCall(opts: {
   });
   if (!res.ok) {
     const t = await res.text();
+    const { releaseFailedReservation } = await import("@/server/call-usage.server");
+    await releaseFailedReservation(reservation.reservationId);
     throw new Error(`ElevenLabs outbound call failed (${res.status}): ${t}`);
   }
   const json = (await res.json()) as {
@@ -792,6 +796,8 @@ export async function placeOutboundCall(opts: {
     callSid?: string | null;
   };
   if (json.success === false) {
+    const { releaseFailedReservation } = await import("@/server/call-usage.server");
+    await releaseFailedReservation(reservation.reservationId);
     throw new Error(`ElevenLabs outbound call rejected: ${json.message ?? "unknown reason"}`);
   }
   return {
