@@ -472,6 +472,45 @@ export type Database = {
         }
         Relationships: []
       }
+      call_allowance_ledger: {
+        Row: {
+          actual_seconds: number | null
+          call_key: string
+          created_at: string
+          environment: string
+          finalized_at: string | null
+          id: string
+          period_end: string
+          period_start: string
+          reserved_seconds: number
+          user_id: string
+        }
+        Insert: {
+          actual_seconds?: number | null
+          call_key: string
+          created_at?: string
+          environment: string
+          finalized_at?: string | null
+          id?: string
+          period_end: string
+          period_start: string
+          reserved_seconds?: number
+          user_id: string
+        }
+        Update: {
+          actual_seconds?: number | null
+          call_key?: string
+          created_at?: string
+          environment?: string
+          finalized_at?: string | null
+          id?: string
+          period_end?: string
+          period_start?: string
+          reserved_seconds?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           agent_id: string | null
@@ -1230,6 +1269,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      account_plan_id: {
+        Args: { p_env?: string; p_user: string }
+        Returns: string
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -1266,6 +1309,15 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      reserve_call_allowance: {
+        Args: {
+          p_call_key: string
+          p_env: string
+          p_max_seconds?: number
+          p_user: string
+        }
+        Returns: Json
       }
     }
     Enums: {

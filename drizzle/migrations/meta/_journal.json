@@ -15,6 +15,13 @@
       "when": 1792541278211,
       "tag": "0001_dialer_call_log",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793765370804,
+      "tag": "0002_plan_entitlements_and_call_allowances",
+      "breakpoints": true
     }
   ]
 }
