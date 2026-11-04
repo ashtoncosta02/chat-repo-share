@@ -72,6 +72,7 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState(search.business ?? "");
   const [submitting, setSubmitting] = useState(false);
+  const [confirmEmailSentTo, setConfirmEmailSentTo] = useState<string | null>(null);
   const defaultTab = search.mode === "signin" ? "signin" : search.mode === "signup" ? "signup" : "signin";
 
   useEffect(() => {
@@ -94,10 +95,20 @@ function AuthPage() {
       return;
     }
     setSubmitting(true);
-    const { error } = await signUp(email, password, displayName);
+    const { error, session } = await signUp(email, password, displayName);
     setSubmitting(false);
-    if (error) toast.error(error.message);
-    else {
+    if (error) {
+      if (error.code === "signup_disabled") {
+        toast.error(
+          "New accounts are by invitation right now. Email hello@askjanice.net and we'll get you set up.",
+        );
+      } else {
+        toast.error(error.message);
+      }
+    } else if (!session) {
+      // Email confirmation required — not signed in yet.
+      setConfirmEmailSentTo(email);
+    } else {
       toast.success("Account created! You're signed in.");
       navigate({ to: "/dashboard/conversations" });
     }
@@ -140,6 +151,15 @@ function AuthPage() {
               </form>
             </TabsContent>
             <TabsContent value="signup" className="mt-6">
+              {confirmEmailSentTo ? (
+                <div className="space-y-3 text-center" role="status">
+                  <h2 className="text-lg font-semibold text-foreground">Check your email to confirm your account</h2>
+                  <p className="text-sm text-muted-foreground">
+                    We sent a confirmation link to <span className="font-medium text-foreground">{confirmEmailSentTo}</span>.
+                    Open it to finish creating your account, then sign in.
+                  </p>
+                </div>
+              ) : (
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div>
                   <Label htmlFor="signup-name">Your name</Label>
@@ -158,6 +178,7 @@ function AuthPage() {
                   {submitting ? "Creating…" : "Create account"}
                 </Button>
               </form>
+              )}
             </TabsContent>
           </Tabs>
         </div>
