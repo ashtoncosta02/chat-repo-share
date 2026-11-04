@@ -61,6 +61,7 @@ import { Route as ApiPublicHooksBackfillCallsRouteImport } from './routes/api.pu
 import { Route as ApiPublicHooksWidgetChatDigestRouteImport } from './routes/api.public.hooks.widget-chat-digest'
 import { Route as ApiPublicOutlookCalendarCallbackRouteImport } from './routes/api.public.outlook-calendar.callback'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api.public.payments.webhook'
+import { Route as ApiPublicTwilioCallDurationRouteImport } from './routes/api.public.twilio.call-duration'
 import { Route as ApiPublicTwilioCallbackRouteImport } from './routes/api.public.twilio.callback'
 import { Route as ApiPublicTwilioDialerBridgeRouteImport } from './routes/api.public.twilio.dialer-bridge'
 import { Route as ApiPublicTwilioSmsRouteImport } from './routes/api.public.twilio.sms'
@@ -351,6 +352,12 @@ const ApiPublicPaymentsWebhookRoute =
     path: '/api/public/payments/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicTwilioCallDurationRoute =
+  ApiPublicTwilioCallDurationRouteImport.update({
+    id: '/api/public/twilio/call-duration',
+    path: '/api/public/twilio/call-duration',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicTwilioCallbackRoute = ApiPublicTwilioCallbackRouteImport.update({
   id: '/api/public/twilio/callback',
   path: '/api/public/twilio/callback',
@@ -502,6 +509,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/widget-chat-digest': typeof ApiPublicHooksWidgetChatDigestRoute
   '/api/public/outlook-calendar/callback': typeof ApiPublicOutlookCalendarCallbackRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/twilio/call-duration': typeof ApiPublicTwilioCallDurationRoute
   '/api/public/twilio/callback': typeof ApiPublicTwilioCallbackRoute
   '/api/public/twilio/dialer-bridge': typeof ApiPublicTwilioDialerBridgeRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
@@ -567,6 +575,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/widget-chat-digest': typeof ApiPublicHooksWidgetChatDigestRoute
   '/api/public/outlook-calendar/callback': typeof ApiPublicOutlookCalendarCallbackRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/twilio/call-duration': typeof ApiPublicTwilioCallDurationRoute
   '/api/public/twilio/callback': typeof ApiPublicTwilioCallbackRoute
   '/api/public/twilio/dialer-bridge': typeof ApiPublicTwilioDialerBridgeRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
@@ -639,6 +648,7 @@ export interface FileRoutesById {
   '/api/public/hooks/widget-chat-digest': typeof ApiPublicHooksWidgetChatDigestRoute
   '/api/public/outlook-calendar/callback': typeof ApiPublicOutlookCalendarCallbackRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/twilio/call-duration': typeof ApiPublicTwilioCallDurationRoute
   '/api/public/twilio/callback': typeof ApiPublicTwilioCallbackRoute
   '/api/public/twilio/dialer-bridge': typeof ApiPublicTwilioDialerBridgeRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
@@ -712,6 +722,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/widget-chat-digest'
     | '/api/public/outlook-calendar/callback'
     | '/api/public/payments/webhook'
+    | '/api/public/twilio/call-duration'
     | '/api/public/twilio/callback'
     | '/api/public/twilio/dialer-bridge'
     | '/api/public/twilio/sms'
@@ -777,6 +788,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/widget-chat-digest'
     | '/api/public/outlook-calendar/callback'
     | '/api/public/payments/webhook'
+    | '/api/public/twilio/call-duration'
     | '/api/public/twilio/callback'
     | '/api/public/twilio/dialer-bridge'
     | '/api/public/twilio/sms'
@@ -848,6 +860,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/widget-chat-digest'
     | '/api/public/outlook-calendar/callback'
     | '/api/public/payments/webhook'
+    | '/api/public/twilio/call-duration'
     | '/api/public/twilio/callback'
     | '/api/public/twilio/dialer-bridge'
     | '/api/public/twilio/sms'
@@ -890,6 +903,7 @@ export interface RootRouteChildren {
   ApiPublicHooksWidgetChatDigestRoute: typeof ApiPublicHooksWidgetChatDigestRoute
   ApiPublicOutlookCalendarCallbackRoute: typeof ApiPublicOutlookCalendarCallbackRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
+  ApiPublicTwilioCallDurationRoute: typeof ApiPublicTwilioCallDurationRoute
   ApiPublicTwilioCallbackRoute: typeof ApiPublicTwilioCallbackRoute
   ApiPublicTwilioDialerBridgeRoute: typeof ApiPublicTwilioDialerBridgeRoute
   ApiPublicTwilioSmsRoute: typeof ApiPublicTwilioSmsRoute
@@ -1271,6 +1285,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/twilio/call-duration': {
+      id: '/api/public/twilio/call-duration'
+      path: '/api/public/twilio/call-duration'
+      fullPath: '/api/public/twilio/call-duration'
+      preLoaderRoute: typeof ApiPublicTwilioCallDurationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/twilio/callback': {
       id: '/api/public/twilio/callback'
       path: '/api/public/twilio/callback'
@@ -1545,6 +1566,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksWidgetChatDigestRoute: ApiPublicHooksWidgetChatDigestRoute,
   ApiPublicOutlookCalendarCallbackRoute: ApiPublicOutlookCalendarCallbackRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
+  ApiPublicTwilioCallDurationRoute: ApiPublicTwilioCallDurationRoute,
   ApiPublicTwilioCallbackRoute: ApiPublicTwilioCallbackRoute,
   ApiPublicTwilioDialerBridgeRoute: ApiPublicTwilioDialerBridgeRoute,
   ApiPublicTwilioSmsRoute: ApiPublicTwilioSmsRoute,
