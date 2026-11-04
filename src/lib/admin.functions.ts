@@ -797,7 +797,6 @@ const agentPatchSchema = z.object({
   patch: z.object({
     business_name: z.string().max(200).optional(),
     industry: z.string().max(200).optional(),
-    system_prompt: z.string().max(20000).optional(),
     greeting: z.string().max(2000).optional(),
     services_text: z.string().max(20000).optional(),
     faqs_text: z.string().max(20000).optional(),
@@ -822,21 +821,40 @@ export const adminUpdateAgent = createServerFn({ method: "POST" })
     const auth = await requireAdmin(data.accessToken);
     if ("error" in auth) return { success: false as const, error: auth.error };
 
+    // Form field names → real agents columns.
+    const COLUMN_MAP: Record<string, string> = {
+      greeting: "greeting_message",
+      services_text: "services",
+      faqs_text: "faqs",
+    };
     const patch = Object.fromEntries(
-      Object.entries(data.patch).filter(([, v]) => v !== undefined),
+      Object.entries(data.patch)
+        .filter(([, v]) => v !== undefined)
+        .map(([k, v]) => [COLUMN_MAP[k] ?? k, v]),
     );
     if (Object.keys(patch).length === 0) {
       return { success: false as const, error: "No fields to update." };
     }
 
-    const { error } = await supabaseAdmin
+    const { data: updated, error } = await supabaseAdmin
       .from("agents")
       .update(patch as any)
-      .eq("user_id", data.userId);
+      .eq("user_id", data.userId)
+      .select("id");
     if (error) return { success: false as const, error: error.message };
 
     console.log(`[admin-edit] ${auth.userId} updated agent for ${data.userId}: ${Object.keys(patch).join(", ")}`);
-    return { success: true as const, fields: Object.keys(patch) };
+    let warning: string | null = null;
+    const { resyncReceptionistById } = await import("@/server/elevenlabs-agent-resync.server");
+    for (const row of updated ?? []) {
+      try {
+        const r = (await resyncReceptionistById(row.id)) as { success?: boolean; error?: string } | void;
+        if (r && r.success === false) warning = `Saved, but the voice receptionist could not be updated: ${r.error ?? "unknown error"}`;
+      } catch (e) {
+        warning = `Saved, but the voice receptionist could not be updated: ${e instanceof Error ? e.message : "unknown error"}`;
+      }
+    }
+    return { success: true as const, fields: Object.keys(patch), warning };
   });
 
 const profilePatchSchema = z.object({
@@ -957,6 +975,8 @@ export const adminReplyTicket = createServerFn({ method: "POST" })
     if (error) return { success: false as const, error: error.message };
     // bump ticket updated_at
     await supabaseAdmin.from("tickets").update({ updated_at: new Date().toISOString() }).eq("id", data.ticketId);
+    const { notifyCustomerOfAdminReply } = await import("@/server/ticket-email.server");
+    await notifyCustomerOfAdminReply({ ticketId: data.ticketId, body: data.body });
     return { success: true as const };
   });
 

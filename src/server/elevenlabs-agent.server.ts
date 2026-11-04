@@ -1,3 +1,4 @@
+import { PUBLIC_APP_ORIGIN } from "@/lib/app-origin";
 // Server-only helpers for the ElevenLabs Agents Platform.
 // Build the system prompt, voice, and post-call webhook config for an
 // AI Receptionist, then create or update the agent in ElevenLabs.
@@ -7,12 +8,10 @@ import { VOICE_TOOL_HEADER, voiceToolCredential } from "./voice-tool-auth.server
 import { buildBookingPromptAddendum, getCalendarConfig } from "./widget-booking-tools";
 
 const EL_BASE = "https://api.elevenlabs.io/v1";
-const PROJECT_ID = "d1e796ad-671c-47e1-843b-cdecc02fe11f";
 
 // Public base URL the ElevenLabs voice agent uses to call our booking webhooks.
-// Using the stable preview URL so it works before publishing too.
 function publicBaseUrl(): string {
-  return `https://project--${PROJECT_ID}-dev.lovable.app`;
+  return PUBLIC_APP_ORIGIN;
 }
 
 export interface AgentBusinessProfile {
@@ -81,6 +80,7 @@ export function buildSystemPrompt(p: AgentBusinessProfile): string {
   lines.push(`- Never invent prices, hours, or policies that aren't in your knowledge.`);
   lines.push(`- Always confirm the caller's name and callback number before ending the call.`);
   lines.push(`- End calls warmly: thank them by name and say goodbye.`);
+  lines.push(`- Never claim to be human. If asked, say you are an AI assistant.`);
   lines.push(``);
   lines.push(`# Reduce dead air (IMPORTANT for perceived speed)`);
   lines.push(`- Before calling ANY tool (find_available_slots, book_appointment), say a brief filler phrase first so the caller isn't sitting in silence. Examples: "Let me check that for you", "One sec, pulling that up", "Okay, booking that now". Then call the tool.`);
@@ -219,7 +219,7 @@ function buildFirstMessage(p: AgentBusinessProfile): string {
   if (custom) {
     return custom;
   }
-  return `Hi, this is ${name} from ${biz}. How can I help you?`;
+  return `Hi, this is ${name} from ${biz}. This call may be recorded. How can I help you?`;
 }
 
 
@@ -707,7 +707,7 @@ export async function deleteElevenLabsPhoneNumber(phoneNumberId: string): Promis
 }
 
 export function postCallWebhookUrl(): string {
-  return `https://project--${PROJECT_ID}-dev.lovable.app/api/public/elevenlabs/postcall`;
+  return `${PUBLIC_APP_ORIGIN}/api/public/elevenlabs/postcall`;
 }
 
 /** Register a Twilio voice webhook call with ElevenLabs and return TwiML. */

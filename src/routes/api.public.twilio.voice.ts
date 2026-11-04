@@ -1,9 +1,10 @@
+import { PUBLIC_APP_ORIGIN } from "@/lib/app-origin";
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { registerTwilioCall } from "@/server/elevenlabs-agent.server";
+import { digitsOnly, samePhone } from "@/lib/phone-match";
 import { verifyTwilioSignature, formDataToRecord } from "@/server/twilio-signature.server";
 
-const PROJECT_ID = "d1e796ad-671c-47e1-843b-cdecc02fe11f";
 // ~2 North American ring cycles (2s ring + 4s pause, second ring starts ~6s).
 const RING_DELAY_MS = 7000;
 
@@ -69,7 +70,7 @@ export const Route = createFileRoute("/api/public/twilio/voice")({
           const forward = String((fwdRow as any)?.owner_forward_phone || "").trim();
           const mode = String(agent.answer_mode || "immediate");
           if (mode === "after_4_rings" && forward) {
-            const base = `https://project--${PROJECT_ID}-dev.lovable.app`;
+            const base = PUBLIC_APP_ORIGIN;
             const fallbackUrl =
               `${base}/api/public/twilio/voice-fallback` +
               `?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
@@ -145,13 +146,4 @@ function escapeXml(s: string) {
   return s.replace(/[<>&'"]/g, (c) =>
     c === "<" ? "&lt;" : c === ">" ? "&gt;" : c === "&" ? "&amp;" : c === "'" ? "&apos;" : "&quot;",
   );
-}
-
-function digitsOnly(phone: string) {
-  return phone.replace(/\D/g, "");
-}
-
-function samePhone(aDigits: string, bPhone: string) {
-  const bDigits = digitsOnly(bPhone);
-  return Boolean(aDigits && bDigits && (aDigits.endsWith(bDigits) || bDigits.endsWith(aDigits)));
 }

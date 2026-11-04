@@ -3,7 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/dashboard/PageHeader";
-import { User, Phone, Mail, MessageSquare, Search, PhoneCall, Bot, Loader2, Trash2 } from "lucide-react";
+import { User, Phone, Mail, MessageSquare, Search, PhoneCall, Bot, Loader2, Trash2, Download } from "lucide-react";
+import { toCsv } from "@/lib/csv";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -95,6 +96,50 @@ function LeadsPage() {
     setLeads(leadsRes.data ?? []);
     setAgents(agentsRes.data ?? []);
     setLoading(false);
+  };
+
+  const [exporting, setExporting] = useState(false);
+  const exportCsv = async () => {
+    if (!user) return;
+    setExporting(true);
+    try {
+      const PAGE = 1000;
+      const all: LeadRow[] = [];
+      for (let from = 0; ; from += PAGE) {
+        const { data, error } = await supabase
+          .from("leads")
+          .select(
+            "id, name, phone, email, address, notes, status, source, agent_id, conversation_id, created_at, last_message_at",
+          )
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        all.push(...(data ?? []));
+        if (!data || data.length < PAGE) break;
+      }
+      const agentName = new Map(agents.map((a) => [a.id, a.business_name]));
+      const csv = toCsv(
+        ["Name", "Phone", "Email", "Address", "Status", "Source", "Receptionist", "Notes", "Created", "Last message"],
+        all.map((l) => [
+          l.name, l.phone, l.email, l.address, l.status, l.source,
+          l.agent_id ? agentName.get(l.agent_id) ?? "" : "", l.notes, l.created_at, l.last_message_at,
+        ]),
+      );
+      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `leads-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`Exported ${all.length} lead${all.length === 1 ? "" : "s"}.`);
+    } catch (e) {
+      console.error("lead export failed", e);
+      toast.error("Couldn't export your leads. Please try again.");
+    } finally {
+      setExporting(false);
+    }
   };
 
   useEffect(() => {
@@ -209,6 +254,12 @@ function LeadsPage() {
       <PageHeader
         title="Leads"
         description="Contact info captured automatically from chats, calls, and bookings"
+        action={
+          <Button variant="outline" size="sm" onClick={exportCsv} disabled={exporting}>
+            {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            Export CSV
+          </Button>
+        }
       />
       <div className="p-4 md:p-8 space-y-4 md:space-y-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

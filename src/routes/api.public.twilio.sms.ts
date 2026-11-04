@@ -79,14 +79,8 @@ export const Route = createFileRoute("/api/public/twilio/sms")({
           // Guards that must run before any AI call.
           if (CARRIER_KEYWORDS.has(body.toUpperCase())) return emptyTwiml();
 
-          const { data: blocked } = await supabaseAdmin
-            .from("blocked_callers")
-            .select("id")
-            .eq("user_id", agent.user_id)
-            .eq("phone", from)
-            .limit(1)
-            .maybeSingle();
-          if (blocked) return emptyTwiml();
+          const { isBlockedCaller } = await import("@/server/blocked-callers.server");
+          if (await isBlockedCaller(agent.user_id, from)) return emptyTwiml();
 
           const { isEntitled } = await import("@/server/entitlement.server");
           if (!(await isEntitled(agent.user_id))) return emptyTwiml();

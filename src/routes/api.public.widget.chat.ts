@@ -66,19 +66,35 @@ function isStaleWidgetConversation(updatedAt: string | null | undefined): boolea
   return Date.now() - updated > WIDGET_SESSION_IDLE_MS;
 }
 
+const MAX_HISTORY_PARSE = 300;
+const MAX_HISTORY_KEEP = 50;
+const MAX_CONTENT = 4000;
+
 const ChatRequestSchema = z.object({
   agentId: z.string().uuid(),
   sessionToken: z.string().min(1).max(200),
+  // The widget sends its whole history: accept a generous count, then keep
+  // only the most recent turns. Older content is truncated, never rejected.
   messages: z
     .array(
       z.object({
         role: z.enum(["user", "assistant"]),
-        content: z.string().max(4000),
+        content: z.string(),
       }),
     )
     .min(1)
-    .max(50),
-  pageUrl: z.string().max(4000).optional().nullable(),
+    .max(MAX_HISTORY_PARSE)
+    .transform((list) => {
+      const kept = list.slice(-MAX_HISTORY_KEEP);
+      return kept.map((m, i) =>
+        i === kept.length - 1 ? m : { ...m, content: m.content.slice(0, MAX_CONTENT) },
+      );
+    }),
+  pageUrl: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((v) => (v == null ? v : v.slice(0, 2000))),
   visitorName: z.string().max(200).optional().nullable(),
   visitorEmail: z.string().max(254).optional().nullable(),
 });
@@ -283,6 +299,9 @@ export const Route = createFileRoute("/api/public/widget/chat")({
         const { agentId, sessionToken, messages, pageUrl } = parsed.data;
 
         const lastUser = messages[messages.length - 1];
+        if (lastUser && lastUser.role === "user" && lastUser.content.length > MAX_CONTENT) {
+          return jsonResponse({ error: "Message is too long. Please keep it under 4000 characters." }, 400);
+        }
         if (!lastUser || lastUser.role !== "user" || !lastUser.content.trim()) {
           return jsonResponse({ error: "Invalid message" }, 400);
         }

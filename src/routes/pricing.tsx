@@ -20,6 +20,8 @@ import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { PlanOptions } from "@/components/PlanOptions";
 
 
+const OG_IMAGE = "https://askjanice.net/og-image.png";
+
 export const Route = createFileRoute("/pricing")({
   head: () => ({
     meta: [
@@ -36,7 +38,11 @@ export const Route = createFileRoute("/pricing")({
           "Essential $79/month with 200 call minutes; Elite $139/month with 750 call minutes. Both include a 7-day free trial.",
       },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:image", content: OG_IMAGE },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { name: "twitter:image", content: OG_IMAGE },
       { property: "og:url", content: "https://askjanice.net/pricing" },
     ],
     links: [{ rel: "canonical", href: "https://askjanice.net/pricing" }],

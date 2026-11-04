@@ -246,25 +246,34 @@ export async function persistPostCall(
   }
 
 
-  // Dashboard "Live voice test" sessions tag themselves with a dynamic
-  // variable so we can skip persisting them — they're practice runs by the
-  // owner, not real customer conversations.
-  const isDashboardTestFlag =
-    data.conversation_initiation_client_data?.dynamic_variables
-      ?.is_dashboard_test === "true";
-  const { data: testMarker } = await supabaseAdmin
-    .from("dashboard_test_conversations")
-    .select("id")
-    .eq("elevenlabs_conversation_id", conversationId)
-    .maybeSingle();
-  if (isDashboardTestFlag || testMarker) {
-    return { status: "duplicate" };
+  const { finishAgentCall, notifyAllowanceThresholds } = await import("@/server/call-usage.server");
+  const reservationId = data.conversation_initiation_client_data?.dynamic_variables?.janice_call_reservation;
+
+  // Dashboard "Live voice test" sessions are owner practice runs. Only honour
+  // the test flag/marker when the call did not come over the phone, so a real
+  // call can never be hidden. Test sessions release any reservation at 0s.
+  const isPhoneCall = Boolean(data.metadata?.phone_call);
+  if (!isPhoneCall) {
+    const isDashboardTestFlag =
+      data.conversation_initiation_client_data?.dynamic_variables
+        ?.is_dashboard_test === "true";
+    const { data: testMarker } = await supabaseAdmin
+      .from("dashboard_test_conversations")
+      .select("id")
+      .eq("elevenlabs_conversation_id", conversationId)
+      .maybeSingle();
+    if (isDashboardTestFlag || testMarker) {
+      await finishAgentCall(agent.user_id, conversationId, 0, reservationId).catch((e: unknown) =>
+        console.error("postcall: could not release test reservation", e),
+      );
+      return { status: "duplicate" };
+    }
   }
 
   // Real calls are metered before conversation deduplication so deleting
-  // history cannot reset call usage. Owner browser practice sessions are excluded.
-  const { finishAgentCall } = await import("@/server/call-usage.server");
-  await finishAgentCall(agent.user_id, conversationId, Math.max(0,Math.round(data.metadata?.call_duration_secs ?? 0)), data.conversation_initiation_client_data?.dynamic_variables?.janice_call_reservation);
+  // history cannot reset call usage.
+  await finishAgentCall(agent.user_id, conversationId, Math.max(0,Math.round(data.metadata?.call_duration_secs ?? 0)), reservationId);
+  await notifyAllowanceThresholds(agent.user_id);
 
   const { data: existing } = await supabaseAdmin
     .from("conversations")

@@ -380,6 +380,7 @@ function WidgetChat() {
         <input
           ref={inputRef}
           type="text"
+          maxLength={4000}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type your message…"

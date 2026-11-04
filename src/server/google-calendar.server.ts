@@ -11,7 +11,6 @@ const CALENDAR_API = "https://www.googleapis.com/calendar/v3";
 // (preview, custom domain apex, www, new tab, etc.). This must match the redirect URI
 // registered in Google Cloud Console exactly.
 const CANONICAL_OAUTH_ORIGIN = "https://www.askjanice.net";
-const LOVABLE_DEV_ORIGIN = "https://project--d1e796ad-671c-47e1-843b-cdecc02fe11f-dev.lovable.app";
 
 export const SCOPES = [
   "openid",
@@ -19,41 +18,6 @@ export const SCOPES = [
   "profile",
   "https://www.googleapis.com/auth/calendar.events",
 ].join(" ");
-
-function isLocalOrigin(origin: string): boolean {
-  try {
-    const host = new URL(origin).hostname;
-    return host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0";
-  } catch {
-    return false;
-  }
-}
-
-function isPrivatePreviewOrigin(origin: string): boolean {
-  try {
-    const host = new URL(origin).hostname;
-    return host.endsWith(".lovableproject.com") || host.startsWith("id-preview--");
-  } catch {
-    return false;
-  }
-}
-
-function getOrigin(request: Request): string {
-  const origin = request.headers.get("origin");
-  if (origin && !isLocalOrigin(origin) && !isPrivatePreviewOrigin(origin)) return origin;
-
-  const forwardedHost = request.headers.get("x-forwarded-host");
-  if (forwardedHost) {
-    const forwardedProto = request.headers.get("x-forwarded-proto") || "https";
-    const forwardedOrigin = `${forwardedProto}://${forwardedHost}`;
-    if (!isLocalOrigin(forwardedOrigin) && !isPrivatePreviewOrigin(forwardedOrigin))
-      return forwardedOrigin;
-  }
-
-  const url = new URL(request.url);
-  if (isLocalOrigin(url.origin) || isPrivatePreviewOrigin(url.origin)) return LOVABLE_DEV_ORIGIN;
-  return `${url.protocol}//${url.host}`;
-}
 
 export function getRedirectUri(_request: Request): string {
   // Always return the canonical production redirect URI. This is the only value

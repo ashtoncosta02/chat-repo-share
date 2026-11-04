@@ -229,7 +229,11 @@ function AdminUserDetailPage() {
               onSave={async (patch) => {
                 if (!session?.access_token) return false;
                 const r = await adminUpdateAgent({ data: { accessToken: session.access_token, userId, patch } });
-                if (r.success) { toast.success(`Saved ${r.fields.length} field(s)`); load(); return true; }
+                if (r.success) {
+                  toast.success(`Saved ${r.fields.length} field(s)`);
+                  if (r.warning) toast.warning(r.warning);
+                  load(); return true;
+                }
                 toast.error(r.error ?? "Failed"); return false;
               }}
             />
@@ -539,7 +543,6 @@ function EditableProfile({
 type AgentPatch = {
   business_name?: string;
   industry?: string;
-  system_prompt?: string;
   greeting?: string;
   services_text?: string;
   faqs_text?: string;
@@ -571,10 +574,9 @@ function EditableAgent({
   const initForm = (): AgentPatch => ({
     business_name: agent.business_name ?? "",
     industry: agent.industry ?? "",
-    system_prompt: agent.system_prompt ?? "",
-    greeting: agent.greeting ?? "",
-    services_text: agent.services_text ?? "",
-    faqs_text: agent.faqs_text ?? "",
+    greeting: agent.greeting_message ?? "",
+    services_text: agent.services ?? "",
+    faqs_text: agent.faqs ?? "",
     notify_email: agent.notify_email ?? "",
     notify_phone: agent.notify_phone ?? "",
     sms_followup_enabled: !!agent.sms_followup_enabled,
@@ -646,7 +648,6 @@ function EditableAgent({
         </label>
       </div>
       <TextArea label="Greeting" rows={2} value={form.greeting ?? ""} onChange={(v) => set("greeting", v)} />
-      <TextArea label="System prompt" rows={8} value={form.system_prompt ?? ""} onChange={(v) => set("system_prompt", v)} />
       <TextArea label="Services" rows={4} value={form.services_text ?? ""} onChange={(v) => set("services_text", v)} />
       <TextArea label="FAQs" rows={6} value={form.faqs_text ?? ""} onChange={(v) => set("faqs_text", v)} />
       <TextArea label="Pricing notes" rows={3} value={form.pricing_notes ?? ""} onChange={(v) => set("pricing_notes", v)} />

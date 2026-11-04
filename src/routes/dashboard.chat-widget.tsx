@@ -1,3 +1,4 @@
+import { PUBLIC_APP_ORIGIN } from "@/lib/app-origin";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
@@ -79,11 +80,8 @@ export function ChatWidgetPage() {
     setDraftInstructions(selected.widget_instructions || "");
   }, [selectedId]);
 
-  const origin =
-    typeof window !== "undefined" ? window.location.origin : "";
-
   const scriptTag = selected
-    ? `<script src="${origin}/api/public/widget/embed.js?agent=${selected.id}" async></script>`
+    ? `<script src="${PUBLIC_APP_ORIGIN}/api/public/widget/embed.js?agent=${selected.id}" async></script>`
     : "";
 
   // Debounce draft values so the preview iframe doesn't reload on every keystroke.

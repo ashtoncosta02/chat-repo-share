@@ -1,14 +1,10 @@
 // Fixed-window rate limiting backed by the check_rate_limit database function.
-// Fails OPEN (allows) on any error so the app keeps working until the
-// database function exists.
+// allowRequest fails OPEN on any error so the app keeps working until the
+// database function exists; allowRequestStrict fails closed.
 import { createHash } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-export async function allowRequest(
-  key: string,
-  limit: number,
-  windowSeconds: number,
-): Promise<boolean> {
+async function checkRateLimit(key: string, limit: number, windowSeconds: number): Promise<boolean | null> {
   try {
     const rpc = supabaseAdmin.rpc as unknown as (
       fn: string,
@@ -20,14 +16,24 @@ export async function allowRequest(
       p_window_seconds: windowSeconds,
     });
     if (error) {
-      console.warn("[rate-limit] check_rate_limit failed, allowing:", error.message);
-      return true;
+      console.warn("[rate-limit] check_rate_limit failed:", error.message);
+      return null;
     }
     return data !== false;
   } catch (e) {
-    console.warn("[rate-limit] check_rate_limit threw, allowing:", e);
-    return true;
+    console.warn("[rate-limit] check_rate_limit threw:", e);
+    return null;
   }
+}
+
+/** Fails OPEN: allows the request when the limiter is unavailable. */
+export async function allowRequest(key: string, limit: number, windowSeconds: number): Promise<boolean> {
+  return (await checkRateLimit(key, limit, windowSeconds)) ?? true;
+}
+
+/** Fails CLOSED: returns false when the limiter is unavailable (use for once-only side effects). */
+export async function allowRequestStrict(key: string, limit: number, windowSeconds: number): Promise<boolean> {
+  return (await checkRateLimit(key, limit, windowSeconds)) ?? false;
 }
 
 export function sha256Hex(value: string): string {
