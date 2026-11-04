@@ -21,8 +21,10 @@ function Waveform() {
   const reduce = useReducedMotion();
 
   useEffect(() => {
-    const c = ref.current!;
-    const ctx = c.getContext("2d")!;
+    const c = ref.current;
+    if (!c) return;
+    const ctx = c.getContext("2d");
+    if (!ctx) return;
     let raf = 0;
     let start = -1;
     const draw = (t: number) => {

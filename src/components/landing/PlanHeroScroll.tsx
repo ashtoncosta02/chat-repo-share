@@ -95,8 +95,9 @@ export function HeroScroll() {
         delete root.dataset.ajHeroDone;
       };
     }
-    const section = sectionRef.current!;
-    const canvas = canvasRef.current!;
+    const section = sectionRef.current;
+    const canvas = canvasRef.current;
+    if (!section || !canvas) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const navMark = () => document.getElementById("aj-nav-mark");
     let scene: JaniceScene | null = null;
@@ -168,7 +169,8 @@ export function HeroScroll() {
     window.addEventListener("resize", onResize, { passive: true });
 
     const updateDom = (p: number) => {
-      const copy = copyRef.current!;
+      const copy = copyRef.current;
+      if (!copy) return;
       const o = 1 - smooth(seg(p, T.copyOut[0], T.copyOut[1]));
       copy.style.opacity = String(o);
       copy.style.transform = `translate3d(0, ${((narrow ? -10 : -48) * (1 - o)).toFixed(2)}px, 0)`;
@@ -187,7 +189,8 @@ export function HeroScroll() {
         el.style.visibility = w <= 0.001 ? "hidden" : "visible";
       });
 
-      const meet = meetRef.current!;
+      const meet = meetRef.current;
+      if (!meet) return;
       const mw = windowed(p, T.meet[0], T.meet[1], 0.14);
       meet.style.opacity = String(mw);
       meet.style.visibility = mw <= 0.001 ? "hidden" : "visible";
@@ -197,7 +200,8 @@ export function HeroScroll() {
       // Canvas hands over to the vector mark, which then docks into the nav.
       const hand = reduced ? 0 : smooth(seg(p, T.handoff[0], T.handoff[1]));
       canvas.style.opacity = String(1 - hand);
-      const overlay = overlayRef.current!;
+      const overlay = overlayRef.current;
+      if (!overlay) return;
       // Reduced motion: no scroll story, the mark simply lives in the nav.
       const docked = reduced || p >= T.dock[1];
       if (hand > 0 && !docked) {
