@@ -64,7 +64,13 @@ const ScrapeOutput = z.object({
 export const scrapeBusinessFromUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => ScrapeInput.parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    {
+      const { allowRequest } = await import("@/server/rate-limit.server");
+      if (!(await allowRequest(`scrape:user:${context.userId}`, 10, 3600))) {
+        return { success: false as const, error: "Too many requests. Please wait a bit and try again." };
+      }
+    }
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       return { success: false as const, error: "AI service is not configured." };

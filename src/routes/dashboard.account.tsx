@@ -187,7 +187,8 @@ function AccountPage() {
         </div>
         <p className="mt-2 text-sm text-muted-foreground">
           Permanently delete your account, your receptionist, conversations, leads, bookings, and
-          connected phone numbers. This cannot be undone.
+          call recordings. This also cancels your subscription immediately and releases your
+          phone number, so it will stop working right away. This cannot be undone.
         </p>
         <DeleteAccountButton onDone={async () => { await signOut(); navigate({ to: "/" }); }} />
       </section>

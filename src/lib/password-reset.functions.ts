@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { getRequest } from "@tanstack/react-start/server";
+import { isPasswordStrong, PASSWORD_REQUIREMENTS_TEXT } from "@/lib/password-strength";
 
 const APP_URL = "https://www.askjanice.net";
 const TOKEN_TTL_MINUTES = 60;
@@ -25,6 +27,12 @@ export const requestPasswordReset = createServerFn({ method: "POST" })
     const email = data.email.trim().toLowerCase();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { sendEmail } = await import("@/server/email.server");
+    const { allowRequest, clientIpKey, sha256Hex: sha } = await import("@/server/rate-limit.server");
+
+    // Rate-limited requests still return ok:true and send nothing.
+    const ipOk = await allowRequest(`pw-reset:ip:${clientIpKey(getRequest())}`, 5, 3600);
+    const emailOk = ipOk && (await allowRequest(`pw-reset:email:${sha(email)}`, 3, 3600));
+    if (!ipOk || !emailOk) return { ok: true as const };
 
     // Look up the user by email. We always respond success to avoid leaking
     // whether an account exists.
@@ -84,27 +92,27 @@ export const resetPasswordWithToken = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data }) => {
+    if (!isPasswordStrong(data.password)) throw new Error(PASSWORD_REQUIREMENTS_TEXT);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const tokenHash = await sha256Hex(data.token);
-    const { data: row, error: selErr } = await supabaseAdmin
+    const nowIso = new Date().toISOString();
+    // Consume the token atomically first so it can only ever be used once.
+    const { data: consumed, error: consumeErr } = await supabaseAdmin
       .from("password_reset_tokens")
-      .select("user_id, expires_at, used_at")
+      .update({ used_at: nowIso })
       .eq("token_hash", tokenHash)
+      .is("used_at", null)
+      .gt("expires_at", nowIso)
+      .select("user_id")
       .maybeSingle();
-    if (selErr) throw new Error("Could not verify reset link. Please try again.");
-    if (!row) throw new Error("This reset link is invalid or has already been used.");
-    if (row.used_at) throw new Error("This reset link has already been used. Request a new one.");
-    if (new Date(row.expires_at as string).getTime() < Date.now()) {
-      throw new Error("This reset link has expired. Request a new one.");
-    }
-    const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(
-      row.user_id as string,
-      { password: data.password },
-    );
+    if (consumeErr) throw new Error("Could not verify reset link. Please try again.");
+    if (!consumed) throw new Error("This reset link is invalid, expired, or already used. Request a new one.");
+    const userId = consumed.user_id as string;
+    const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+      password: data.password,
+    });
     if (updErr) throw new Error(updErr.message);
-    await supabaseAdmin
-      .from("password_reset_tokens")
-      .update({ used_at: new Date().toISOString() })
-      .eq("token_hash", tokenHash);
+    const { revokeUserSessions } = await import("@/server/account-purge.server");
+    await revokeUserSessions(userId);
     return { ok: true as const };
   });

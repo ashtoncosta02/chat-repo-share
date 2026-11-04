@@ -58,6 +58,12 @@ export const getReceptionistPreviewToken = createServerFn({ method: "POST" })
     );
     const auth = await authUser(data.accessToken);
     if ("error" in auth) return { success: false as const, error: auth.error };
+    {
+      const { allowRequest } = await import("@/server/rate-limit.server");
+      if (!(await allowRequest(`preview-token:user:${auth.userId}`, 30, 3600))) {
+        return { success: false as const, error: "Too many requests. Please wait a bit and try again." };
+      }
+    }
 
     const { data: row } = await supabaseAdmin
       .from("agents")

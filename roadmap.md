@@ -6,3 +6,5 @@
 - [x] Verify nine plan rules, desktop/mobile pricing, signed-in account/scenario pages, and app preview dashboard handoff.
 - [ ] Two existing subscriptions remain Elite at $49, verified read-only in Stripe; requested $50 special charges have not been applied.
 - [ ] Public live Stripe prices still use the old offer; new $79/$139 test prices sync on publish.
+- [ ] Customer inbox (email) integration — PAUSED by user (Nov 4)
+- [ ] Security follow-ups needing DB/ops: add check_rate_limit + revoke_user_sessions DB functions; resync receptionists, then set VOICE_TOOL_AUTH_ENFORCED = true

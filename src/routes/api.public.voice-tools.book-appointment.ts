@@ -6,19 +6,15 @@
 //   duration_minutes?, customer_email?, reason?, conversation_id?
 // }
 import { createFileRoute } from "@tanstack/react-router";
+import { isUuid, voiceToolAuthFailure } from "@/server/voice-tool-auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { bookAppointment } from "@/server/widget-booking-tools";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-};
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json" },
   });
 }
 
@@ -36,7 +32,6 @@ interface BookBody {
 export const Route = createFileRoute("/api/public/voice-tools/book-appointment")({
   server: {
     handlers: {
-      OPTIONS: async () => new Response(null, { status: 204, headers: corsHeaders }),
       POST: async ({ request }) => {
         let body: BookBody;
         try {
@@ -46,7 +41,9 @@ export const Route = createFileRoute("/api/public/voice-tools/book-appointment")
         }
 
         const agentId = body.agent_id?.trim();
-        if (!agentId) return jsonResponse({ ok: false, error: "agent_id required" }, 400);
+        if (!isUuid(agentId)) return jsonResponse({ ok: false, error: "agent_id must be a UUID" }, 400);
+        const denied = voiceToolAuthFailure(request, agentId, "book-appointment");
+        if (denied) return denied;
 
         // Look up the owning user for the agent (needed for RLS-bypassing insert).
         const { data: agent, error: agentErr } = await supabaseAdmin

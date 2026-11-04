@@ -5,8 +5,7 @@ import { createHmac, timingSafeEqual } from "crypto";
  * Algorithm: HMAC-SHA1 over (full URL + sorted POST params concatenated as key+value),
  * base64-encoded, using the Twilio Auth Token as the key.
  *
- * Returns true if valid OR if running locally without the auth token configured
- * (dev convenience). In production TWILIO_AUTH_TOKEN must be set.
+ * Returns false when TWILIO_AUTH_TOKEN is not configured (fail closed).
  */
 export async function verifyTwilioSignature(
   request: Request,
@@ -14,8 +13,8 @@ export async function verifyTwilioSignature(
 ): Promise<boolean> {
   const authToken = process.env.TWILIO_AUTH_TOKEN;
   if (!authToken) {
-    console.warn("TWILIO_AUTH_TOKEN not configured — skipping signature check");
-    return true;
+    console.error("TWILIO_AUTH_TOKEN not configured — rejecting Twilio request");
+    return false;
   }
 
   const signature = request.headers.get("x-twilio-signature");

@@ -63,6 +63,15 @@ export const Route = createFileRoute("/api/public/owner-chat")({
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
+        {
+          const { allowRequest } = await import("@/server/rate-limit.server");
+          if (!(await allowRequest(`owner-chat:user:${userData.user.id}`, 60, 3600))) {
+            return new Response(JSON.stringify({ error: "Too many messages. Please wait a bit and try again." }), {
+              status: 429,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+        }
 
         let body: OwnerChatRequest;
         try {

@@ -3,6 +3,9 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendEmail } from "@/server/email.server";
 import { renderInvitationEmail } from "@/server/email-templates.server";
+import { getRequest } from "@tanstack/react-start/server";
+import { allowRequest, clientIpKey } from "@/server/rate-limit.server";
+import { isPasswordStrong, PASSWORD_REQUIREMENTS_TEXT } from "@/lib/password-strength";
 
 const SITE_URL = "https://www.askjanice.net";
 
@@ -261,6 +264,9 @@ export const adminSetUserTrial = createServerFn({ method: "POST" })
 export const getInvitationByToken = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ token: z.string().min(10).max(200) }).parse(input))
   .handler(async ({ data }) => {
+    if (!(await allowRequest(`invite-lookup:ip:${clientIpKey(getRequest())}`, 20, 3600))) {
+      return { valid: false as const, reason: "rate_limited" as const };
+    }
     const { data: inv } = await supabaseAdmin
       .from("account_invitations")
       .select("id, email, status, trial_days, expires_at")
@@ -294,6 +300,12 @@ export const acceptInvitationAndSignup = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data }) => {
+    if (!(await allowRequest(`invite-accept:ip:${clientIpKey(getRequest())}`, 20, 3600))) {
+      return { success: false as const, error: "Too many attempts. Please try again later." };
+    }
+    if (!isPasswordStrong(data.password)) {
+      return { success: false as const, error: PASSWORD_REQUIREMENTS_TEXT };
+    }
     const { data: inv } = await supabaseAdmin
       .from("account_invitations")
       .select("id, email, status, trial_days, expires_at")

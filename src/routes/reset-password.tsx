@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { AgentFactoryLogo } from "@/components/AgentFactoryLogo";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,14 @@ export const Route = createFileRoute("/reset-password")({
 
 function ResetPasswordPage() {
   const navigate = useNavigate();
-  const { token } = Route.useSearch();
+  const { token: tokenFromUrl } = Route.useSearch();
+  // Keep the token in memory only and strip it from the address bar.
+  const [token] = useState(tokenFromUrl);
+  useEffect(() => {
+    if (tokenFromUrl && typeof window !== "undefined") {
+      window.history.replaceState(window.history.state, "", window.location.pathname);
+    }
+  }, [tokenFromUrl]);
   const [pwd, setPwd] = useState("");
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);

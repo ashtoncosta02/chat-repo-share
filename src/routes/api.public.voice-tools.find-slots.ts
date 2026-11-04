@@ -2,18 +2,14 @@
 // available appointment slots for a given date.
 // Request body: { agent_id: string, date: "YYYY-MM-DD", duration_minutes?: number }
 import { createFileRoute } from "@tanstack/react-router";
+import { isUuid, voiceToolAuthFailure } from "@/server/voice-tool-auth.server";
 import { findAvailableSlots, getCalendarConfig } from "@/server/widget-booking-tools";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-};
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json" },
   });
 }
 
@@ -35,7 +31,6 @@ function formatSlotForVoice(iso: string, timezone: string): string {
 export const Route = createFileRoute("/api/public/voice-tools/find-slots")({
   server: {
     handlers: {
-      OPTIONS: async () => new Response(null, { status: 204, headers: corsHeaders }),
       POST: async ({ request }) => {
         let body: { agent_id?: string; date?: string; duration_minutes?: number };
         try {
@@ -46,7 +41,9 @@ export const Route = createFileRoute("/api/public/voice-tools/find-slots")({
 
         const agentId = body.agent_id?.trim();
         const date = body.date?.trim();
-        if (!agentId) return jsonResponse({ error: "agent_id required" }, 400);
+        if (!isUuid(agentId)) return jsonResponse({ error: "agent_id must be a UUID" }, 400);
+        const denied = voiceToolAuthFailure(request, agentId, "find-slots");
+        if (denied) return denied;
         if (!date) return jsonResponse({ error: "date required (YYYY-MM-DD)" }, 400);
 
         const cfg = await getCalendarConfig(agentId);

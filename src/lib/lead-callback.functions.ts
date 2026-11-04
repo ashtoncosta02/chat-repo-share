@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { placeOutboundCall } from "@/server/elevenlabs-agent.server";
+import { isAllowedNanp, normalize, DISALLOWED_NUMBER_MESSAGE } from "@/server/phone-guard.server";
+import { allowRequest } from "@/server/rate-limit.server";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
 const PROJECT_ID = "d1e796ad-671c-47e1-843b-cdecc02fe11f";
@@ -49,6 +51,13 @@ export const aiCallbackLead = createServerFn({ method: "POST" })
     if (!lead.phone) {
       return { success: false as const, error: "This lead has no phone number on file." };
     }
+    const toNumber = normalize(lead.phone);
+    if (!toNumber || !isAllowedNanp(toNumber)) {
+      return { success: false as const, error: `Can't call this number. ${DISALLOWED_NUMBER_MESSAGE}` };
+    }
+    if (!(await allowRequest(`ai-callback:user:${auth.userId}`, 50, 86400))) {
+      return { success: false as const, error: "Daily limit of 50 AI callbacks reached. Try again tomorrow." };
+    }
 
     // Find the user's receptionist (1-per-account) and a connected phone number.
     const { data: agent } = await supabaseAdmin
@@ -88,7 +97,7 @@ export const aiCallbackLead = createServerFn({ method: "POST" })
       const result = await placeOutboundCall({
         agentId: agent.elevenlabs_agent_id,
         agentPhoneNumberId: phone.elevenlabs_phone_number_id,
-        toNumber: lead.phone,
+        toNumber,
         dynamicVariables: {
           call_direction: "outbound",
           lead_name: firstName === "there" ? "" : firstName,

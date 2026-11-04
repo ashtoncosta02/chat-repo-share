@@ -7,19 +7,9 @@ import {
 } from "@/server/google-calendar.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { resyncReceptionistById } from "@/server/elevenlabs-agent-resync.server";
+import { escapeHtml, oauthHtmlResponse as htmlResponse } from "@/server/oauth-html.server";
 
-function htmlResponse(title: string, body: string, status = 200) {
-  return new Response(
-    `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title>
-<style>body{font-family:system-ui,sans-serif;max-width:480px;margin:60px auto;padding:24px;text-align:center;color:#222}
-.card{border:1px solid #e5e7eb;border-radius:12px;padding:32px;background:#fff;box-shadow:0 4px 12px rgba(0,0,0,.04)}
-h1{margin:0 0 12px;font-size:20px}p{color:#555;line-height:1.5}a{color:#b8860b;text-decoration:none;font-weight:600}</style>
-</head><body><div class="card">${body}</div>
-<script>setTimeout(function(){if(window.opener){window.close()}},2500)</script>
-</body></html>`,
-    { status, headers: { "Content-Type": "text/html; charset=utf-8" } },
-  );
-}
+const TRY_AGAIN = `<p>Please close this window and try connecting again from your dashboard.</p>`;
 
 export const Route = createFileRoute("/api/public/google-calendar/callback")({
   server: {
@@ -31,19 +21,20 @@ export const Route = createFileRoute("/api/public/google-calendar/callback")({
         const errorParam = url.searchParams.get("error");
 
         if (errorParam) {
+          console.error("google oauth returned error:", errorParam);
           return htmlResponse(
             "Cancelled",
-            `<h1>Connection cancelled</h1><p>${errorParam}</p><p>You can close this window.</p>`,
+            `<h1>Connection cancelled</h1><p>You can close this window.</p>`,
             400,
           );
         }
         if (!code || !state) {
-          return htmlResponse("Error", `<h1>Missing code or state</h1>`, 400);
+          return htmlResponse("Error", `<h1>Missing code or state</h1>${TRY_AGAIN}`, 400);
         }
 
         const verified = verifyState(state);
         if (!verified) {
-          return htmlResponse("Error", `<h1>Invalid or expired state</h1>`, 400);
+          return htmlResponse("Error", `<h1>Invalid or expired link</h1>${TRY_AGAIN}`, 400);
         }
 
         const { data: ownedAgent } = await supabaseAdmin
@@ -62,7 +53,7 @@ export const Route = createFileRoute("/api/public/google-calendar/callback")({
           if (!tokens.refresh_token) {
             return htmlResponse(
               "Error",
-              `<h1>No refresh token received</h1><p>Please remove access for this app at <a href="https://myaccount.google.com/permissions" target="_blank">myaccount.google.com/permissions</a> and try connecting again.</p>`,
+              `<h1>No refresh token received</h1><p>Please remove access for this app at <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer">myaccount.google.com/permissions</a> and try connecting again.</p>`,
               400,
             );
           }
@@ -70,7 +61,6 @@ export const Route = createFileRoute("/api/public/google-calendar/callback")({
 
           const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
 
-          // Upsert by agent_id
           const { error } = await supabaseAdmin.from("agent_google_calendar").upsert(
             {
               agent_id: verified.agent_id,
@@ -87,23 +77,21 @@ export const Route = createFileRoute("/api/public/google-calendar/callback")({
           );
 
           if (error) {
-            console.error("upsert failed", error);
-            return htmlResponse("Error", `<h1>Database error</h1><p>${error.message}</p>`, 500);
+            console.error("google calendar upsert failed", error);
+            return htmlResponse("Error", `<h1>Something went wrong</h1>${TRY_AGAIN}`, 500);
           }
 
-          // Provision booking webhook tools + push updated prompt to EL.
           await resyncReceptionistById(verified.agent_id).catch((e: unknown) => {
             console.error("resync after calendar connect failed:", e);
           });
 
           return htmlResponse(
             "Connected",
-            `<h1>✓ Calendar connected</h1><p>Signed in as <strong>${userInfo.email}</strong></p><p>You can close this window.</p>`,
+            `<h1>✓ Calendar connected</h1><p>Signed in as <strong>${escapeHtml(userInfo.email)}</strong></p><p>You can close this window.</p>`,
           );
         } catch (e) {
-          console.error("callback error", e);
-          const msg = e instanceof Error ? e.message : "Unknown error";
-          return htmlResponse("Error", `<h1>Connection failed</h1><p>${msg}</p>`, 500);
+          console.error("google calendar callback error", e);
+          return htmlResponse("Error", `<h1>Connection failed</h1>${TRY_AGAIN}`, 500);
         }
       },
     },

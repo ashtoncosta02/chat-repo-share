@@ -37,6 +37,12 @@ export const chatWithAgent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => ChatInput.parse(input))
   .handler(async ({ data, context }) => {
+    {
+      const { allowRequest } = await import("@/server/rate-limit.server");
+      if (!(await allowRequest(`agent-chat:user:${context.userId}`, 100, 3600))) {
+        return { success: false as const, error: "Too many requests. Please wait a bit and try again." };
+      }
+    }
     // Build the prompt only from the caller's stored receptionist config —
     // never from client-supplied fields.
     if (!data.agent.id) return { success: false as const, error: "Agent not found." };

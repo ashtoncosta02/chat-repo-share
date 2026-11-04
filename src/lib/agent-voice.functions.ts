@@ -4,7 +4,7 @@ import { z } from "zod";
 
 const TtsInput = z.object({
   text: z.string().min(1).max(2000),
-  voiceId: z.string().min(1).max(64).optional(),
+  voiceId: z.string().regex(/^[A-Za-z0-9]{1,64}$/).optional(),
 });
 
 // Default voice: "Sarah" — warm, friendly female receptionist
@@ -58,7 +58,13 @@ function urlToSpeech(rest: string): string {
 export const speakText = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => TtsInput.parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    {
+      const { allowRequest } = await import("@/server/rate-limit.server");
+      if (!(await allowRequest(`tts:user:${context.userId}`, 60, 3600))) {
+        return { success: false as const, error: "Too many requests. Please wait a bit and try again." };
+      }
+    }
     const apiKey = process.env.ELEVENLABS_API_KEY;
     if (!apiKey) {
       return { success: false as const, error: "Voice service is not configured." };
@@ -111,7 +117,13 @@ const SttInput = z.object({
 export const transcribeAudio = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => SttInput.parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    {
+      const { allowRequest } = await import("@/server/rate-limit.server");
+      if (!(await allowRequest(`stt:user:${context.userId}`, 60, 3600))) {
+        return { success: false as const, error: "Too many requests. Please wait a bit and try again." };
+      }
+    }
     const apiKey = process.env.ELEVENLABS_API_KEY;
     if (!apiKey) {
       return { success: false as const, error: "Voice service is not configured." };

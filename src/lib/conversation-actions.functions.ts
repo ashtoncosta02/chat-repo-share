@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { placeOutboundCall } from "@/server/elevenlabs-agent.server";
+import { isAllowedNanp, normalize, DISALLOWED_NUMBER_MESSAGE } from "@/server/phone-guard.server";
+import { allowRequest } from "@/server/rate-limit.server";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
 const PROJECT_ID = "d1e796ad-671c-47e1-843b-cdecc02fe11f";
@@ -68,6 +70,10 @@ async function loadContext(userId: string, conversationId: string) {
   }
   if (!lead) return { error: "No saved lead is linked to this conversation." as const };
   if (!lead.phone) return { error: "This caller has no phone number on file." as const };
+  const leadPhone = normalize(lead.phone);
+  if (!leadPhone || !isAllowedNanp(leadPhone)) {
+    return { error: `Can't contact this number. ${DISALLOWED_NUMBER_MESSAGE}` as const };
+  }
 
   const { data: agent } = await supabaseAdmin
     .from("agents")
@@ -94,7 +100,7 @@ async function loadContext(userId: string, conversationId: string) {
   }
 
   return {
-    lead,
+    lead: { ...lead, phone: leadPhone },
     agent,
     fromNumber: phone.phone_number,
     elPhoneNumberId: phone.elevenlabs_phone_number_id,
@@ -115,6 +121,9 @@ export const aiCallbackFromConversation = createServerFn({ method: "POST" })
     const ctx = await loadContext(auth.userId, data.conversationId);
     if ("error" in ctx) return { success: false as const, error: ctx.error };
     const { lead, agent, elPhoneNumberId } = ctx;
+    if (!(await allowRequest(`ai-callback:user:${auth.userId}`, 50, 86400))) {
+      return { success: false as const, error: "Daily limit of 50 AI callbacks reached. Try again tomorrow." };
+    }
 
     const firstName = (lead.name ?? "").trim().split(/\s+/)[0] || "there";
     const instructions = data.instructions?.trim() ?? "";
@@ -161,6 +170,9 @@ export const sendSmsFromConversation = createServerFn({ method: "POST" })
     const ctx = await loadContext(auth.userId, data.conversationId);
     if ("error" in ctx) return { success: false as const, error: ctx.error };
     const { lead, fromNumber } = ctx;
+    if (!(await allowRequest(`sms-send:user:${auth.userId}`, 100, 86400))) {
+      return { success: false as const, error: "Daily limit of 100 texts reached. Try again tomorrow." };
+    }
 
     try {
       const res = await fetch(`${GATEWAY_URL}/Messages.json`, {
