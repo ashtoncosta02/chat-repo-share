@@ -8,6 +8,7 @@ import {
   type AgentBusinessProfile,
 } from "./elevenlabs-agent.server";
 import { coerceScenarios, scenariosToPromptText } from "@/lib/scenarios";
+import { accountPlan } from "@/server/plan-access.server";
 
 interface AgentRow {
   id: string;
@@ -30,7 +31,7 @@ interface AgentRow {
   elevenlabs_agent_id: string | null;
 }
 
-function rowToProfile(row: AgentRow): AgentBusinessProfile {
+function rowToProfile(row: AgentRow, humanTransfer: boolean, scenarioLimit: number | null): AgentBusinessProfile {
   let faqs: AgentBusinessProfile["faqs_structured"] = null;
   if (Array.isArray(row.faqs_structured)) {
     faqs = (row.faqs_structured as unknown[])
@@ -43,7 +44,8 @@ function rowToProfile(row: AgentRow): AgentBusinessProfile {
       })
       .filter((f) => f.question || f.answer);
   }
-  const scenarios = coerceScenarios(row.scenarios);
+  const allScenarios = coerceScenarios(row.scenarios);
+  const scenarios = (scenarioLimit === null ? allScenarios : allScenarios.slice(0,scenarioLimit)).map(s => !humanTransfer && s.action?.type === "call_transfer" ? { ...s, action: null } : s);
   const scenariosPrompt = scenariosToPromptText(scenarios);
   const transferNumbers: Array<{ phone: string; condition: string }> = [];
   const seen = new Set<string>();
@@ -114,7 +116,9 @@ export async function resyncReceptionistById(
   if (rowErr || !row) return { success: false, error: "Receptionist not found." };
 
 
-  const profile = rowToProfile(row as AgentRow);
+  const { plan } = await accountPlan(row.user_id);
+  if (!plan) return { success: false, error: "Choose an active plan before syncing your receptionist." };
+  const profile = rowToProfile(row as AgentRow, plan.humanTransfer, plan.scenarioLimit);
   profile.coaching_notes = await loadCoachingNotes(row.id).catch(() => []);
 
   try {

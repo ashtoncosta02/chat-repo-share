@@ -33,6 +33,8 @@ import {
 } from "lucide-react";
 
 import { syncReceptionistAgent } from "@/lib/elevenlabs-agent.functions";
+import { getPlanAccess } from "@/lib/plan-access.functions";
+import { planForPrice, validatePlanScenarios } from "@/lib/plans";
 import { suggestFaqs, type SuggestedFaq } from "@/lib/faq-suggest.functions";
 import { coerceFaqs, newFaq, type StructuredFaq } from "@/lib/faqs";
 import {
@@ -92,6 +94,10 @@ function KnowledgePage() {
   const navigate = useNavigate();
   const syncEl = useServerFn(syncReceptionistAgent);
   const suggestFaqsFn = useServerFn(suggestFaqs);
+  const fetchPlan = useServerFn(getPlanAccess);
+  const [planId, setPlanId] = useState<string | null>(null);
+  useEffect(() => { if (user) void fetchPlan().then(r => setPlanId(r.priceId)).catch(() => setPlanId(null)); }, [user, fetchPlan]);
+  const plan = planForPrice(planId);
 
   const [agent, setAgent] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(true);
@@ -180,6 +186,7 @@ function KnowledgePage() {
 
   const handleSave = async () => {
     if (!user || !agent) return;
+    try { validatePlanScenarios(planId ?? "", edit.scenarios); } catch (e) { toast.error(e instanceof Error ? e.message : "Check your plan."); return; }
     if (!edit.business_name.trim()) {
       toast.error("Business name is required");
       return;
@@ -670,6 +677,7 @@ function KnowledgePage() {
   };
 
   const addScenario = (intent = "") => {
+    if (!plan || (plan.scenarioLimit !== null && scenarios.length >= plan.scenarioLimit)) { toast.error("Essential includes up to 3 scenarios. Choose Elite for more."); return; }
     const s = newScenario(intent);
     setEdit({ ...edit, scenarios: [s, ...scenarios] });
     setOpenScenarioId(s.id);
@@ -807,7 +815,10 @@ function KnowledgePage() {
       next.splice(to, 0, moved);
       updateScenario(idx, { steps: next });
     };
-    const setAction = (a: ScenarioAction) => updateScenario(idx, { action: a });
+    const setAction = (a: ScenarioAction) => {
+      if (a?.type === "call_transfer" && !plan?.humanTransfer) { toast.error("Instant human transfer is available on Elite only."); return; }
+      updateScenario(idx, { action: a });
+    };
 
     const collectStepIdx = s.steps.findIndex((st) => st.kind === "collect_info");
     const hasCollect = collectStepIdx >= 0;
@@ -1019,6 +1030,8 @@ function KnowledgePage() {
                 <button
                   type="button"
                   onClick={() => setAction({ type: "call_transfer", phone: "" })}
+                  disabled={!plan?.humanTransfer}
+                  title={!plan?.humanTransfer ? "Available on Elite only" : "Instant human transfer"}
                   className="rounded-lg border border-border bg-card p-4 hover:border-primary/50 hover:shadow-sm transition flex items-center justify-center gap-2 text-sm text-foreground"
                 >
                   <Phone className="h-4 w-4" /> Call Transfer

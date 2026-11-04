@@ -245,6 +245,11 @@ export async function persistPostCall(
     return { status: "agent-not-found" };
   }
 
+  // Meter before deduplication and dashboard-test filtering: deleting history
+  // or retrying webhooks must not erase usage or strand a reservation.
+  const { finishAgentCall } = await import("@/server/call-usage.server");
+  await finishAgentCall(agent.user_id, conversationId, Math.max(0,Math.round(data.metadata?.call_duration_secs ?? 0)), data.conversation_initiation_client_data?.dynamic_variables?.janice_call_reservation);
+
   // Dashboard "Live voice test" sessions tag themselves with a dynamic
   // variable so we can skip persisting them — they're practice runs by the
   // owner, not real customer conversations.
