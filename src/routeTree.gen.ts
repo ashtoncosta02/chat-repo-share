@@ -53,6 +53,7 @@ import { Route as DashboardAgentsAgentIdRouteImport } from './routes/dashboard.a
 import { Route as DashboardConversationsIndexRouteImport } from './routes/dashboard.conversations.index'
 import { Route as DashboardConversationsConversationIdRouteImport } from './routes/dashboard.conversations.$conversationId'
 import { Route as DashboardConversationsBlockedRouteImport } from './routes/dashboard.conversations.blocked'
+import { Route as ApiPublicElevenlabsCallAllowanceRouteImport } from './routes/api.public.elevenlabs.call-allowance'
 import { Route as ApiPublicElevenlabsPostcallRouteImport } from './routes/api.public.elevenlabs.postcall'
 import { Route as ApiPublicGoogleCalendarCallbackRouteImport } from './routes/api.public.google-calendar.callback'
 import { Route as ApiPublicHooksAutoDeleteThreadsRouteImport } from './routes/api.public.hooks.auto-delete-threads'
@@ -302,6 +303,12 @@ const DashboardConversationsBlockedRoute =
     path: '/blocked',
     getParentRoute: () => DashboardConversationsRoute,
   } as any)
+const ApiPublicElevenlabsCallAllowanceRoute =
+  ApiPublicElevenlabsCallAllowanceRouteImport.update({
+    id: '/api/public/elevenlabs/call-allowance',
+    path: '/api/public/elevenlabs/call-allowance',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicElevenlabsPostcallRoute =
   ApiPublicElevenlabsPostcallRouteImport.update({
     id: '/api/public/elevenlabs/postcall',
@@ -487,6 +494,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/conversations/blocked': typeof DashboardConversationsBlockedRoute
   '/dashboard/admin/': typeof DashboardAdminIndexRoute
   '/dashboard/conversations/': typeof DashboardConversationsIndexRoute
+  '/api/public/elevenlabs/call-allowance': typeof ApiPublicElevenlabsCallAllowanceRoute
   '/api/public/elevenlabs/postcall': typeof ApiPublicElevenlabsPostcallRoute
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
   '/api/public/hooks/auto-delete-threads': typeof ApiPublicHooksAutoDeleteThreadsRoute
@@ -551,6 +559,7 @@ export interface FileRoutesByTo {
   '/dashboard/conversations/blocked': typeof DashboardConversationsBlockedRoute
   '/dashboard/admin': typeof DashboardAdminIndexRoute
   '/dashboard/conversations': typeof DashboardConversationsIndexRoute
+  '/api/public/elevenlabs/call-allowance': typeof ApiPublicElevenlabsCallAllowanceRoute
   '/api/public/elevenlabs/postcall': typeof ApiPublicElevenlabsPostcallRoute
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
   '/api/public/hooks/auto-delete-threads': typeof ApiPublicHooksAutoDeleteThreadsRoute
@@ -622,6 +631,7 @@ export interface FileRoutesById {
   '/dashboard/conversations/blocked': typeof DashboardConversationsBlockedRoute
   '/dashboard/admin/': typeof DashboardAdminIndexRoute
   '/dashboard/conversations/': typeof DashboardConversationsIndexRoute
+  '/api/public/elevenlabs/call-allowance': typeof ApiPublicElevenlabsCallAllowanceRoute
   '/api/public/elevenlabs/postcall': typeof ApiPublicElevenlabsPostcallRoute
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
   '/api/public/hooks/auto-delete-threads': typeof ApiPublicHooksAutoDeleteThreadsRoute
@@ -694,6 +704,7 @@ export interface FileRouteTypes {
     | '/dashboard/conversations/blocked'
     | '/dashboard/admin/'
     | '/dashboard/conversations/'
+    | '/api/public/elevenlabs/call-allowance'
     | '/api/public/elevenlabs/postcall'
     | '/api/public/google-calendar/callback'
     | '/api/public/hooks/auto-delete-threads'
@@ -758,6 +769,7 @@ export interface FileRouteTypes {
     | '/dashboard/conversations/blocked'
     | '/dashboard/admin'
     | '/dashboard/conversations'
+    | '/api/public/elevenlabs/call-allowance'
     | '/api/public/elevenlabs/postcall'
     | '/api/public/google-calendar/callback'
     | '/api/public/hooks/auto-delete-threads'
@@ -828,6 +840,7 @@ export interface FileRouteTypes {
     | '/dashboard/conversations/blocked'
     | '/dashboard/admin/'
     | '/dashboard/conversations/'
+    | '/api/public/elevenlabs/call-allowance'
     | '/api/public/elevenlabs/postcall'
     | '/api/public/google-calendar/callback'
     | '/api/public/hooks/auto-delete-threads'
@@ -869,6 +882,7 @@ export interface RootRouteChildren {
   AuthInviteRoute: typeof AuthInviteRoute
   WidgetAgentIdRoute: typeof WidgetAgentIdRoute
   ApiPublicOwnerChatRoute: typeof ApiPublicOwnerChatRoute
+  ApiPublicElevenlabsCallAllowanceRoute: typeof ApiPublicElevenlabsCallAllowanceRoute
   ApiPublicElevenlabsPostcallRoute: typeof ApiPublicElevenlabsPostcallRoute
   ApiPublicGoogleCalendarCallbackRoute: typeof ApiPublicGoogleCalendarCallbackRoute
   ApiPublicHooksAutoDeleteThreadsRoute: typeof ApiPublicHooksAutoDeleteThreadsRoute
@@ -1201,6 +1215,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardConversationsBlockedRouteImport
       parentRoute: typeof DashboardConversationsRoute
     }
+    '/api/public/elevenlabs/call-allowance': {
+      id: '/api/public/elevenlabs/call-allowance'
+      path: '/api/public/elevenlabs/call-allowance'
+      fullPath: '/api/public/elevenlabs/call-allowance'
+      preLoaderRoute: typeof ApiPublicElevenlabsCallAllowanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/elevenlabs/postcall': {
       id: '/api/public/elevenlabs/postcall'
       path: '/api/public/elevenlabs/postcall'
@@ -1516,6 +1537,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthInviteRoute: AuthInviteRoute,
   WidgetAgentIdRoute: WidgetAgentIdRoute,
   ApiPublicOwnerChatRoute: ApiPublicOwnerChatRoute,
+  ApiPublicElevenlabsCallAllowanceRoute: ApiPublicElevenlabsCallAllowanceRoute,
   ApiPublicElevenlabsPostcallRoute: ApiPublicElevenlabsPostcallRoute,
   ApiPublicGoogleCalendarCallbackRoute: ApiPublicGoogleCalendarCallbackRoute,
   ApiPublicHooksAutoDeleteThreadsRoute: ApiPublicHooksAutoDeleteThreadsRoute,

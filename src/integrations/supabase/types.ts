@@ -1282,6 +1282,16 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      finalize_call_allowance: {
+        Args: {
+          p_conversation_id: string
+          p_env: string
+          p_reservation?: string
+          p_seconds: number
+          p_user: string
+        }
+        Returns: undefined
+      }
       has_active_subscription: {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean
