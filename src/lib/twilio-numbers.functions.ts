@@ -1,3 +1,4 @@
+import { PUBLIC_APP_ORIGIN } from "@/lib/app-origin";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
@@ -228,10 +229,7 @@ export const purchasePhoneNumber = createServerFn({ method: "POST" })
     }
 
     try {
-      const PROJECT_ID = "d1e796ad-671c-47e1-843b-cdecc02fe11f";
-      // Use the -dev subdomain so webhooks work before the project is published.
-      // Once published, you can re-sync to point at the production URL.
-      const baseUrl = `https://project--${PROJECT_ID}-dev.lovable.app`;
+      const baseUrl = PUBLIC_APP_ORIGIN;
       const smsWebhook = `${baseUrl}/api/public/twilio/sms`;
       const voiceWebhook = `${baseUrl}/api/public/twilio/voice`;
 

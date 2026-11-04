@@ -1,3 +1,4 @@
+import { PUBLIC_APP_ORIGIN } from "@/lib/app-origin";
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { registerTwilioCall } from "@/server/elevenlabs-agent.server";
@@ -53,7 +54,7 @@ export const Route = createFileRoute("/api/public/twilio/callback")({
           if (answeredBy.startsWith("machine") || answeredBy === "fax" || answeredBy === "unknown") {
             const exp = Date.now() + 10 * 60 * 1000;
             const sig = signPayload(`${leadId}|${agentId}|${exp}`);
-            const audioUrl = `https://project--d1e796ad-671c-47e1-843b-cdecc02fe11f-dev.lovable.app/api/public/voicemail/audio?lead=${encodeURIComponent(leadId)}&agent=${encodeURIComponent(agentId)}&exp=${exp}&sig=${sig}`;
+            const audioUrl = `${PUBLIC_APP_ORIGIN}/api/public/voicemail/audio?lead=${encodeURIComponent(leadId)}&agent=${encodeURIComponent(agentId)}&exp=${exp}&sig=${sig}`;
             return new Response(
               `<Response><Play>${escapeXml(audioUrl)}</Play><Hangup /></Response>`,
               { headers: { "Content-Type": "application/xml" } },

@@ -1,3 +1,4 @@
+import { PUBLIC_APP_ORIGIN } from "@/lib/app-origin";
 // Server-only helpers for the ElevenLabs Agents Platform.
 // Build the system prompt, voice, and post-call webhook config for an
 // AI Receptionist, then create or update the agent in ElevenLabs.
@@ -10,9 +11,8 @@ const EL_BASE = "https://api.elevenlabs.io/v1";
 const PROJECT_ID = "d1e796ad-671c-47e1-843b-cdecc02fe11f";
 
 // Public base URL the ElevenLabs voice agent uses to call our booking webhooks.
-// Using the stable preview URL so it works before publishing too.
 function publicBaseUrl(): string {
-  return `https://project--${PROJECT_ID}-dev.lovable.app`;
+  return PUBLIC_APP_ORIGIN;
 }
 
 export interface AgentBusinessProfile {
@@ -707,7 +707,7 @@ export async function deleteElevenLabsPhoneNumber(phoneNumberId: string): Promis
 }
 
 export function postCallWebhookUrl(): string {
-  return `https://project--${PROJECT_ID}-dev.lovable.app/api/public/elevenlabs/postcall`;
+  return `${PUBLIC_APP_ORIGIN}/api/public/elevenlabs/postcall`;
 }
 
 /** Register a Twilio voice webhook call with ElevenLabs and return TwiML. */

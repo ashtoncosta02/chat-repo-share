@@ -1,3 +1,4 @@
+import { PUBLIC_APP_ORIGIN } from "@/lib/app-origin";
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { registerTwilioCall } from "@/server/elevenlabs-agent.server";
@@ -70,7 +71,7 @@ export const Route = createFileRoute("/api/public/twilio/voice")({
           const forward = String((fwdRow as any)?.owner_forward_phone || "").trim();
           const mode = String(agent.answer_mode || "immediate");
           if (mode === "after_4_rings" && forward) {
-            const base = `https://project--${PROJECT_ID}-dev.lovable.app`;
+            const base = PUBLIC_APP_ORIGIN;
             const fallbackUrl =
               `${base}/api/public/twilio/voice-fallback` +
               `?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;

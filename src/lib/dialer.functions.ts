@@ -1,3 +1,4 @@
+import { PUBLIC_APP_ORIGIN } from "@/lib/app-origin";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -87,7 +88,7 @@ export const startOutboundCall = createServerFn({ method: "POST" })
 
     const expiresAt = Date.now() + 5 * 60 * 1000;
     const sig = await signDialerToken(toE164, fromNumber, expiresAt);
-    const bridgeUrl = `https://project--${PROJECT_ID}-dev.lovable.app/api/public/twilio/dialer-bridge?to=${encodeURIComponent(
+    const bridgeUrl = `${PUBLIC_APP_ORIGIN}/api/public/twilio/dialer-bridge?to=${encodeURIComponent(
       toE164,
     )}&from=${encodeURIComponent(fromNumber)}&exp=${expiresAt}&sig=${sig}`;
 
