@@ -59,7 +59,7 @@ export function Hero() {
               <Clock className="h-4 w-4 text-gold" /> Answers in under 2 seconds
             </li>
             <li className="inline-flex items-center gap-2">
-              <Phone className="h-4 w-4 text-gold" /> Unlimited calls, 24/7
+              <Phone className="h-4 w-4 text-gold" /> 24/7 answering: 200 or 750 minutes/month
             </li>
             <li className="inline-flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-gold" /> Setup in minutes

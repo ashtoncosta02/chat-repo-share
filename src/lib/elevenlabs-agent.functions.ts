@@ -72,8 +72,6 @@ export const getReceptionistPreviewToken = createServerFn({ method: "POST" })
       };
     }
     try {
-      const { reserveAgentCall } = await import("@/server/call-usage.server");
-      const reservation = await reserveAgentCall(row.elevenlabs_agent_id, `preview:${crypto.randomUUID()}`);
       const [token, signedUrl] = await Promise.all([
         getConversationToken(row.elevenlabs_agent_id).catch(() => null),
         getConversationSignedUrl(row.elevenlabs_agent_id).catch(() => null),
@@ -86,8 +84,6 @@ export const getReceptionistPreviewToken = createServerFn({ method: "POST" })
         token: token ?? "",
         signedUrl: signedUrl ?? "",
         agentId: row.elevenlabs_agent_id,
-        maxDurationSeconds: reservation.seconds,
-        reservationId: reservation.reservationId,
       };
     } catch (e) {
       console.error("getReceptionistPreviewToken error:", e);

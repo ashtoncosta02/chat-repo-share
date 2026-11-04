@@ -6,7 +6,7 @@ import { CallSection } from "@/janice/components/sections/CallSection";
 import { HowSection } from "@/janice/components/sections/HowSection";
 import { ChatSection } from "@/janice/components/sections/ChatSection";
 import { InboxSection } from "@/janice/components/sections/InboxSection";
-import { FeaturesSection } from "@/janice/components/sections/FeaturesSection";
+import { FeaturesSection } from "@/components/landing/PlanFeaturesSection";
 import { AudienceSection } from "@/janice/components/sections/AudienceSection";
 import { PricingSection } from "@/components/landing/PlanPricingSection";
 import { FaqSection } from "@/components/landing/PlanFaqSection";
