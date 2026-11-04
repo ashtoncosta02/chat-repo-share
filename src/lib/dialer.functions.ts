@@ -5,7 +5,6 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { isAllowedNanp, normalize as normalizeE164 } from "@/server/phone-guard.server";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
-const PROJECT_ID = "d1e796ad-671c-47e1-843b-cdecc02fe11f";
 
 const Input = z.object({
   accessToken: z.string().min(1),

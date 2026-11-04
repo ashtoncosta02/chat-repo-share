@@ -19,24 +19,6 @@ export const SCOPES = [
   "https://www.googleapis.com/auth/calendar.events",
 ].join(" ");
 
-function isLocalOrigin(origin: string): boolean {
-  try {
-    const host = new URL(origin).hostname;
-    return host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0";
-  } catch {
-    return false;
-  }
-}
-
-function isPrivatePreviewOrigin(origin: string): boolean {
-  try {
-    const host = new URL(origin).hostname;
-    return host.endsWith(".lovableproject.com") || host.startsWith("id-preview--");
-  } catch {
-    return false;
-  }
-}
-
 export function getRedirectUri(_request: Request): string {
   // Always return the canonical production redirect URI. This is the only value
   // registered in Google Cloud Console, so OAuth works from any origin (preview,

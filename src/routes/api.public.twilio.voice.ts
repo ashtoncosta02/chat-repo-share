@@ -5,7 +5,6 @@ import { registerTwilioCall } from "@/server/elevenlabs-agent.server";
 import { digitsOnly, samePhone } from "@/lib/phone-match";
 import { verifyTwilioSignature, formDataToRecord } from "@/server/twilio-signature.server";
 
-const PROJECT_ID = "d1e796ad-671c-47e1-843b-cdecc02fe11f";
 // ~2 North American ring cycles (2s ring + 4s pause, second ring starts ~6s).
 const RING_DELAY_MS = 7000;
 

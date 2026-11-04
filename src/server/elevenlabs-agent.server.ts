@@ -8,7 +8,6 @@ import { VOICE_TOOL_HEADER, voiceToolCredential } from "./voice-tool-auth.server
 import { buildBookingPromptAddendum, getCalendarConfig } from "./widget-booking-tools";
 
 const EL_BASE = "https://api.elevenlabs.io/v1";
-const PROJECT_ID = "d1e796ad-671c-47e1-843b-cdecc02fe11f";
 
 // Public base URL the ElevenLabs voice agent uses to call our booking webhooks.
 function publicBaseUrl(): string {
