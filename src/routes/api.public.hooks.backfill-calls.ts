@@ -54,6 +54,29 @@ ${credential.hint ? `<p>${credential.hint}</p>` : ""}
           }
         }
 
+        // 1b. Finalize stale call-allowance reservations (no post-call
+        // webhook after 3h) at 0 seconds so they stop holding minutes.
+        let staleReservationsReleased = 0;
+        {
+          const cutoff = new Date(Date.now() - 3 * 3600_000).toISOString();
+          const { data: stale, error: staleErr } = await supabaseAdmin
+            .from("call_allowance_ledger")
+            .select("id")
+            .is("finalized_at", null)
+            .lt("created_at", cutoff)
+            .limit(500);
+          if (staleErr) console.error("backfill-sweep: stale reservation lookup failed:", staleErr.message);
+          for (const row of stale ?? []) {
+            const { error: updErr } = await supabaseAdmin
+              .from("call_allowance_ledger")
+              .update({ actual_seconds: 0, finalized_at: new Date().toISOString() })
+              .eq("id", row.id)
+              .is("finalized_at", null);
+            if (updErr) console.error("backfill-sweep: could not release reservation", row.id, updErr.message);
+            else staleReservationsReleased++;
+          }
+        }
+
         // 2. Drain anything parked by a failed webhook verification.
         const replay = await replayWebhookFailures();
 
@@ -118,6 +141,7 @@ ${credential.hint ? `<p>${credential.hint}</p>` : ""}
             errors,
             recovered,
             widgetChatsNotified: widgetDigest.notified,
+            staleReservationsReleased,
           }),
           { headers: { "Content-Type": "application/json" } },
         );

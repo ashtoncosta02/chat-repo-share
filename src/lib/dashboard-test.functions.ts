@@ -9,8 +9,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export const markConversationAsDashboardTest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { elevenlabsConversationId: string }) => {
-    if (!input?.elevenlabsConversationId || typeof input.elevenlabsConversationId !== "string") {
-      throw new Error("elevenlabsConversationId is required");
+    if (!input?.elevenlabsConversationId || typeof input.elevenlabsConversationId !== "string" || input.elevenlabsConversationId.length > 200) {
+      throw new Error("elevenlabsConversationId is required (max 200 characters)");
     }
     return input;
   })

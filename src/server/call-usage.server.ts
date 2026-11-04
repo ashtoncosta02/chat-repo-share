@@ -29,3 +29,52 @@ export async function callAllowanceCredential(agentId: string) {
   const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(`call-allowance:${agentId}`));
   return Array.from(new Uint8Array(signature), b => b.toString(16).padStart(2,"0")).join("");
 }
+const ALLOWANCE_THRESHOLDS = [100, 80] as const;
+
+/**
+ * After a real call is finalized, email the owner once per billing period when
+ * usage crosses 80% and 100% of the plan's minutes. Never throws.
+ */
+export async function notifyAllowanceThresholds(userId: string): Promise<void> {
+  try {
+    const env = planEnvironment();
+    const { accountPlan } = await import("@/server/plan-access.server");
+    const { plan } = await accountPlan(userId);
+    if (!plan) return;
+    const { data: sub } = await supabaseAdmin.from("subscriptions").select("current_period_start,current_period_end").eq("user_id", userId).eq("environment", env).order("created_at", { ascending: false }).limit(1).maybeSingle();
+    const now = new Date();
+    const start = sub?.current_period_start ?? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+    const end = sub?.current_period_end ?? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)).toISOString();
+    const { data: ledger, error } = await supabaseAdmin.from("call_allowance_ledger").select("actual_seconds,reserved_seconds").eq("user_id", userId).eq("environment", env).eq("period_start", start);
+    if (error) return;
+    const usedSeconds = (ledger ?? []).reduce((n, r) => n + (r.actual_seconds ?? r.reserved_seconds), 0);
+    const limitSeconds = plan.callMinutes * 60;
+    const pct = (usedSeconds / limitSeconds) * 100;
+    const threshold = ALLOWANCE_THRESHOLDS.find((t) => pct >= t);
+    if (!threshold) return;
+
+    const { allowRequestStrict } = await import("@/server/rate-limit.server");
+    const windowSeconds = Math.max(3600, Math.ceil((new Date(end).getTime() - Date.now()) / 1000) + 86400 * 3);
+    if (!(await allowRequestStrict(`allowance-email:${userId}:${start}:${threshold}`, 1, windowSeconds))) return;
+
+    const { data: profile } = await supabaseAdmin.from("profiles").select("email").eq("id", userId).maybeSingle();
+    if (!profile?.email) return;
+    const usedMinutes = Math.round(usedSeconds / 60);
+    const resets = new Date(end).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+    const { sendEmail } = await import("@/server/email.server");
+    const { PUBLIC_APP_ORIGIN } = await import("@/lib/app-origin");
+    const subject = threshold >= 100
+      ? "Your AI Receptionist has reached this month's call minutes"
+      : "You've used 80% of this month's call minutes";
+    const body = threshold >= 100
+      ? `<p>Your receptionist has used all ${plan.callMinutes} call minutes included in your ${plan.name} plan, so it will stop answering calls until your allowance resets on ${resets}.</p>`
+      : `<p>Your receptionist has used about ${usedMinutes} of the ${plan.callMinutes} call minutes included in your ${plan.name} plan. Your allowance resets on ${resets}.</p>`;
+    await sendEmail({
+      to: profile.email,
+      subject,
+      html: `${body}<p><a href="${PUBLIC_APP_ORIGIN}/dashboard/account">Review your plan</a></p>`,
+    });
+  } catch (e) {
+    console.error("notifyAllowanceThresholds failed", e);
+  }
+}
