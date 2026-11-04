@@ -957,6 +957,8 @@ export const adminReplyTicket = createServerFn({ method: "POST" })
     if (error) return { success: false as const, error: error.message };
     // bump ticket updated_at
     await supabaseAdmin.from("tickets").update({ updated_at: new Date().toISOString() }).eq("id", data.ticketId);
+    const { notifyCustomerOfAdminReply } = await import("@/server/ticket-email.server");
+    await notifyCustomerOfAdminReply({ ticketId: data.ticketId, body: data.body });
     return { success: true as const };
   });
 

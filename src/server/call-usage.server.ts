@@ -57,7 +57,7 @@ export async function notifyAllowanceThresholds(userId: string): Promise<void> {
     const windowSeconds = Math.max(3600, Math.ceil((new Date(end).getTime() - Date.now()) / 1000) + 86400 * 3);
     if (!(await allowRequestStrict(`allowance-email:${userId}:${start}:${threshold}`, 1, windowSeconds))) return;
 
-    const { data: profile } = await supabaseAdmin.from("profiles").select("email").eq("id", userId).maybeSingle();
+    const { data: profile } = await supabaseAdmin.from("profiles").select("email").eq("user_id", userId).maybeSingle();
     if (!profile?.email) return;
     const usedMinutes = Math.round(usedSeconds / 60);
     const resets = new Date(end).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });

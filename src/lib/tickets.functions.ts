@@ -26,6 +26,8 @@ export const createTicket = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
+    const { notifySupportOfTicket } = await import("@/server/ticket-email.server");
+    await notifySupportOfTicket({ ticketId: row.id, userId, subject: data.subject, body: data.description, kind: "new" });
     return { success: true as const, ticketId: row.id };
   });
 
@@ -69,6 +71,13 @@ export const replyToTicket = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const { data: ticket } = await supabase
+      .from("tickets")
+      .select("id, subject")
+      .eq("id", data.ticketId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!ticket) throw new Error("Ticket not found");
     const { error } = await supabase.from("ticket_messages").insert({
       ticket_id: data.ticketId,
       sender_id: userId,
@@ -76,7 +85,15 @@ export const replyToTicket = createServerFn({ method: "POST" })
       body: data.body,
     });
     if (error) throw new Error(error.message);
-    await supabase.from("tickets").update({ updated_at: new Date().toISOString(), status: "open" }).eq("id", data.ticketId);
+    // Customers can't update tickets under RLS; ownership was verified above.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin
+      .from("tickets")
+      .update({ updated_at: new Date().toISOString(), status: "open" })
+      .eq("id", ticket.id)
+      .eq("user_id", userId);
+    const { notifySupportOfTicket } = await import("@/server/ticket-email.server");
+    await notifySupportOfTicket({ ticketId: ticket.id, userId, subject: ticket.subject, body: data.body, kind: "reply" });
     return { success: true as const };
   });
 
