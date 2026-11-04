@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { setAnswerMode } from "@/lib/twilio-numbers.functions";
 import { Phone, Clock, Zap, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -38,6 +40,15 @@ export function AnswerModeCard({
   const [phoneDraft, setPhoneDraft] = useState(forwardPhone ?? "");
   const [phoneSaving, setPhoneSaving] = useState(false);
 
+  const setAnswerModeFn = useServerFn(setAnswerMode);
+
+  const save = async (mode: "immediate" | "after_4_rings", phone: string | null) => {
+    const { data: sess } = await supabase.auth.getSession();
+    const accessToken = sess.session?.access_token;
+    if (!accessToken) return { success: false as const, error: "Please sign in again." };
+    return setAnswerModeFn({ data: { accessToken, agentId, mode, forwardPhone: phone } });
+  };
+
   const update = async (next: "immediate" | "after_4_rings") => {
     if (next === value) return;
     if (next === "after_4_rings" && !forwardPhone) {
@@ -45,14 +56,10 @@ export function AnswerModeCard({
       return;
     }
     setSaving(next);
-    const { error } = await supabase
-      .from("agents")
-      .update({ answer_mode: next })
-      .eq("id", agentId);
+    const r = await save(next, forwardPhone);
     setSaving(null);
-    if (error) {
-      toast.error("Couldn't save answer mode.");
-      console.error(error);
+    if (!r.success) {
+      toast.error(r.error || "Couldn't save answer mode.");
       return;
     }
     onChange(next);
@@ -70,26 +77,19 @@ export function AnswerModeCard({
       toast.error("Enter a valid phone number (e.g. +15551234567).");
       return;
     }
+    // Clearing the number while in forward mode flips back to immediate.
+    const mode = !normalized && value === "after_4_rings" ? "immediate" : value;
     setPhoneSaving(true);
-    const { error } = await supabase
-      .from("agents")
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .update({ owner_forward_phone: normalized } as any)
-      .eq("id", agentId);
+    const r = await save(mode, normalized);
     setPhoneSaving(false);
-    if (error) {
-      toast.error("Couldn't save your forwarding number.");
-      console.error(error);
+    if (!r.success) {
+      toast.error(r.error || "Couldn't save your forwarding number.");
       return;
     }
-    onForwardPhoneChange(normalized);
-    setPhoneDraft(normalized ?? "");
-    toast.success(normalized ? "Forwarding number saved." : "Forwarding number cleared.");
-    // If they cleared the number while in forward mode, flip back to immediate.
-    if (!normalized && value === "after_4_rings") {
-      await supabase.from("agents").update({ answer_mode: "immediate" }).eq("id", agentId);
-      onChange("immediate");
-    }
+    onForwardPhoneChange(r.forwardPhone);
+    setPhoneDraft(r.forwardPhone ?? "");
+    if (mode !== value) onChange(mode);
+    toast.success(r.forwardPhone ? "Forwarding number saved." : "Forwarding number cleared.");
   };
 
   return (
