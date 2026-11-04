@@ -3,6 +3,7 @@
 // AI Receptionist, then create or update the agent in ElevenLabs.
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { VOICE_TOOL_HEADER, voiceToolCredential } from "./voice-tool-auth.server";
 import { buildBookingPromptAddendum, getCalendarConfig } from "./widget-booking-tools";
 
 const EL_BASE = "https://api.elevenlabs.io/v1";
@@ -452,6 +453,7 @@ function buildFindSlotsToolConfig(agentDbId: string) {
     api_schema: {
       url: `${publicBaseUrl()}/api/public/voice-tools/find-slots`,
       method: "POST",
+      request_headers: { [VOICE_TOOL_HEADER]: voiceToolCredential(agentDbId) },
       request_body_schema: {
         type: "object",
         required: ["agent_id", "date"],
@@ -476,6 +478,7 @@ function buildBookToolConfig(agentDbId: string) {
     api_schema: {
       url: `${publicBaseUrl()}/api/public/voice-tools/book-appointment`,
       method: "POST",
+      request_headers: { [VOICE_TOOL_HEADER]: voiceToolCredential(agentDbId) },
       request_body_schema: {
         type: "object",
         required: ["agent_id", "start_iso", "customer_name", "customer_phone"],
