@@ -859,8 +859,19 @@ export const adminUpdateProfile = createServerFn({ method: "POST" })
     if (Object.keys(patch).length === 0) {
       return { success: false as const, error: "No fields to update." };
     }
-    const { error } = await supabaseAdmin.from("profiles").update(patch as any).eq("user_id", data.userId);
-    if (error) return { success: false as const, error: error.message };
+    // Email changes go through auth so login identity and profile stay in sync.
+    const { email, ...profilePatch } = patch as { email?: string; display_name?: string };
+    if (email) {
+      const { error: authErr } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
+        email: email.trim().toLowerCase(),
+        email_confirm: true,
+      });
+      if (authErr) return { success: false as const, error: authErr.message };
+    }
+    if (Object.keys(profilePatch).length > 0) {
+      const { error } = await supabaseAdmin.from("profiles").update(profilePatch).eq("user_id", data.userId);
+      if (error) return { success: false as const, error: error.message };
+    }
     console.log(`[admin-edit] ${auth.userId} updated profile for ${data.userId}: ${Object.keys(patch).join(", ")}`);
     return { success: true as const };
   });
@@ -1044,9 +1055,13 @@ export const adminDeleteUser = createServerFn({ method: "POST" })
       .maybeSingle();
     const email = profile?.email ?? null;
 
-    // Delete the auth user — cascades through public tables with FK to auth.users.
-    const { error: delErr } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
-    if (delErr) return { success: false as const, error: delErr.message };
+    // Cancel billing, release paid resources, then delete the auth user.
+    try {
+      const { purgeAccount } = await import("@/server/account-purge.server");
+      await purgeAccount(data.userId);
+    } catch (e) {
+      return { success: false as const, error: e instanceof Error ? e.message : "Delete failed." };
+    }
 
     // Wipe any invitations for this email so the address is free to re-invite.
     if (email) {

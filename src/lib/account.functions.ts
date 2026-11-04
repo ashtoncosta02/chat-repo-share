@@ -9,13 +9,7 @@ export const deleteOwnAccount = createServerFn({ method: "POST" })
   )
   .handler(async ({ context }) => {
     const { userId } = context;
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    // Best-effort cleanup of owned rows; auth.users delete cascades to most.
-    await supabaseAdmin.from("agents").delete().eq("user_id", userId);
-    await supabaseAdmin.from("phone_numbers").delete().eq("user_id", userId);
-    await supabaseAdmin.from("agent_google_calendar").delete().eq("user_id", userId);
-    await supabaseAdmin.from("agent_outlook_calendar").delete().eq("user_id", userId);
-    const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
-    if (error) throw new Error(error.message);
+    const { purgeAccount } = await import("@/server/account-purge.server");
+    await purgeAccount(userId);
     return { success: true as const };
   });

@@ -52,6 +52,7 @@ function InvitePage() {
           revoked: "This invitation has been revoked. Reach out for a new one.",
           already_used: "This invitation has already been used. Please sign in instead.",
           expired: "This invitation has expired. Reach out for a new one.",
+          rate_limited: "Too many attempts. Please wait a while and try again.",
         };
         setState({ kind: "invalid", reason: map[res.reason] ?? "Invalid invite." });
       } else {
