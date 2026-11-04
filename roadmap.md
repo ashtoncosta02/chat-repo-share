@@ -1,0 +1,7 @@
+# Plan pricing and entitlements
+- [x] Correct web, homepage, billing, and app preview pricing while retaining the existing design outside plan comparison.
+- [x] Enforce Essential scenario and transfer restrictions at trusted write/runtime boundaries.
+- [ ] Activate and verify live monthly call allowances: code and usage display are ready; waits for publishing the inbound-check endpoint, then syncing each live receptionist and a real phone test.
+- [x] Verify nine plan rules, desktop/mobile pricing, signed-in account/scenario pages, and app preview dashboard handoff.
+- [ ] Two existing subscriptions remain Elite at $49, verified read-only in Stripe; requested $50 special charges have not been applied.
+- [ ] Public live Stripe prices still use the old offer; new $79/$139 test prices sync on publish.

@@ -17,7 +17,7 @@ const faqs = [
   },
   {
     q: "What happens if she can't answer something?",
-    a: "Janice can transfer the call to you or a teammate instantly for urgent situations, or take a message and send you the full transcript, caller details and a summary by email and SMS.",
+    a: "On Elite, Janice can transfer the call to you or a teammate instantly for urgent situations, or take a message and send you the full transcript, caller details and a summary by email and SMS.",
   },
   {
     q: "Does she work with my calendar?",
@@ -25,7 +25,7 @@ const faqs = [
   },
   {
     q: "Is there a contract?",
-    a: "No contracts. It's $49 per month, cancel any time from your account page. Unlimited calls are included — no per-minute charges.",
+    a: "Essential is $79/month with 200 call minutes and up to 3 scenarios. Elite is $139/month with 750 call minutes, unlimited scenarios and instant human transfer. Both include a 7-day free trial. Cancel anytime.",
   },
   {
     q: "What's your refund policy?",

@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { planEnvironment } from "@/server/plan-access.server";
 
 export const NOT_ENTITLED_MESSAGE =
   "Your plan has ended. Restart your plan from the dashboard to keep using this feature.";
@@ -32,6 +33,7 @@ export async function isEntitled(userId: string): Promise<boolean> {
     .from("subscriptions")
     .select("status, current_period_end")
     .eq("user_id", userId)
+    .eq("environment", planEnvironment())
     .order("created_at", { ascending: false })
     .limit(5);
   if ((subs ?? []).some((s) => subscriptionActive(s as never))) return true;

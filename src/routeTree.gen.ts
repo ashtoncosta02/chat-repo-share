@@ -53,6 +53,7 @@ import { Route as DashboardAgentsAgentIdRouteImport } from './routes/dashboard.a
 import { Route as DashboardConversationsIndexRouteImport } from './routes/dashboard.conversations.index'
 import { Route as DashboardConversationsConversationIdRouteImport } from './routes/dashboard.conversations.$conversationId'
 import { Route as DashboardConversationsBlockedRouteImport } from './routes/dashboard.conversations.blocked'
+import { Route as ApiPublicElevenlabsCallAllowanceRouteImport } from './routes/api.public.elevenlabs.call-allowance'
 import { Route as ApiPublicElevenlabsPostcallRouteImport } from './routes/api.public.elevenlabs.postcall'
 import { Route as ApiPublicGoogleCalendarCallbackRouteImport } from './routes/api.public.google-calendar.callback'
 import { Route as ApiPublicHooksAutoDeleteThreadsRouteImport } from './routes/api.public.hooks.auto-delete-threads'
@@ -60,6 +61,7 @@ import { Route as ApiPublicHooksBackfillCallsRouteImport } from './routes/api.pu
 import { Route as ApiPublicHooksWidgetChatDigestRouteImport } from './routes/api.public.hooks.widget-chat-digest'
 import { Route as ApiPublicOutlookCalendarCallbackRouteImport } from './routes/api.public.outlook-calendar.callback'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api.public.payments.webhook'
+import { Route as ApiPublicTwilioCallDurationRouteImport } from './routes/api.public.twilio.call-duration'
 import { Route as ApiPublicTwilioCallbackRouteImport } from './routes/api.public.twilio.callback'
 import { Route as ApiPublicTwilioDialerBridgeRouteImport } from './routes/api.public.twilio.dialer-bridge'
 import { Route as ApiPublicTwilioSmsRouteImport } from './routes/api.public.twilio.sms'
@@ -302,6 +304,12 @@ const DashboardConversationsBlockedRoute =
     path: '/blocked',
     getParentRoute: () => DashboardConversationsRoute,
   } as any)
+const ApiPublicElevenlabsCallAllowanceRoute =
+  ApiPublicElevenlabsCallAllowanceRouteImport.update({
+    id: '/api/public/elevenlabs/call-allowance',
+    path: '/api/public/elevenlabs/call-allowance',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicElevenlabsPostcallRoute =
   ApiPublicElevenlabsPostcallRouteImport.update({
     id: '/api/public/elevenlabs/postcall',
@@ -342,6 +350,12 @@ const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
     path: '/api/public/payments/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicTwilioCallDurationRoute =
+  ApiPublicTwilioCallDurationRouteImport.update({
+    id: '/api/public/twilio/call-duration',
+    path: '/api/public/twilio/call-duration',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicTwilioCallbackRoute = ApiPublicTwilioCallbackRouteImport.update({
@@ -487,6 +501,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/conversations/blocked': typeof DashboardConversationsBlockedRoute
   '/dashboard/admin/': typeof DashboardAdminIndexRoute
   '/dashboard/conversations/': typeof DashboardConversationsIndexRoute
+  '/api/public/elevenlabs/call-allowance': typeof ApiPublicElevenlabsCallAllowanceRoute
   '/api/public/elevenlabs/postcall': typeof ApiPublicElevenlabsPostcallRoute
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
   '/api/public/hooks/auto-delete-threads': typeof ApiPublicHooksAutoDeleteThreadsRoute
@@ -494,6 +509,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/widget-chat-digest': typeof ApiPublicHooksWidgetChatDigestRoute
   '/api/public/outlook-calendar/callback': typeof ApiPublicOutlookCalendarCallbackRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/twilio/call-duration': typeof ApiPublicTwilioCallDurationRoute
   '/api/public/twilio/callback': typeof ApiPublicTwilioCallbackRoute
   '/api/public/twilio/dialer-bridge': typeof ApiPublicTwilioDialerBridgeRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
@@ -551,6 +567,7 @@ export interface FileRoutesByTo {
   '/dashboard/conversations/blocked': typeof DashboardConversationsBlockedRoute
   '/dashboard/admin': typeof DashboardAdminIndexRoute
   '/dashboard/conversations': typeof DashboardConversationsIndexRoute
+  '/api/public/elevenlabs/call-allowance': typeof ApiPublicElevenlabsCallAllowanceRoute
   '/api/public/elevenlabs/postcall': typeof ApiPublicElevenlabsPostcallRoute
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
   '/api/public/hooks/auto-delete-threads': typeof ApiPublicHooksAutoDeleteThreadsRoute
@@ -558,6 +575,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/widget-chat-digest': typeof ApiPublicHooksWidgetChatDigestRoute
   '/api/public/outlook-calendar/callback': typeof ApiPublicOutlookCalendarCallbackRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/twilio/call-duration': typeof ApiPublicTwilioCallDurationRoute
   '/api/public/twilio/callback': typeof ApiPublicTwilioCallbackRoute
   '/api/public/twilio/dialer-bridge': typeof ApiPublicTwilioDialerBridgeRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
@@ -622,6 +640,7 @@ export interface FileRoutesById {
   '/dashboard/conversations/blocked': typeof DashboardConversationsBlockedRoute
   '/dashboard/admin/': typeof DashboardAdminIndexRoute
   '/dashboard/conversations/': typeof DashboardConversationsIndexRoute
+  '/api/public/elevenlabs/call-allowance': typeof ApiPublicElevenlabsCallAllowanceRoute
   '/api/public/elevenlabs/postcall': typeof ApiPublicElevenlabsPostcallRoute
   '/api/public/google-calendar/callback': typeof ApiPublicGoogleCalendarCallbackRoute
   '/api/public/hooks/auto-delete-threads': typeof ApiPublicHooksAutoDeleteThreadsRoute
@@ -629,6 +648,7 @@ export interface FileRoutesById {
   '/api/public/hooks/widget-chat-digest': typeof ApiPublicHooksWidgetChatDigestRoute
   '/api/public/outlook-calendar/callback': typeof ApiPublicOutlookCalendarCallbackRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/twilio/call-duration': typeof ApiPublicTwilioCallDurationRoute
   '/api/public/twilio/callback': typeof ApiPublicTwilioCallbackRoute
   '/api/public/twilio/dialer-bridge': typeof ApiPublicTwilioDialerBridgeRoute
   '/api/public/twilio/sms': typeof ApiPublicTwilioSmsRoute
@@ -694,6 +714,7 @@ export interface FileRouteTypes {
     | '/dashboard/conversations/blocked'
     | '/dashboard/admin/'
     | '/dashboard/conversations/'
+    | '/api/public/elevenlabs/call-allowance'
     | '/api/public/elevenlabs/postcall'
     | '/api/public/google-calendar/callback'
     | '/api/public/hooks/auto-delete-threads'
@@ -701,6 +722,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/widget-chat-digest'
     | '/api/public/outlook-calendar/callback'
     | '/api/public/payments/webhook'
+    | '/api/public/twilio/call-duration'
     | '/api/public/twilio/callback'
     | '/api/public/twilio/dialer-bridge'
     | '/api/public/twilio/sms'
@@ -758,6 +780,7 @@ export interface FileRouteTypes {
     | '/dashboard/conversations/blocked'
     | '/dashboard/admin'
     | '/dashboard/conversations'
+    | '/api/public/elevenlabs/call-allowance'
     | '/api/public/elevenlabs/postcall'
     | '/api/public/google-calendar/callback'
     | '/api/public/hooks/auto-delete-threads'
@@ -765,6 +788,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/widget-chat-digest'
     | '/api/public/outlook-calendar/callback'
     | '/api/public/payments/webhook'
+    | '/api/public/twilio/call-duration'
     | '/api/public/twilio/callback'
     | '/api/public/twilio/dialer-bridge'
     | '/api/public/twilio/sms'
@@ -828,6 +852,7 @@ export interface FileRouteTypes {
     | '/dashboard/conversations/blocked'
     | '/dashboard/admin/'
     | '/dashboard/conversations/'
+    | '/api/public/elevenlabs/call-allowance'
     | '/api/public/elevenlabs/postcall'
     | '/api/public/google-calendar/callback'
     | '/api/public/hooks/auto-delete-threads'
@@ -835,6 +860,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/widget-chat-digest'
     | '/api/public/outlook-calendar/callback'
     | '/api/public/payments/webhook'
+    | '/api/public/twilio/call-duration'
     | '/api/public/twilio/callback'
     | '/api/public/twilio/dialer-bridge'
     | '/api/public/twilio/sms'
@@ -869,6 +895,7 @@ export interface RootRouteChildren {
   AuthInviteRoute: typeof AuthInviteRoute
   WidgetAgentIdRoute: typeof WidgetAgentIdRoute
   ApiPublicOwnerChatRoute: typeof ApiPublicOwnerChatRoute
+  ApiPublicElevenlabsCallAllowanceRoute: typeof ApiPublicElevenlabsCallAllowanceRoute
   ApiPublicElevenlabsPostcallRoute: typeof ApiPublicElevenlabsPostcallRoute
   ApiPublicGoogleCalendarCallbackRoute: typeof ApiPublicGoogleCalendarCallbackRoute
   ApiPublicHooksAutoDeleteThreadsRoute: typeof ApiPublicHooksAutoDeleteThreadsRoute
@@ -876,6 +903,7 @@ export interface RootRouteChildren {
   ApiPublicHooksWidgetChatDigestRoute: typeof ApiPublicHooksWidgetChatDigestRoute
   ApiPublicOutlookCalendarCallbackRoute: typeof ApiPublicOutlookCalendarCallbackRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
+  ApiPublicTwilioCallDurationRoute: typeof ApiPublicTwilioCallDurationRoute
   ApiPublicTwilioCallbackRoute: typeof ApiPublicTwilioCallbackRoute
   ApiPublicTwilioDialerBridgeRoute: typeof ApiPublicTwilioDialerBridgeRoute
   ApiPublicTwilioSmsRoute: typeof ApiPublicTwilioSmsRoute
@@ -1201,6 +1229,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardConversationsBlockedRouteImport
       parentRoute: typeof DashboardConversationsRoute
     }
+    '/api/public/elevenlabs/call-allowance': {
+      id: '/api/public/elevenlabs/call-allowance'
+      path: '/api/public/elevenlabs/call-allowance'
+      fullPath: '/api/public/elevenlabs/call-allowance'
+      preLoaderRoute: typeof ApiPublicElevenlabsCallAllowanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/elevenlabs/postcall': {
       id: '/api/public/elevenlabs/postcall'
       path: '/api/public/elevenlabs/postcall'
@@ -1248,6 +1283,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/payments/webhook'
       fullPath: '/api/public/payments/webhook'
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/twilio/call-duration': {
+      id: '/api/public/twilio/call-duration'
+      path: '/api/public/twilio/call-duration'
+      fullPath: '/api/public/twilio/call-duration'
+      preLoaderRoute: typeof ApiPublicTwilioCallDurationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/twilio/callback': {
@@ -1516,6 +1558,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthInviteRoute: AuthInviteRoute,
   WidgetAgentIdRoute: WidgetAgentIdRoute,
   ApiPublicOwnerChatRoute: ApiPublicOwnerChatRoute,
+  ApiPublicElevenlabsCallAllowanceRoute: ApiPublicElevenlabsCallAllowanceRoute,
   ApiPublicElevenlabsPostcallRoute: ApiPublicElevenlabsPostcallRoute,
   ApiPublicGoogleCalendarCallbackRoute: ApiPublicGoogleCalendarCallbackRoute,
   ApiPublicHooksAutoDeleteThreadsRoute: ApiPublicHooksAutoDeleteThreadsRoute,
@@ -1523,6 +1566,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksWidgetChatDigestRoute: ApiPublicHooksWidgetChatDigestRoute,
   ApiPublicOutlookCalendarCallbackRoute: ApiPublicOutlookCalendarCallbackRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
+  ApiPublicTwilioCallDurationRoute: ApiPublicTwilioCallDurationRoute,
   ApiPublicTwilioCallbackRoute: ApiPublicTwilioCallbackRoute,
   ApiPublicTwilioDialerBridgeRoute: ApiPublicTwilioDialerBridgeRoute,
   ApiPublicTwilioSmsRoute: ApiPublicTwilioSmsRoute,

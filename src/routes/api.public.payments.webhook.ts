@@ -103,6 +103,15 @@ async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
     .eq('user_id', userId);
 
   if (!existing) await sendWelcomeEmail(userId);
+  await syncPlanConfiguration(userId);
+}
+
+async function syncPlanConfiguration(userId: string) {
+  const { data: agent } = await getSupabase().from('agents').select('id').eq('user_id',userId).maybeSingle();
+  if (!agent) return;
+  const { resyncReceptionistById } = await import('@/server/elevenlabs-agent-resync.server');
+  const result = await resyncReceptionistById(agent.id);
+  if (!result.success) throw new Error(result.error);
 }
 
 async function handleSubscriptionUpdated(subscription: any, env: StripeEnv) {
@@ -121,6 +130,8 @@ async function handleSubscriptionUpdated(subscription: any, env: StripeEnv) {
     })
     .eq('stripe_subscription_id', subscription.id)
     .eq('environment', env);
+  const { data: saved } = await getSupabase().from('subscriptions').select('user_id').eq('stripe_subscription_id',subscription.id).eq('environment',env).maybeSingle();
+  if (saved) await syncPlanConfiguration(saved.user_id);
 }
 
 async function handleSubscriptionDeleted(subscription: any, env: StripeEnv) {

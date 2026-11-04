@@ -15,13 +15,13 @@ import { Reveal } from "./Reveal";
 
 const smallFeatures = [
   { icon: Bot, label: "1 AI receptionist trained on your business" },
-  { icon: Phone, label: "Unlimited calls, 24/7" },
+  { icon: Phone, label: "24/7 answering: 200 or 750 minutes/month" },
   { icon: UserPlus, label: "Lead capture — name, phone & email saved automatically" },
   { icon: FileText, label: "Full conversation transcripts" },
   { icon: BarChart3, label: "Analytics — call volume, peak hours, leads" },
   { icon: MessageSquare, label: "SMS follow-up after every call (optional)" },
   { icon: MessageCircle, label: "Live chat widget for your website" },
-  { icon: PhoneForwarded, label: "Instant human transfer for emergencies" },
+  { icon: PhoneForwarded, label: "Instant human transfer for emergencies — Elite" },
   { icon: PhoneCall, label: "One-click callback from your leads dashboard" },
   { icon: Rocket, label: "Full setup included — ready in minutes" },
 ];
@@ -36,7 +36,7 @@ export function Features() {
             Everything included — no add-ons
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            One plan, one price, every feature switched on from day one.
+            Essential and Elite, with clear monthly call allowances.
           </p>
         </Reveal>
 

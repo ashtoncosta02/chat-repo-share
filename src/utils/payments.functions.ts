@@ -6,6 +6,7 @@ import {
   getStripeErrorMessage,
 } from "@/lib/stripe.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { isPlanId, TRIAL_DAYS } from "@/lib/plans";
 
 const ALLOWED_RETURN_HOSTS = new Set([
   "askjanice.net",
@@ -33,7 +34,6 @@ function safeReturnUrl(raw: string | undefined): string | undefined {
   return u.toString();
 }
 
-const TRIAL_DAYS = 7;
 
 type CheckoutSessionResult = { clientSecret: string } | { error: string };
 type PortalSessionResult = { url: string } | { error: string };
@@ -84,7 +84,8 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       /** When set, Stripe collects the card but charges $0 for this many days. */
       trialDays?: number;
     }) => {
-      if (!/^[a-zA-Z0-9_-]+$/.test(data.priceId)) throw new Error("Invalid priceId");
+      if (!isPlanId(data.priceId)) throw new Error("Choose Essential or Elite.");
+      if (data.environment !== "sandbox" && data.environment !== "live") throw new Error("Invalid payment environment");
       if (data.trialDays !== undefined) {
         if (data.trialDays !== TRIAL_DAYS) {
           throw new Error("Invalid trial length");
@@ -100,6 +101,8 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       // Never trust a client-supplied account: the checkout is always bound to
       // the authenticated caller.
       const userId = context.userId;
+      const { data: current } = await context.supabase.from("subscriptions").select("status,current_period_end").eq("user_id",userId).eq("environment",data.environment).order("created_at",{ ascending:false }).limit(1).maybeSingle();
+      if (current && ((["active","trialing","past_due"].includes(current.status) && (!current.current_period_end || new Date(current.current_period_end).getTime()>Date.now())) || (current.status === "canceled" && current.current_period_end && new Date(current.current_period_end).getTime()>Date.now()))) return { error: "You already have a plan. Manage it from Subscription & billing instead of opening another subscription." };
       const email =
         typeof context.claims?.email === "string" ? (context.claims.email as string) : undefined;
 
@@ -113,11 +116,13 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       // Trial length is fixed server-side and only offered to accounts that
       // have never had a subscription before.
       let trialEligible = false;
-      if (isRecurring && data.trialDays) {
-        const { count } = await context.supabase
+      if (isRecurring) {
+        const { count, error: historyError } = await context.supabase
           .from("subscriptions")
           .select("id", { count: "exact", head: true })
-          .eq("user_id", userId);
+          .eq("user_id", userId)
+          .eq("environment", data.environment);
+        if (historyError) throw new Error(historyError.message);
         trialEligible = (count ?? 0) === 0;
       }
       const withTrial = trialEligible;
