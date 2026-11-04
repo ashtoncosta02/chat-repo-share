@@ -80,9 +80,6 @@ export function ChatWidgetPage() {
     setDraftInstructions(selected.widget_instructions || "");
   }, [selectedId]);
 
-  const origin =
-    typeof window !== "undefined" ? window.location.origin : "";
-
   const scriptTag = selected
     ? `<script src="${PUBLIC_APP_ORIGIN}/api/public/widget/embed.js?agent=${selected.id}" async></script>`
     : "";

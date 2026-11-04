@@ -11,6 +11,8 @@ async function getEl() {
 }
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
+const ELEVENLABS_INBOUND_VOICE_URL = "https://api.elevenlabs.io/twilio/inbound_call";
+const ELEVENLABS_INBOUND_SMS_URL = "https://api.elevenlabs.io/twilio/inbound-sms";
 
 /**
  * Best-effort: import a Twilio number into ElevenLabs and link it to the
@@ -399,22 +401,40 @@ export const syncTwilioWebhooks = createServerFn({ method: "POST" })
 
     const { data: row, error: fetchErr } = await supabaseAdmin
       .from("phone_numbers")
-      .select("id, twilio_sid")
+      .select("id, twilio_sid, agent_id, elevenlabs_phone_number_id")
       .eq("id", data.phoneNumberId)
       .eq("user_id", auth.userId)
       .maybeSingle();
     if (fetchErr || !row) return { success: false as const, error: "Number not found." };
 
+    let answerMode: string | null = null;
+    if (row.agent_id) {
+      const { data: agent } = await supabaseAdmin
+        .from("agents")
+        .select("answer_mode")
+        .eq("id", row.agent_id)
+        .eq("user_id", auth.userId)
+        .maybeSingle();
+      answerMode = agent?.answer_mode ?? null;
+    }
+
     try {
-      const PROJECT_ID = "d1e796ad-671c-47e1-843b-cdecc02fe11f";
-      // Use the -dev subdomain so webhooks work before the project is published.
-      const baseUrl = `https://project--${PROJECT_ID}-dev.lovable.app`;
-      const body = new URLSearchParams({
-        SmsUrl: `${baseUrl}/api/public/twilio/sms`,
-        SmsMethod: "POST",
-        VoiceUrl: `${baseUrl}/api/public/twilio/voice`,
-        VoiceMethod: "POST",
-      });
+      // Numbers linked to ElevenLabs answer directly; keep them there unless
+      // the owner chose "ring my cell first", which needs our voice webhook.
+      const keepElevenLabs = Boolean(row.elevenlabs_phone_number_id) && answerMode !== "after_4_rings";
+      const body = keepElevenLabs
+        ? new URLSearchParams({
+            SmsUrl: ELEVENLABS_INBOUND_SMS_URL,
+            SmsMethod: "POST",
+            VoiceUrl: ELEVENLABS_INBOUND_VOICE_URL,
+            VoiceMethod: "POST",
+          })
+        : new URLSearchParams({
+            SmsUrl: `${PUBLIC_APP_ORIGIN}/api/public/twilio/sms`,
+            SmsMethod: "POST",
+            VoiceUrl: `${PUBLIC_APP_ORIGIN}/api/public/twilio/voice`,
+            VoiceMethod: "POST",
+          });
       const res = await fetch(
         `${GATEWAY_URL}/IncomingPhoneNumbers/${row.twilio_sid}.json`,
         {
@@ -443,6 +463,92 @@ export const syncTwilioWebhooks = createServerFn({ method: "POST" })
       };
     }
   });
+
+const SetAnswerModeInput = z.object({
+  accessToken: z.string().min(1),
+  agentId: z.string().uuid(),
+  mode: z.enum(["immediate", "after_4_rings"]),
+  forwardPhone: z.string().max(40).nullable(),
+});
+
+async function setTwilioVoiceUrl(twilioSid: string, voiceUrl: string) {
+  const res = await fetch(`${GATEWAY_URL}/IncomingPhoneNumbers/${twilioSid}.json`, {
+    method: "POST",
+    headers: { ...gatewayHeaders(), "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ VoiceUrl: voiceUrl, VoiceMethod: "POST" }),
+  });
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    throw new Error(`Twilio ${res.status}: ${t.slice(0, 200)}`);
+  }
+}
+
+/**
+ * Saves answer mode + forwarding phone, then points the agent's
+ * ElevenLabs-linked numbers at the right voice URL. Numbers not linked to
+ * ElevenLabs already use our voice webhook, which reads answer_mode per call.
+ * On Twilio failure the saved fields (and any already-switched numbers) are restored.
+ */
+export const setAnswerMode = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => SetAnswerModeInput.parse(input))
+  .handler(async ({ data }) => {
+    const supabaseAdmin = await getAdmin();
+    const auth = await getAuthenticatedUserId(data.accessToken);
+    if ("error" in auth) return { success: false as const, error: auth.error };
+
+    const { normalize, isAllowedNanp, DISALLOWED_NUMBER_MESSAGE } = await import("@/server/phone-guard.server");
+    let forward: string | null = null;
+    if (data.forwardPhone && data.forwardPhone.trim()) {
+      forward = normalize(data.forwardPhone);
+      if (!forward) return { success: false as const, error: "Enter a valid phone number (e.g. +15551234567)." };
+      if (!isAllowedNanp(forward)) return { success: false as const, error: DISALLOWED_NUMBER_MESSAGE };
+    }
+    if (data.mode === "after_4_rings" && !forward) {
+      return { success: false as const, error: "Add your personal cell first so we know where to forward." };
+    }
+
+    const { data: agent, error: agentErr } = await supabaseAdmin
+      .from("agents")
+      .select("id, answer_mode, owner_forward_phone")
+      .eq("id", data.agentId)
+      .eq("user_id", auth.userId)
+      .maybeSingle();
+    if (agentErr || !agent) return { success: false as const, error: "Receptionist not found." };
+
+    const old = { answer_mode: agent.answer_mode, owner_forward_phone: agent.owner_forward_phone };
+    const { error: saveErr } = await supabaseAdmin
+      .from("agents")
+      .update({ answer_mode: data.mode, owner_forward_phone: forward })
+      .eq("id", agent.id);
+    if (saveErr) return { success: false as const, error: "Couldn't save answer mode." };
+
+    if (old.answer_mode === data.mode) return { success: true as const, answerMode: data.mode, forwardPhone: forward };
+
+    const { data: numbers } = await supabaseAdmin
+      .from("phone_numbers")
+      .select("twilio_sid, elevenlabs_phone_number_id")
+      .eq("agent_id", agent.id)
+      .eq("user_id", auth.userId);
+    const linked = (numbers ?? []).filter((n) => n.twilio_sid && n.elevenlabs_phone_number_id);
+    const targetUrl = data.mode === "after_4_rings" ? `${PUBLIC_APP_ORIGIN}/api/public/twilio/voice` : ELEVENLABS_INBOUND_VOICE_URL;
+    const previousUrl = data.mode === "after_4_rings" ? ELEVENLABS_INBOUND_VOICE_URL : `${PUBLIC_APP_ORIGIN}/api/public/twilio/voice`;
+    const switched: string[] = [];
+    try {
+      for (const n of linked) {
+        await setTwilioVoiceUrl(n.twilio_sid as string, targetUrl);
+        switched.push(n.twilio_sid as string);
+      }
+    } catch (e) {
+      console.error("setAnswerMode: Twilio update failed", e);
+      for (const sid of switched) {
+        await setTwilioVoiceUrl(sid, previousUrl).catch((err) => console.error("setAnswerMode: rollback failed", err));
+      }
+      await supabaseAdmin.from("agents").update(old).eq("id", agent.id);
+      return { success: false as const, error: "Couldn't update your phone number's call routing. Nothing was changed — please try again." };
+    }
+    return { success: true as const, answerMode: data.mode, forwardPhone: forward };
+  });
+
 const LinkExistingInput = z.object({
   accessToken: z.string().min(1),
   phoneNumberId: z.string().uuid(),
