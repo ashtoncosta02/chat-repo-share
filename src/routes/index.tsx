@@ -5,8 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { JanicePlansLanding } from "@/components/landing/JanicePlansLanding";
 
-const OG_IMAGE =
-  "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/bdf233e4-c52b-4b09-802c-6f9c4dad8519/id-preview-970c1d47--d1e796ad-671c-47e1-843b-cdecc02fe11f.lovable.app-1782442129187.png";
+const OG_IMAGE = "https://askjanice.net/og-image.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -26,6 +25,10 @@ export const Route = createFileRoute("/")({
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://askjanice.net/" },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:image", content: OG_IMAGE },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { name: "twitter:image", content: OG_IMAGE },
     ],
     links: [{ rel: "canonical", href: "https://askjanice.net/" }],
     scripts: [

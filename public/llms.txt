@@ -1,16 +1,19 @@
 # Ask Janice
 
-> Ask Janice is an AI receptionist for local businesses. It answers your calls 24/7, sounds like a real receptionist, captures every lead, and books appointments straight into your calendar.
+> Ask Janice is an AI receptionist for local businesses. It answers your calls 24/7, captures every lead, and books appointments straight into your calendar.
 
-Ask Janice also includes a live chat bot for your website, SMS follow-up, call transfers, and calendar booking. One plan: $49/mo, unlimited calls, no contracts.
+Ask Janice also includes a live chat bot for your website, SMS follow-up, and calendar booking. Two plans, both with a 7-day free trial and no contracts:
+
+- Essential — $79/month, includes 200 call minutes per month and up to 3 call scenarios.
+- Elite — $139/month, includes 750 call minutes per month, unlimited scenarios, and call transfers to a person.
 
 ## Pages
 
 - [Home](/): What Ask Janice does, how it works, and customer use cases.
-- [Pricing](/pricing): Elite plan — $49/mo, unlimited calls, 24/7 answering, lead capture and booking.
+- [Pricing](/pricing): Essential ($79/month, 200 call minutes) and Elite ($139/month, 750 call minutes), each with a 7-day free trial.
 - [Privacy Policy](/privacy): How Ask Janice collects, uses, and protects data.
 - [Terms of Service](/terms): Terms for using Ask Janice.
-- [Refund Policy](/refund-policy): 30-day money-back guarantee details.
+- [Refund Policy](/refund-policy): Refund details.
 
 ## Optional
 

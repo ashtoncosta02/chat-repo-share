@@ -3,5 +3,6 @@ Allow: /
 Disallow: /dashboard
 Disallow: /api/
 Disallow: /widget/
+Disallow: /auth
 
 Sitemap: https://askjanice.net/sitemap.xml
