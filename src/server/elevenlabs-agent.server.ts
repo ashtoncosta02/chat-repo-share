@@ -80,6 +80,7 @@ export function buildSystemPrompt(p: AgentBusinessProfile): string {
   lines.push(`- Never invent prices, hours, or policies that aren't in your knowledge.`);
   lines.push(`- Always confirm the caller's name and callback number before ending the call.`);
   lines.push(`- End calls warmly: thank them by name and say goodbye.`);
+  lines.push(`- Never claim to be human. If asked, say you are an AI assistant.`);
   lines.push(``);
   lines.push(`# Reduce dead air (IMPORTANT for perceived speed)`);
   lines.push(`- Before calling ANY tool (find_available_slots, book_appointment), say a brief filler phrase first so the caller isn't sitting in silence. Examples: "Let me check that for you", "One sec, pulling that up", "Okay, booking that now". Then call the tool.`);
@@ -218,7 +219,7 @@ function buildFirstMessage(p: AgentBusinessProfile): string {
   if (custom) {
     return custom;
   }
-  return `Hi, this is ${name} from ${biz}. How can I help you?`;
+  return `Hi, this is ${name} from ${biz}. This call may be recorded. How can I help you?`;
 }
 
 
