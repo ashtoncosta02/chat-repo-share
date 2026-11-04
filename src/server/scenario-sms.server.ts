@@ -1,6 +1,8 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { coerceScenarios } from "@/lib/scenarios";
 import { sendSms } from "@/server/sms.server";
+import { isAllowedNanp, normalize } from "@/server/phone-guard.server";
+import { allowRequest, sha256Hex } from "@/server/rate-limit.server";
 
 interface Params {
   agentId: string;
@@ -24,6 +26,11 @@ interface Params {
  */
 export async function sendScenarioPostCallSms(p: Params): Promise<void> {
   if (!p.callerNumber || p.turns.length === 0) return;
+  const toNumber = normalize(p.callerNumber);
+  if (!toNumber || !isAllowedNanp(toNumber)) {
+    console.warn("scenario-sms: skipped — destination is not an allowed US/Canada number");
+    return;
+  }
   if (p.startedAt) {
     const ageMs = Date.now() - new Date(p.startedAt).getTime();
     if (Number.isFinite(ageMs) && ageMs > 60 * 60 * 1000) {
@@ -86,8 +93,16 @@ export async function sendScenarioPostCallSms(p: Params): Promise<void> {
       console.log(`scenario-sms: skip already-sent SMS for intent "${s.intent}"`);
       continue;
     }
+    if (!(await allowRequest(`scenario-sms:to:${sha256Hex(toNumber)}`, 3, 86400))) {
+      console.warn("scenario-sms: skipped — daily cap for this destination reached");
+      return;
+    }
+    if (!(await allowRequest(`scenario-sms:agent:${p.agentId}`, 100, 86400))) {
+      console.warn("scenario-sms: skipped — daily cap for this agent reached");
+      return;
+    }
     try {
-      await sendSms({ to: p.callerNumber, from, body });
+      await sendSms({ to: toNumber, from, body });
       console.log(`scenario-sms: sent post-call SMS for intent "${s.intent}"`);
       if (p.dedupeThreadId) {
         await supabaseAdmin.from("messages").insert({
