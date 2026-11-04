@@ -6,6 +6,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { ELITE_PRICE_ID, getStripeEnvironment } from "@/lib/stripe";
 import { PlanOptions } from "@/components/PlanOptions";
+import { CallAllowance } from "@/components/dashboard/CallAllowance";
 import { planForPrice } from "@/lib/plans";
 import { createPortalSession } from "@/utils/payments.functions";
 
@@ -127,6 +128,7 @@ export function BillingSection() {
           </div>
 
           {checkoutElement}
+          <CallAllowance />
 
           <p className="mt-3 text-xs text-muted-foreground">
             Payments are handled securely by Stripe. Cancel anytime from the billing portal — you

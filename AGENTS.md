@@ -1,3 +1,6 @@
 # Architecture rules
 
 - Key the conversation detail content by the selected conversation ID so navigating between calls resets call-specific state and cannot mix the previous call's history or recording with the new call.
+- Keep src/janice frozen; editable homepage pricing/copy uses presentation copies outside that directory and reuses untouched original sections.
+- Resolve plan entitlements from trusted environment-filtered subscription price IDs; validate scenarios in the database and voice configuration, not just the editor.
+- Meter calls using an owner-scoped durable reservation ledger, never deletable conversation history; provider duration limits and authenticated inbound initiation checks enforce admission.
