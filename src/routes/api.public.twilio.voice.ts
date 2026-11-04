@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { registerTwilioCall } from "@/server/elevenlabs-agent.server";
+import { digitsOnly, samePhone } from "@/lib/phone-match";
 import { verifyTwilioSignature, formDataToRecord } from "@/server/twilio-signature.server";
 
 const PROJECT_ID = "d1e796ad-671c-47e1-843b-cdecc02fe11f";
@@ -145,13 +146,4 @@ function escapeXml(s: string) {
   return s.replace(/[<>&'"]/g, (c) =>
     c === "<" ? "&lt;" : c === ">" ? "&gt;" : c === "&" ? "&amp;" : c === "'" ? "&apos;" : "&quot;",
   );
-}
-
-function digitsOnly(phone: string) {
-  return phone.replace(/\D/g, "");
-}
-
-function samePhone(aDigits: string, bPhone: string) {
-  const bDigits = digitsOnly(bPhone);
-  return Boolean(aDigits && bDigits && (aDigits.endsWith(bDigits) || bDigits.endsWith(aDigits)));
 }
