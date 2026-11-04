@@ -1,4 +1,5 @@
 # Plan pricing and entitlements
+- [ ] Connect each business's customer inbox and enable Janice email handling; waiting for Gmail app-user connection setup and confirmation of Gmail permissions approval.
 - [x] Correct web, homepage, billing, and app preview pricing while retaining the existing design outside plan comparison.
 - [x] Enforce Essential scenario and transfer restrictions at trusted write/runtime boundaries.
 - [ ] Activate and verify live monthly call allowances: code and usage display are ready; waits for publishing the inbound-check endpoint, then syncing each live receptionist and a real phone test.
