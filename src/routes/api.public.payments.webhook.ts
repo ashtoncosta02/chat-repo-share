@@ -22,21 +22,19 @@ async function sendWelcomeEmail(userId: string) {
     const { sendEmail } = await import('@/server/email.server');
     await sendEmail({
       to: email,
-      subject: 'Welcome to Ask Janice — your receptionist is live',
+      subject: 'Welcome to Ask Janice — your trial has started',
       html: `
         <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#1a1a1a">
           <h1 style="font-size:22px;margin:0 0 12px">Welcome aboard 🎉</h1>
           <p style="font-size:15px;line-height:1.6;margin:0 0 14px">
-            Your Ask Janice subscription is active. Your AI receptionist is ready to answer calls,
-            capture leads and book appointments 24/7.
-          </p>
-          <p style="font-size:15px;line-height:1.6;margin:0 0 14px">
-            Head to your dashboard to fine-tune your greeting, FAQs and scenarios:
+            Your Ask Janice free trial or subscription has started. The next step is setting up
+            your AI receptionist — add your business details, greeting and phone number so it can
+            start answering calls, capturing leads and booking appointments.
           </p>
           <p style="margin:0 0 20px">
             <a href="https://askjanice.net/dashboard"
                style="background:#6b21a8;color:#fff;text-decoration:none;padding:11px 20px;border-radius:8px;font-size:15px;display:inline-block">
-              Open my dashboard
+              Finish setting up
             </a>
           </p>
           <p style="font-size:13px;color:#666;line-height:1.6;margin:0">
@@ -46,6 +44,72 @@ async function sendWelcomeEmail(userId: string) {
     });
   } catch (e) {
     console.error('welcome email failed', e);
+  }
+}
+
+async function emailForUser(userId: string): Promise<string | null> {
+  const { data } = await getSupabase().auth.admin.getUserById(userId);
+  return data?.user?.email ?? null;
+}
+
+function billingButton(label: string) {
+  return `<p style="margin:0 0 20px"><a href="https://askjanice.net/dashboard/account"
+    style="background:#6b21a8;color:#fff;text-decoration:none;padding:11px 20px;border-radius:8px;font-size:15px;display:inline-block">${label}</a></p>`;
+}
+
+async function sendTrialEndingEmail(subscription: any) {
+  try {
+    const userId = subscription.metadata?.userId;
+    if (!userId) return;
+    const email = await emailForUser(userId);
+    if (!email) return;
+    const { planForPrice } = await import('@/lib/plans');
+    const plan = planForPrice(readItem(subscription).priceId);
+    const planText = plan ? `${plan.name} plan ($${plan.monthlyPrice}/month)` : 'your plan';
+    const endDate = subscription.trial_end
+      ? new Date(subscription.trial_end * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+      : 'soon';
+    const { sendEmail } = await import('@/server/email.server');
+    await sendEmail({
+      to: email,
+      subject: `Your Ask Janice trial ends ${endDate}`,
+      html: `<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#1a1a1a">
+        <p style="font-size:15px;line-height:1.6">Your free trial ends on <strong>${endDate}</strong>.</p>
+        <p style="font-size:15px;line-height:1.6">After that, your subscription to the ${planText} renews automatically unless you cancel before the trial ends.</p>
+        ${billingButton('Manage my plan')}
+      </div>`,
+    });
+  } catch (e) {
+    console.error('trial ending email failed', e);
+  }
+}
+
+async function sendPaymentFailedEmail(invoice: any, env: StripeEnv) {
+  try {
+    const customerId = typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id;
+    if (!customerId) return;
+    const { data: sub } = await getSupabase()
+      .from('subscriptions')
+      .select('user_id')
+      .eq('stripe_customer_id', customerId)
+      .eq('environment', env)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const email = (sub?.user_id && (await emailForUser(sub.user_id))) || invoice.customer_email;
+    if (!email) return;
+    const { sendEmail } = await import('@/server/email.server');
+    await sendEmail({
+      to: email,
+      subject: 'Action needed: your Ask Janice payment failed',
+      html: `<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#1a1a1a">
+        <p style="font-size:15px;line-height:1.6">We couldn't process your latest payment for Ask Janice.</p>
+        <p style="font-size:15px;line-height:1.6">Please update your card so your AI receptionist keeps answering calls.</p>
+        ${billingButton('Update my card')}
+      </div>`,
+    });
+  } catch (e) {
+    console.error('payment failed email failed', e);
   }
 }
 
@@ -155,6 +219,12 @@ async function handleWebhook(req: Request, env: StripeEnv) {
       break;
     case 'customer.subscription.deleted':
       await handleSubscriptionDeleted(event.data.object, env);
+      break;
+    case 'customer.subscription.trial_will_end':
+      await sendTrialEndingEmail(event.data.object);
+      break;
+    case 'invoice.payment_failed':
+      await sendPaymentFailedEmail(event.data.object, env);
       break;
     default:
       console.log('Unhandled payment event:', event.type);
