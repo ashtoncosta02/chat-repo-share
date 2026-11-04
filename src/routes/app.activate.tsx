@@ -4,11 +4,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { Check, PartyPopper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFunnel } from "@/components/app-funnel/funnel-context";
+import { PlanOptions } from "@/components/PlanOptions";
+import { PLANS, type PlanId } from "@/lib/plans";
 
 export const Route = createFileRoute("/app/activate")({
   head: () => ({
     meta: [
       { title: "Activate Janice — Ask Janice app" },
+      { name: "description", content: "Choose Essential at $79/month or Elite at $139/month for your Ask Janice AI Receptionist." },
+      { property: "og:title", content: "Activate Janice — Ask Janice app" },
+      { property: "og:description", content: "Essential and Elite plans, both with a 7-day free trial." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -25,6 +32,7 @@ const INCLUDED = [
 function ActivateStep() {
   const { data } = useFunnel();
   const [activated, setActivated] = useState(false);
+  const [planId, setPlanId] = useState<PlanId>("essential_monthly");
   const [signedIn, setSignedIn] = useState(false);
   useEffect(() => {
     supabase.auth.getSession().then(({ data: s }) => setSignedIn(!!s.session));
@@ -62,27 +70,11 @@ function ActivateStep() {
         Activate Janice
       </h1>
       <p className="mt-2 text-muted-foreground">
-        One plan, everything included. Start with a 7-day free trial — cancel
+        Two plans. Both include a 7-day free trial — cancel
         anytime.
       </p>
 
-      <div className="mt-6 rounded-2xl border border-primary bg-card p-5">
-        <div className="flex items-baseline gap-1">
-          <span className="font-display text-4xl font-bold text-foreground">$49</span>
-          <span className="text-muted-foreground">/month</span>
-        </div>
-        <p className="mt-1 text-sm font-medium text-gold-foreground">
-          7-day free trial included
-        </p>
-        <ul className="mt-4 space-y-2">
-          {INCLUDED.map((item) => (
-            <li key={item} className="flex gap-2 text-sm text-foreground">
-              <Check className="h-4 w-4 shrink-0 text-gold-foreground mt-0.5" />
-              {item}
-            </li>
-          ))}
-        </ul>
-      </div>
+      <PlanOptions preview onSelect={setPlanId} />
 
       <div className="mt-6 rounded-xl border border-border bg-muted/50 p-4">
         <p className="text-xs text-muted-foreground">
@@ -95,7 +87,7 @@ function ActivateStep() {
 
       <div className="mt-auto pt-8">
         <Button size="lg" className="w-full" onClick={() => setActivated(true)}>
-          Start free trial
+          Preview {PLANS[planId].name} activation
         </Button>
         <p className="mt-3 text-center text-xs text-muted-foreground">
           Design preview — no payment is taken.
