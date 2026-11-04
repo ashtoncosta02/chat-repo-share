@@ -389,6 +389,7 @@ export async function createElevenLabsAgent(
   }
   const json = (await res.json()) as { agent_id?: string };
   if (!json.agent_id) throw new Error("ElevenLabs returned no agent_id");
+  await configureCallAllowance(json.agent_id);
   return { agent_id: json.agent_id };
 }
 
@@ -412,6 +413,21 @@ export async function updateElevenLabsAgent(
     const t = await res.text();
     throw new Error(`ElevenLabs update agent failed (${res.status}): ${t}`);
   }
+  await configureCallAllowance(agentId);
+}
+
+async function configureCallAllowance(agentId: string) {
+  const { callAllowanceCredential } = await import("@/server/call-usage.server");
+  const credential = await callAllowanceCredential(agentId);
+  const response = await fetch(`${EL_BASE}/convai/agents/${agentId}`, {
+    method: "PATCH", headers: { "xi-api-key": requireKey(), "Content-Type": "application/json" },
+    body: JSON.stringify({ platform_settings: {
+      auth: { enable_auth: true },
+      overrides: { enable_conversation_initiation_client_data_from_webhook: true, conversation_config_override: { conversation: { max_duration_seconds: true } } },
+      workspace_overrides: { conversation_initiation_client_data_webhook: { url: "https://askjanice.net/api/public/elevenlabs/call-allowance", request_headers: { "x-janice-call-allowance": credential } } },
+    } }),
+  });
+  if (!response.ok) throw new Error("Could not configure the receptionist's call allowance.");
 }
 
 // ----- Booking webhook tool sync (find_slots + book_appointment) -----
@@ -698,20 +714,18 @@ export async function registerTwilioCall(opts: {
   firstMessage?: string;
 }): Promise<string> {
   const apiKey = requireKey();
+  const { reserveAgentCall } = await import("@/server/call-usage.server");
+  const reservation = await reserveAgentCall(opts.agentId, `register:${crypto.randomUUID()}`);
   const body: Record<string, unknown> = {
     agent_id: opts.agentId,
     from_number: opts.fromNumber,
     to_number: opts.toNumber,
     direction: opts.direction,
   };
-  if ((opts.dynamicVariables && Object.keys(opts.dynamicVariables).length > 0) || opts.firstMessage) {
+  {
     body.conversation_initiation_client_data = {
-      ...(opts.firstMessage
-        ? { conversation_config_override: { agent: { first_message: opts.firstMessage } } }
-        : {}),
-      ...(opts.dynamicVariables && Object.keys(opts.dynamicVariables).length > 0
-        ? { dynamic_variables: opts.dynamicVariables }
-        : {}),
+      conversation_config_override: { conversation: { max_duration_seconds: reservation.seconds }, ...(opts.firstMessage ? { agent: { first_message: opts.firstMessage } } : {}) },
+      dynamic_variables: { ...opts.dynamicVariables, janice_call_reservation: reservation.reservationId },
     };
   }
 
@@ -745,19 +759,17 @@ export async function placeOutboundCall(opts: {
   firstMessage?: string;
 }): Promise<{ conversation_id: string | null; call_sid: string | null }> {
   const apiKey = requireKey();
+  const { reserveAgentCall } = await import("@/server/call-usage.server");
+  const reservation = await reserveAgentCall(opts.agentId, `outbound:${crypto.randomUUID()}`);
   const body: Record<string, unknown> = {
     agent_id: opts.agentId,
     agent_phone_number_id: opts.agentPhoneNumberId,
     to_number: opts.toNumber,
   };
-  if ((opts.dynamicVariables && Object.keys(opts.dynamicVariables).length > 0) || opts.firstMessage) {
+  {
     body.conversation_initiation_client_data = {
-      ...(opts.firstMessage
-        ? { conversation_config_override: { agent: { first_message: opts.firstMessage } } }
-        : {}),
-      ...(opts.dynamicVariables && Object.keys(opts.dynamicVariables).length > 0
-        ? { dynamic_variables: opts.dynamicVariables }
-        : {}),
+      conversation_config_override: { conversation: { max_duration_seconds: reservation.seconds }, ...(opts.firstMessage ? { agent: { first_message: opts.firstMessage } } : {}) },
+      dynamic_variables: { ...opts.dynamicVariables, janice_call_reservation: reservation.reservationId },
     };
   }
 

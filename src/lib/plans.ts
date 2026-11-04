@@ -10,7 +10,7 @@ export function isPlanId(value: string): value is PlanId {
 export function planForPrice(value: string | undefined | null) {
   return value && isPlanId(value) ? PLANS[value] : null;
 }
-export function validatePlanScenarios(priceId: string, scenarios: Array<{ action?: { type?: string } }>) {
+export function validatePlanScenarios(priceId: string, scenarios: Array<{ action?: { type?: string } | null }>) {
   const plan = planForPrice(priceId);
   if (!plan) throw new Error("Select an active plan before saving scenarios.");
   if (plan.scenarioLimit !== null && scenarios.length > plan.scenarioLimit) throw new Error("Essential includes up to 3 scenarios. Choose Elite for more.");
