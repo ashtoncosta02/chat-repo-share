@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { callAllowanceCredential, reserveAgentCall } from "@/server/call-usage.server";
 
 export const Route = createFileRoute("/api/public/elevenlabs/call-allowance")({
-  server: { handlers: { POST: async ({ request }) => {
+  server: { handlers: { GET: () => Response.json({ call_allowance_ready: true }), POST: async ({ request }) => {
     try {
       const input = await request.json() as { agent_id?: string; conversation_id?: string; call_sid?: string };
       if (!input.agent_id || !input.conversation_id) return new Response("Invalid call", { status: 400 });

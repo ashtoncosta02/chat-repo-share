@@ -417,6 +417,9 @@ export async function updateElevenLabsAgent(
 }
 
 async function configureCallAllowance(agentId: string) {
+  // Do not point an existing live phone number at a not-yet-published route.
+  const readiness = await fetch("https://askjanice.net/api/public/elevenlabs/call-allowance").then(r => r.ok ? r.json() : null).catch(() => null) as { call_allowance_ready?: boolean } | null;
+  if (!readiness?.call_allowance_ready) return;
   const { callAllowanceCredential } = await import("@/server/call-usage.server");
   const credential = await callAllowanceCredential(agentId);
   const response = await fetch(`${EL_BASE}/convai/agents/${agentId}`, {
