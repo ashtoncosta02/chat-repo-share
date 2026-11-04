@@ -17,6 +17,16 @@ async function getAuthenticatedUserId(accessToken: string) {
   return { userId: data.user.id };
 }
 
+async function ownsAgent(userId: string, agentId: string): Promise<boolean> {
+  const { data } = await supabaseAdmin
+    .from("agents")
+    .select("id")
+    .eq("id", agentId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  return !!data;
+}
+
 export const startOutlookCalendarConnect = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
     z.object({ accessToken: z.string().min(1), agent_id: z.string().uuid() }).parse(input),
@@ -25,6 +35,10 @@ export const startOutlookCalendarConnect = createServerFn({ method: "POST" })
     try {
       const auth = await getAuthenticatedUserId(data.accessToken);
       if ("error" in auth) return { success: false as const, error: auth.error };
+
+      if (!(await ownsAgent(auth.userId, data.agent_id))) {
+        return { success: false as const, error: "Receptionist not found." };
+      }
 
       const request = getRequest();
       const redirectUri = getRedirectUri(request);
@@ -51,6 +65,10 @@ export const disconnectOutlookCalendar = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const auth = await getAuthenticatedUserId(data.accessToken);
     if ("error" in auth) return { success: false as const, error: auth.error };
+
+    if (!(await ownsAgent(auth.userId, data.agent_id))) {
+      return { success: false as const, error: "Receptionist not found." };
+    }
 
     const { error } = await supabaseAdmin
       .from("agent_outlook_calendar")
