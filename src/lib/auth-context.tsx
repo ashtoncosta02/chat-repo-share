@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import type { PlanId } from "@/lib/plans";
 
 interface AuthContextValue {
   user: User | null;
@@ -11,6 +12,7 @@ interface AuthContextValue {
     email: string,
     password: string,
     displayName?: string,
+    chosenPlan?: PlanId | null,
   ) => Promise<{ error: (Error & { code?: string }) | null; session: Session | null }>;
   signOut: () => Promise<void>;
 }
@@ -44,14 +46,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error };
   };
 
-  const signUp = async (email: string, password: string, displayName?: string) => {
+  const signUp = async (email: string, password: string, displayName?: string, chosenPlan?: PlanId | null) => {
+    const metadata: Record<string, string> = {};
+    if (displayName) metadata.display_name = displayName;
+    // UI preference only (see plan-choice.ts); never used for billing.
+    if (chosenPlan) metadata.chosen_plan = chosenPlan;
     const redirectUrl = `${window.location.origin}/dashboard`;
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: redirectUrl,
-        data: displayName ? { display_name: displayName } : undefined,
+        data: Object.keys(metadata).length ? metadata : undefined,
       },
     });
     return { error, session: data?.session ?? null };

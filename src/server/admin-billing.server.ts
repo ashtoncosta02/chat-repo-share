@@ -1,6 +1,7 @@
 import type Stripe from "stripe";
 import { createStripeClient, getStripeErrorMessage, type StripeEnv } from "@/lib/stripe.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { PLANS } from "@/lib/plans";
 
 const ZERO_DECIMAL = new Set([
   "bif", "clp", "djf", "gnf", "jpy", "kmf", "krw", "mga",
@@ -49,10 +50,10 @@ export async function getBillingSnapshot(env: StripeEnv) {
     const sevenDaysAgo = now - 7 * 86400;
     const startOfMonth = Math.floor(new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime() / 1000);
 
-    const [subsRes, chargesRes, eliteRes, eventsRes, endpointsRes] = await Promise.allSettled([
+    const [subsRes, chargesRes, planPricesRes, eventsRes, endpointsRes] = await Promise.allSettled([
       stripe.subscriptions.list({ status: "all", limit: 100, expand: ["data.customer"] }),
       stripe.charges.list({ limit: 50, created: { gte: thirtyDaysAgo } }),
-      stripe.prices.list({ lookup_keys: ["elite_monthly"], limit: 1 }),
+      stripe.prices.list({ lookup_keys: Object.keys(PLANS), limit: 10 }),
       stripe.events.list({ limit: 1 }),
       stripe.webhookEndpoints.list({ limit: 20 }),
     ]);
@@ -198,15 +199,24 @@ export async function getBillingSnapshot(env: StripeEnv) {
         : "No events seen yet. Normal if nobody has checked out in this environment.",
     });
 
-    const elitePrice = eliteRes.status === "fulfilled" ? eliteRes.value.data[0] : null;
-    checks.push({
-      id: "price",
-      label: "Elite plan price",
-      status: elitePrice ? "ok" : "fail",
-      detail: elitePrice
-        ? `elite_monthly → ${toMajorUnit(elitePrice.unit_amount, elitePrice.currency).toFixed(2)} ${elitePrice.currency.toUpperCase()} / ${elitePrice.recurring?.interval ?? "one-time"}`
-        : "Not found in this environment — checkout will fail with “Price not found”.",
-    });
+    // One read-only check per plan: Stripe's amount for the lookup key must
+    // match monthlyPrice in src/lib/plans.ts.
+    const planPrices = planPricesRes.status === "fulfilled" ? planPricesRes.value.data : [];
+    for (const [planId, plan] of Object.entries(PLANS)) {
+      const price = planPrices.find((p) => p.lookup_key === planId) ?? null;
+      const amount = price ? toMajorUnit(price.unit_amount, price.currency) : null;
+      const matches = price !== null && amount === plan.monthlyPrice && price.recurring?.interval === "month";
+      checks.push({
+        id: `price-${planId}`,
+        label: `${plan.name} plan price`,
+        status: matches ? "ok" : "fail",
+        detail: planPricesRes.status === "rejected"
+          ? `Couldn't read prices: ${getStripeErrorMessage(planPricesRes.reason)}`
+          : price
+            ? `${planId} → Stripe ${amount!.toFixed(2)} ${price.currency.toUpperCase()} / ${price.recurring?.interval ?? "one-time"}; expected ${plan.monthlyPrice.toFixed(2)} / month${matches ? "" : " — MISMATCH"}`
+            : `${planId} not found in this environment (expected ${plan.monthlyPrice.toFixed(2)} / month) — checkout will fail with “Price not found”.`,
+      });
+    }
 
     checks.push({
       id: "drift",

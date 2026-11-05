@@ -12,3 +12,22 @@ export async function accountPlan(userId: string) {
   if (error) throw new Error(error.message);
   return { priceId: typeof data === "string" ? data : null, plan: planForPrice(data) };
 }
+
+/**
+ * The plan a receptionist should run under, for what callers, website visitors
+ * and customer texts experience. Checks the live subscription first, then
+ * sandbox — the same order as the enforce_scenario_plan database trigger.
+ *
+ * Deliberately does NOT use planEnvironment(): the -dev deployment resolves to
+ * sandbox while serving real customers whose subscriptions are live, so
+ * planEnvironment() would wrongly report "no plan" for them.
+ */
+export async function receptionistPlan(userId: string) {
+  for (const env of ["live", "sandbox"] as const) {
+    const { data, error } = await supabaseAdmin.rpc("account_plan_id", { p_user: userId, p_env: env });
+    if (error) throw new Error(error.message);
+    const plan = planForPrice(typeof data === "string" ? data : null);
+    if (plan) return plan;
+  }
+  return null;
+}

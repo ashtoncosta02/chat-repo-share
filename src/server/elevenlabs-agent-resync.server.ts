@@ -7,7 +7,7 @@ import {
   normalizePhoneE164,
   type AgentBusinessProfile,
 } from "./elevenlabs-agent.server";
-import { coerceScenarios, scenariosToPromptText } from "@/lib/scenarios";
+import { scenariosForPlan, scenariosToPromptText } from "@/lib/scenarios";
 import { accountPlan } from "@/server/plan-access.server";
 
 interface AgentRow {
@@ -44,8 +44,7 @@ function rowToProfile(row: AgentRow, humanTransfer: boolean, scenarioLimit: numb
       })
       .filter((f) => f.question || f.answer);
   }
-  const allScenarios = coerceScenarios(row.scenarios);
-  const scenarios = (scenarioLimit === null ? allScenarios : allScenarios.slice(0,scenarioLimit)).map(s => !humanTransfer && s.action?.type === "call_transfer" ? { ...s, action: null } : s);
+  const scenarios = scenariosForPlan(row.scenarios, { scenarioLimit, humanTransfer });
   const scenariosPrompt = scenariosToPromptText(scenarios);
   const transferNumbers: Array<{ phone: string; condition: string }> = [];
   const seen = new Set<string>();

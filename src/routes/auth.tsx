@@ -11,11 +11,14 @@ import { AgentFactoryLogo } from "@/components/AgentFactoryLogo";
 import { Eye, EyeOff } from "lucide-react";
 import { isPasswordStrong, PASSWORD_REQUIREMENTS_TEXT } from "@/lib/password-strength";
 import { PasswordStrength } from "@/components/PasswordStrength";
+import { PLANS, TRIAL_DAYS } from "@/lib/plans";
+import { readPlanChoice, rememberPlanChoice } from "@/lib/plan-choice";
 
 const authSearchSchema = z.object({
   mode: z.enum(["signin", "signup"]).optional(),
   email: z.string().optional(),
   business: z.string().optional(),
+  plan: z.enum(["essential_monthly", "elite_monthly"]).optional().catch(undefined),
 });
 
 export const Route = createFileRoute("/auth")({
@@ -76,6 +79,10 @@ function AuthPage() {
   const defaultTab = search.mode === "signin" ? "signin" : search.mode === "signup" ? "signup" : "signin";
 
   useEffect(() => {
+    if (search.plan) rememberPlanChoice(search.plan);
+  }, [search.plan]);
+
+  useEffect(() => {
     if (!loading && user) navigate({ to: "/dashboard/conversations" });
   }, [user, loading, navigate]);
 
@@ -95,7 +102,7 @@ function AuthPage() {
       return;
     }
     setSubmitting(true);
-    const { error, session } = await signUp(email, password, displayName);
+    const { error, session } = await signUp(email, password, displayName, search.plan ?? readPlanChoice(null));
     setSubmitting(false);
     if (error) {
       if (error.code === "signup_disabled") {
@@ -161,6 +168,11 @@ function AuthPage() {
                 </div>
               ) : (
               <form onSubmit={handleSignUp} className="space-y-4">
+                {search.plan && (
+                  <p className="rounded-md bg-muted px-3 py-2 text-sm text-foreground">
+                    You chose {PLANS[search.plan].name}: ${PLANS[search.plan].monthlyPrice}/month after your {TRIAL_DAYS}-day free trial.
+                  </p>
+                )}
                 <div>
                   <Label htmlFor="signup-name">Your name</Label>
                   <Input id="signup-name" required value={displayName} onChange={(e) => setDisplayName(e.target.value)} />

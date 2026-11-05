@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { coerceScenarios } from "@/lib/scenarios";
+import { scenariosForPlan } from "@/lib/scenarios";
+import { receptionistPlan } from "@/server/plan-access.server";
 import { sendSms } from "@/server/sms.server";
 import { isAllowedNanp, normalize } from "@/server/phone-guard.server";
 import { allowRequest, sha256Hex } from "@/server/rate-limit.server";
@@ -48,7 +49,18 @@ export async function sendScenarioPostCallSms(p: Params): Promise<void> {
     .maybeSingle();
   if (!agent) return;
 
-  const scenarios = coerceScenarios(agent.scenarios).filter(
+  let plan: Awaited<ReturnType<typeof receptionistPlan>> = null;
+  try {
+    plan = await receptionistPlan(p.userId);
+  } catch (e) {
+    console.warn("scenario-sms: plan lookup failed — sending no text", e);
+    return;
+  }
+  if (!plan) {
+    console.warn("scenario-sms: no active plan for owner — sending no text");
+    return;
+  }
+  const scenarios = scenariosForPlan(agent.scenarios, plan).filter(
     (s) => s.action?.type === "post_call_sms" && s.intent.trim(),
   );
   if (scenarios.length === 0) return;

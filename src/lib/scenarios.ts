@@ -106,6 +106,22 @@ export function coerceScenarios(raw: unknown): StructuredScenario[] {
     .filter((x): x is StructuredScenario => x !== null);
 }
 
+/**
+ * The scenarios a receptionist actually uses under a plan. Saved scenarios are
+ * never deleted on downgrade; extras are simply inactive. Phone, chat and
+ * post-call texts must all go through this so they stay consistent.
+ */
+export function scenariosForPlan(
+  raw: unknown,
+  plan: { scenarioLimit: number | null; humanTransfer: boolean },
+): StructuredScenario[] {
+  const all = coerceScenarios(raw);
+  const limited = plan.scenarioLimit === null ? all : all.slice(0, plan.scenarioLimit);
+  return limited.map((s) =>
+    !plan.humanTransfer && s.action?.type === "call_transfer" ? { ...s, action: null } : s,
+  );
+}
+
 export function fieldLabel(f: string): string {
   return (COLLECT_FIELD_LABELS as Record<string, string>)[f] ?? f;
 }

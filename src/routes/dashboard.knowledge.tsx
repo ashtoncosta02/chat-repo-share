@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
@@ -100,6 +100,9 @@ function KnowledgePage() {
   const plan = planForPrice(planId);
 
   const [agent, setAgent] = useState<Agent | null>(null);
+  // Scenarios as last loaded/saved, so saves that don't touch scenarios skip
+  // plan validation (a downgraded account can still edit FAQs etc.).
+  const savedScenariosJson = useRef<string>("[]");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [view, setView] = useState<View>("index");
@@ -158,7 +161,7 @@ function KnowledgePage() {
         booking_link: a.booking_link ?? "",
         emergency_number: a.emergency_number ?? "",
         faqs_structured: coerceFaqs(a.faqs_structured),
-        scenarios: coerceScenarios(a.scenarios),
+        scenarios: (() => { const sc = coerceScenarios(a.scenarios); savedScenariosJson.current = JSON.stringify(sc); return sc; })(),
         sms_followup_enabled: a.sms_followup_enabled,
         pricing_notes: a.pricing_notes ?? "",
         escalation_triggers: a.escalation_triggers ?? "",
@@ -186,7 +189,8 @@ function KnowledgePage() {
 
   const handleSave = async () => {
     if (!user || !agent) return;
-    try { validatePlanScenarios(planId ?? "", edit.scenarios); } catch (e) { toast.error(e instanceof Error ? e.message : "Check your plan."); return; }
+    const scenariosChanged = JSON.stringify(edit.scenarios) !== savedScenariosJson.current;
+    if (scenariosChanged) try { validatePlanScenarios(planId ?? "", edit.scenarios); } catch (e) { toast.error(e instanceof Error ? e.message : "Check your plan."); return; }
     if (!edit.business_name.trim()) {
       toast.error("Business name is required");
       return;
@@ -212,7 +216,9 @@ function KnowledgePage() {
       emergency_number: edit.emergency_number.trim() || null,
       faqs: null,
       faqs_structured: cleanFaqs,
-      scenarios: edit.scenarios,
+      // Only send scenarios when they changed, so the stored value is left
+      // exactly as-is otherwise (the database plan check allows that).
+      ...(scenariosChanged ? { scenarios: edit.scenarios } : {}),
       sms_followup_enabled: edit.sms_followup_enabled,
       pricing_notes: edit.pricing_notes.trim() || null,
       escalation_triggers: edit.escalation_triggers.trim() || null,
@@ -227,6 +233,7 @@ function KnowledgePage() {
       toast.error("Couldn't save changes", { description: error.message });
       return;
     }
+    if (scenariosChanged) savedScenariosJson.current = JSON.stringify(edit.scenarios);
 
     let elAgentId = agent.elevenlabs_agent_id;
     try {
@@ -709,6 +716,14 @@ function KnowledgePage() {
             <Plus className="h-4 w-4 mr-1" /> New scenario
           </Button>
         </div>
+
+        {plan && plan.scenarioLimit !== null &&
+          (scenarios.length > plan.scenarioLimit ||
+            (!plan.humanTransfer && scenarios.some((s) => s.action?.type === "call_transfer"))) && (
+            <p className="mb-6 rounded-md border border-border bg-muted px-4 py-3 text-sm text-foreground">
+              Your Essential plan uses your first 3 scenarios and doesn't include call transfers. The rest are saved but inactive until you remove them or move to Elite.
+            </p>
+          )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Suggestions */}
