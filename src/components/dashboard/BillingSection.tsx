@@ -114,7 +114,7 @@ export function BillingSection() {
 
           <div className="mt-4 flex flex-wrap gap-2">
             {!isActive ? (
-              <PlanOptions />
+              <PlanOptions resumeChosenPlan />
             ) : (
               <button
                 onClick={openPortal}

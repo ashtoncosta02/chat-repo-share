@@ -8,6 +8,7 @@ import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 import { PlanOptions } from "@/components/PlanOptions";
 import { ELITE_PRICE_ID } from "@/lib/stripe";
+import { clearPlanChoice } from "@/lib/plan-choice";
 
 
 /**
@@ -54,6 +55,15 @@ export function SubscriptionGate({
     };
   }, [user?.id]);
 
+  // Once the account has a plan, drop any remembered pre-signup choice so it
+  // can never open a checkout later. Keyed on user id only (not the user
+  // object, which changes after updateUser) to avoid a loop.
+  const userRef = user;
+  useEffect(() => {
+    if (isActive && userRef) clearPlanChoice(userRef);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isActive, userRef?.id]);
+
   if (isAdmin) return <>{children}</>;
   if (subLoading || profileLoading || !profile) return <>{children}</>;
   if (isActive) return <>{children}</>;
@@ -79,7 +89,7 @@ export function SubscriptionGate({
           </p>
         </div>
         <div className="mt-8">
-          <PlanOptions />
+          <PlanOptions resumeChosenPlan />
         </div>
       </div>
     );
@@ -119,7 +129,7 @@ export function SubscriptionGate({
         your settings, FAQs, threads and leads are all still here. Restart your plan to switch
         everything back on instantly.
       </p>
-      <PlanOptions />
+      <PlanOptions resumeChosenPlan />
       {checkoutElement}
 
       <p className="mt-4 text-xs text-muted-foreground">
