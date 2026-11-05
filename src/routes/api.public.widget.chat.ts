@@ -18,6 +18,8 @@ import {
 } from "@/server/widget-thread-mirror.server";
 import { sendScenarioPostCallSms } from "@/server/scenario-sms.server";
 import { coerceFaqs, faqsToPromptText, faqAllowsSms } from "@/lib/faqs";
+import { PLANS } from "@/lib/plans";
+import { receptionistPlan } from "@/server/plan-access.server";
 import { scenariosForPlan, fieldLabel, type StructuredScenario } from "@/lib/scenarios";
 
 /** Render scenarios for the chat widget (no phone-transfer language). */
@@ -328,6 +330,17 @@ export const Route = createFileRoute("/api/public/widget/chat")({
         const { isEntitled } = await import("@/server/entitlement.server");
         if (!(await isEntitled(agent.user_id))) {
           return jsonResponse({ error: "This chat is currently unavailable." }, 403);
+        }
+
+        // Scenario limits follow the owner's plan. If the plan can't be
+        // resolved, keep chat working with the smaller Essential limits.
+        let receptionistPlanLimits: { scenarioLimit: number | null; humanTransfer: boolean } = PLANS.essential_monthly;
+        try {
+          const resolved = await receptionistPlan(agent.user_id);
+          if (resolved) receptionistPlanLimits = resolved;
+          else console.warn("[widget.chat] no plan found for owner; using Essential limits");
+        } catch (e) {
+          console.error("[widget.chat] plan lookup failed; using Essential limits", e);
         }
 
         // Find or create conversation
