@@ -219,15 +219,6 @@ export async function getBillingSnapshot(env: StripeEnv) {
     }
 
     checks.push({
-      id: "price",
-      label: "Elite plan price",
-      status: elitePrice ? "ok" : "fail",
-      detail: elitePrice
-        ? `elite_monthly → ${toMajorUnit(elitePrice.unit_amount, elitePrice.currency).toFixed(2)} ${elitePrice.currency.toUpperCase()} / ${elitePrice.recurring?.interval ?? "one-time"}`
-        : "Not found in this environment — checkout will fail with “Price not found”.",
-    });
-
-    checks.push({
       id: "drift",
       label: "Stripe ↔ app sync",
       status: driftCount === 0 ? "ok" : "warn",
