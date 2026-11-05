@@ -18,7 +18,7 @@ import {
 } from "@/server/widget-thread-mirror.server";
 import { sendScenarioPostCallSms } from "@/server/scenario-sms.server";
 import { coerceFaqs, faqsToPromptText, faqAllowsSms } from "@/lib/faqs";
-import { coerceScenarios, fieldLabel, type StructuredScenario } from "@/lib/scenarios";
+import { scenariosForPlan, fieldLabel, type StructuredScenario } from "@/lib/scenarios";
 
 /** Render scenarios for the chat widget (no phone-transfer language). */
 function scenariosToChatPromptText(scenarios: StructuredScenario[]): string {
@@ -115,7 +115,7 @@ function buildSystemPrompt(agent: {
   primary_goal: string | null;
   escalation_triggers: string | null;
   widget_instructions: string | null;
-}): string {
+}, plan: { scenarioLimit: number | null; humanTransfer: boolean }): string {
   const name = agent.assistant_name || "Assistant";
   const tone = agent.tone || "friendly and professional";
 
@@ -152,7 +152,7 @@ function buildSystemPrompt(agent: {
     sections.push(`FAQs:\n${agent.faqs}`);
   }
 
-  const scenarios = coerceScenarios(agent.scenarios);
+  const scenarios = scenariosForPlan(agent.scenarios, plan);
   const scenarioText = scenariosToChatPromptText(scenarios);
   if (scenarioText) {
     sections.push(
@@ -387,7 +387,7 @@ export const Route = createFileRoute("/api/public/widget/chat")({
         if (!LOVABLE_API_KEY) return jsonResponse({ error: "AI gateway not configured" }, 500);
 
         // Build base system prompt
-        let systemPrompt = buildSystemPrompt(agent);
+        let systemPrompt = buildSystemPrompt(agent, receptionistPlanLimits);
 
         // Owner-authored coaching notes (Agent Coaching)
         const { data: coachingRows } = await supabaseAdmin
