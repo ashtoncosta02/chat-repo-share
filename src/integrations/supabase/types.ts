@@ -952,6 +952,24 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limits: {
+        Row: {
+          count: number
+          key: string
+          window_start: string
+        }
+        Insert: {
+          count?: number
+          key: string
+          window_start?: string
+        }
+        Update: {
+          count?: number
+          key?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           cancel_at_period_end: boolean | null
@@ -1273,6 +1291,10 @@ export type Database = {
         Args: { p_env?: string; p_user: string }
         Returns: string
       }
+      check_rate_limit: {
+        Args: { p_key: string; p_limit: number; p_window_seconds: number }
+        Returns: boolean
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -1329,6 +1351,7 @@ export type Database = {
         }
         Returns: Json
       }
+      revoke_user_sessions: { Args: { p_user: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "user"
