@@ -6,6 +6,7 @@ import { PUBLIC_APP_ORIGIN } from "@/lib/app-origin";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { VOICE_TOOL_HEADER, voiceToolCredential } from "./voice-tool-auth.server";
 import { buildBookingPromptAddendum, getCalendarConfig } from "./widget-booking-tools";
+import { stripUnknownVariables } from "@/lib/receptionist-variables";
 
 const EL_BASE = "https://api.elevenlabs.io/v1";
 
@@ -291,10 +292,11 @@ export function buildAgentPayload(p: AgentBusinessProfile): ElevenLabsAgentConfi
     name: `${p.business_name} — AI Receptionist`,
     conversation_config: {
       agent: {
-        first_message: buildFirstMessage(p),
+        // Customer-typed text must never reference a variable we don't supply.
+        first_message: stripUnknownVariables(buildFirstMessage(p)),
         language: "en",
         prompt: {
-          prompt: buildSystemPrompt(p),
+          prompt: stripUnknownVariables(buildSystemPrompt(p)),
           // Bumped from gemini-2.0-flash — ElevenLabs explicitly recommends
           // 2.5-flash (or stronger) when the agent has webhook tools because
           // 2.0-flash is unreliable at extracting tool parameters. When the
