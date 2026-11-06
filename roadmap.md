@@ -7,5 +7,6 @@
 - [x] Costa Caulking and Luma Salon & Spa both stay Elite at $49/month by owner decision (Nov 5 2026); the earlier $50 charge is dropped and their subscriptions are unchanged.
 - [x] Public live Stripe prices now show Essential $79 and Elite $139 (synced on publish, verified read-only in live Stripe).
 - [ ] Customer inbox (email) integration — PAUSED by user (Nov 4)
-- [ ] Security follow-ups needing DB/ops: add check_rate_limit + revoke_user_sessions DB functions; resync receptionists, then set VOICE_TOOL_AUTH_ENFORCED = true
+- [x] check_rate_limit + revoke_user_sessions DB functions exist (applied Nov 4, check_rate_limit verified from the published site).
+- [ ] Resync receptionists, then set VOICE_TOOL_AUTH_ENFORCED = true
 - [x] Lead safety pass (Nov 6): calls can't be refused by our own errors, texts save the sender's number, leads saved first, sweep recovers missing leads and alerts on failed calls.

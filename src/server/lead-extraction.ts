@@ -3,7 +3,7 @@
 // upsert into the `leads` table. Idempotent per (agent_id, conversation_id)
 // and dedupes by email when available.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { callerWordsSnippet, mergeLeadNotes } from "@/lib/lead-notes";
+import { callerWordsSnippet, mergeLeadNotes, replaceNewestLeadNote } from "@/lib/lead-notes";
 
 export { mergeLeadNotes };
 
@@ -204,7 +204,20 @@ export async function captureLead(args: CaptureLeadArgs): Promise<CaptureLeadRes
       if (finalLead.phone) patch.phone = finalLead.phone;
       if (finalLead.email) patch.email = finalLead.email;
       if (finalLead.address) patch.address = finalLead.address;
-      const merged = mergeLeadNotes(finalLead.notes, existing.notes);
+      // Same conversation already linked to this lead (e.g. a chat captured on
+      // every turn): replace only the newest note so notes don't stack up.
+      let sameConversation = false;
+      if (args.conversationId) {
+        const { data: link } = await supabaseAdmin
+          .from("conversations")
+          .select("lead_id")
+          .eq("id", args.conversationId)
+          .maybeSingle();
+        sameConversation = link?.lead_id === existing.id;
+      }
+      const merged = sameConversation
+        ? replaceNewestLeadNote(finalLead.notes, existing.notes)
+        : mergeLeadNotes(finalLead.notes, existing.notes);
       if (merged && merged !== existing.notes) patch.notes = merged;
       // "won" never changes. "contacted" re-opens only on a fresh inquiry.
       if (existing.status !== "won") {

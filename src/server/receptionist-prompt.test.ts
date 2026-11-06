@@ -47,3 +47,13 @@ describe("receptionist prompt", () => {
     for (const t of texts) expect(unknownVariables(t)).toEqual([]);
   });
 });
+
+describe("customer-typed variables", () => {
+  it("turns unknown {{foo}} in a scenario and greeting into plain text", () => {
+    const p = { ...profile, greeting_message: "Hi {{foo}}, welcome", scenarios_prompt: "If asked about {{foo}}, say yes. Greet {{lead_name}}." } as AgentBusinessProfile;
+    const agent = buildAgentPayload(p).conversation_config.agent;
+    expect(agent.first_message).toBe("Hi foo, welcome");
+    expect(agent.prompt.prompt).toContain("If asked about foo, say yes. Greet {{lead_name}}.");
+    expect(agent.prompt.prompt).not.toContain("{{foo}}");
+  });
+});

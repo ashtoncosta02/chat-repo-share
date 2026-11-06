@@ -398,7 +398,7 @@ function ConversationsPage() {
     { value: "all", label: "All Intents" },
     { value: "voice", label: "Voice Call" },
     { value: "widget", label: "Chat Widget" },
-    { value: "sms", label: "SMS" },
+    { value: "sms", label: "Text message" },
   ];
 
   const statusOptions = [
@@ -752,9 +752,9 @@ function ConversationRow({
             c.lead_notes?.trim() ||
             (c.message_count > 0
               ? "Generating summary…"
-              : `${c.message_count} messages · ${Math.round(c.duration_seconds / 60)}m call`)}
+              : (c.source === "sms" ? `${c.message_count} messages · text` : `${c.message_count} messages · ${Math.round(c.duration_seconds / 60)}m call`))}
         </p>
-        {c.recording_url && (
+        {c.recording_url && c.source !== "sms" && (
           <span className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[oklch(0.95_0.05_290)] text-[var(--gold)]">
             <Mic className="h-3 w-3" />
             Recording
@@ -908,7 +908,7 @@ function ConversationCard({
             Read
           </span>
         )}
-        {c.recording_url && (
+        {c.recording_url && c.source !== "sms" && (
           <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[oklch(0.95_0.05_290)] text-[var(--gold)]">
             <Mic className="h-3 w-3" />
             Recording
@@ -978,7 +978,7 @@ function IntentTag({ source }: { source: string | null }) {
   const map: Record<string, { label: string; cls: string }> = {
     voice: { label: "Voice Call", cls: "bg-blue-100 text-blue-700" },
     widget: { label: "Chat Widget", cls: "bg-violet-100 text-violet-700" },
-    sms: { label: "SMS", cls: "bg-emerald-100 text-emerald-700" },
+    sms: { label: "Text message", cls: "bg-emerald-100 text-emerald-700" },
   };
   const key = (source ?? "").toLowerCase();
   const info = map[key] ?? { label: source ?? "General", cls: "bg-slate-100 text-slate-700" };

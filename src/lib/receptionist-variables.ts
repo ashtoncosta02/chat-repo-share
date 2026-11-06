@@ -17,6 +17,14 @@ export function referencedVariables(text: string): string[] {
   return Array.from(text.matchAll(/\{\{\s*([A-Za-z0-9_]+)\s*\}\}/g), (m) => m[1]);
 }
 
+/** Turn any {{name}} we don't supply (and isn't system__) into plain text. */
+export function stripUnknownVariables(text: string): string {
+  const allowed = new Set<string>(RECEPTIONIST_DYNAMIC_VARIABLES);
+  return text.replace(/\{\{\s*([A-Za-z0-9_]+)\s*\}\}/g, (m, name: string) =>
+    allowed.has(name) || name.startsWith("system__") ? m : name,
+  );
+}
+
 /** Variables used in text that are neither supplied by us nor system__ ones. */
 export function unknownVariables(text: string): string[] {
   const allowed = new Set<string>(RECEPTIONIST_DYNAMIC_VARIABLES);

@@ -16,6 +16,21 @@ export function mergeLeadNotes(newNote: string | null | undefined, oldNote: stri
   return `${fresh}\n\nEarlier: ${old}`.slice(0, MAX_NOTES);
 }
 
+const EARLIER = "\n\nEarlier: ";
+
+/**
+ * Same conversation updating its own lead: swap only the newest note (text
+ * before the first "\n\nEarlier: ") and keep the history, capped at 2000.
+ */
+export function replaceNewestLeadNote(newNote: string | null | undefined, oldNote: string | null | undefined): string | null {
+  const fresh = (newNote ?? "").trim();
+  const old = (oldNote ?? "").trim();
+  if (!fresh) return old || null;
+  const i = old.indexOf(EARLIER);
+  const rest = i >= 0 ? old.slice(i) : "";
+  return `${fresh}${rest}`.slice(0, MAX_NOTES);
+}
+
 /** First 300 characters of what the caller/visitor said, for fallback notes. */
 export function callerWordsSnippet(messages: { role: string; content: string }[]): string | null {
   const words = messages.filter((m) => m.role === "user").map((m) => m.content.trim()).filter(Boolean).join(" ");

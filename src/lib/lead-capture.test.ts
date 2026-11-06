@@ -62,3 +62,21 @@ describe("call allowance decision", () => {
     expect((r.body as any).conversation_config_override.conversation.max_duration_seconds).toBe(420);
   });
 });
+
+import { replaceNewestLeadNote } from "./lead-notes";
+describe("replaceNewestLeadNote", () => {
+  it("swaps only the newest part and keeps history", () => {
+    expect(replaceNewestLeadNote("Wants Tuesday", "Wants a quote\n\nEarlier: Asked about hours")).toBe("Wants Tuesday\n\nEarlier: Asked about hours");
+  });
+  it("replaces the whole note when there is no history", () => {
+    expect(replaceNewestLeadNote("Wants Tuesday", "Wants a quote")).toBe("Wants Tuesday");
+  });
+  it("does not stack across repeated turns", () => {
+    let n = "First\n\nEarlier: Old call";
+    for (const t of ["A", "B", "C"]) n = replaceNewestLeadNote(t, n)!;
+    expect(n).toBe("C\n\nEarlier: Old call");
+  });
+  it("caps at 2000 characters", () => {
+    expect(replaceNewestLeadNote("a".repeat(1500), "x\n\nEarlier: " + "b".repeat(1500))!.length).toBe(2000);
+  });
+});

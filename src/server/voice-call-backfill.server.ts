@@ -188,9 +188,8 @@ export async function backfillRecentCalls(opts: {
           },
           conversation_initiation_client_data: detail.conversation_initiation_client_data,
         },
-        // Recovery only backfills history — never re-send owner alerts or
-        // text the caller again for a call that already happened.
-        { silent: true },
+        // Not silent: persistPostCall already stays quiet for calls older
+        // than 1 hour, so a fresh call saved here still alerts the owner.
       );
       if (recentFail) {
         let leadSaved = false;
