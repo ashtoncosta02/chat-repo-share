@@ -20,7 +20,7 @@ export const Route = createFileRoute("/api/public/elevenlabs/call-allowance")({
         }
       }
       const reservation = await reserveAgentCall(input.agent_id, `el:${input.conversation_id}`);
-      return Response.json({ type: "conversation_initiation_client_data", conversation_config_override: { conversation: { max_duration_seconds: reservation.seconds } }, dynamic_variables: { janice_call_reservation: reservation.reservationId } });
+      return Response.json({ type: "conversation_initiation_client_data", conversation_config_override: { conversation: { max_duration_seconds: reservation.seconds } }, dynamic_variables: { janice_call_reservation: reservation.reservationId, call_direction: "inbound", lead_name: "", lead_notes: "" } });
     } catch {
       // Fail closed instead of starting an unmetered call.
       return new Response("Call allowance unavailable", { status: 403 });
