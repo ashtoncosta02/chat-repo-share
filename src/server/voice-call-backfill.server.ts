@@ -3,6 +3,7 @@
 // URL was misconfigured). Safe to re-run — uses the same idempotency key.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { persistPostCall, type PostCallData } from "@/routes/api.public.elevenlabs.postcall";
+import { callerNumberFrom } from "@/lib/caller-number";
 
 const EL_BASE = "https://api.elevenlabs.io/v1";
 
@@ -20,7 +21,16 @@ interface ConversationDetail {
   conversation_id: string;
   status?: string;
   transcript?: PostCallData["transcript"];
-  metadata?: PostCallData["metadata"];
+  metadata?: PostCallData["metadata"] & { termination_reason?: string };
+  conversation_initiation_client_data?: PostCallData["conversation_initiation_client_data"];
+}
+
+export interface FailedCallNote {
+  conversationId: string;
+  elAgentId: string;
+  startUnix: number | null;
+  terminationReason: string | null;
+  leadSaved: boolean;
 }
 
 /**
@@ -30,7 +40,15 @@ interface ConversationDetail {
 export async function backfillRecentCalls(opts: {
   elAgentId: string;
   pageSize?: number;
-}): Promise<{ scanned: number; saved: number; skipped: number; errors: number }> {
+}): Promise<{
+  scanned: number;
+  saved: number;
+  skipped: number;
+  errors: number;
+  leadsRecovered: number;
+  leadRecoveryFailures: FailedCallNote[];
+  recentFailed: FailedCallNote[];
+}> {
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) throw new Error("ELEVENLABS_API_KEY not configured");
   const pageSize = Math.min(Math.max(opts.pageSize ?? 30, 1), 100);
@@ -43,7 +61,23 @@ export async function backfillRecentCalls(opts: {
     throw new Error(`EL list conversations failed (${listRes.status}): ${await listRes.text()}`);
   }
   const listJson = (await listRes.json()) as { conversations?: ConversationListItem[] };
-  const items = (listJson.conversations ?? []).filter((c) => (c.status ?? "done") === "done");
+  // "failed" conversations are real callers too (e.g. dropped mid-call).
+  const items = (listJson.conversations ?? []).filter((c) => {
+    const st = c.status ?? "done";
+    return st === "done" || st === "failed";
+  });
+  const leadsRecoveredRef = { n: 0 };
+  const leadRecoveryFailures: FailedCallNote[] = [];
+  const recentFailed: FailedCallNote[] = [];
+  const nowSec = Date.now() / 1000;
+  const fetchDetail = async (id: string): Promise<ConversationDetail | null> => {
+    const r = await fetch(`${EL_BASE}/convai/conversations/${encodeURIComponent(id)}`, { headers: { "xi-api-key": apiKey } });
+    if (!r.ok) {
+      console.error(`backfill: detail fetch failed for ${id} (${r.status})`);
+      return null;
+    }
+    return (await r.json()) as ConversationDetail;
+  };
 
   let saved = 0;
   let skipped = 0;
@@ -52,13 +86,18 @@ export async function backfillRecentCalls(opts: {
   // Skip ids we already stored.
   const ids = items.map((c) => c.conversation_id);
   const existingSet = new Set<string>();
+  const deletedSet = new Set<string>();
+  const existingRows = new Map<string, { id: string; lead_id: string | null; agent_id: string | null; user_id: string }>();
   if (ids.length > 0) {
     const { data: existing } = await supabaseAdmin
       .from("conversations")
-      .select("elevenlabs_conversation_id")
+      .select("id, lead_id, agent_id, user_id, elevenlabs_conversation_id")
       .in("elevenlabs_conversation_id", ids);
     for (const row of existing ?? []) {
-      if (row.elevenlabs_conversation_id) existingSet.add(row.elevenlabs_conversation_id);
+      if (row.elevenlabs_conversation_id) {
+        existingSet.add(row.elevenlabs_conversation_id);
+        existingRows.set(row.elevenlabs_conversation_id, row);
+      }
     }
     // Calls the owner deleted must never be re-imported.
     const { data: deleted } = await supabaseAdmin
@@ -67,12 +106,54 @@ export async function backfillRecentCalls(opts: {
       .in("elevenlabs_conversation_id", ids);
     for (const row of deleted ?? []) {
       existingSet.add(row.elevenlabs_conversation_id);
+      deletedSet.add(row.elevenlabs_conversation_id);
     }
   }
 
   for (const item of items) {
+    const isFailed = item.status === "failed";
+    const recentFail = isFailed && !!item.start_time_unix_secs && nowSec - item.start_time_unix_secs < 3 * 3600;
+    if (deletedSet.has(item.conversation_id)) {
+      skipped++;
+      continue;
+    }
     if (existingSet.has(item.conversation_id)) {
       skipped++;
+      const row = existingRows.get(item.conversation_id);
+      const within72h = !!item.start_time_unix_secs && nowSec - item.start_time_unix_secs < 72 * 3600;
+      let leadSaved = !!row?.lead_id;
+      // Saved conversation whose lead never landed: recover it silently.
+      if (row && !row.lead_id && row.agent_id && within72h) {
+        try {
+          const detail = await fetchDetail(item.conversation_id);
+          if (detail) {
+            const turns = (detail.transcript ?? [])
+              .map((t) => ({ role: (t.role === "agent" ? "assistant" : "user") as "user" | "assistant", content: String(t.message ?? t.text ?? "").trim() }))
+              .filter((t) => t.content.length > 0);
+            const phone = callerNumberFrom(detail);
+            if (turns.some((t) => t.role === "user") || phone) {
+              const { captureLead } = await import("@/server/lead-extraction");
+              const r = await captureLead({
+                agentId: row.agent_id,
+                userId: row.user_id,
+                conversationId: row.id,
+                source: detail.metadata?.sms ? "sms" : "voice",
+                fallbackPhone: phone,
+                messages: turns,
+              });
+              if (r.ok && r.leadId) {
+                leadsRecoveredRef.n++;
+                leadSaved = true;
+              } else {
+                leadRecoveryFailures.push({ conversationId: item.conversation_id, elAgentId: opts.elAgentId, startUnix: item.start_time_unix_secs ?? null, terminationReason: detail.metadata?.termination_reason ?? null, leadSaved: false });
+              }
+            }
+          }
+        } catch (e) {
+          console.error("backfill: lead recovery failed for", item.conversation_id, e);
+        }
+      }
+      if (recentFail) recentFailed.push({ conversationId: item.conversation_id, elAgentId: opts.elAgentId, startUnix: item.start_time_unix_secs ?? null, terminationReason: null, leadSaved });
       continue;
     }
     try {
@@ -105,6 +186,14 @@ export async function backfillRecentCalls(opts: {
         // text the caller again for a call that already happened.
         { silent: true },
       );
+      if (recentFail) {
+        let leadSaved = false;
+        if (result.status === "ok") {
+          const { data: c } = await supabaseAdmin.from("conversations").select("lead_id").eq("id", result.conversationDbId).maybeSingle();
+          leadSaved = !!c?.lead_id;
+        }
+        recentFailed.push({ conversationId: item.conversation_id, elAgentId: opts.elAgentId, startUnix: item.start_time_unix_secs ?? null, terminationReason: detail.metadata?.termination_reason ?? null, leadSaved });
+      }
       if (result.status === "ok") saved++;
       else if (result.status === "duplicate") skipped++;
       else errors++;
@@ -114,5 +203,5 @@ export async function backfillRecentCalls(opts: {
     }
   }
 
-  return { scanned: items.length, saved, skipped, errors };
+  return { scanned: items.length, saved, skipped, errors, leadsRecovered: leadsRecoveredRef.n, leadRecoveryFailures, recentFailed };
 }
