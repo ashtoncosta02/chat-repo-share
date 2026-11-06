@@ -13,6 +13,8 @@ export const Route = createFileRoute("/api/public/twilio/voice")({
     handlers: {
       POST: async ({ request }) => {
         const startedAt = Date.now();
+        // Known as soon as possible so the outer catch can still save the caller.
+        let missed: { agentId: string; userId: string; callerNumber: string } | null = null;
         try {
           const form = await request.formData();
           const params = formDataToRecord(form);
@@ -57,6 +59,7 @@ export const Route = createFileRoute("/api/public/twilio/voice")({
             .select("id, user_id, elevenlabs_agent_id, answer_mode")
             .eq("id", phoneRow.agent_id)
             .maybeSingle();
+          if (agent?.id && agent.user_id) missed = { agentId: agent.id, userId: agent.user_id, callerNumber: from };
           if (!agent?.elevenlabs_agent_id) return voiceMessage("Sorry, the receptionist is unavailable right now.");
 
           // Fetch owner_forward_phone separately (not yet in generated types).
@@ -110,7 +113,9 @@ export const Route = createFileRoute("/api/public/twilio/voice")({
           const firstName = (lead?.name ?? "").trim().split(/\s+/)[0] ?? "";
           // Let the caller hear ~2 rings before the AI picks up so it feels
           // natural. Twilio keeps playing ringback until we return TwiML.
-          const [twiml] = await Promise.all([
+          let twiml: string;
+          try {
+          [twiml] = await Promise.all([
             registerTwilioCall({
               agentId: agent.elevenlabs_agent_id,
               fromNumber: from,
@@ -124,10 +129,24 @@ export const Route = createFileRoute("/api/public/twilio/voice")({
             }),
             new Promise((r) => setTimeout(r, Math.max(0, RING_DELAY_MS - (Date.now() - startedAt)))),
           ]);
+          } catch (e) {
+            const { AllowanceDeniedError } = await import("@/server/call-usage.server");
+            if (e instanceof AllowanceDeniedError) {
+              const { saveMissedCaller } = await import("@/server/lead-extraction");
+              await saveMissedCaller({ ...missed!, reason: e.message || "call allowance reached" });
+              missed = null;
+              return voiceMessage("Sorry, we can't take your call right now. We have your number and someone will call you back.");
+            }
+            throw e;
+          }
 
           return new Response(twiml, { headers: { "Content-Type": "application/xml" } });
         } catch (e) {
           console.error("Twilio voice webhook error:", e);
+          if (missed) {
+            const { saveMissedCaller } = await import("@/server/lead-extraction");
+            await saveMissedCaller({ ...missed, reason: "the receptionist could not answer (system error)" });
+          }
           return voiceMessage("Sorry, an application error occurred. Goodbye.");
         }
       },
