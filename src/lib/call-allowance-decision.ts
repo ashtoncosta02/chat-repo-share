@@ -1,3 +1,5 @@
+import { defaultReceptionistVariables } from "@/lib/receptionist-variables";
+
 // Pure decision for the inbound minutes check. Only a verified request whose
 // caller is blocked, or whose account was denied by the allowance itself
 // (over the limit / no plan), may refuse a call. Everything else — bad input,
@@ -23,7 +25,7 @@ export function allowanceResponseBody(o: AllowanceOutcome): { status: number; bo
     body: {
       type: "conversation_initiation_client_data",
       conversation_config_override: { conversation: { max_duration_seconds: seconds } },
-      dynamic_variables: { call_direction: "inbound", lead_name: "", lead_notes: "", janice_call_reservation: reservationId },
+      dynamic_variables: { ...defaultReceptionistVariables(), janice_call_reservation: reservationId },
     },
   };
 }
