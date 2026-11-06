@@ -370,7 +370,21 @@ export const Route = createFileRoute("/api/public/widget/chat")({
             })
             .select("id")
             .single();
-          if (newConvoErr || !newConvo) return jsonResponse({ error: "Failed to create conversation" }, 500);
+          if (newConvoErr || !newConvo) {
+            // Even with no conversation row, never lose a visitor who shared contact details.
+            const qualifies =
+              messages.filter((m) => m.role === "user").length >= 2 ||
+              messages.some((m) => m.role === "user" && looksLikeContact(String(m.content ?? "")));
+            if (qualifies) {
+              await captureLeadFromWidget({
+                agentId,
+                userId: agent.user_id,
+                conversationId: null,
+                messages: messages.map((m) => ({ role: m.role, content: m.content })),
+              }).catch((e) => console.error("lead capture error:", e));
+            }
+            return jsonResponse({ error: "Failed to create conversation" }, 500);
+          }
           conversationId = newConvo.id;
         }
 
