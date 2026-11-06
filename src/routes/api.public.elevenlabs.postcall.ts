@@ -4,6 +4,9 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { captureLead } from "@/server/lead-extraction";
 import { sendEmail } from "@/server/email.server";
 import { renderTranscriptEmail } from "@/server/email-templates.server";
+import { callerNumberFrom } from "@/lib/caller-number";
+
+export { callerNumberFrom };
 
 const EL_BASE = "https://api.elevenlabs.io/v1";
 
@@ -117,6 +120,7 @@ export const Route = createFileRoute("/api/public/elevenlabs/postcall")({
         const result = await persistPostCall(elAgentId, conversationId, data);
         if (result.status === "agent-not-found") {
           console.warn("postcall: agent not found for", elAgentId);
+          await quarantinePayload({ reason: "agent-not-found", conversationId, agentId: elAgentId, data });
           return new Response("ok-no-agent", { status: 200 });
         }
         if (result.status === "duplicate") {
@@ -213,6 +217,7 @@ export interface PostCallData {
     start_time_unix_secs?: number;
     call_duration_secs?: number;
     phone_call?: { external_number?: string; agent_number?: string };
+    sms?: { sms_user_phone_number?: string; [key: string]: unknown };
   };
   conversation_initiation_client_data?: {
     dynamic_variables?: Record<string, string>;
@@ -247,13 +252,16 @@ export async function persistPostCall(
 
 
   const { finishAgentCall, notifyAllowanceThresholds } = await import("@/server/call-usage.server");
-  const reservationId = data.conversation_initiation_client_data?.dynamic_variables?.janice_call_reservation;
+  const reservationId = data.conversation_initiation_client_data?.dynamic_variables?.janice_call_reservation || undefined;
+  const isPhoneCall = Boolean(data.metadata?.phone_call);
+  // A text conversation is a real customer contact, never a dashboard test.
+  const isSms = Boolean(data.metadata?.sms);
+  const callerNumber = callerNumberFrom(data);
 
   // Dashboard "Live voice test" sessions are owner practice runs. Only honour
-  // the test flag/marker when the call did not come over the phone, so a real
-  // call can never be hidden. Test sessions release any reservation at 0s.
-  const isPhoneCall = Boolean(data.metadata?.phone_call);
-  if (!isPhoneCall) {
+  // the test flag/marker when the conversation did not come over the phone or
+  // by text, so a real contact can never be hidden.
+  if (!isPhoneCall && !isSms) {
     const isDashboardTestFlag =
       data.conversation_initiation_client_data?.dynamic_variables
         ?.is_dashboard_test === "true";
@@ -270,30 +278,71 @@ export async function persistPostCall(
     }
   }
 
-  // Real calls are metered before conversation deduplication so deleting
-  // history cannot reset call usage.
-  await finishAgentCall(agent.user_id, conversationId, Math.max(0,Math.round(data.metadata?.call_duration_secs ?? 0)), reservationId);
-  await notifyAllowanceThresholds(agent.user_id);
+  // Texts use no call time.
+  const durationSec = isSms ? 0 : Math.max(0, Math.round(data.metadata?.call_duration_secs ?? 0));
 
-  const { data: existing } = await supabaseAdmin
+  // Real calls are metered before conversation deduplication so deleting
+  // history cannot reset call usage. A metering failure must never stop the
+  // call or its lead being saved.
+  try {
+    await finishAgentCall(agent.user_id, conversationId, durationSec, reservationId);
+  } catch (e) {
+    console.error("postcall: finishAgentCall failed", e);
+  }
+  try {
+    await notifyAllowanceThresholds(agent.user_id);
+  } catch (e) {
+    console.error("postcall: notifyAllowanceThresholds failed", e);
+  }
+
+  const transcriptArr = Array.isArray(data.transcript) ? data.transcript : [];
+  const cleanedTurns = transcriptArr
+    .map((t) => ({
+      role: (t.role === "agent" ? "assistant" : "user") as "user" | "assistant",
+      content: String(t.message ?? t.text ?? "").trim(),
+    }))
+    .filter((t) => t.content.length > 0);
+  const messageCount = cleanedTurns.length;
+  const userTurns = cleanedTurns.filter((t) => t.role === "user");
+  const direction = data.conversation_initiation_client_data?.dynamic_variables?.call_direction;
+  const leadSource: "voice" | "sms" = isSms ? "sms" : "voice";
+  const runCaptureLead = (dbConversationId: string) =>
+    captureLead({
+      agentId: agent.id,
+      userId: agent.user_id,
+      conversationId: dbConversationId,
+      source: leadSource,
+      fallbackPhone: callerNumber,
+      newInquiry: userTurns.length > 0 && direction !== "outbound",
+      messages: cleanedTurns,
+    });
+
+  const { data: existingRows } = await supabaseAdmin
     .from("conversations")
-    .select("id")
+    .select("id, lead_id")
     .eq("elevenlabs_conversation_id", conversationId)
-    .maybeSingle();
-  if (existing) return { status: "duplicate" };
+    .order("created_at", { ascending: true })
+    .limit(1);
+  const existing = existingRows?.[0];
+  if (existing) {
+    // Saved before but the lead never landed: make the lead safe now.
+    if (!existing.lead_id && (userTurns.length > 0 || callerNumber)) {
+      const r = await runCaptureLead(existing.id);
+      if (!r.ok) console.error("postcall: lead capture for existing conversation failed", existing.id);
+    }
+    return { status: "duplicate" };
+  }
 
   const startedAt = data.metadata?.start_time_unix_secs
     ? new Date(data.metadata.start_time_unix_secs * 1000).toISOString()
     : new Date().toISOString();
-  const durationSec = Math.max(0, Math.round(data.metadata?.call_duration_secs ?? 0));
   const endedAt = new Date(
     new Date(startedAt).getTime() + durationSec * 1000,
   ).toISOString();
 
   // Notifications (owner email/SMS + caller scenario SMS) must only fire for
   // calls that just happened. Recovery sweeps and late webhook retries can
-  // persist calls from days ago — sending those now looks like a backlog of
-  // "new" alerts to the business owner and texts stale customers.
+  // persist calls from days ago.
   const callAgeMs = Date.now() - new Date(startedAt).getTime();
   const isStaleCall = callAgeMs > 60 * 60 * 1000; // older than 1 hour
   const notify = opts?.silent !== true && !isStaleCall;
@@ -303,17 +352,7 @@ export async function persistPostCall(
     );
   }
 
-
-
-  const transcriptArr = Array.isArray(data.transcript) ? data.transcript : [];
-  const cleanedTurns = transcriptArr
-    .map((t) => ({
-      role: t.role === "agent" ? "assistant" : "user",
-      content: String(t.message ?? t.text ?? "").trim(),
-    }))
-    .filter((t) => t.content.length > 0);
-  const messageCount = cleanedTurns.length;
-
+  // 1. Conversation row.
   const { data: convo, error: convoErr } = await supabaseAdmin
     .from("conversations")
     .insert({
@@ -333,19 +372,34 @@ export async function persistPostCall(
     return { status: "db-error" };
   }
 
+  // 2. Messages.
   if (cleanedTurns.length > 0) {
-    const rows = cleanedTurns.map((t) => ({
-      user_id: agent.user_id,
-      conversation_id: convo.id,
-      role: t.role,
-      content: t.content,
-    }));
-    const { error: msgErr } = await supabaseAdmin.from("messages").insert(rows);
-    if (msgErr) console.error("postcall: insert messages failed", msgErr);
+    try {
+      const rows = cleanedTurns.map((t) => ({
+        user_id: agent.user_id,
+        conversation_id: convo.id,
+        role: t.role,
+        content: t.content,
+      }));
+      const { error: msgErr } = await supabaseAdmin.from("messages").insert(rows);
+      if (msgErr) console.error("postcall: insert messages failed", msgErr);
+    } catch (e) {
+      console.error("postcall: insert messages threw", e);
+    }
   }
 
-  // Generate AI summary from the transcript so it shows up in the dashboard
-  // immediately, without waiting for someone to open Conversations.
+  // 3. Lead — before anything slow. Only when the caller said something or
+  // we know who they are (avoids empty leads for silent hangups).
+  if (userTurns.length > 0 || callerNumber) {
+    try {
+      const r = await runCaptureLead(convo.id);
+      if (!r.ok) console.error("postcall: lead capture failed for", convo.id);
+    } catch (e) {
+      console.error("postcall: lead capture threw", e);
+    }
+  }
+
+  // 4. Summary.
   let summaryText: string | null = null;
   if (cleanedTurns.length > 0) {
     try {
@@ -361,44 +415,10 @@ export async function persistPostCall(
     }
   }
 
-  // Fetch + store the call recording from ElevenLabs so it can be played
-  // back in the dashboard. Best-effort: failures don't block the rest.
-  try {
-    const recordingUrl = await fetchAndStoreCallAudio({
-      conversationId,
-      userId: agent.user_id,
-      dbConversationId: convo.id,
-    });
-    if (recordingUrl) {
-      await supabaseAdmin
-        .from("conversations")
-        .update({ recording_url: recordingUrl })
-        .eq("id", convo.id);
-    }
-  } catch (e) {
-    console.error("postcall: recording fetch/upload failed", e);
-  }
+  const envUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+  const siteUrl = envUrl && !envUrl.includes("vercel.app") ? envUrl : "https://www.askjanice.net";
 
-  // Lead extraction — uses the caller's phone (from EL metadata) as a
-  // fallback when the AI can't pull a phone from the transcript.
-  const fallbackPhone =
-    data.metadata?.phone_call?.external_number?.trim() || null;
-
-  const userTurns = cleanedTurns.filter((t) => t.role === "user");
-  // Only extract a lead if the caller actually said something — otherwise
-  // we'd create empty leads for hangups / no-answers.
-  if (userTurns.length > 0 || fallbackPhone) {
-    await captureLead({
-      agentId: agent.id,
-      userId: agent.user_id,
-      conversationId: convo.id,
-      source: "voice",
-      fallbackPhone,
-      messages: cleanedTurns as { role: "user" | "assistant"; content: string }[],
-    });
-  }
-
-  // Email the transcript to the business owner if they've opted in.
+  // 5a. Owner email.
   if (notify && agent.notify_email_transcript !== false) {
     try {
       let ownerEmail = agent.notify_email?.trim() || null;
@@ -411,33 +431,22 @@ export async function persistPostCall(
         ownerEmail = prof?.email?.trim() || null;
       }
       if (ownerEmail) {
-        // Look up the lead row we just (potentially) created/updated so we
-        // can put the caller's name/email/phone/address at the top of the
-        // email.
-        const { data: leadRow } = await supabaseAdmin
+        const { data: leadRows } = await supabaseAdmin
           .from("leads")
           .select("name, email, phone, address")
           .eq("agent_id", agent.id)
           .eq("conversation_id", convo.id)
-          .maybeSingle();
-
-        // Always prefer the canonical custom domain. Old NEXT_PUBLIC_SITE_URL
-        // values (e.g. retired vercel.app deploys) would otherwise 404.
-        const envUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
-        const siteUrl =
-          envUrl && !envUrl.includes("vercel.app")
-            ? envUrl
-            : "https://www.askjanice.net";
-
+          .order("created_at", { ascending: true })
+          .limit(1);
         const { subject, html } = renderTranscriptEmail({
           businessName: agent.business_name || "Your business",
-          callerNumber: data.metadata?.phone_call?.external_number ?? null,
+          callerNumber,
           startedAt: new Date(startedAt),
           durationSeconds: durationSec,
           summary: summaryText,
-          turns: cleanedTurns as { role: "user" | "assistant"; content: string }[],
+          turns: cleanedTurns,
           conversationDashboardUrl: `${siteUrl}/dashboard/conversations/${convo.id}`,
-          lead: leadRow ?? null,
+          lead: leadRows?.[0] ?? null,
         });
         await sendEmail({ to: ownerEmail, subject, html });
       }
@@ -446,20 +455,15 @@ export async function persistPostCall(
     }
   }
 
-  // SMS the transcript summary to the business owner if they've opted in.
+  // 5b. Owner SMS.
   if (notify && agent.notify_sms_transcript && agent.notify_phone?.trim()) {
     try {
-      const envUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
-      const siteUrl =
-        envUrl && !envUrl.includes("vercel.app")
-          ? envUrl
-          : "https://www.askjanice.net";
       const { sendTranscriptSms } = await import("@/server/sms.server");
       await sendTranscriptSms({
         userId: agent.user_id,
         to: agent.notify_phone.trim(),
         businessName: agent.business_name || "Your business",
-        callerNumber: data.metadata?.phone_call?.external_number ?? null,
+        callerNumber,
         durationSeconds: durationSec,
         summary: summaryText ?? "",
         dashboardUrl: `${siteUrl}/dashboard/conversations/${convo.id}`,
@@ -469,19 +473,38 @@ export async function persistPostCall(
     }
   }
 
-  // Scenario-driven post-call SMS to the caller (e.g. "text me the pricing sheet").
+  // 6. Scenario-driven post-call SMS to the caller.
   if (notify) {
     try {
       const { sendScenarioPostCallSms } = await import("@/server/scenario-sms.server");
       await sendScenarioPostCallSms({
         agentId: agent.id,
         userId: agent.user_id,
-        callerNumber: data.metadata?.phone_call?.external_number?.trim() || null,
-        turns: cleanedTurns as { role: "user" | "assistant"; content: string }[],
+        callerNumber,
+        turns: cleanedTurns,
         startedAt,
       });
     } catch (e) {
       console.error("postcall: scenario SMS failed", e);
+    }
+  }
+
+  // 7. Recording last — slow and least important.
+  if (!isSms) {
+    try {
+      const recordingUrl = await fetchAndStoreCallAudio({
+        conversationId,
+        userId: agent.user_id,
+        dbConversationId: convo.id,
+      });
+      if (recordingUrl) {
+        await supabaseAdmin
+          .from("conversations")
+          .update({ recording_url: recordingUrl })
+          .eq("id", convo.id);
+      }
+    } catch (e) {
+      console.error("postcall: recording fetch/upload failed", e);
     }
   }
 

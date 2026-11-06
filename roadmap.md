@@ -8,3 +8,4 @@
 - [x] Public live Stripe prices now show Essential $79 and Elite $139 (synced on publish, verified read-only in live Stripe).
 - [ ] Customer inbox (email) integration — PAUSED by user (Nov 4)
 - [ ] Security follow-ups needing DB/ops: add check_rate_limit + revoke_user_sessions DB functions; resync receptionists, then set VOICE_TOOL_AUTH_ENFORCED = true
+- [x] Lead safety pass (Nov 6): calls can't be refused by our own errors, texts save the sender's number, leads saved first, sweep recovers missing leads and alerts on failed calls.

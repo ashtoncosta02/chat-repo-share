@@ -11,6 +11,7 @@ import {
   isCalendarConnected,
 } from "@/server/widget-booking-tools";
 import { captureLeadFromWidget } from "@/server/widget-lead-capture";
+import { looksLikeContact } from "@/lib/lead-notes";
 import {
   ensureThreadForWidgetConversation,
   
@@ -369,7 +370,21 @@ export const Route = createFileRoute("/api/public/widget/chat")({
             })
             .select("id")
             .single();
-          if (newConvoErr || !newConvo) return jsonResponse({ error: "Failed to create conversation" }, 500);
+          if (newConvoErr || !newConvo) {
+            // Even with no conversation row, never lose a visitor who shared contact details.
+            const qualifies =
+              messages.filter((m) => m.role === "user").length >= 2 ||
+              messages.some((m) => m.role === "user" && looksLikeContact(String(m.content ?? "")));
+            if (qualifies) {
+              await captureLeadFromWidget({
+                agentId,
+                userId: agent.user_id,
+                conversationId: null,
+                messages: messages.map((m) => ({ role: m.role, content: m.content })),
+              }).catch((e) => console.error("lead capture error:", e));
+            }
+            return jsonResponse({ error: "Failed to create conversation" }, 500);
+          }
           conversationId = newConvo.id;
         }
 
@@ -540,25 +555,27 @@ export const Route = createFileRoute("/api/public/widget/chat")({
         // forget, which is why notified_at stayed null and no email/SMS ever
         // went out for widget chats.
         const userMsgCount = messages.filter((m) => m.role === "user").length;
-        if (userMsgCount >= 2 && threadId) {
-          const allMessages = [
-            ...messages.map((m) => ({ role: m.role, content: m.content })),
-            { role: "assistant" as const, content: finalText },
-          ];
+        const sharedContact = messages.some((m) => m.role === "user" && looksLikeContact(String(m.content ?? "")));
+        const allMessages = [
+          ...messages.map((m) => ({ role: m.role, content: m.content })),
+          { role: "assistant" as const, content: finalText },
+        ];
+        if (userMsgCount >= 2 || sharedContact) {
+          // Capture even if no thread could be created (conversationId null).
+          // Pass the mirrored thread id so leads.conversation_id links to the
+          // row the Threads UI reads.
           try {
-            // Pass the mirrored thread id (not the widget conversation id)
-            // so leads.conversation_id links to the row the Threads UI reads,
-            // and the visitor's name shows up instead of "Unknown Caller".
             await captureLeadFromWidget({
               agentId,
               userId: agent.user_id,
-              conversationId: threadId,
+              conversationId: threadId ?? null,
               messages: allMessages,
             });
           } catch (e) {
             console.error("lead capture error:", e);
           }
-
+        }
+        if (userMsgCount >= 2 && threadId) {
           // Post-call (post-turn) SMS for triggered scenarios. Runs on the
           // widget too: we look up the captured lead's phone and reuse the
           // same scenario matcher used by voice calls. Deduped per-thread so

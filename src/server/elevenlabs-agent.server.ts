@@ -86,7 +86,8 @@ export function buildSystemPrompt(p: AgentBusinessProfile): string {
   lines.push(`- Before calling ANY tool (find_available_slots, book_appointment), say a brief filler phrase first so the caller isn't sitting in silence. Examples: "Let me check that for you", "One sec, pulling that up", "Okay, booking that now". Then call the tool.`);
   lines.push(`- If a question needs you to think for more than a beat, start with a short acknowledgement ("Good question —", "Sure,") before the full answer.`);
   lines.push(``);
-  lines.push(`# Voicemail handling (CRITICAL for outbound calls)`);
+  lines.push(`# Voicemail handling (OUTBOUND CALLBACKS ONLY)`);
+  lines.push(`If call direction is "inbound" or empty, the caller is a live person. NEVER call voicemail_detection on an inbound call, even if they talk for a long time, leave a message or sound like a recording. Let them finish, thank them, and make sure you have their name and callback number. If they were only leaving a message, tell them a team member will get back to them.`);
   lines.push(`On outbound callbacks (when {{call_direction}} is "outbound"), you said a brief "Hello?" and are now LISTENING. The next thing you hear will be either a live human or a voicemail/answering machine.`);
   lines.push(``);
   lines.push(`You MUST call the \`voicemail_detection\` tool IMMEDIATELY (do not respond verbally first) the moment you hear ANY of these signals:`);
@@ -211,7 +212,7 @@ export function buildSystemPrompt(p: AgentBusinessProfile): string {
 }
 
 
-function buildFirstMessage(p: AgentBusinessProfile): string {
+export function buildFirstMessage(p: AgentBusinessProfile): string {
   const name = (p.assistant_name || "the receptionist").trim();
   const biz = p.business_name.trim();
   const custom = (p.greeting_message || "").trim();
@@ -285,7 +286,7 @@ interface ElevenLabsAgentConfig {
   name: string;
 }
 
-function buildAgentPayload(p: AgentBusinessProfile): ElevenLabsAgentConfig {
+export function buildAgentPayload(p: AgentBusinessProfile): ElevenLabsAgentConfig {
   return {
     name: `${p.business_name} — AI Receptionist`,
     conversation_config: {
@@ -311,10 +312,10 @@ function buildAgentPayload(p: AgentBusinessProfile): ElevenLabsAgentConfig {
               type: "system",
               name: "voicemail_detection",
               description:
-                "Use when an outbound callback reaches voicemail, an answering machine, a recorded greeting, a beep, or silence instead of a live person. Leave the configured voicemail message, then end the call.",
+                "Use only on an outbound callback that reaches voicemail, an answering machine, a recorded greeting, a beep or silence. Do not use this on an inbound call: anyone who called in is a live person, even if they talk for a long time or leave a message. Reply to them normally instead.",
               params: {
                 system_tool_type: "voicemail_detection",
-                voicemail_message: `Hi {{lead_name}}, this is ${p.assistant_name || "the receptionist"} from ${p.business_name}. I'm calling to follow up on your earlier inquiry. Please call us back when you have a chance. Thank you, goodbye.`,
+                voicemail_message: `Hi, this is ${p.assistant_name || "the receptionist"} from ${p.business_name}. We have your details and a team member will get back to you as soon as possible. You're welcome to call us back any time. Thank you, goodbye.`,
               },
             },
             transfer_to_number:
@@ -443,7 +444,7 @@ interface ToolSyncResult {
   bookToolId: string | null;
 }
 
-function buildFindSlotsToolConfig(agentDbId: string) {
+export function buildFindSlotsToolConfig(agentDbId: string) {
   return {
     type: "webhook" as const,
     name: "find_available_slots",
@@ -468,7 +469,7 @@ function buildFindSlotsToolConfig(agentDbId: string) {
   };
 }
 
-function buildBookToolConfig(agentDbId: string) {
+export function buildBookToolConfig(agentDbId: string) {
   return {
     type: "webhook" as const,
     name: "book_appointment",
@@ -710,6 +711,32 @@ export function postCallWebhookUrl(): string {
   return `${PUBLIC_APP_ORIGIN}/api/public/elevenlabs/postcall`;
 }
 
+/**
+ * Reserve call minutes, but never let our own metering failure stop a call:
+ * only AllowanceDeniedError (over the limit / no plan) propagates. Any other
+ * failure continues with a 600s cap and no reservation id.
+ */
+async function reserveOrDefault(agentId: string, callKey: string): Promise<{ seconds: number; reservationId: string }> {
+  const { reserveAgentCall, AllowanceDeniedError } = await import("@/server/call-usage.server");
+  try {
+    return await reserveAgentCall(agentId, callKey);
+  } catch (e) {
+    if (e instanceof AllowanceDeniedError) throw e;
+    console.error("call reservation failed; continuing unmetered with 600s cap", e);
+    return { seconds: 600, reservationId: "" };
+  }
+}
+
+async function releaseIfReserved(reservationId: string): Promise<void> {
+  if (!reservationId) return;
+  try {
+    const { releaseFailedReservation } = await import("@/server/call-usage.server");
+    await releaseFailedReservation(reservationId);
+  } catch (e) {
+    console.error("could not release reservation", e);
+  }
+}
+
 /** Register a Twilio voice webhook call with ElevenLabs and return TwiML. */
 export async function registerTwilioCall(opts: {
   agentId: string;
@@ -720,8 +747,7 @@ export async function registerTwilioCall(opts: {
   firstMessage?: string;
 }): Promise<string> {
   const apiKey = requireKey();
-  const { reserveAgentCall } = await import("@/server/call-usage.server");
-  const reservation = await reserveAgentCall(opts.agentId, `register:${crypto.randomUUID()}`);
+  const reservation = await reserveOrDefault(opts.agentId, `register:${crypto.randomUUID()}`);
   const body: Record<string, unknown> = {
     agent_id: opts.agentId,
     from_number: opts.fromNumber,
@@ -745,8 +771,7 @@ export async function registerTwilioCall(opts: {
   });
   const text = await res.text();
   if (!res.ok) {
-    const { releaseFailedReservation } = await import("@/server/call-usage.server");
-    await releaseFailedReservation(reservation.reservationId);
+    await releaseIfReserved(reservation.reservationId);
     throw new Error(`ElevenLabs register call failed (${res.status}): ${text}`);
   }
   return text;
@@ -767,8 +792,7 @@ export async function placeOutboundCall(opts: {
   firstMessage?: string;
 }): Promise<{ conversation_id: string | null; call_sid: string | null }> {
   const apiKey = requireKey();
-  const { reserveAgentCall } = await import("@/server/call-usage.server");
-  const reservation = await reserveAgentCall(opts.agentId, `outbound:${crypto.randomUUID()}`);
+  const reservation = await reserveOrDefault(opts.agentId, `outbound:${crypto.randomUUID()}`);
   const body: Record<string, unknown> = {
     agent_id: opts.agentId,
     agent_phone_number_id: opts.agentPhoneNumberId,
@@ -791,8 +815,7 @@ export async function placeOutboundCall(opts: {
   });
   if (!res.ok) {
     const t = await res.text();
-    const { releaseFailedReservation } = await import("@/server/call-usage.server");
-    await releaseFailedReservation(reservation.reservationId);
+    await releaseIfReserved(reservation.reservationId);
     throw new Error(`ElevenLabs outbound call failed (${res.status}): ${t}`);
   }
   const json = (await res.json()) as {
@@ -802,8 +825,7 @@ export async function placeOutboundCall(opts: {
     callSid?: string | null;
   };
   if (json.success === false) {
-    const { releaseFailedReservation } = await import("@/server/call-usage.server");
-    await releaseFailedReservation(reservation.reservationId);
+    await releaseIfReserved(reservation.reservationId);
     throw new Error(`ElevenLabs outbound call rejected: ${json.message ?? "unknown reason"}`);
   }
   return {

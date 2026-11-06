@@ -82,7 +82,7 @@ ${credential.hint ? `<p>${credential.hint}</p>` : ""}
 
         const { data: agents, error } = await supabaseAdmin
           .from("agents")
-          .select("id, elevenlabs_agent_id")
+          .select("id, elevenlabs_agent_id, business_name")
           .not("elevenlabs_agent_id", "is", null);
 
 
@@ -99,6 +99,9 @@ ${credential.hint ? `<p>${credential.hint}</p>` : ""}
         let skipped = 0;
         let errors = 0;
         const recovered: Array<{ agent_id: string; saved: number }> = [];
+        let leadsRecovered = 0;
+        type FailedNote = import("@/server/voice-call-backfill.server").FailedCallNote;
+        const alertable: Array<FailedNote & { business: string }> = [];
 
         for (const agent of agents ?? []) {
           const elAgentId = agent.elevenlabs_agent_id;
@@ -109,6 +112,9 @@ ${credential.hint ? `<p>${credential.hint}</p>` : ""}
             saved += r.saved;
             skipped += r.skipped;
             errors += r.errors;
+            leadsRecovered += r.leadsRecovered;
+            const business = agent.business_name || "Unknown business";
+            for (const f of [...r.recentFailed, ...r.leadRecoveryFailures]) alertable.push({ ...f, business });
             if (r.saved > 0) {
               recovered.push({ agent_id: agent.id, saved: r.saved });
               console.warn(
@@ -130,8 +136,55 @@ ${credential.hint ? `<p>${credential.hint}</p>` : ""}
           return { notified: 0 };
         });
 
+        // Lead repair passes. Silent: no emails or texts to anyone.
+        const { repairLeadsMissingContact, recoverWidgetLeads } = await import("@/server/voice-call-backfill.server");
+        const phoneRepair = await repairLeadsMissingContact().catch((e) => {
+          console.error("backfill-sweep: lead phone repair failed", e);
+          return { checked: 0, repaired: 0 };
+        });
+        const widgetLeads = await recoverWidgetLeads().catch((e) => {
+          console.error("backfill-sweep: widget lead recovery failed", e);
+          return { checked: 0, recovered: 0 };
+        });
+
+        // Failed-call digest to the platform inbox (never to customers).
+        let failedCallsAlerted = 0;
+        try {
+          const { allowRequestStrict } = await import("@/server/rate-limit.server");
+          const seen = new Set<string>();
+          const fresh: typeof alertable = [];
+          for (const f of alertable) {
+            if (seen.has(f.conversationId)) continue;
+            seen.add(f.conversationId);
+            if (await allowRequestStrict(`failed-call-alert:${f.conversationId}`, 1, 30 * 86400)) fresh.push(f);
+          }
+          if (fresh.length > 0) {
+            const esc = (v: unknown) =>
+              String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string);
+            const fmt = (u: number | null) =>
+              u ? new Date(u * 1000).toLocaleString("en-CA", { timeZone: "America/Toronto", dateStyle: "medium", timeStyle: "short" }) : "unknown time";
+            const rows = fresh
+              .map((f) => `<tr><td>${esc(f.business)}</td><td>${esc(fmt(f.startUnix))}</td><td>${esc(f.terminationReason ?? "unknown")}</td><td>${esc(f.conversationId)}</td><td>${f.leadSaved ? "yes" : "NO"}</td></tr>`)
+              .join("");
+            await sendEmail({
+              to: "hello@askjanice.net",
+              subject: `Janice alert: ${fresh.length} call(s) failed or lost their lead`,
+              html: `<p>These calls ended as failed, or their lead could not be saved:</p><table border="1" cellpadding="4" cellspacing="0"><tr><th>Business</th><th>Time (Toronto)</th><th>Reason</th><th>Conversation</th><th>Lead saved</th></tr>${rows}</table>`,
+            });
+            failedCallsAlerted = fresh.length;
+          }
+        } catch (e) {
+          console.error("backfill-sweep: failed-call alert failed", e);
+        }
+
         return new Response(
           JSON.stringify({
+            leadsRecovered,
+            leadPhonesChecked: phoneRepair.checked,
+            leadPhonesRepaired: phoneRepair.repaired,
+            widgetLeadsChecked: widgetLeads.checked,
+            widgetLeadsRecovered: widgetLeads.recovered,
+            failedCallsAlerted,
             success: true,
             credentials: { ok: credential.ok, detail: credential.detail },
             replay,
