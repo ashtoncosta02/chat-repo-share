@@ -50,6 +50,7 @@ interface Conversation {
   ended_at: string | null;
   recording_url: string | null;
   lead_id?: string | null;
+  source?: string | null;
 }
 
 interface RelatedCall {
@@ -173,7 +174,7 @@ function ConversationDetailContent({ conversationId }: { conversationId: string 
     (async () => {
       const { data: c } = await supabase
         .from("conversations")
-        .select("id, agent_id, message_count, duration_seconds, started_at, ended_at, recording_url, lead_id")
+        .select("id, agent_id, message_count, duration_seconds, started_at, ended_at, recording_url, lead_id, source")
         .eq("id", conversationId)
         .maybeSingle();
       if (cancelled) return;
@@ -305,7 +306,11 @@ function ConversationDetailContent({ conversationId }: { conversationId: string 
 
         <div className="mt-4 flex flex-wrap gap-3 text-sm">
           <Stat icon={<MessageSquare className="h-4 w-4" />} label={`${conv.message_count} messages`} />
-          <Stat icon={<Clock className="h-4 w-4" />} label={`${minutes} min`} />
+          {conv.source === "sms" ? (
+            <Stat icon={<MessageCircle className="h-4 w-4" />} label="Text message" />
+          ) : (
+            <Stat icon={<Clock className="h-4 w-4" />} label={`${minutes} min`} />
+          )}
           {lead?.phone && <Stat icon={<Phone className="h-4 w-4" />} label={lead.phone} />}
           {lead?.email && <Stat icon={<MessageCircle className="h-4 w-4" />} label={lead.email} />}
           {agent && <Stat icon={<Bot className="h-4 w-4" />} label={assistantName} />}
@@ -413,7 +418,7 @@ function ConversationDetailContent({ conversationId }: { conversationId: string 
           </div>
         )}
 
-        {conv.recording_url && recordingUrl && (
+        {conv.source !== "sms" && conv.recording_url && recordingUrl && (
           <div className="rounded-xl border border-border bg-card p-5">
             <div className="flex items-center gap-2 text-sm font-semibold text-foreground mb-3">
               <Mic className="h-4 w-4 text-[var(--gold)]" />
