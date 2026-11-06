@@ -255,7 +255,9 @@ export async function persistPostCall(
   const reservationId = data.conversation_initiation_client_data?.dynamic_variables?.janice_call_reservation || undefined;
   const isPhoneCall = Boolean(data.metadata?.phone_call);
   // A text conversation is a real customer contact, never a dashboard test.
-  const isSms = Boolean(data.metadata?.sms);
+  const isSms =
+    Boolean(data.metadata?.sms) ||
+    data.conversation_initiation_client_data?.dynamic_variables?.system__channel === "twilio_sms";
   const callerNumber = callerNumberFrom(data);
 
   // Dashboard "Live voice test" sessions are owner practice runs. Only honour
@@ -363,6 +365,7 @@ export async function persistPostCall(
       ended_at: endedAt,
       duration_seconds: durationSec,
       message_count: messageCount,
+      ...(isSms ? { source: "sms" } : {}),
     })
     .select("id")
     .single();
@@ -388,11 +391,13 @@ export async function persistPostCall(
     }
   }
 
+  let capturedLeadId: string | null = null;
   // 3. Lead — before anything slow. Only when the caller said something or
   // we know who they are (avoids empty leads for silent hangups).
   if (userTurns.length > 0 || callerNumber) {
     try {
       const r = await runCaptureLead(convo.id);
+      capturedLeadId = r.leadId;
       if (!r.ok) console.error("postcall: lead capture failed for", convo.id);
     } catch (e) {
       console.error("postcall: lead capture threw", e);
@@ -431,13 +436,14 @@ export async function persistPostCall(
         ownerEmail = prof?.email?.trim() || null;
       }
       if (ownerEmail) {
-        const { data: leadRows } = await supabaseAdmin
-          .from("leads")
-          .select("name, email, phone, address")
-          .eq("agent_id", agent.id)
-          .eq("conversation_id", convo.id)
-          .order("created_at", { ascending: true })
-          .limit(1);
+        // By the captured lead id, so repeat callers' details show too.
+        const { data: leadRows } = capturedLeadId
+          ? await supabaseAdmin
+              .from("leads")
+              .select("name, email, phone, address")
+              .eq("id", capturedLeadId)
+              .limit(1)
+          : { data: null };
         const { subject, html } = renderTranscriptEmail({
           businessName: agent.business_name || "Your business",
           callerNumber,

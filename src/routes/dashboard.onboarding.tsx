@@ -211,6 +211,8 @@ function OnboardingWizard() {
         ...payload,
         voice_id: DEFAULT_VOICE_ID,
         answer_mode: "immediate",
+        // New accounts hear about their leads by default (DB default is false).
+        notify_email_transcript: true,
         onboarding_completed: false,
         is_live: true,
       })
