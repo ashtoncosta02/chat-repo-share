@@ -200,12 +200,14 @@ function MetricCard({ icon, iconBg, label, value, sublabel }: { icon: React.Reac
 function ResyncAllButton({ accessToken }: { accessToken: string | undefined }) {
   const [state, setState] = useState<"idle" | "running" | "done" | "error">("idle");
   const [msg, setMsg] = useState<string>("");
+  const [failures, setFailures] = useState<{ agentId: string; businessName: string; error: string }[]>([]);
 
   const run = async () => {
     if (!accessToken) return;
     if (!confirm("Push the latest voice-agent settings to every receptionist? This can take a minute.")) return;
     setState("running");
     setMsg("");
+    setFailures([]);
     try {
       const res = await adminResyncAllReceptionists({ data: { accessToken } });
       if (!res.success) {
@@ -215,6 +217,7 @@ function ResyncAllButton({ accessToken }: { accessToken: string | undefined }) {
       }
       setState("done");
       setMsg(`Resynced ${res.succeeded}/${res.total}${res.failed ? ` (${res.failed} failed)` : ""}`);
+      setFailures(res.failures ?? []);
     } catch (e: any) {
       setState("error");
       setMsg(e?.message ?? "Failed");
@@ -222,15 +225,30 @@ function ResyncAllButton({ accessToken }: { accessToken: string | undefined }) {
   };
 
   return (
-    <button
-      onClick={run}
-      disabled={state === "running" || !accessToken}
-      className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-60"
-      title="Push server-side agent config changes (LLM, prompts, timeouts, tools) to every receptionist in ElevenLabs."
-    >
-      {state === "running" ? "Resyncing…" : "Resync all receptionists"}
-      {msg && <span className="text-xs text-muted-foreground ml-1">— {msg}</span>}
-    </button>
+    <>
+      <button
+        onClick={run}
+        disabled={state === "running" || !accessToken}
+        className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-60"
+        title="Push server-side agent config changes (LLM, prompts, timeouts, tools) to every receptionist in ElevenLabs."
+      >
+        {state === "running" ? "Resyncing…" : "Resync all receptionists"}
+        {msg && state === "done" && <span className="text-xs text-muted-foreground ml-1">— {msg}</span>}
+      </button>
+      {/* Full-width row under the action buttons (parent is flex-wrap). */}
+      {state === "error" && msg && (
+        <p role="alert" className="order-last basis-full w-0 min-w-full text-xs text-destructive whitespace-pre-wrap break-words">{msg}</p>
+      )}
+      {state === "done" && failures.length > 0 && (
+        <ul role="alert" className="order-last basis-full w-0 min-w-full text-xs text-destructive space-y-1">
+          {failures.map((f) => (
+            <li key={f.agentId} className="break-words">
+              <span className="font-medium">{f.businessName}:</span> {f.error}
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
   );
 }
 
