@@ -236,9 +236,9 @@ export async function backfillRecentCalls(opts: {
             .eq("elevenlabs_agent_id", opts.elAgentId)
             .maybeSingle();
           if (error) console.error("backfill: agent lookup failed for initiated callers", error.message);
-          agentRow = error ? undefined : (data ?? null);
-          if (!agentRow) break;
+          agentRow = error ? null : (data ?? null);
         }
+        if (!agentRow) break;
         const { allowRequestStrict } = await import("@/server/rate-limit.server");
         if (!(await allowRequestStrict(`initiated-caller:${item.conversation_id}`, 1, 30 * 86400))) continue;
         const { saveMissedCaller } = await import("@/server/lead-extraction");
