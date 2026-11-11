@@ -1,4 +1,5 @@
 import { defaultReceptionistVariables } from "@/lib/receptionist-variables";
+import { AI_CALL_MAX_SECONDS } from "@/lib/call-length";
 
 // Pure decision for the inbound minutes check. Only a verified request whose
 // caller is blocked, or whose account was denied by the allowance itself
@@ -12,7 +13,7 @@ export type AllowanceOutcome =
   | { kind: "bad-credential" }
   | { kind: "error" };
 
-export const FALLBACK_MAX_SECONDS = 600;
+export const FALLBACK_MAX_SECONDS = AI_CALL_MAX_SECONDS;
 
 export function allowanceResponseBody(o: AllowanceOutcome): { status: number; body: Record<string, unknown> | string; alert: boolean } {
   if (o.kind === "blocked") return { status: 403, body: "Caller blocked", alert: false };

@@ -716,7 +716,7 @@ export function postCallWebhookUrl(): string {
 /**
  * Reserve call minutes, but never let our own metering failure stop a call:
  * only AllowanceDeniedError (over the limit / no plan) propagates. Any other
- * failure continues with a 600s cap and no reservation id.
+ * failure continues with the normal AI call limit and no reservation id.
  */
 async function reserveOrDefault(agentId: string, callKey: string): Promise<{ seconds: number; reservationId: string }> {
   const { reserveAgentCall, AllowanceDeniedError } = await import("@/server/call-usage.server");
@@ -724,8 +724,9 @@ async function reserveOrDefault(agentId: string, callKey: string): Promise<{ sec
     return await reserveAgentCall(agentId, callKey);
   } catch (e) {
     if (e instanceof AllowanceDeniedError) throw e;
-    console.error("call reservation failed; continuing unmetered with 600s cap", e);
-    return { seconds: 600, reservationId: "" };
+    console.error("call reservation failed; continuing unmetered with the AI call limit", e);
+    const { AI_CALL_MAX_SECONDS } = await import("@/lib/call-length");
+    return { seconds: AI_CALL_MAX_SECONDS, reservationId: "" };
   }
 }
 

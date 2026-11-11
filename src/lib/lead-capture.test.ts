@@ -45,12 +45,12 @@ describe("call allowance decision", () => {
     expect(allowanceResponseBody({ kind: "denied" }).status).toBe(403);
   });
   for (const kind of ["bad-request", "bad-credential", "error"] as const) {
-    it(`lets the call through on ${kind} with 600s and empty variables`, () => {
+    it(`lets the call through on ${kind} with 30 minutes and empty variables`, () => {
       const r = allowanceResponseBody({ kind });
       expect(r.status).toBe(200);
       expect(r.body).toEqual({
         type: "conversation_initiation_client_data",
-        conversation_config_override: { conversation: { max_duration_seconds: 600 } },
+        conversation_config_override: { conversation: { max_duration_seconds: 1800 } },
         dynamic_variables: { call_direction: "inbound", lead_name: "", lead_notes: "", janice_call_reservation: "" },
       });
     });

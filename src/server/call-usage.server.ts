@@ -1,5 +1,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { planEnvironment } from "@/server/plan-access.server";
+import { planForPrice } from "@/lib/plans";
+import { AI_CALL_MAX_SECONDS, RESERVATION_SLOT_SECONDS, callMaxSeconds } from "@/lib/call-length";
 
 /** The account is over its minutes or has no active plan. Only this may refuse a call. */
 export class AllowanceDeniedError extends Error {
@@ -12,12 +14,39 @@ export class AllowanceDeniedError extends Error {
 export async function reserveAgentCall(agentId: string, callKey: string) {
   const { data: agent, error: agentError } = await supabaseAdmin.from("agents").select("user_id").eq("elevenlabs_agent_id", agentId).maybeSingle();
   if (agentError || !agent) throw new Error("Receptionist not found.");
-  const { data, error } = await supabaseAdmin.rpc("reserve_call_allowance", { p_user: agent.user_id, p_env: planEnvironment(), p_call_key: callKey, p_max_seconds: 600 });
+  const { data, error } = await supabaseAdmin.rpc("reserve_call_allowance", { p_user: agent.user_id, p_env: planEnvironment(), p_call_key: callKey, p_max_seconds: RESERVATION_SLOT_SECONDS });
   if (error) throw new Error(error.message);
-  const result = data as { seconds?: number; reservation_id?: string; error?: string } | null;
+  const result = data as { seconds?: number; reservation_id?: string; plan_id?: string; error?: string } | null;
   if (!result?.seconds && result?.error) throw new AllowanceDeniedError(result.error);
   if (!result?.seconds || !result.reservation_id) throw new Error(result?.error || "Call allowance reservation returned no reservation.");
-  return { seconds: result.seconds, reservationId: result.reservation_id };
+  const usage = await reservationUsage(agent.user_id, result.reservation_id, result.plan_id);
+  // `seconds` is the call's hard limit; the ledger keeps only the small slot until the real duration is recorded.
+  return { seconds: callMaxSeconds(result.seconds, AI_CALL_MAX_SECONDS, usage), reservationId: result.reservation_id };
+}
+
+/**
+ * Plan cap and usage (including the given reservation) for the reservation's
+ * billing period. Returns null on any problem so callers never cut a call short.
+ */
+export async function reservationUsage(userId: string, reservationId: string, planId?: string | null): Promise<{ capSeconds: number; usedSeconds: number } | null> {
+  try {
+    let plan = planForPrice(planId);
+    if (!plan) {
+      const { accountPlan } = await import("@/server/plan-access.server");
+      plan = (await accountPlan(userId)).plan;
+    }
+    if (!plan) return null;
+    const env = planEnvironment();
+    const { data: row, error: rowError } = await supabaseAdmin.from("call_allowance_ledger").select("period_start").eq("id", reservationId).maybeSingle();
+    if (rowError || !row) return null;
+    const { data: ledger, error } = await supabaseAdmin.from("call_allowance_ledger").select("actual_seconds,reserved_seconds").eq("user_id", userId).eq("environment", env).eq("period_start", row.period_start);
+    if (error) return null;
+    const usedSeconds = (ledger ?? []).reduce((n, r) => n + (r.actual_seconds ?? r.reserved_seconds), 0);
+    return { capSeconds: plan.callMinutes * 60, usedSeconds };
+  } catch (e) {
+    console.error("reservationUsage failed", e);
+    return null;
+  }
 }
 
 export async function finishAgentCall(userId: string, conversationId: string, seconds: number, reservationId?: string) {
