@@ -28,16 +28,44 @@ function isPublicHttpUrl(raw: string): boolean {
   if (host === "::1" || host.startsWith("fe80:") || host.startsWith("fc") || host.startsWith("fd")) {
     return false;
   }
-  const ipv4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
-  if (ipv4) {
-    const [a, b] = [Number(ipv4[1]), Number(ipv4[2])];
-    if (a === 10 || a === 127 || a === 0) return false;
-    if (a === 169 && b === 254) return false; // link-local / cloud metadata
-    if (a === 172 && b >= 16 && b <= 31) return false;
-    if (a === 192 && b === 168) return false;
-    if (a === 100 && b >= 64 && b <= 127) return false;
-  }
+  // Business websites use domain names. Raw IP addresses (v4 or v6) and
+  // single-label hosts are refused, so this can't be aimed at arbitrary servers.
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host) || host.includes(":")) return false;
+  if (!host.includes(".") || !/^[a-z0-9.-]+$/.test(host)) return false;
   return true;
+}
+
+/** Rough "same website" key: example.com for www.example.com, example.co.uk for shop.example.co.uk. */
+function siteKey(raw: string): string {
+  const labels = new URL(raw).hostname.toLowerCase().split(".");
+  const take = labels.length >= 3 && labels[labels.length - 2].length <= 3 && labels[labels.length - 1].length === 2 ? 3 : 2;
+  return labels.slice(-take).join(".");
+}
+
+const MAX_PAGE_BYTES = 2_000_000;
+
+/** Read at most MAX_PAGE_BYTES of the body, then stop downloading. */
+async function readCapped(res: Response): Promise<string> {
+  if (!res.body) return "";
+  const reader = res.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (total < MAX_PAGE_BYTES) {
+    const { done, value } = await reader.read();
+    if (done || !value) break;
+    chunks.push(value);
+    total += value.byteLength;
+  }
+  await reader.cancel().catch(() => {});
+  const buf = new Uint8Array(Math.min(total, MAX_PAGE_BYTES));
+  let off = 0;
+  for (const c of chunks) {
+    const part = c.subarray(0, Math.min(c.byteLength, buf.byteLength - off));
+    buf.set(part, off);
+    off += part.byteLength;
+    if (off >= buf.byteLength) break;
+  }
+  return new TextDecoder().decode(buf);
 }
 
 const ScrapeInput = z.object({
@@ -80,12 +108,15 @@ export const scrapeBusinessFromUrl = createServerFn({ method: "POST" })
       // Fetch the URL content
       let pageText = "";
       try {
-        // Follow redirects manually so every hop is re-checked as public.
+        // Follow redirects manually so every hop is re-checked as public and
+        // must stay on the same website the owner entered.
         let target = data.url;
+        const site = siteKey(data.url);
         let pageRes: Response | null = null;
         for (let hop = 0; hop < 4; hop++) {
-          if (!isPublicHttpUrl(target)) break;
+          if (!isPublicHttpUrl(target) || siteKey(target) !== site) break;
           const res = await fetch(target, {
+            method: "GET",
             headers: {
               "User-Agent": "Mozilla/5.0 (compatible; AskJaniceBot/1.0)",
             },
@@ -101,8 +132,8 @@ export const scrapeBusinessFromUrl = createServerFn({ method: "POST" })
           break;
         }
         const ctype = pageRes?.headers.get("content-type") ?? "";
-        if (pageRes && pageRes.ok && (ctype === "" || /text\/|html|xml/i.test(ctype))) {
-          const html = await pageRes.text();
+        if (pageRes && pageRes.ok && /text\/html|application\/xhtml/i.test(ctype)) {
+          const html = await readCapped(pageRes);
           // Strip scripts/styles, then tags, collapse whitespace
           pageText = html
             .replace(/<script[\s\S]*?<\/script>/gi, " ")
@@ -192,7 +223,7 @@ export const scrapeBusinessFromUrl = createServerFn({ method: "POST" })
       console.error("scrapeBusinessFromUrl error:", e);
       return {
         success: false as const,
-        error: e instanceof Error ? e.message : "Unexpected error during scraping.",
+        error: "Something went wrong reading that website. Please try again.",
       };
     }
   });
