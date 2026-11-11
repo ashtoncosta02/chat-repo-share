@@ -100,6 +100,7 @@ ${credential.hint ? `<p>${credential.hint}</p>` : ""}
         let errors = 0;
         const recovered: Array<{ agent_id: string; saved: number }> = [];
         let leadsRecovered = 0;
+        let missedCallersSaved = 0;
         type FailedNote = import("@/server/voice-call-backfill.server").FailedCallNote;
         const alertable: Array<FailedNote & { business: string }> = [];
 
@@ -113,6 +114,7 @@ ${credential.hint ? `<p>${credential.hint}</p>` : ""}
             skipped += r.skipped;
             errors += r.errors;
             leadsRecovered += r.leadsRecovered;
+            missedCallersSaved += r.missedCallersSaved;
             const business = agent.business_name || "Unknown business";
             for (const f of [...r.recentFailed, ...r.leadRecoveryFailures]) alertable.push({ ...f, business });
             if (r.saved > 0) {
@@ -180,6 +182,7 @@ ${credential.hint ? `<p>${credential.hint}</p>` : ""}
         return new Response(
           JSON.stringify({
             leadsRecovered,
+            missedCallersSaved,
             leadPhonesChecked: phoneRepair.checked,
             leadPhonesRepaired: phoneRepair.repaired,
             widgetLeadsChecked: widgetLeads.checked,
