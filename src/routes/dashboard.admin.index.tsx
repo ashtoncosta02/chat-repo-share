@@ -225,21 +225,22 @@ function ResyncAllButton({ accessToken }: { accessToken: string | undefined }) {
   };
 
   return (
-    <div className="flex flex-col gap-1.5 max-w-md">
+    <>
       <button
         onClick={run}
         disabled={state === "running" || !accessToken}
-        className="inline-flex items-center gap-2 self-start rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-60"
+        className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-60"
         title="Push server-side agent config changes (LLM, prompts, timeouts, tools) to every receptionist in ElevenLabs."
       >
         {state === "running" ? "Resyncing…" : "Resync all receptionists"}
         {msg && state === "done" && <span className="text-xs text-muted-foreground ml-1">— {msg}</span>}
       </button>
+      {/* Full-width row under the action buttons (parent is flex-wrap). */}
       {state === "error" && msg && (
-        <p role="alert" className="text-xs text-destructive whitespace-pre-wrap break-words">{msg}</p>
+        <p role="alert" className="order-last basis-full w-0 min-w-full text-xs text-destructive whitespace-pre-wrap break-words">{msg}</p>
       )}
       {state === "done" && failures.length > 0 && (
-        <ul role="alert" className="text-xs text-destructive space-y-1">
+        <ul role="alert" className="order-last basis-full w-0 min-w-full text-xs text-destructive space-y-1">
           {failures.map((f) => (
             <li key={f.agentId} className="break-words">
               <span className="font-medium">{f.businessName}:</span> {f.error}
@@ -247,7 +248,7 @@ function ResyncAllButton({ accessToken }: { accessToken: string | undefined }) {
           ))}
         </ul>
       )}
-    </div>
+    </>
   );
 }
 
