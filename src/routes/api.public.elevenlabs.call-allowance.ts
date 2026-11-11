@@ -20,7 +20,7 @@ async function alertAllowedAnyway(kind: string, detail: unknown) {
     await sendEmail({
       to: "hello@askjanice.net",
       subject: "Janice alert: minutes check let a call through",
-      html: `<p>The inbound minutes check hit a problem (<strong>${safe}</strong>) and let the call through with a 10-minute cap instead of rejecting it. Check the server logs.</p>`,
+      html: `<p>The inbound minutes check hit a problem (<strong>${safe}</strong>) and let the call through with the normal 30-minute limit instead of rejecting it. Check the server logs.</p>`,
     });
   } catch (e) {
     console.error("call-allowance: alert failed", e);
