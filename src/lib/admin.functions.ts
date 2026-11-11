@@ -700,21 +700,40 @@ export const adminResyncAllReceptionists = createServerFn({ method: "POST" })
     const auth = await requireAdmin(data.accessToken);
     if ("error" in auth) return { success: false as const, error: auth.error };
 
+    // Only the live-billing copy may resync. A test-billing copy resolves plans
+    // against test subscriptions (skipping paying customers) and signs the
+    // call-allowance key with its own environment, so refuse before touching
+    // any receptionist.
+    const { planEnvironment } = await import("@/server/plan-access.server");
+    let env: "live" | "sandbox" | null = null;
+    try {
+      env = planEnvironment();
+    } catch {
+      env = null;
+    }
+    if (env !== "live") {
+      return {
+        success: false as const,
+        error: "Resync only from https://askjanice.net/dashboard/admin. This copy of the app uses test billing, so it would skip paying customers.",
+      };
+    }
+
     const { data: agents, error } = await supabaseAdmin
       .from("agents")
-      .select("id");
+      .select("id, business_name");
     if (error) return { success: false as const, error: error.message };
 
     const { resyncReceptionistById } = await import("@/server/elevenlabs-agent-resync.server");
     let succeeded = 0;
-    const failures: { agentId: string; error: string }[] = [];
+    const failures: { agentId: string; businessName: string; error: string }[] = [];
     for (const a of agents ?? []) {
+      const businessName = a.business_name || "Unnamed business";
       try {
         const r = await resyncReceptionistById(a.id);
         if (r.success) succeeded++;
-        else failures.push({ agentId: a.id, error: r.error });
+        else failures.push({ agentId: a.id, businessName, error: r.error });
       } catch (e: any) {
-        failures.push({ agentId: a.id, error: e?.message ?? "Unknown error" });
+        failures.push({ agentId: a.id, businessName, error: e?.message ?? "Unknown error" });
       }
     }
     return {
