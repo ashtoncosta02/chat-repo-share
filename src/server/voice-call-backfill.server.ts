@@ -4,6 +4,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { persistPostCall, type PostCallData } from "@/routes/api.public.elevenlabs.postcall";
 import { callerNumberFrom } from "@/lib/caller-number";
+import { isInitiatedInWindow, isMissedInitiatedCall } from "@/lib/initiated-caller";
 
 const EL_BASE = "https://api.elevenlabs.io/v1";
 
@@ -21,7 +22,10 @@ interface ConversationDetail {
   conversation_id: string;
   status?: string;
   transcript?: PostCallData["transcript"];
-  metadata?: PostCallData["metadata"] & { termination_reason?: string };
+  metadata?: PostCallData["metadata"] & {
+    termination_reason?: string;
+    phone_call?: { direction?: string | null } | null;
+  };
   conversation_initiation_client_data?: PostCallData["conversation_initiation_client_data"];
 }
 
@@ -48,6 +52,7 @@ export async function backfillRecentCalls(opts: {
   leadsRecovered: number;
   leadRecoveryFailures: FailedCallNote[];
   recentFailed: FailedCallNote[];
+  missedCallersSaved: number;
 }> {
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) throw new Error("ELEVENLABS_API_KEY not configured");
@@ -61,8 +66,9 @@ export async function backfillRecentCalls(opts: {
     throw new Error(`EL list conversations failed (${listRes.status}): ${await listRes.text()}`);
   }
   const listJson = (await listRes.json()) as { conversations?: ConversationListItem[] };
+  const allItems = listJson.conversations ?? [];
   // "failed" conversations are real callers too (e.g. dropped mid-call).
-  const items = (listJson.conversations ?? []).filter((c) => {
+  const items = allItems.filter((c) => {
     const st = c.status ?? "done";
     return st === "done" || st === "failed";
   });
@@ -208,7 +214,49 @@ export async function backfillRecentCalls(opts: {
     }
   }
 
-  return { scanned: items.length, saved, skipped, errors, leadsRecovered: leadsRecoveredRef.n, leadRecoveryFailures, recentFailed };
+  // Inbound callers who hung up before the receptionist answered: ElevenLabs
+  // keeps these at "initiated" and sends no post-call report. Save the caller
+  // as a lead (no email, no conversation row), once per conversation.
+  let missedCallersSaved = 0;
+  const initiated = allItems.filter((c) => isInitiatedInWindow(c, nowSec));
+  if (initiated.length > 0) {
+    let agentRow: { id: string; user_id: string } | null | undefined;
+    for (const item of initiated) {
+      try {
+        const detail = await fetchDetail(item.conversation_id);
+        if (!detail) continue;
+        const direction = detail.metadata?.phone_call?.direction ?? null;
+        if (!isMissedInitiatedCall({ status: item.status, start_time_unix_secs: item.start_time_unix_secs, direction }, nowSec)) continue;
+        const phone = callerNumberFrom(detail);
+        if (!phone) continue;
+        if (agentRow === undefined) {
+          const { data, error } = await supabaseAdmin
+            .from("agents")
+            .select("id, user_id")
+            .eq("elevenlabs_agent_id", opts.elAgentId)
+            .maybeSingle();
+          if (error) console.error("backfill: agent lookup failed for initiated callers", error.message);
+          agentRow = error ? undefined : (data ?? null);
+          if (!agentRow) break;
+        }
+        const { allowRequestStrict } = await import("@/server/rate-limit.server");
+        if (!(await allowRequestStrict(`initiated-caller:${item.conversation_id}`, 1, 30 * 86400))) continue;
+        const { saveMissedCaller } = await import("@/server/lead-extraction");
+        await saveMissedCaller({
+          agentId: agentRow.id,
+          userId: agentRow.user_id,
+          callerNumber: phone,
+          reason: "called but hung up before the receptionist answered",
+          notifyOwner: false,
+        });
+        missedCallersSaved++;
+      } catch (e) {
+        console.error("backfill: initiated caller failed for", item.conversation_id, e);
+      }
+    }
+  }
+
+  return { scanned: items.length, saved, skipped, errors, leadsRecovered: leadsRecoveredRef.n, leadRecoveryFailures, recentFailed, missedCallersSaved };
 }
 
 /**

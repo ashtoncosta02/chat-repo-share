@@ -271,13 +271,15 @@ export async function captureLead(args: CaptureLeadArgs): Promise<CaptureLeadRes
 /**
  * A caller who could not reach the receptionist (over minutes, no plan, our
  * error). Record them as a lead and tell the owner (max once per caller per
- * hour). Never throws.
+ * hour) unless notifyOwner is false. Never throws.
  */
 export async function saveMissedCaller(opts: {
   agentId: string;
   userId: string;
   callerNumber: string;
   reason: string;
+  /** Default true. When false, the lead is saved and no email is sent. */
+  notifyOwner?: boolean;
 }): Promise<void> {
   try {
     const result = await captureLead({
@@ -291,6 +293,7 @@ export async function saveMissedCaller(opts: {
       messages: [],
     });
     if (!result.ok) console.error("saveMissedCaller: lead not saved");
+    if (opts.notifyOwner === false) return;
 
     const { allowRequestStrict, sha256Hex } = await import("@/server/rate-limit.server");
     const digits = opts.callerNumber.replace(/\D/g, "").slice(-10);
