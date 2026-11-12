@@ -577,6 +577,24 @@ export type Database = {
           },
         ]
       }
+      cron_hook_tokens: {
+        Row: {
+          created_at: string
+          name: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          name: string
+          token: string
+        }
+        Update: {
+          created_at?: string
+          name?: string
+          token?: string
+        }
+        Relationships: []
+      }
       dashboard_test_conversations: {
         Row: {
           created_at: string
@@ -1352,6 +1370,7 @@ export type Database = {
         Returns: Json
       }
       revoke_user_sessions: { Args: { p_user: string }; Returns: undefined }
+      verify_cron_hook_token: { Args: { p_token: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"
