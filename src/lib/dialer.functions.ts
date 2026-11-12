@@ -3,6 +3,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { isAllowedNanp, normalize as normalizeE164 } from "@/server/phone-guard.server";
+import {
+  matchesSavedNumber,
+  UNKNOWN_CALLBACK_MESSAGE,
+  UNKNOWN_DESTINATION_MESSAGE,
+} from "@/lib/dialer-guard";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
 
@@ -57,6 +62,32 @@ export const startOutboundCall = createServerFn({ method: "POST" })
     if (!myE164) return { success: false as const, error: "Enter a valid callback number for yourself." };
     if (!isAllowedNanp(toE164) || !isAllowedNanp(myE164)) {
       return { success: false as const, error: "Only US and Canada numbers can be dialed (no premium or international numbers)." };
+    }
+
+    // Both legs must come from numbers saved on the server: the first leg rings the
+    // owner's own saved phone, the second leg reaches a customer already in Leads.
+    const { data: agentRows } = await supabaseAdmin
+      .from("agents")
+      .select("owner_forward_phone, notify_phone")
+      .eq("user_id", auth.userId);
+    const ownerPhones = (agentRows ?? []).flatMap((a) => [a.owner_forward_phone, a.notify_phone]);
+    if (!matchesSavedNumber(myE164, ownerPhones, normalizeE164)) {
+      return { success: false as const, error: UNKNOWN_CALLBACK_MESSAGE };
+    }
+
+    const { data: leadRows, error: leadErr } = await supabaseAdmin
+      .from("leads")
+      .select("phone")
+      .eq("user_id", auth.userId)
+      .not("phone", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(5000);
+    if (leadErr) {
+      console.error("startOutboundCall lead lookup failed:", leadErr.message);
+      return { success: false as const, error: "Could not place the call. Please try again." };
+    }
+    if (!matchesSavedNumber(toE164, (leadRows ?? []).map((l) => l.phone), normalizeE164)) {
+      return { success: false as const, error: UNKNOWN_DESTINATION_MESSAGE };
     }
 
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();

@@ -98,6 +98,10 @@ export function DialerPanel({ onClose }: DialerPanelProps) {
             placeholder="+1 555 123 4567"
             className="h-9 text-sm"
           />
+          <p className="text-[11px] text-muted-foreground">
+            Use the forwarding or notification number saved in your settings. You can call customers who
+            appear in Leads.
+          </p>
           <button
             onClick={saveCallback}
             className="w-full text-xs font-medium bg-foreground text-background rounded-md py-2 hover:opacity-90"
