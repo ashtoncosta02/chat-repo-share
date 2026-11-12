@@ -319,12 +319,19 @@ export async function persistPostCall(
       messages: cleanedTurns,
     });
 
-  const { data: existingRows } = await supabaseAdmin
+  const { data: existingRows, error: existingErr } = await supabaseAdmin
     .from("conversations")
     .select("id, lead_id")
     .eq("elevenlabs_conversation_id", conversationId)
-    .order("created_at", { ascending: true })
+    .order("started_at", { ascending: true })
     .limit(1);
+  if (existingErr) {
+    // Can't tell whether this call is already saved. Don't risk saving it
+    // twice (duplicate leads and alerts): fail so the provider retries and the
+    // recovery sweep picks it up, exactly like a failed insert.
+    console.error("postcall: existing conversation lookup failed", existingErr.message);
+    return { status: "db-error" };
+  }
   const existing = existingRows?.[0];
   if (existing) {
     // Saved before but the lead never landed: make the lead safe now.
