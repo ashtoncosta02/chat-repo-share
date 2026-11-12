@@ -29,6 +29,13 @@
       "when": 1793765428760,
       "tag": "0003_finalize_call_allowances",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794498630932,
+      "tag": "0004_cron_hook_token",
+      "breakpoints": true
     }
   ]
 }
