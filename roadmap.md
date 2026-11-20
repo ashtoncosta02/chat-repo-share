@@ -14,4 +14,4 @@
 - [x] Verify Purchase (confirmed paid, real amount/currency, no duplicate on refresh) and StartTrial; explain Preview testing. No live payment setting changes.
 - [x] Report the first paid charge after a free trial to Meta — DEFERRED by owner (Nov 20): StartTrial is the primary campaign conversion.
 - [x] Remove Sonia's test-mode trials and test accounts (Nov 20).
-- [ ] Confirm Meta receives StartTrial from askjanice.net — waits on askjanice.net being in Meta's allowed domains and one real live trial.
+- [ ] Confirm Meta receives StartTrial from askjanice.net — DEFERRED by owner (Nov 20): no test signup with a real card; verification waits for the first genuine customer trial. askjanice.net and www.askjanice.net still need adding to Meta's allowed domains.
