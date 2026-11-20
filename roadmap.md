@@ -12,4 +12,6 @@
 - [x] Lead safety pass (Nov 6): calls can't be refused by our own errors, texts save the sender's number, leads saved first, sweep recovers missing leads and alerts on failed calls.
 - [x] Meta Pixel (Nov 20): regional cookie banner, public pages only, one PageView per page; StartTrial/Purchase only after confirmed checkout (also in dashboard), no lead or call details.
 - [x] Verify Purchase (confirmed paid, real amount/currency, no duplicate on refresh) and StartTrial; explain Preview testing. No live payment setting changes.
-- [ ] Report the first paid charge after a free trial to Meta (needs server-side Conversions API); waiting on owner decision.
+- [x] Report the first paid charge after a free trial to Meta — DEFERRED by owner (Nov 20): StartTrial is the primary campaign conversion.
+- [x] Remove Sonia's test-mode trials and test accounts (Nov 20).
+- [ ] Confirm Meta receives StartTrial from askjanice.net — waits on askjanice.net being in Meta's allowed domains and one real live trial.
