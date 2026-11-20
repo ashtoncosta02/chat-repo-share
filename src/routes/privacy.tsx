@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { openCookieSettings } from "@/components/CookieBanner";
 
 export const Route = createFileRoute("/privacy")({
   head: () => ({
@@ -35,7 +36,7 @@ function PrivacyPage() {
       </header>
       <main className="mx-auto max-w-3xl px-6 py-12">
         <h1 className="font-display text-4xl font-bold tracking-tight">Privacy Policy</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Last updated: October 20, 2026</p>
+        <p className="mt-2 text-sm text-muted-foreground">Last updated: November 20, 2026</p>
 
         <section className="mt-8 space-y-4 text-base leading-relaxed text-foreground/90">
           <h2 className="font-display text-2xl font-semibold">1. Who We Are</h2>
@@ -95,7 +96,7 @@ function PrivacyPage() {
           </p>
 
           <h2 className="font-display text-2xl font-semibold">6. Data Sharing</h2>
-          <p>We share data only with the sub-processors required to run the Service:</p>
+          <p>We share data with the sub-processors required to run the Service:</p>
           <ul className="list-disc pl-6">
             <li><strong>Twilio</strong> — phone numbers, SMS, call audio transport.</li>
             <li><strong>ElevenLabs</strong> — AI voice generation and conversation.</li>
@@ -106,9 +107,16 @@ function PrivacyPage() {
           </ul>
           <p>
             These providers process data only on our instructions and under their own
-            data-protection agreements. We do not sell or rent personal data, and we do not share
-            personal data for cross-context behavioral advertising. We disclose data when required
-            by law or to protect our rights.
+            data-protection agreements. We do not sell or rent personal data. We disclose data when
+            required by law or to protect our rights.
+          </p>
+          <p>
+            <strong>Meta (advertising, only with your permission):</strong> on our public website
+            pages, the Meta Pixel can tell Meta (Facebook and Instagram) which of our pages you
+            visited, along with your browser details, IP address and Meta cookies. We use this to
+            measure and improve our ads. It never runs in the signed-in dashboard or in the chat
+            widget businesses place on their own websites, and we do not send Meta your callers' or
+            leads' information. See section 7 for how to allow or refuse it.
           </p>
 
           <h2 id="google-user-data" className="font-display text-2xl font-semibold">6A. Google User Data</h2>
@@ -168,9 +176,23 @@ function PrivacyPage() {
             to providing the Service and are set without additional consent.
           </p>
           <p>
-            We do not use advertising cookies, cross-site tracking pixels, or third-party
-            analytics that build behavioral profiles of visitors. If we ever add optional
-            analytics, we will request consent before setting them and update this section.
+            <strong>Visit counting:</strong> we count page visits, time on page, page speed and
+            errors without cookies and without identifying you. If you allow analytics, we also
+            measure clicks on our pages.
+          </p>
+          <p>
+            <strong>Advertising:</strong> if you allow advertising, our public website pages load
+            the Meta Pixel, which sets Meta cookies and shares the page visits described in
+            section 6 with Meta to measure our ads. In the EU/EEA, the UK, Switzerland and Canada
+            we ask first and nothing loads until you accept. Elsewhere it runs unless you refuse.
+            If your browser sends a Global Privacy Control signal, we treat it as a refusal.
+          </p>
+          <p>
+            You can change or withdraw your choice at any time in{" "}
+            <button type="button" onClick={openCookieSettings} className="underline">
+              Cookie settings
+            </button>
+            , also linked at the bottom of every page. A refusal takes effect straight away.
           </p>
 
           <h2 className="font-display text-2xl font-semibold">8. Data Retention</h2>
@@ -195,8 +217,10 @@ function PrivacyPage() {
           <p>
             For California residents (CCPA/CPRA): you have the right to know what personal
             information we collect, the right to delete it, the right to correct it, and the
-            right to opt out of its sale or sharing — we do not sell or share personal information
-            as those terms are defined, and we treat all users equally when rights are exercised.
+            right to opt out of its sale or sharing. We do not sell personal information. The Meta
+            Pixel described in section 7 may count as "sharing" for advertising; you can opt out in
+            Cookie settings or with a Global Privacy Control signal, and we treat all users equally
+            when rights are exercised.
             We do not knowingly sell data of users under 16.
           </p>
           <p>
@@ -250,7 +274,10 @@ function PrivacyPage() {
           © {new Date().getFullYear()} Ask Janice ·{" "}
           <Link to="/privacy" className="hover:text-foreground">Privacy</Link> ·{" "}
           <Link to="/terms" className="hover:text-foreground">Terms</Link> ·{" "}
-          <Link to="/refund-policy" className="hover:text-foreground">Refunds</Link>
+          <Link to="/refund-policy" className="hover:text-foreground">Refunds</Link> ·{" "}
+          <button type="button" onClick={openCookieSettings} className="hover:text-foreground">
+            Cookie settings
+          </button>
         </div>
       </footer>
     </div>

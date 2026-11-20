@@ -10,3 +10,5 @@
 - [x] check_rate_limit + revoke_user_sessions DB functions exist (applied Nov 4, check_rate_limit verified from the published site).
 - [ ] Resync receptionists, then set VOICE_TOOL_AUTH_ENFORCED = true
 - [x] Lead safety pass (Nov 6): calls can't be refused by our own errors, texts save the sender's number, leads saved first, sweep recovers missing leads and alerts on failed calls.
+- [ ] Meta Pixel (Nov 20): regional cookie banner, public pages only, one PageView per page; StartTrial/Purchase only after confirmed checkout (also in dashboard), no lead or call details.
+- [ ] Verify Purchase (confirmed paid, real amount/currency, no duplicate on refresh) and StartTrial; explain Preview testing. No live payment setting changes.

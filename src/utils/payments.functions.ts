@@ -35,6 +35,13 @@ function safeReturnUrl(raw: string | undefined): string | undefined {
 }
 
 
+/** Adds Stripe's {CHECKOUT_SESSION_ID} placeholder (left unencoded so Stripe replaces it). */
+function withCheckoutSessionParam(url: string): string {
+  const [base, hash] = url.split("#", 2);
+  const joined = `${base}${base!.includes("?") ? "&" : "?"}checkout_session={CHECKOUT_SESSION_ID}`;
+  return hash !== undefined ? `${joined}#${hash}` : joined;
+}
+
 type CheckoutSessionResult = { clientSecret: string } | { error: string };
 type PortalSessionResult = { url: string } | { error: string };
 
@@ -138,7 +145,8 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
         line_items: [{ price: stripePrice.id, quantity: 1 }],
         mode: isRecurring ? "subscription" : "payment",
         ui_mode: "embedded_page",
-        return_url: data.returnUrl,
+        // Stripe fills in the session ID so the return page can confirm success before reporting it.
+        return_url: withCheckoutSessionParam(data.returnUrl),
         customer: customerId,
         // Stripe handles tax compliance, fraud, disputes and transaction support.
         managed_payments: { enabled: true },

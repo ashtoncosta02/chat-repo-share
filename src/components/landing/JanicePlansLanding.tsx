@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import { Nav } from "@/janice/components/Nav";
-import { Footer } from "@/janice/components/Footer";
+import { PlanFooter } from "@/components/landing/PlanFooter";
 import { HeroScroll } from "@/components/landing/PlanHeroScroll";
 import { CallSection } from "@/janice/components/sections/CallSection";
 import { HowSection } from "@/janice/components/sections/HowSection";
@@ -52,7 +52,7 @@ export function JanicePlansLanding({ banner }: { banner?: ReactNode }) {
         <FaqSection />
         <ClosingSection />
       </main>
-      <Footer />
+      <PlanFooter />
     </div>
   );
 }

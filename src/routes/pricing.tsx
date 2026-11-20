@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { openCookieSettings } from "@/components/CookieBanner";
 import { useState } from "react";
 import {
   Bot,
@@ -51,5 +52,5 @@ export const Route = createFileRoute("/pricing")({
 });
 
 function PricingPage() {
-  return <div className="min-h-screen bg-background text-foreground"><header className="border-b border-border"><div className="mx-auto flex max-w-6xl justify-between px-6 py-5"><Link to="/" className="font-display text-2xl font-bold">Ask Janice</Link><Link to="/auth">Sign in</Link></div></header><main className="mx-auto max-w-5xl px-6 py-10"><h1 className="font-display text-3xl font-bold text-center">Choose your plan</h1><PlanOptions /><p className="mt-8 text-center text-sm text-muted-foreground">Secure checkout · Cancel anytime · 30-day money back</p></main><footer className="border-t border-border py-8 text-center text-sm"><Link to="/privacy">Privacy</Link> · <Link to="/terms">Terms</Link> · <Link to="/refund-policy">Refunds</Link></footer></div>;
+  return <div className="min-h-screen bg-background text-foreground"><header className="border-b border-border"><div className="mx-auto flex max-w-6xl justify-between px-6 py-5"><Link to="/" className="font-display text-2xl font-bold">Ask Janice</Link><Link to="/auth">Sign in</Link></div></header><main className="mx-auto max-w-5xl px-6 py-10"><h1 className="font-display text-3xl font-bold text-center">Choose your plan</h1><PlanOptions /><p className="mt-8 text-center text-sm text-muted-foreground">Secure checkout · Cancel anytime · 30-day money back</p></main><footer className="border-t border-border py-8 text-center text-sm"><Link to="/privacy">Privacy</Link> · <Link to="/terms">Terms</Link> · <Link to="/refund-policy">Refunds</Link> · <button type="button" onClick={openCookieSettings}>Cookie settings</button></footer></div>;
 }

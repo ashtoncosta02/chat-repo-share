@@ -4,6 +4,9 @@ import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { NewVersionBanner } from "@/components/NewVersionBanner";
+import { CookieBanner } from "@/components/CookieBanner";
+import { MetaPixel } from "@/components/MetaPixel";
+import { CONSENT_DEFAULTS_SCRIPT } from "@/lib/consent-defaults-script";
 
 import appCss from "../styles.css?url";
 
@@ -65,6 +68,7 @@ export const Route = createRootRoute({
       },
       { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
     ],
+    scripts: [{ children: CONSENT_DEFAULTS_SCRIPT }],
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -93,6 +97,8 @@ function RootComponent() {
         <Outlet />
         <Toaster richColors position="top-right" />
         <NewVersionBanner />
+        <CookieBanner />
+        <MetaPixel />
       </AuthProvider>
     </QueryClientProvider>
   );
