@@ -1,10 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { isPixelPath, resetPixelStateForTests, setPixelActive, trackConversion } from "./meta-pixel";
 
+let advertisingAllowed = true;
+vi.mock("./consent", () => ({ canTrack: async () => advertisingAllowed }));
+
 type Call = unknown[];
 let calls: Call[];
 
 beforeEach(() => {
+  advertisingAllowed = true;
   resetPixelStateForTests();
   calls = [];
   const fbq = Object.assign((...args: unknown[]) => calls.push(args), { queue: [], loaded: true, version: "2.0" });
@@ -31,13 +35,20 @@ describe("Meta Pixel page views", () => {
     expect(isPixelPath("/")).toBe(true);
   });
 
-  it("a conversion on a paused dashboard page sends no PageView and pauses again", () => {
-    trackConversion("StartTrial", { content_name: "essential_monthly", currency: "USD" }, "cs_test_1");
+  it("a conversion on a paused dashboard page sends no PageView and pauses again", async () => {
+    await trackConversion("StartTrial", { content_name: "essential_monthly", currency: "USD" }, "cs_test_1");
     expect(pageViews()).toBe(0);
     expect(calls.map((c) => c[0] + ":" + String(c[1]))).toEqual([
       "init:1910459309922815",
       "track:StartTrial",
       "consent:revoke",
     ]);
+  });
+
+  it("a conversion is never sent when advertising was refused", async () => {
+    advertisingAllowed = false;
+    const sent = await trackConversion("Purchase", { value: 139, currency: "USD" }, "cs_test_2");
+    expect(sent).toBe(false);
+    expect(calls).toEqual([]);
   });
 });

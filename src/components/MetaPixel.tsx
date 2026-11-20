@@ -142,7 +142,7 @@ export function MetaPixel() {
         if (alreadySent(sessionId) || !(await canTrack("advertising"))) return;
         markSent(sessionId);
         clearPendingCheckout();
-        trackConversion(conversion.event, conversion.params, conversion.eventId);
+        await trackConversion(conversion.event, conversion.params, conversion.eventId);
       } catch {
         /* never interrupt the dashboard */
       } finally {

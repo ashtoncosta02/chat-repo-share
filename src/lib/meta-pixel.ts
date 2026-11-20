@@ -4,6 +4,8 @@
  * Fires exactly one PageView on first load and one per page (path) change; Meta's own automatic
  * history tracking is turned off so it can't add a second PageView on navigation.
  */
+import { canTrack } from "./consent";
+
 export const META_PIXEL_ID = "1910459309922815";
 const SCRIPT_SRC = "https://connect.facebook.net/en_US/fbevents.js";
 
@@ -90,10 +92,16 @@ export function setPixelActive(on: boolean, pageView: boolean): void {
 /**
  * Sends one confirmed checkout conversion. Works on dashboard pages too: if the Pixel is paused or not
  * loaded there, it is woken for this event only (no PageView) and paused again right after.
- * Callers must already have advertising permission.
+ * Checks advertising permission itself, so a refused or withdrawn choice can never send it.
+ * Resolves true only when the event was handed to the Pixel.
  */
-export function trackConversion(event: string, params: Record<string, string | number>, eventId: string): void {
-  if (typeof window === "undefined") return;
+export async function trackConversion(
+  event: string,
+  params: Record<string, string | number>,
+  eventId: string,
+): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  if (!(await canTrack("advertising"))) return false;
   let fbq = (window as PixelWindow).fbq;
   const wasSending = loaded && sending;
   if (!loaded || !fbq) {
@@ -108,6 +116,7 @@ export function trackConversion(event: string, params: Record<string, string | n
     fbq("consent", "revoke");
     sending = false;
   }
+  return true;
 }
 
 /** Test helper: forget the module state. */
