@@ -9,3 +9,4 @@
 - Website chat never sends automatic texts; scenario texts go only to the caller ID of real calls/texts, because a typed phone number is unverified.
 - Scheduled jobs authenticate to /api/public/hooks/* with a database-generated token (cron_hook_tokens, read by pg_cron and checked via service-role-only verify_cron_hook_token); never put cron credentials in migrations or code, because repository contents are public.
 - Click-to-call only bridges the owner's saved forwarding/notification phone to a phone already in their Leads, so a signed-in caller can never pick arbitrary numbers to ring.
+- Meta Pixel loads only through src/lib/meta-pixel.ts after canTrack("advertising") from src/lib/consent.ts; it never runs on /widget and pauses on /dashboard, where only Stripe-confirmed StartTrial/Purchase (event ID = checkout session) may be sent, because the dashboard shows customers' lead and call data.

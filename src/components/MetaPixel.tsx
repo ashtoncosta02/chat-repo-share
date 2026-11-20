@@ -8,6 +8,40 @@ import { getStripeEnvironment } from "@/lib/stripe";
 
 const CHECKOUT_PARAM = "checkout_session";
 const SENT_PREFIX = "meta_conversion_sent_";
+const PENDING_KEY = "meta_pending_checkout";
+
+/**
+ * Remember the returned checkout ID straight away: the dashboard may redirect (onboarding, sign-in)
+ * and drop it from the address bar before the account has loaded.
+ */
+function rememberPendingCheckout() {
+  const id = new URLSearchParams(window.location.search).get(CHECKOUT_PARAM);
+  if (!id) return;
+  try {
+    sessionStorage.setItem(PENDING_KEY, id);
+  } catch {
+    /* ignore */
+  }
+}
+
+function pendingCheckout(): string | null {
+  const fromUrl = new URLSearchParams(window.location.search).get(CHECKOUT_PARAM);
+  if (fromUrl) return fromUrl;
+  try {
+    return sessionStorage.getItem(PENDING_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function clearPendingCheckout() {
+  try {
+    sessionStorage.removeItem(PENDING_KEY);
+  } catch {
+    /* ignore */
+  }
+  stripCheckoutParam();
+}
 
 function alreadySent(sessionId: string): boolean {
   try {
@@ -43,7 +77,10 @@ export function MetaPixel() {
   const checkoutsInFlight = useRef(new Set<string>());
   const [consentVersion, setConsentVersion] = useState(0);
 
-  useEffect(() => onConsentChange(() => setConsentVersion((v) => v + 1)), []);
+  useEffect(() => {
+    rememberPendingCheckout();
+    return onConsentChange(() => setConsentVersion((v) => v + 1));
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -82,10 +119,10 @@ export function MetaPixel() {
   // StartTrial / Purchase: only after Stripe confirms the signed-in account's checkout finished.
   useEffect(() => {
     if (!userId) return;
-    const sessionId = new URLSearchParams(window.location.search).get(CHECKOUT_PARAM);
+    const sessionId = pendingCheckout();
     if (!sessionId || checkoutsInFlight.current.has(sessionId)) return;
     if (alreadySent(sessionId)) {
-      stripCheckoutParam();
+      clearPendingCheckout();
       return;
     }
     checkoutsInFlight.current.add(sessionId);
@@ -97,9 +134,14 @@ export function MetaPixel() {
         const conversion = await getCheckoutConversion({
           data: { sessionId, environment: getStripeEnvironment() },
         });
-        if (!conversion || alreadySent(sessionId) || !(await canTrack("advertising"))) return;
+        if (!conversion) {
+          // Not a confirmed, finished checkout for this account: report nothing, don't retry.
+          clearPendingCheckout();
+          return;
+        }
+        if (alreadySent(sessionId) || !(await canTrack("advertising"))) return;
         markSent(sessionId);
-        stripCheckoutParam();
+        clearPendingCheckout();
         trackConversion(conversion.event, conversion.params, conversion.eventId);
       } catch {
         /* never interrupt the dashboard */
