@@ -49,6 +49,12 @@ export const requestPasswordReset = createServerFn({ method: "POST" })
     }
 
     if (userId) {
+      // Only the newest link works: retire any earlier unused links first.
+      await supabaseAdmin
+        .from("password_reset_tokens")
+        .update({ used_at: new Date().toISOString() })
+        .eq("user_id", userId)
+        .is("used_at", null);
       const token = randomToken();
       const tokenHash = await sha256Hex(token);
       const expiresAt = new Date(Date.now() + TOKEN_TTL_MINUTES * 60_000).toISOString();
@@ -112,6 +118,13 @@ export const resetPasswordWithToken = createServerFn({ method: "POST" })
       password: data.password,
     });
     if (updErr) throw new Error(updErr.message);
+    // A finished reset retires every other outstanding link for this account.
+    const { error: retireErr } = await supabaseAdmin
+      .from("password_reset_tokens")
+      .update({ used_at: nowIso })
+      .eq("user_id", userId)
+      .is("used_at", null);
+    if (retireErr) console.error("resetPasswordWithToken: could not retire other links", retireErr.message);
     const { revokeUserSessions } = await import("@/server/account-purge.server");
     await revokeUserSessions(userId);
     return { ok: true as const };

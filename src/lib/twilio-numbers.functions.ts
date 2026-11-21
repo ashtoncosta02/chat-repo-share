@@ -66,6 +66,29 @@ async function getAuthenticatedUserId(accessToken: string) {
   return { userId: data.user.id };
 }
 
+/**
+ * Confirms a stored Twilio SID really is the phone number saved on the same
+ * row (and belongs to our Twilio account) before we change or release it.
+ * Returns "gone" when Twilio no longer has it.
+ */
+async function confirmTwilioSid(
+  sid: unknown,
+  phoneNumber: string | null,
+): Promise<"ok" | "gone" | "mismatch"> {
+  const { isTwilioNumberSid, sameNumber } = await import("@/lib/twilio-sid");
+  if (!isTwilioNumberSid(sid)) return "mismatch";
+  const res = await fetch(`${GATEWAY_URL}/IncomingPhoneNumbers/${sid}.json`, {
+    method: "GET",
+    headers: gatewayHeaders(),
+  });
+  if (res.status === 404) return "gone";
+  if (!res.ok) throw new Error(`Twilio lookup failed (${res.status}).`);
+  const info = (await res.json().catch(() => ({}))) as { phone_number?: string };
+  return sameNumber(info.phone_number, phoneNumber) ? "ok" : "mismatch";
+}
+
+const SID_MISMATCH_MESSAGE = "This number's record doesn't match your phone provider. Nothing was changed.";
+
 const SearchInput = z.object({
   accessToken: z.string().min(1),
   postalCode: z.string().min(3).max(10).regex(/^[A-Za-z0-9 -]+$/),
@@ -346,13 +369,15 @@ export const releasePhoneNumber = createServerFn({ method: "POST" })
 
     const { data: row, error: fetchErr } = await supabaseAdmin
       .from("phone_numbers")
-      .select("id, twilio_sid, elevenlabs_phone_number_id")
+      .select("id, twilio_sid, phone_number, elevenlabs_phone_number_id")
       .eq("id", data.phoneNumberId)
       .eq("user_id", auth.userId)
       .maybeSingle();
     if (fetchErr || !row) return { success: false as const, error: "Number not found." };
 
     try {
+      const sidCheck = await confirmTwilioSid(row.twilio_sid, row.phone_number);
+      if (sidCheck === "mismatch") return { success: false as const, error: SID_MISMATCH_MESSAGE };
       // Unlink from ElevenLabs first (best-effort).
       if (row.elevenlabs_phone_number_id) {
         try {
@@ -362,14 +387,16 @@ export const releasePhoneNumber = createServerFn({ method: "POST" })
         }
       }
 
-      const res = await fetch(`${GATEWAY_URL}/IncomingPhoneNumbers/${row.twilio_sid}.json`, {
-        method: "DELETE",
-        headers: gatewayHeaders(),
-      });
-      if (!res.ok && res.status !== 404) {
-        const t = await res.text();
-        console.error("Twilio release error:", res.status, t);
-        return { success: false as const, error: `Could not release number (${res.status}).` };
+      if (sidCheck === "ok") {
+        const res = await fetch(`${GATEWAY_URL}/IncomingPhoneNumbers/${row.twilio_sid}.json`, {
+          method: "DELETE",
+          headers: gatewayHeaders(),
+        });
+        if (!res.ok && res.status !== 404) {
+          const t = await res.text();
+          console.error("Twilio release error:", res.status, t);
+          return { success: false as const, error: `Could not release number (${res.status}).` };
+        }
       }
       await supabaseAdmin.from("phone_numbers").delete().eq("id", row.id);
       return { success: true as const };
@@ -401,7 +428,7 @@ export const syncTwilioWebhooks = createServerFn({ method: "POST" })
 
     const { data: row, error: fetchErr } = await supabaseAdmin
       .from("phone_numbers")
-      .select("id, twilio_sid, agent_id, elevenlabs_phone_number_id")
+      .select("id, twilio_sid, phone_number, agent_id, elevenlabs_phone_number_id")
       .eq("id", data.phoneNumberId)
       .eq("user_id", auth.userId)
       .maybeSingle();
@@ -419,6 +446,13 @@ export const syncTwilioWebhooks = createServerFn({ method: "POST" })
     }
 
     try {
+      const sidCheck = await confirmTwilioSid(row.twilio_sid, row.phone_number);
+      if (sidCheck !== "ok") {
+        return {
+          success: false as const,
+          error: sidCheck === "gone" ? "This number is no longer on your phone account." : SID_MISMATCH_MESSAGE,
+        };
+      }
       // Numbers linked to ElevenLabs answer directly; keep them there unless
       // the owner chose "ring my cell first", which needs our voice webhook.
       const keepElevenLabs = Boolean(row.elevenlabs_phone_number_id) && answerMode !== "after_4_rings";
@@ -526,10 +560,22 @@ export const setAnswerMode = createServerFn({ method: "POST" })
 
     const { data: numbers } = await supabaseAdmin
       .from("phone_numbers")
-      .select("twilio_sid, elevenlabs_phone_number_id")
+      .select("twilio_sid, phone_number, elevenlabs_phone_number_id")
       .eq("agent_id", agent.id)
       .eq("user_id", auth.userId);
     const linked = (numbers ?? []).filter((n) => n.twilio_sid && n.elevenlabs_phone_number_id);
+    try {
+      for (const n of linked) {
+        if ((await confirmTwilioSid(n.twilio_sid, n.phone_number)) !== "ok") {
+          await supabaseAdmin.from("agents").update(old).eq("id", agent.id);
+          return { success: false as const, error: SID_MISMATCH_MESSAGE };
+        }
+      }
+    } catch (e) {
+      console.error("setAnswerMode: Twilio lookup failed", e);
+      await supabaseAdmin.from("agents").update(old).eq("id", agent.id);
+      return { success: false as const, error: "Couldn't reach your phone provider. Nothing was changed — please try again." };
+    }
     const targetUrl = data.mode === "after_4_rings" ? `${PUBLIC_APP_ORIGIN}/api/public/twilio/voice` : ELEVENLABS_INBOUND_VOICE_URL;
     const previousUrl = data.mode === "after_4_rings" ? ELEVENLABS_INBOUND_VOICE_URL : `${PUBLIC_APP_ORIGIN}/api/public/twilio/voice`;
     const switched: string[] = [];
@@ -576,9 +622,19 @@ export const linkExistingNumberToElevenLabs = createServerFn({ method: "POST" })
     if (row.elevenlabs_phone_number_id) {
       return { success: true as const, alreadyLinked: true };
     }
-    // If the number isn't assigned to an agent yet, auto-assign it to the
-    // user's only receptionist (we enforce 1-receptionist-per-account).
-    let agentId = row.agent_id;
+    // Only ever link to a receptionist this account owns. If the number isn't
+    // assigned (or points at a receptionist that isn't the caller's), assign
+    // it to the user's only receptionist (we enforce 1-receptionist-per-account).
+    let agentId: string | null = null;
+    if (row.agent_id) {
+      const { data: owned } = await supabaseAdmin
+        .from("agents")
+        .select("id")
+        .eq("id", row.agent_id)
+        .eq("user_id", auth.userId)
+        .maybeSingle();
+      agentId = owned?.id ?? null;
+    }
     if (!agentId) {
       const { data: agents } = await supabaseAdmin
         .from("agents")
@@ -608,6 +664,7 @@ export const linkExistingNumberToElevenLabs = createServerFn({ method: "POST" })
       .from("agents")
       .select("elevenlabs_agent_id, business_name")
       .eq("id", agentId)
+      .eq("user_id", auth.userId)
       .maybeSingle();
     if (!agent?.elevenlabs_agent_id) {
       return {
