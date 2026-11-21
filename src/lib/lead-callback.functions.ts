@@ -55,6 +55,15 @@ export const aiCallbackLead = createServerFn({ method: "POST" })
     if (!toNumber || !isAllowedNanp(toNumber)) {
       return { success: false as const, error: `Can't call this number. ${DISALLOWED_NUMBER_MESSAGE}` };
     }
+    // Lead phones are editable, so the provider must confirm this number really
+    // phoned or texted one of the business's own numbers.
+    {
+      const { callerHasContactedBusiness } = await import("@/server/contact-proof.server");
+      const { UNVERIFIED_CONTACT_MESSAGE, CONTACT_CHECK_FAILED_MESSAGE } = await import("@/lib/contact-proof");
+      const proof = await callerHasContactedBusiness(auth.userId, toNumber);
+      if (proof === "unverified") return { success: false as const, error: UNVERIFIED_CONTACT_MESSAGE };
+      if (proof === "error") return { success: false as const, error: CONTACT_CHECK_FAILED_MESSAGE };
+    }
     if (!(await allowRequest(`ai-callback:user:${auth.userId}`, 50, 86400))) {
       return { success: false as const, error: "Daily limit of 50 AI callbacks reached. Try again tomorrow." };
     }

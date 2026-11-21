@@ -89,6 +89,15 @@ export const startOutboundCall = createServerFn({ method: "POST" })
     if (!matchesSavedNumber(toE164, (leadRows ?? []).map((l) => l.phone), normalizeE164)) {
       return { success: false as const, error: UNKNOWN_DESTINATION_MESSAGE };
     }
+    // Lead phones are editable, so the provider must confirm this number really
+    // phoned or texted one of the business's own numbers.
+    {
+      const { callerHasContactedBusiness } = await import("@/server/contact-proof.server");
+      const { UNVERIFIED_CONTACT_MESSAGE, CONTACT_CHECK_FAILED_MESSAGE } = await import("@/lib/contact-proof");
+      const proof = await callerHasContactedBusiness(auth.userId, toE164);
+      if (proof === "unverified") return { success: false as const, error: UNVERIFIED_CONTACT_MESSAGE };
+      if (proof === "error") return { success: false as const, error: CONTACT_CHECK_FAILED_MESSAGE };
+    }
 
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const { count } = await supabaseAdmin
