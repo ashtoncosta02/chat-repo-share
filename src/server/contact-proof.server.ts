@@ -1,10 +1,16 @@
 // Server-only: confirm with Twilio that a phone number really phoned or texted
 // one of the account's own business numbers before we place an outbound call to it.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { decideContactProof, type ContactCheck, type ContactProof } from "@/lib/contact-proof";
+import {
+  decideContactProof,
+  textMentionsNumber,
+  type ContactCheck,
+  type ContactProof,
+} from "@/lib/contact-proof";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
 const MAX_BUSINESS_NUMBERS = 10;
+const MAX_WIDGET_MESSAGES = 500;
 
 function gatewayHeaders() {
   const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
@@ -46,14 +52,43 @@ async function providerHasRecord(
 }
 
 /**
+ * "yes" when a website visitor typed this number in one of the user's chat
+ * conversations. widget_messages is written only by the server's public chat
+ * route (owners may read, never insert or edit), so it can't be faked by
+ * editing a lead.
+ */
+async function numberTypedInWidgetChat(userId: string, e164: string): Promise<ContactCheck> {
+  const digits = e164.replace(/\D/g, "");
+  if (digits.length < 7) return "no";
+  const lastFour = digits.slice(-4);
+  const { data, error } = await supabaseAdmin
+    .from("widget_messages")
+    .select("content, widget_conversations!inner(user_id)")
+    .eq("widget_conversations.user_id", userId)
+    .eq("role", "user")
+    .like("content", `%${lastFour}%`)
+    .order("created_at", { ascending: false })
+    .limit(MAX_WIDGET_MESSAGES);
+  if (error) {
+    console.error("contact-proof widget lookup failed:", error.message);
+    return "error";
+  }
+  return (data ?? []).some((m) => textMentionsNumber(m.content, e164)) ? "yes" : "no";
+}
+
+/**
  * "verified" only when Twilio's own records show `callerE164` calling or texting
- * one of this user's business numbers. The destination therefore comes from the
- * provider, never from a lead row the account owner can edit.
+ * one of this user's business numbers, or a visitor typed it in this user's
+ * website chat. The proof therefore comes from records only our server writes,
+ * never from a lead row the account owner can edit.
  */
 export async function callerHasContactedBusiness(
   userId: string,
   callerE164: string,
 ): Promise<ContactProof> {
+  const widget = await numberTypedInWidgetChat(userId, callerE164);
+  if (widget === "yes") return "verified";
+
   const { data: rows, error } = await supabaseAdmin
     .from("phone_numbers")
     .select("phone_number")
@@ -64,9 +99,8 @@ export async function callerHasContactedBusiness(
     return "error";
   }
   const businessNumbers = [...new Set((rows ?? []).map((r) => r.phone_number).filter(Boolean))];
-  if (businessNumbers.length === 0) return "unverified";
 
-  const checks: ContactCheck[] = [];
+  const checks: ContactCheck[] = [widget];
   for (const to of businessNumbers) {
     const [call, text] = await Promise.all([
       providerHasRecord("Calls", callerE164, to),
