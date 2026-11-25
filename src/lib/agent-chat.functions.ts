@@ -43,6 +43,11 @@ export const chatWithAgent = createServerFn({ method: "POST" })
         return { success: false as const, error: "Too many requests. Please wait a bit and try again." };
       }
     }
+    {
+      const { requireEntitlement } = await import("@/server/entitlement.server");
+      const gate = await requireEntitlement(context.userId);
+      if (gate) return { success: false as const, error: gate.error };
+    }
     // Build the prompt only from the caller's stored receptionist config —
     // never from client-supplied fields.
     if (!data.agent.id) return { success: false as const, error: "Agent not found." };
