@@ -684,7 +684,7 @@ function KnowledgePage() {
   };
 
   const addScenario = (intent = "") => {
-    if (!plan || (plan.scenarioLimit !== null && scenarios.length >= plan.scenarioLimit)) { toast.error("Essential includes up to 3 scenarios. Choose Elite for more."); return; }
+    if (!plan || (plan.scenarioLimit !== null && scenarios.length >= plan.scenarioLimit)) { toast.error("Essential includes up to 3 scenarios. Upgrade to Elite for more.", { action: { label: "Upgrade", onClick: () => { window.location.href = "/dashboard/account"; } } }); return; }
     const s = newScenario(intent);
     setEdit({ ...edit, scenarios: [s, ...scenarios] });
     setOpenScenarioId(s.id);
@@ -831,7 +831,7 @@ function KnowledgePage() {
       updateScenario(idx, { steps: next });
     };
     const setAction = (a: ScenarioAction) => {
-      if (a?.type === "call_transfer" && !plan?.humanTransfer) { toast.error("Instant human transfer is available on Elite only."); return; }
+      if (a?.type === "call_transfer" && !plan?.humanTransfer) { toast.error("Instant human transfer is available on Elite. Upgrade to use it.", { action: { label: "Upgrade", onClick: () => { window.location.href = "/dashboard/account"; } } }); return; }
       updateScenario(idx, { action: a });
     };
 
@@ -1045,11 +1045,11 @@ function KnowledgePage() {
                 <button
                   type="button"
                   onClick={() => setAction({ type: "call_transfer", phone: "" })}
-                  disabled={!plan?.humanTransfer}
-                  title={!plan?.humanTransfer ? "Available on Elite only" : "Instant human transfer"}
+                  title={!plan?.humanTransfer ? "Available on Elite — click to upgrade" : "Instant human transfer"}
                   className="rounded-lg border border-border bg-card p-4 hover:border-primary/50 hover:shadow-sm transition flex items-center justify-center gap-2 text-sm text-foreground"
                 >
                   <Phone className="h-4 w-4" /> Call Transfer
+                  {!plan?.humanTransfer && <span className="ml-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Elite</span>}
                 </button>
                 <button
                   type="button"
