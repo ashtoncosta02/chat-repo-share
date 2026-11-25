@@ -1,8 +1,9 @@
+import { planForPrice } from "@/lib/plans";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
-import { getAdminUserDetail, adminBackfillUserCalls, adminRelinkPhone, adminResyncReceptionist, adminClearGoogleCalendar, adminSetUserPlan, adminSetUserBilling, adminUpdateAgent, adminUpdateProfile, adminImpersonateUser, adminDeleteUser } from "@/lib/admin.functions";
+import { getAdminUserDetail, adminBackfillUserCalls, adminRelinkPhone, adminResyncReceptionist, adminClearGoogleCalendar, adminSetUserBilling, adminUpdateAgent, adminUpdateProfile, adminImpersonateUser, adminDeleteUser } from "@/lib/admin.functions";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Shield, ArrowLeft, AlertTriangle, CheckCircle2, Phone, Calendar, MessageSquare, User as UserIcon, RefreshCw, Pencil, Save, X, LogIn, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -187,24 +188,7 @@ function AdminUserDetailPage() {
               toast.error(r.error ?? "Failed"); return false;
             }}
           />
-          <div className="mt-4 pt-4 border-t border-border flex items-center gap-3">
-            <label className="text-xs text-muted-foreground">Plan:</label>
-            <select
-              defaultValue={(profile as any).plan ?? "standard"}
-              onChange={async (e) => {
-                if (!session?.access_token) return;
-                const r = await adminSetUserPlan({ data: { accessToken: session.access_token, userId, plan: e.target.value as any } });
-                if (r.success) toast.success("Plan updated"); else toast.error(r.error ?? "Failed");
-                load();
-              }}
-              className="rounded-lg border border-border bg-card px-3 py-1.5 text-sm"
-            >
-              <option value="free">Free (comped)</option>
-              <option value="discounted">Discounted</option>
-              <option value="standard">Standard</option>
-            </select>
-            <span className="text-[11px] text-muted-foreground">Label only — no charges happen yet.</span>
-          </div>
+          <Membership subscriptions={(d as any).subscriptions ?? []} billingStatus={(profile as any).billing_status ?? null} />
           <BillingOverrides
             profile={profile}
             onSave={async (priceCents, freeUntil) => {
@@ -770,6 +754,36 @@ function BillingOverrides({ profile, onSave }: { profile: any; onSave: (priceCen
           {saving ? "Saving…" : "Save billing"}
         </button>
       </div>
+    </div>
+  );
+}
+
+function Membership({ subscriptions, billingStatus }: {
+  subscriptions: Array<{ price_id: string; status: string; environment: string; current_period_end: string | null; cancel_at_period_end: boolean | null }>;
+  billingStatus: string | null;
+}) {
+  const current = subscriptions.find((s) => s.environment === "live") ?? subscriptions[0];
+  const plan = current ? planForPrice(current.price_id) : null;
+  const statusLabel: Record<string, string> = { trialing: "Free trial", active: "Paying", past_due: "Payment failed", canceled: "Cancelled", incomplete: "Checkout not finished", unpaid: "Unpaid" };
+  return (
+    <div className="mt-4 pt-4 border-t border-border text-sm space-y-1">
+      <div className="text-xs text-muted-foreground">Membership</div>
+      {current ? (
+        <>
+          <div className="font-medium">
+            {plan ? `${plan.name} — $${plan.monthlyPrice}/mo` : current.price_id}
+            {" · "}{statusLabel[current.status] ?? current.status}
+            {current.environment !== "live" && <span className="text-muted-foreground"> (test mode)</span>}
+          </div>
+          {current.current_period_end && (
+            <div className="text-xs text-muted-foreground">
+              {current.cancel_at_period_end ? "Ends" : current.status === "trialing" ? "First charge" : "Renews"} {new Date(current.current_period_end).toLocaleDateString()}
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="font-medium">No plan picked yet{billingStatus === "pending_trial" ? " — signed up but didn't finish checkout" : ""}</div>
+      )}
     </div>
   );
 }

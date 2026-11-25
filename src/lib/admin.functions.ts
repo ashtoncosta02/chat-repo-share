@@ -337,8 +337,9 @@ export const getAdminUserDetail = createServerFn({ method: "POST" })
       leadsRes,
       roleRes,
       authUserRes,
+      subsRes,
     ] = await Promise.all([
-      supabaseAdmin.from("profiles").select("user_id, email, display_name, created_at, plan").eq("user_id", uid).maybeSingle(),
+      supabaseAdmin.from("profiles").select("user_id, email, display_name, created_at, plan, billing_status, trial_ends_at").eq("user_id", uid).maybeSingle(),
       supabaseAdmin.from("agents").select("*").eq("user_id", uid).maybeSingle(),
       supabaseAdmin.from("phone_numbers").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
       supabaseAdmin.from("agent_google_calendar").select("*").eq("user_id", uid).maybeSingle(),
@@ -348,6 +349,7 @@ export const getAdminUserDetail = createServerFn({ method: "POST" })
       supabaseAdmin.from("leads").select("id, name, phone, email, source, status, created_at").eq("user_id", uid).order("created_at", { ascending: false }).limit(20),
       supabaseAdmin.from("user_roles").select("role").eq("user_id", uid),
       supabaseAdmin.auth.admin.getUserById(uid),
+      supabaseAdmin.from("subscriptions").select("price_id, status, environment, current_period_end, cancel_at_period_end, created_at").eq("user_id", uid).order("created_at", { ascending: false }),
     ]);
 
     const gcal = gcalRes.data;
@@ -388,6 +390,7 @@ export const getAdminUserDetail = createServerFn({ method: "POST" })
       bookings: bookingsRes.data ?? [],
       leads: leadsRes.data ?? [],
       healthIssues,
+      subscriptions: subsRes.data ?? [],
     };
   });
 
