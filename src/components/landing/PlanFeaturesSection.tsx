@@ -13,6 +13,7 @@ import {
   UserCirclePlusIcon,
 } from "@phosphor-icons/react";
 import { Heading, Reveal } from "@/janice/components/ui";
+import { drawRoundedBar } from "@/lib/canvas-bar";
 
 /** Janice’s voice: a canvas waveform that only animates while on screen. */
 function Waveform() {
@@ -54,7 +55,7 @@ function Waveform() {
         const bx = i * 7;
         const r = 1.6;
         ctx.beginPath();
-        ctx.roundRect(bx, (h - bh) / 2, 3.2, bh, r);
+        drawRoundedBar(ctx, bx, (h - bh) / 2, 3.2, bh, r);
         ctx.fill();
       }
       if (!reduce && inView && !resting) raf = requestAnimationFrame(draw);
