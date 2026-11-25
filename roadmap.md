@@ -15,4 +15,3 @@
 - [x] Report the first paid charge after a free trial to Meta — DEFERRED by owner (Nov 20): StartTrial is the primary campaign conversion.
 - [x] Remove Sonia's test-mode trials and test accounts (Nov 20).
 - [ ] Confirm Meta receives StartTrial from askjanice.net — DEFERRED by owner (Nov 20): no test signup with a real card; verification waits for the first genuine customer trial. askjanice.net and www.askjanice.net still need adding to Meta's allowed domains.
-- [ ] Homepage pictures: waiting on Ashton to point to the right section
