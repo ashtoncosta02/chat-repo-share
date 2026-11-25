@@ -102,6 +102,24 @@ export const Route = createFileRoute("/api/public/elevenlabs/postcall")({
         // canonical transcript returned by ElevenLabs. This keeps the endpoint
         // authenticated without burning more customer call credits.
         if (!signatureTrusted) {
+          // Bound unsigned traffic before we spend an API call: per-IP rate
+          // limit, and the agent must be one of our own receptionists.
+          const { allowRequest, clientIpKey } = await import("@/server/rate-limit.server");
+          if (!(await allowRequest(`postcall-verify:ip:${clientIpKey(request)}`, 30, 3600))) {
+            return new Response("Too many requests", { status: 429 });
+          }
+          if (typeof elAgentId !== "string" || elAgentId.length > 100 || typeof conversationId !== "string" || conversationId.length > 100 || !/^[A-Za-z0-9_-]+$/.test(conversationId)) {
+            return new Response("Bad fields", { status: 400 });
+          }
+          const { data: knownAgent } = await supabaseAdmin
+            .from("agents")
+            .select("id")
+            .eq("elevenlabs_agent_id", elAgentId)
+            .maybeSingle();
+          if (!knownAgent) {
+            console.warn(`postcall: unsigned payload for unknown agent; rejected (${conversationId})`);
+            return new Response("Unauthorized", { status: 401 });
+          }
           const verified = await fetchElevenLabsConversation(conversationId);
           if (!verified || !verified.agent_id || verified.agent_id !== elAgentId) {
             // Unverifiable payloads are never stored: they could be forged by
@@ -273,7 +291,10 @@ export async function persistPostCall(
       .eq("elevenlabs_conversation_id", conversationId)
       .maybeSingle();
     if (isDashboardTestFlag || testMarker) {
-      await finishAgentCall(agent.user_id, conversationId, 0, reservationId).catch((e: unknown) =>
+      // The test marker/flag is owner-supplied, so it only hides the thread;
+      // the call is still metered at its real duration.
+      const testSec = Math.max(0, Math.round(data.metadata?.call_duration_secs ?? 0));
+      await finishAgentCall(agent.user_id, conversationId, testSec, reservationId).catch((e: unknown) =>
         console.error("postcall: could not release test reservation", e),
       );
       return { status: "duplicate" };
