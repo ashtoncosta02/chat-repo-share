@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { coerceFaqs, faqsToPromptText } from "@/lib/faqs";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { verifyTwilioSignature, formDataToRecord } from "@/server/twilio-signature.server";
 import { allowRequest, sha256Hex } from "@/server/rate-limit.server";
@@ -66,7 +67,7 @@ export const Route = createFileRoute("/api/public/twilio/sms")({
           const { data: agent, error: agentErr } = await supabaseAdmin
             .from("agents")
             .select(
-              "id, user_id, business_name, industry, tone, primary_goal, services, booking_link, emergency_number, faqs, pricing_notes, escalation_triggers, assistant_name",
+              "id, user_id, business_name, industry, tone, primary_goal, services, booking_link, emergency_number, faqs, faqs_structured, pricing_notes, escalation_triggers, assistant_name",
             )
             .eq("id", phoneRow.agent_id)
             .maybeSingle();
@@ -195,7 +196,7 @@ Services:
 ${agent.services || "(none provided)"}
 
 FAQs:
-${agent.faqs || "(none provided)"}
+${(() => { const structured = coerceFaqs(agent.faqs_structured); return structured.length > 0 ? faqsToPromptText(structured) : agent.faqs || "(none provided)"; })()}
 
 Pricing notes:
 ${agent.pricing_notes || "(none provided)"}
@@ -208,7 +209,8 @@ Rules:
 - If this is the first message of the day, greet them by introducing yourself as ${name}.
 - Be concise (1–3 short sentences).
 - If they ask to book, share the booking link if available.
-- If you don't know, offer to take a message or hand off to a human.`;
+- For general questions about the kind of work this business does (what a service involves, how it usually works, care or prep tips), answer helpfully from your general knowledge of the industry; you do not need an FAQ for that.
+- Never invent business-specific facts that are not listed above (exact prices, hours, address, policies). Only for those, offer to take a message or hand off to a human, and never reply with only "I don't know".`;
 
           // Call the AI gateway
           const apiKey = process.env.LOVABLE_API_KEY;
